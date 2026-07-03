@@ -1,0 +1,13 @@
+Jarvis V9 Phase 2 — Verification Suite Logs (per step)
+Baseline (pre-Phase-2): 4 PASS / 4 FAIL / 5 SKIP
+Step 1 (browser lock):           4 PASS / 4 FAIL / 5 SKIP  (no regression)
+Step 2 (lock -> bid_executor):   4 PASS / 4 FAIL / 5 SKIP  (no regression)
+Step 3 (repoint 4 routes):       4 PASS / 4 FAIL / 5 SKIP  (no regression)
+Step B (adapter extraction):     4 PASS / 4 FAIL / 5 SKIP  (after chat-routing test update)
+Step E (deletions):              4 PASS / 4 FAIL / 5 SKIP  (after approval-gate test update)
+Step F (executor rewire):        4 PASS / 4 FAIL / 5 SKIP  (no regression)
+Final (registry + reports):      4 PASS / 4 FAIL / 5 SKIP  (no regression)
+
+The 4 FAIL = test_health/hubstaff/clickworker/zuodao (need running backend + network).
+The 5 SKIP = heavy tests needing Ollama/display/browser.
+Both identical to pre-migration baseline — proving zero regressions from the brain transplant.

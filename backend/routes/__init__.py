@@ -1,0 +1,10 @@
+from .proposals   import router as proposals_router
+from .messages    import router as messages_router
+from .analytics   import router as analytics_router
+from .scraper     import router as scraper_router
+from .fiverr      import router as fiverr_router
+from .hubstaff    import router as hubstaff_router
+from .clickworker import router as clickworker_router
+from .zuodao      import router as zuodao_router
+from .automation  import router as automation_router
+from .orchestrator import router as orchestrator_router

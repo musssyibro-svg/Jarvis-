@@ -1,0 +1,84 @@
+{
+  "test": "test_chat_persistence",
+  "result": "SKIP",
+  "skip_reason": "Frontend not running at http://127.0.0.1:5173 \u2014 start with 'npm run dev' to enable browser-refresh persistence test. SQLite and static checks above already passed.",
+  "started": "2026-06-20T13:50:50.430197+00:00",
+  "finished": "2026-06-20T13:50:50.459252+00:00",
+  "checks": [
+    {
+      "label": "messages survive SQLite restart (new connection)",
+      "ok": true,
+      "evidence": {
+        "restored": [
+          {
+            "role": "user",
+            "content": "hello jarvis v8"
+          },
+          {
+            "role": "assistant",
+            "content": "hello Ibrahim"
+          }
+        ],
+        "count": 2
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "restored content is correct",
+      "ok": true,
+      "evidence": {
+        "first": {
+          "role": "user",
+          "content": "hello jarvis v8"
+        },
+        "second": {
+          "role": "assistant",
+          "content": "hello Ibrahim"
+        }
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "localStorage getItem for stable session id",
+      "ok": true,
+      "evidence": {
+        "found": true,
+        "file": "/home/claude/jarvis_v8/frontend/src/pages/Chat.jsx"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "localStorage setItem persists session on first load",
+      "ok": true,
+      "evidence": {
+        "found_in_source": true,
+        "searched_for": "localStorage.setItem('jarvis_session_id'",
+        "file": "/home/claude/jarvis_v8/frontend/src/pages/Chat.jsx"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "Chat.jsx calls /chat/history on mount",
+      "ok": true,
+      "evidence": {
+        "found": true,
+        "checked_for": "chat/history"
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [
+    "/home/claude/jarvis_v8/verification/results/artifacts/ram_chat_persistence_135050.json"
+  ],
+  "logs": [
+    "[2026-06-20T13:50:50.430403+00:00] RAM [start]: used=414MB avail=3583MB pct=10.4%",
+    "[2026-06-20T13:50:50.458222+00:00] RAM [after_sqlite]: used=413MB avail=3584MB pct=10.4%",
+    "[2026-06-20T13:50:50.458971+00:00] SKIP: Frontend not running at http://127.0.0.1:5173 \u2014 start with 'npm run dev' to enable browser-refresh persistence test. SQLite and static checks above already passed.",
+    "[2026-06-20T13:50:50.459229+00:00] Artifact saved: ram_chat_persistence_135050.json"
+  ]
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "label": "start",
+    "timestamp": "2026-06-20T07:47:11.645800+00:00",
+    "total_mb": 3997,
+    "used_mb": 331,
+    "available_mb": 3666,
+    "percent": 8.3,
+    "process_rss_mb": 52
+  },
+  {
+    "label": "before_fetch",
+    "timestamp": "2026-06-20T07:47:11.647805+00:00",
+    "total_mb": 3997,
+    "used_mb": 331,
+    "available_mb": 3666,
+    "percent": 8.3,
+    "process_rss_mb": 52
+  },
+  {
+    "label": "after_fetch",
+    "timestamp": "2026-06-20T07:47:11.756868+00:00",
+    "total_mb": 3997,
+    "used_mb": 331,
+    "available_mb": 3666,
+    "percent": 8.3,
+    "process_rss_mb": 52
+  },
+  {
+    "label": "end",
+    "timestamp": "2026-06-20T07:47:11.757087+00:00",
+    "total_mb": 3997,
+    "used_mb": 331,
+    "available_mb": 3666,
+    "percent": 8.3,
+    "process_rss_mb": 52
+  }
+]

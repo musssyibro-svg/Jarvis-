@@ -1,0 +1,20 @@
+[
+  {
+    "label": "start",
+    "timestamp": "2026-06-20T07:47:12.168997+00:00",
+    "total_mb": 3997,
+    "used_mb": 331,
+    "available_mb": 3666,
+    "percent": 8.3,
+    "process_rss_mb": 53
+  },
+  {
+    "label": "after_file_ops",
+    "timestamp": "2026-06-20T07:47:12.178396+00:00",
+    "total_mb": 3997,
+    "used_mb": 331,
+    "available_mb": 3666,
+    "percent": 8.3,
+    "process_rss_mb": 54
+  }
+]

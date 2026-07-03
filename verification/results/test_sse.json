@@ -1,0 +1,13 @@
+{
+  "test": "test_sse",
+  "result": "SKIP",
+  "skip_reason": "Backend not reachable at http://127.0.0.1:8000 \u2014 {'error': '<urlopen error [Errno 111] Connection refused>'}. Start with: cd backend && python -m uvicorn main:app --port 8000",
+  "started": "2026-06-20T13:50:50.459903+00:00",
+  "finished": "2026-06-20T13:50:50.460523+00:00",
+  "checks": [],
+  "artifacts": [],
+  "logs": [
+    "[2026-06-20T13:50:50.460072+00:00] RAM [start]: used=413MB avail=3584MB pct=10.4%",
+    "[2026-06-20T13:50:50.460487+00:00] SKIP: Backend not reachable at http://127.0.0.1:8000 \u2014 {'error': '<urlopen error [Errno 111] Connection refused>'}. Start with: cd backend && python -m uvicorn main:app --port 8000"
+  ]
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "label": "start",
+    "timestamp": "2026-06-20T07:47:15.992609+00:00",
+    "total_mb": 3997,
+    "used_mb": 406,
+    "available_mb": 3591,
+    "percent": 10.2,
+    "process_rss_mb": 55
+  },
+  {
+    "label": "before_round1",
+    "timestamp": "2026-06-20T07:47:15.992764+00:00",
+    "total_mb": 3997,
+    "used_mb": 406,
+    "available_mb": 3591,
+    "percent": 10.2,
+    "process_rss_mb": 55
+  },
+  {
+    "label": "after_round2",
+    "timestamp": "2026-06-20T07:47:20.359678+00:00",
+    "total_mb": 3997,
+    "used_mb": 486,
+    "available_mb": 3511,
+    "percent": 12.2,
+    "process_rss_mb": 56
+  },
+  {
+    "label": "end",
+    "timestamp": "2026-06-20T07:47:20.359971+00:00",
+    "total_mb": 3997,
+    "used_mb": 486,
+    "available_mb": 3511,
+    "percent": 12.2,
+    "process_rss_mb": 56
+  }
+]

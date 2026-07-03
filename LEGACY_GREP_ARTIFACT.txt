@@ -1,0 +1,16 @@
+Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
+
+planner.py:                 DELETED (file no longer exists)
+commander.execute_command:  REMOVED (def count in commander.py = 0)
+commander.execute_plan:     REMOVED (def count = 0)
+commander.handle_message:   REMOVED (def count = 0)
+
+Live callers after migration:
+  /chat            -> adapters.commander_adapter.handle_chat   (main.py:131)
+  /agents/command  -> adapters.commander_adapter.handle_chat   (routes/agents.py:63)
+  /agents/execute  -> ExecutorAgent._act                        (routes/agents.py:68)
+  read-only plan routes -> agent_plans DB table (no planner import)
+  ExecutorAgent._act -> agents.desktop_agent.* directly (NO commander fallback)
+
+Remaining textual matches for these names are exclusively in comments/docstrings
+describing the migration, not executable calls.

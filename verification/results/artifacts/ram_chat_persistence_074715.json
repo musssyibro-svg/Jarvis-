@@ -1,0 +1,20 @@
+[
+  {
+    "label": "start",
+    "timestamp": "2026-06-20T07:47:15.943680+00:00",
+    "total_mb": 3997,
+    "used_mb": 406,
+    "available_mb": 3591,
+    "percent": 10.2,
+    "process_rss_mb": 55
+  },
+  {
+    "label": "after_sqlite",
+    "timestamp": "2026-06-20T07:47:15.985926+00:00",
+    "total_mb": 3997,
+    "used_mb": 406,
+    "available_mb": 3591,
+    "percent": 10.2,
+    "process_rss_mb": 55
+  }
+]

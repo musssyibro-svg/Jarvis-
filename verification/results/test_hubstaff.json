@@ -1,0 +1,34 @@
+{
+  "test": "test_hubstaff",
+  "result": "FAIL",
+  "skip_reason": "",
+  "started": "2026-06-20T13:50:39.990828+00:00",
+  "finished": "2026-06-20T13:50:45.747511+00:00",
+  "checks": [
+    {
+      "label": "at least one job returned",
+      "ok": false,
+      "evidence": {
+        "count": 0,
+        "first_raw": null,
+        "ram_before_mb": 278,
+        "ram_after_mb": 339
+      },
+      "substantive_evidence": true,
+      "error": "zero jobs \u2014 scraper needs Playwright + login"
+    }
+  ],
+  "artifacts": [
+    "/home/claude/jarvis_v8/verification/results/artifacts/processes_before_hubstaff_135039.txt",
+    "/home/claude/jarvis_v8/verification/results/artifacts/ram_hubstaff_135045.json"
+  ],
+  "logs": [
+    "[2026-06-20T13:50:39.990972+00:00] RAM [start]: used=277MB avail=3720MB pct=6.9%",
+    "[2026-06-20T13:50:39.995652+00:00] Artifact saved: processes_before_hubstaff_135039.txt",
+    "[2026-06-20T13:50:40.009828+00:00] Calling scrape_hubstaff_jobs(max_jobs=10) \u2014 needs Playwright + network",
+    "[2026-06-20T13:50:40.010046+00:00] RAM [before_scrape]: used=278MB avail=3719MB pct=7.0%",
+    "[2026-06-20T13:50:45.747140+00:00] RAM [after_scrape]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:45.747171+00:00] Returned 0 job(s)",
+    "[2026-06-20T13:50:45.747482+00:00] Artifact saved: ram_hubstaff_135045.json"
+  ]
+}

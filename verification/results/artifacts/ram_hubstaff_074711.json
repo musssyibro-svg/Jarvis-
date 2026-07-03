@@ -1,0 +1,29 @@
+[
+  {
+    "label": "start",
+    "timestamp": "2026-06-20T07:47:04.883738+00:00",
+    "total_mb": 3997,
+    "used_mb": 232,
+    "available_mb": 3765,
+    "percent": 5.8,
+    "process_rss_mb": 27
+  },
+  {
+    "label": "before_scrape",
+    "timestamp": "2026-06-20T07:47:04.931224+00:00",
+    "total_mb": 3997,
+    "used_mb": 232,
+    "available_mb": 3765,
+    "percent": 5.8,
+    "process_rss_mb": 28
+  },
+  {
+    "label": "after_scrape",
+    "timestamp": "2026-06-20T07:47:11.643243+00:00",
+    "total_mb": 3997,
+    "used_mb": 331,
+    "available_mb": 3666,
+    "percent": 8.3,
+    "process_rss_mb": 52
+  }
+]

@@ -1,0 +1,115 @@
+{
+  "test": "test_executor",
+  "result": "PASS",
+  "skip_reason": "",
+  "started": "2026-06-20T13:50:46.852902+00:00",
+  "finished": "2026-06-20T13:50:50.426665+00:00",
+  "checks": [
+    {
+      "label": "executor refuses PENDING items (safety gate)",
+      "ok": true,
+      "evidence": {
+        "qid": 1,
+        "response": {
+          "success": false,
+          "message": "Item status is 'pending', not 'approved' \u2014 refusing to execute"
+        }
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "executor ran approved-item code path without crashing",
+      "ok": true,
+      "evidence": {
+        "result": {
+          "success": false,
+          "message": "Could not find bid description field \u2014 bid form layout may have changed. Manual submission required."
+        },
+        "feed_event_count": 4,
+        "stdout_len": 0
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "Playwright navigation attempted (feed confirms)",
+      "ok": true,
+      "evidence": {
+        "navigation_keywords_found": true,
+        "feed_events": [
+          {
+            "agent": "executor",
+            "msg": "Executing approved bid: Test (approved)",
+            "level": "info"
+          },
+          {
+            "agent": "executor",
+            "msg": "Opening job page: https://www.freelancer.com/projects/python/test-verification\u2026",
+            "level": "info"
+          },
+          {
+            "agent": "executor",
+            "msg": "Filling bid description\u2026",
+            "level": "info"
+          },
+          {
+            "agent": "executor",
+            "msg": "\u2717 Failed: Test (approved) \u2014 Could not find bid description field \u2014 bid form layout may have changed. Manual submission required.",
+            "level": "error"
+          }
+        ],
+        "feed_event_count": 4
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "queue item status changed from 'approved'",
+      "ok": true,
+      "evidence": {
+        "status_after": "failed",
+        "expected_not": "approved"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "executor_status returns status dict with 'running' key",
+      "ok": true,
+      "evidence": {
+        "status": {
+          "running": false,
+          "approved": 0,
+          "executing": 0,
+          "done": 0,
+          "failed": 1
+        }
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [
+    "/home/claude/jarvis_v8/verification/results/artifacts/processes_before_executor_135046.txt",
+    "/home/claude/jarvis_v8/verification/results/artifacts/executor_nav_1781963450.txt",
+    "/home/claude/jarvis_v8/verification/results/artifacts/processes_after_executor_135050.txt",
+    "/home/claude/jarvis_v8/verification/results/artifacts/ram_executor_135050.json"
+  ],
+  "logs": [
+    "[2026-06-20T13:50:46.853102+00:00] RAM [start]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:46.907669+00:00] Artifact saved: processes_before_executor_135046.txt",
+    "[2026-06-20T13:50:46.907875+00:00] RAM [before_executor]: used=338MB avail=3659MB pct=8.5%",
+    "[2026-06-20T13:50:46.913967+00:00] RAM [before_playwright_launch]: used=338MB avail=3659MB pct=8.5%",
+    "[2026-06-20T13:50:50.413872+00:00] RAM [after_playwright_launch]: used=412MB avail=3585MB pct=10.3%",
+    "[2026-06-20T13:50:50.414462+00:00] Artifact saved: executor_nav_1781963450.txt",
+    "[2026-06-20T13:50:50.415676+00:00] Feed events captured: 4",
+    "[2026-06-20T13:50:50.415698+00:00]   [info] executor: Executing approved bid: Test (approved)",
+    "[2026-06-20T13:50:50.415711+00:00]   [info] executor: Opening job page: https://www.freelancer.com/projects/python/test-verification\u2026",
+    "[2026-06-20T13:50:50.415725+00:00]   [info] executor: Filling bid description\u2026",
+    "[2026-06-20T13:50:50.415736+00:00]   [error] executor: \u2717 Failed: Test (approved) \u2014 Could not find bid description field \u2014 bid form layout may have changed. Manual submission required.",
+    "[2026-06-20T13:50:50.424610+00:00] Artifact saved: processes_after_executor_135050.txt",
+    "[2026-06-20T13:50:50.425833+00:00] RAM [end]: used=413MB avail=3584MB pct=10.3%",
+    "[2026-06-20T13:50:50.426268+00:00] Artifact saved: ram_executor_135050.json"
+  ]
+}

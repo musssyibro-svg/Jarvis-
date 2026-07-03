@@ -1,0 +1,24 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  background: #040a10;
+  color: #a8d8ea;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 2px; }
+
+@keyframes scanline   { 0%{top:0%;opacity:1} 95%{opacity:1} 100%{top:100%;opacity:0} }
+@keyframes pulseglow  { 0%,100%{opacity:0.4} 50%{opacity:1} }
+@keyframes blink      { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes fadeIn     { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin       { to{transform:rotate(360deg)} }
+@keyframes hud-glow   {
+  0%,100% { text-shadow: 0 0 10px rgba(0,212,255,0.4); }
+  50%     { text-shadow: 0 0 26px rgba(0,212,255,0.95), 0 0 6px rgba(0,212,255,0.6); }
+}
+
+.hud-glow { animation: hud-glow 3s ease-in-out infinite; }
+.fade-in  { animation: fadeIn 0.25s ease; }

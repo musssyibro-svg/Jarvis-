@@ -1,0 +1,159 @@
+{
+  "report": "Jarvis V9 Brain Transplant — Legacy Dependency Audit",
+  "phase": "1 (audit only, no code written)",
+  "verdict": "Your suspicion is CORRECT. V8 execution logic is still live underneath V9. There are THREE parallel control paths, not one. V9 (/v9/goal) is currently a fourth, isolated path that almost nothing routes through.",
+
+  "import_graph": {
+    "commander.py": {
+      "imported_by": ["main.py", "agents/executor_agent.py", "routes/agents.py"],
+      "imports": ["agents/planner.py", "agents/desktop_agent.py", "agents/orchestrator.py"]
+    },
+    "planner.py": {
+      "imported_by": ["agents/commander.py", "routes/agents.py"],
+      "spec_says": "DELETE"
+    },
+    "automation_engine.py": {
+      "imported_by": ["agents/orchestrator_core.py(banner-only)", "agents/scheduler.py(no longer)", "routes/automation.py"],
+      "spec_says": "DELETE"
+    },
+    "desktop_agent.py / browser_agent.py": {
+      "imported_directly_by": ["agents/commander.py", "services/bid_executor.py", "routes/agents.py"]
+    }
+  },
+
+  "execution_graph": {
+    "path_1_legacy_commander": "routes/agents.py POST /agents/execute -> commander.execute_command() -> desktop_agent.* (DIRECT, bypasses orchestrator)",
+    "path_2_legacy_planner": "routes/agents.py POST /agents/plan -> planner.create_plan() + commander.execute_plan() (open-loop, ignores verify)",
+    "path_3_automation_engine": "routes/automation.py POST /automation/run -> services.automation_engine.run_auto_mode() (duplicate pipeline)",
+    "path_3b_legacy_pipeline": "routes/orchestrator.py POST /orchestrator/start -> agents.orchestrator.start_pipeline() (yet another pipeline)",
+    "path_4_v9_core": "main.py POST /v9/goal -> OrchestratorCore.run_full_workflow() (the intended brain — but ONLY this one route reaches it)",
+    "path_5_bid_executor": "routes/automation.py POST /automation/execute -> services.bid_executor (direct browser submit, independent of all of the above)"
+  },
+
+  "route_graph": {
+    "bypasses_orchestrator": [
+      "POST /agents/execute  (commander.execute_command -> desktop direct)",
+      "POST /agents/desktop/* (20+ routes calling desktop_agent functions directly)",
+      "POST /agents/plan, /agents/plan/run (planner + execute_plan)",
+      "POST /automation/run (automation_engine.run_auto_mode)",
+      "POST /automation/execute, /automation/execute-all (bid_executor direct)",
+      "POST /orchestrator/start (legacy agents.orchestrator.start_pipeline)"
+    ],
+    "uses_v9_orchestrator": ["POST /v9/goal"]
+  },
+
+  "dependencies": [
+    {
+      "id": "commander.execute_command",
+      "file": "agents/commander.py:78",
+      "severity": "BLOCKER",
+      "reason": "Commander still executes commands directly to desktop_agent. Spec rejection condition #1. Reachable via POST /agents/execute and from inside handle_message desktop branch. This is the primary 'V8 underneath V9' path you suspected.",
+      "used_by": ["routes/agents.py:71", "agents/commander.py handle_message desktop branch", "agents/executor_agent._act fallback"]
+    },
+    {
+      "id": "commander.execute_plan",
+      "file": "agents/commander.py:227",
+      "severity": "BLOCKER",
+      "reason": "Open-loop plan runner that ignores the verify field — the exact anti-pattern V9 exists to remove. Still wired to POST /agents/plan/run and /agents/auto.",
+      "used_by": ["routes/agents.py:233", "routes/agents.py:244"]
+    },
+    {
+      "id": "planner.create_plan",
+      "file": "agents/planner.py:52",
+      "severity": "BLOCKER",
+      "reason": "Spec mandates planner.py deletion. Still called at runtime from commander.py:220, commander.py:341, and routes/agents.py:225. Cannot delete planner.py until these 3 call sites are migrated to OrchestratorCore planning.",
+      "used_by": ["agents/commander.py:220", "agents/commander.py:341", "routes/agents.py:225"]
+    },
+    {
+      "id": "automation_engine.run_auto_mode",
+      "file": "services/automation_engine.py",
+      "severity": "BLOCKER",
+      "reason": "Duplicate orchestration pipeline. Spec rejection condition: legacy execution coexisting with V9. Still reachable via POST /automation/run. Deprecation banner added previously but the ROUTE still calls it live.",
+      "used_by": ["routes/automation.py:25"]
+    },
+    {
+      "id": "orchestrator.start_pipeline (legacy)",
+      "file": "agents/orchestrator.py",
+      "severity": "HIGH RISK",
+      "reason": "A THIRD pipeline, separate from both automation_engine and OrchestratorCore. Reachable via POST /orchestrator/start. Note: agents/orchestrator.py also hosts STATE (the SSE feed) which IS still needed — so the file cannot be deleted wholesale, only start_pipeline removed.",
+      "used_by": ["routes/orchestrator.py:27"]
+    },
+    {
+      "id": "bid_executor direct",
+      "file": "services/bid_executor.py",
+      "severity": "HIGH RISK",
+      "reason": "Real browser submit path reachable via /automation/execute independent of orchestrator. Not legacy per se (it's the actual working submit), but it bypasses the V9 control loop, so an autonomous run and a manual queue execution can both drive the browser with no shared coordination. Must be made a tool the ExecutorAgent calls, not a parallel entrypoint.",
+      "used_by": ["routes/automation.py:141", "routes/automation.py:147"]
+    },
+    {
+      "id": "routes/agents.py desktop/* (20+ routes)",
+      "file": "routes/agents.py:78-359",
+      "severity": "MEDIUM RISK",
+      "reason": "Direct desktop_agent function exposure (click, type, open_app, etc.). These are useful as manual/debug tools and as the ExecutorAgent's action primitives. Not a blocker IF the autonomous path stops using them as its control flow — but they must not remain an alternative *workflow* entry. Keep as primitives, remove any workflow logic.",
+      "used_by": ["frontend Agents page", "manual control"]
+    },
+    {
+      "id": "agents/orchestrator.py STATE (SSE feed)",
+      "file": "agents/orchestrator.py:68",
+      "severity": "SAFE",
+      "reason": "The SSE event bus. Required infrastructure, used by V9 core too. Keep. Do NOT delete agents/orchestrator.py wholesale — extract/keep STATE.",
+      "used_by": ["everything that emits to the live feed, including orchestrator_core.py"]
+    },
+    {
+      "id": "executor_agent._act commander fallback",
+      "file": "agents/executor_agent.py",
+      "severity": "HIGH RISK",
+      "reason": "The NEW V9 executor currently falls back to commander.execute_command for desktop actions. This means even the V9 path re-enters legacy commander execution. Must be rewired to call desktop_agent primitives directly, or commander.execute_command can never be removed.",
+      "used_by": ["agents/executor_agent.py _act()"]
+    }
+  ],
+
+  "migration_blockers": [
+    "BLOCKER: 3 live call sites of planner.create_plan must be migrated before planner.py can be deleted.",
+    "BLOCKER: POST /automation/run still calls run_auto_mode — route must be repointed to OrchestratorCore before automation_engine deletion.",
+    "BLOCKER: commander.execute_command/execute_plan still wired to /agents/execute, /agents/plan/run, /agents/auto — these routes must be repointed or removed.",
+    "HIGH: V9 executor itself calls commander.execute_command as a fallback — self-defeating; rewire to desktop_agent primitives.",
+    "HIGH: POST /orchestrator/start (legacy pipeline) and POST /automation/run (engine) are two more pipelines that must be collapsed into OrchestratorCore.",
+    "CONSTRAINT: agents/orchestrator.py cannot be deleted — it hosts STATE (SSE). Extract STATE or keep the file and remove only start_pipeline."
+  ],
+
+  "challenges_to_spec": [
+    {
+      "spec_says": "Delete planner.py",
+      "audit_finding": "AGREE it should go, but it has 3 live callers. Deleting it now breaks /agents/plan, /agents/auto, and commander's plan branch immediately. Must migrate callers FIRST. Sequencing challenge, not a disagreement.",
+      "recommendation": "Migrate the 3 call sites to OrchestratorCore.PLANNING, THEN delete planner.py."
+    },
+    {
+      "spec_says": "Delete services/automation_engine.py",
+      "audit_finding": "AGREE, but POST /automation/run is still live-wired to it and the frontend Auto Mode page may call it. Deleting the file without repointing the route is a guaranteed 500 error on that page.",
+      "recommendation": "Repoint /automation/run -> OrchestratorCore first, then delete."
+    },
+    {
+      "spec_says": "Delete any routes bypassing orchestrator (implies the /agents/desktop/* routes)",
+      "audit_finding": "PARTIAL DISAGREE. The 20+ desktop primitive routes should NOT all be deleted — the ExecutorAgent needs those exact functions as its action primitives, and they're valuable as manual/debug controls. What must be removed is their use as an alternative *workflow/control* path, not the primitives themselves.",
+      "recommendation": "Keep desktop_agent primitives + their thin routes; remove only workflow-bearing routes (execute_command, execute_plan, run_auto_mode, start_pipeline)."
+    },
+    {
+      "spec_says": "Browser perception OCR-only is unacceptable",
+      "audit_finding": "AGREE and FLAG: current perception_agent.py is Stage-1 text-only (OCR/vision text). Meeting this spec requires real Playwright DOM extraction (role/text/bbox/clickable). This is genuine new work, not a wiring change, and it is the single highest-effort item in the transplant.",
+      "recommendation": "Treat structured browser perception as the critical-path deliverable, not a side task."
+    },
+    {
+      "spec_says": "agents/orchestrator.py implied removable",
+      "audit_finding": "DISAGREE. It hosts STATE (the SSE event bus) that V9 itself depends on. Deleting it breaks the live feed everywhere.",
+      "recommendation": "Keep the file or relocate STATE into core/; never delete wholesale."
+    }
+  ],
+
+  "summary": {
+    "active_control_paths_found": 5,
+    "paths_that_reach_v9_brain": 1,
+    "blockers": 4,
+    "high_risk": 4,
+    "medium_risk": 1,
+    "safe": 1,
+    "headline": "V9 exists but is an island. Four legacy/parallel execution paths still drive desktop and browser without going through OrchestratorCore. The brain transplant cannot be called done until /agents/execute, /agents/plan*, /automation/run, /orchestrator/start are repointed or removed, planner.py's 3 callers are migrated, and the V9 executor stops falling back into commander.execute_command."
+  },
+
+  "next_step": "AWAITING APPROVAL. No code will be written until you approve this report and the proposed sequencing (migrate callers -> repoint routes -> delete legacy -> then structured perception)."
+}

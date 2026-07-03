@@ -1,0 +1,67 @@
+{
+  "suite": "jarvis_v8_verification",
+  "generated_at": "2026-06-17T03:58:21.134182+00:00",
+  "total": 8,
+  "passed": 5,
+  "failed": 3,
+  "results": [
+    {
+      "test": "test_hubstaff",
+      "result": "FAIL",
+      "evidence_present": false,
+      "checks": 1
+    },
+    {
+      "test": "test_clickworker",
+      "result": "FAIL",
+      "evidence_present": true,
+      "checks": 2
+    },
+    {
+      "test": "test_zuodao",
+      "result": "FAIL",
+      "evidence_present": true,
+      "checks": 2
+    },
+    {
+      "test": "test_desktop",
+      "result": "PASS",
+      "evidence_present": true,
+      "checks": 9
+    },
+    {
+      "test": "test_browser_profile",
+      "result": "PASS",
+      "evidence_present": true,
+      "checks": 4
+    },
+    {
+      "test": "test_executor",
+      "result": "PASS",
+      "evidence_present": true,
+      "checks": 4
+    },
+    {
+      "test": "test_llava",
+      "result": "PASS",
+      "evidence_present": true,
+      "checks": 5
+    },
+    {
+      "test": "test_chat_persistence",
+      "result": "PASS",
+      "evidence_present": true,
+      "checks": 4
+    }
+  ],
+  "detail_files": [
+    "results/test_hubstaff.json",
+    "results/test_clickworker.json",
+    "results/test_zuodao.json",
+    "results/test_desktop.json",
+    "results/test_browser_profile.json",
+    "results/test_executor.json",
+    "results/test_llava.json",
+    "results/test_chat_persistence.json"
+  ]
+}

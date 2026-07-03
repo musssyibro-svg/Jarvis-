@@ -1,0 +1,17 @@
+{
+  "ram": {
+    "label": "ollama_dump",
+    "timestamp": "2026-06-20T13:38:46.187809+00:00",
+    "total_mb": 3997,
+    "used_mb": 229,
+    "available_mb": 3768,
+    "percent": 5.7,
+    "process_rss_mb": 18
+  },
+  "ollama": {
+    "ok": false,
+    "reason": "python 'ollama' package not installed",
+    "installed_models": [],
+    "approved_present": {}
+  }
+}

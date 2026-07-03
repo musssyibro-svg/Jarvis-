@@ -1,0 +1,44 @@
+{
+  "test": "test_clickworker",
+  "result": "FAIL",
+  "skip_reason": "",
+  "started": "2026-06-20T13:50:45.748111+00:00",
+  "finished": "2026-06-20T13:50:46.142295+00:00",
+  "checks": [
+    {
+      "label": "no hardcoded sample data detected",
+      "ok": true,
+      "evidence": {
+        "total": 0,
+        "fake_count": 0,
+        "fake_details": []
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "at least one real task returned",
+      "ok": false,
+      "evidence": {
+        "count": 0,
+        "sample": [],
+        "ram_before_mb": 339,
+        "ram_after_mb": 339
+      },
+      "substantive_evidence": true,
+      "error": "zero tasks \u2014 site needs login or is unavailable"
+    }
+  ],
+  "artifacts": [
+    "/home/claude/jarvis_v8/verification/results/artifacts/ram_clickworker_135046.json"
+  ],
+  "logs": [
+    "[2026-06-20T13:50:45.748273+00:00] RAM [start]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:45.748533+00:00] Calling fetch_public_tasks(max_tasks=10)",
+    "[2026-06-20T13:50:45.748690+00:00] RAM [before_fetch]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:46.141452+00:00] RAM [after_fetch]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:46.141482+00:00] Returned 0 task(s)",
+    "[2026-06-20T13:50:46.141954+00:00] RAM [end]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:46.142268+00:00] Artifact saved: ram_clickworker_135046.json"
+  ]
+}

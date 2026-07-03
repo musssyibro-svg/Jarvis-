@@ -1,0 +1,85 @@
+{
+  "test": "test_playwright_recovery",
+  "result": "PASS",
+  "skip_reason": "",
+  "started": "2026-06-20T13:50:50.461032+00:00",
+  "finished": "2026-06-20T13:50:54.641431+00:00",
+  "checks": [
+    {
+      "label": "round 1: browser launched",
+      "ok": true,
+      "evidence": {
+        "url": "about:blank",
+        "closed": true
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "round 1: localStorage value written",
+      "ok": true,
+      "evidence": {
+        "value_set": "round1_value",
+        "expected": "round1_value"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "round 2: browser recovered after crash-close",
+      "ok": true,
+      "evidence": {
+        "url": "about:blank",
+        "error": null
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "localStorage persisted across recovery cycle",
+      "ok": true,
+      "evidence": {
+        "expected": "round1_value",
+        "actual": "round1_value",
+        "match": true,
+        "ram_r1": {
+          "label": "before_round1",
+          "timestamp": "2026-06-20T13:50:50.461412+00:00",
+          "total_mb": 3997,
+          "used_mb": 413,
+          "available_mb": 3584,
+          "percent": 10.4,
+          "process_rss_mb": 55
+        },
+        "ram_r2": {
+          "label": "after_round2",
+          "timestamp": "2026-06-20T13:50:54.640622+00:00",
+          "total_mb": 3997,
+          "used_mb": 485,
+          "available_mb": 3512,
+          "percent": 12.2,
+          "process_rss_mb": 55
+        }
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [
+    "/home/claude/jarvis_v8/verification/results/artifacts/recovery_r1.png",
+    "/home/claude/jarvis_v8/verification/results/artifacts/recovery_r2.png",
+    "/home/claude/jarvis_v8/verification/results/artifacts/ram_playwright_recovery_135054.json"
+  ],
+  "logs": [
+    "[2026-06-20T13:50:50.461180+00:00] RAM [start]: used=413MB avail=3584MB pct=10.4%",
+    "[2026-06-20T13:50:50.461244+00:00] Profile: /home/claude/jarvis_v8/backend/browser-profile",
+    "[2026-06-20T13:50:50.461421+00:00] RAM [before_round1]: used=413MB avail=3584MB pct=10.4%",
+    "[2026-06-20T13:50:54.640647+00:00] RAM [after_round2]: used=485MB avail=3512MB pct=12.2%",
+    "[2026-06-20T13:50:54.640691+00:00] R1: ok=True ls_set=True",
+    "[2026-06-20T13:50:54.640703+00:00] R2: ok=True ls_persisted=True",
+    "[2026-06-20T13:50:54.640845+00:00] Artifact saved: recovery_r1.png",
+    "[2026-06-20T13:50:54.640878+00:00] Artifact saved: recovery_r2.png",
+    "[2026-06-20T13:50:54.641110+00:00] RAM [end]: used=485MB avail=3512MB pct=12.2%",
+    "[2026-06-20T13:50:54.641405+00:00] Artifact saved: ram_playwright_recovery_135054.json"
+  ]
+}

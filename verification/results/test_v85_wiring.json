@@ -1,0 +1,82 @@
+{
+  "test": "test_v85_wiring",
+  "result": "PASS",
+  "skip_reason": "",
+  "started": "2026-06-20T13:50:54.642377+00:00",
+  "finished": "2026-06-20T13:50:54.658970+00:00",
+  "checks": [
+    {
+      "label": "/chat imports and calls commander_adapter.handle_chat",
+      "ok": true,
+      "evidence": {
+        "routes_through_adapter": true,
+        "calls_handle_chat": true,
+        "chat_endpoint_excerpt": "@app.post(\"/chat\")\ndef chat(body: ChatIn):\n    if not body.message.strip(): raise HTTPException(400, \"Empty message\")\n    history = _get_history(body.session_id)\n    _save_msg(body.session_id, \"user\", body.message)\n    # V8.5: Chat is the single entry point \u2014 route through Commander, which\n    # detects intent and dispatches to the right agent (desktop/vision/plan/\n    # freelance) or falls back t"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "risky command returns needs_approval and is NOT executed",
+      "ok": true,
+      "evidence": {
+        "risky_needs_approval": true,
+        "risky_not_executed": true,
+        "is_risky_delete": true,
+        "is_risky_open": false,
+        "executor_owns_gate": true,
+        "pending_action_type": "delete_file"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "scheduler start/stop works and triggers the V9 OrchestratorCore",
+      "ok": true,
+      "evidence": {
+        "enabled_on_start": true,
+        "every_minutes": 15,
+        "next_run_set": true,
+        "core_triggered": true,
+        "disabled_on_stop": true,
+        "fired_log": [
+          "Scheduled run triggered (every 15m)",
+          "GOAL_SET:freelance_application",
+          "CORE_RUN",
+          "AutoMode scheduled every 15 minutes",
+          "Scheduled run triggered (every 15m)"
+        ]
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "/orchestrator/feed (SSE) and schedule routes are registered",
+      "ok": true,
+      "evidence": {
+        "total_routes": 128,
+        "feed_route": true,
+        "schedule_start": true,
+        "schedule_stop": true,
+        "schedule_status": true,
+        "chat_route": true
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "App.jsx has 4 tabs with Chat default; WorkspaceHub groups tools",
+      "ok": true,
+      "evidence": {
+        "tabs_present": true,
+        "chat_default": true,
+        "only_four_toplevel": true,
+        "workspace_subtab_count": 8
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [],
+  "logs": []
+}

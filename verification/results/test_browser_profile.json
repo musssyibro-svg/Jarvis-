@@ -1,0 +1,24 @@
+{
+  "test": "test_browser_profile",
+  "result": "SKIP",
+  "skip_reason": "No network (HTTP Error 403: Forbidden) \u2014 browser cookie test needs internet access",
+  "started": "2026-06-20T13:50:46.827811+00:00",
+  "finished": "2026-06-20T13:50:46.851986+00:00",
+  "checks": [
+    {
+      "label": "PROFILE_DIR configured",
+      "ok": true,
+      "evidence": {
+        "PROFILE_DIR": "/home/claude/jarvis_v8/backend/browser-profile"
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [],
+  "logs": [
+    "[2026-06-20T13:50:46.827963+00:00] RAM [start]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:46.828416+00:00] PROFILE_DIR = /home/claude/jarvis_v8/backend/browser-profile",
+    "[2026-06-20T13:50:46.851928+00:00] SKIP: No network (HTTP Error 403: Forbidden) \u2014 browser cookie test needs internet access"
+  ]
+}

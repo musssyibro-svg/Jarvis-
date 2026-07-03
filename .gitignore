@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Runtime data
+backend/jarvis.db
+backend/jarvis.db-shm
+backend/jarvis.db-wal
+backend/screenshots/
+verification/screenshots/
+verification/results/screenshots/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Env
+.env
+
+# OS
+.DS_Store

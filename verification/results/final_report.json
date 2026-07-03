@@ -1,0 +1,146 @@
+{
+  "suite": "jarvis_v8_verification_final",
+  "generated_at": "2026-06-20T07:48:16.834297+00:00",
+  "total": 13,
+  "passed": 4,
+  "failed": 4,
+  "skipped": 5,
+  "results": [
+    {
+      "test": "test_health",
+      "result": "FAIL",
+      "skip_reason": "",
+      "checks_run": 9,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/ollama_status_074803.json",
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_health_074803.json"
+      ]
+    },
+    {
+      "test": "test_hubstaff",
+      "result": "FAIL",
+      "skip_reason": "",
+      "checks_run": 1,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/processes_before_hubstaff_074803.txt",
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_hubstaff_074808.json"
+      ]
+    },
+    {
+      "test": "test_clickworker",
+      "result": "FAIL",
+      "skip_reason": "",
+      "checks_run": 2,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_clickworker_074808.json"
+      ]
+    },
+    {
+      "test": "test_zuodao",
+      "result": "FAIL",
+      "skip_reason": "",
+      "checks_run": 2,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_zuodao_074809.json"
+      ]
+    },
+    {
+      "test": "test_desktop",
+      "result": "SKIP",
+      "skip_reason": "pyautogui not installed \u2014 live input tests (open_app/close_app/type_text/click) require: pip install pyautogui pygetwindow",
+      "checks_run": 9,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/processes_start_074809.txt",
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_desktop_074809.json",
+        "/home/claude/jarvis_v8/verification/results/artifacts/processes_end_no_input_074809.txt"
+      ]
+    },
+    {
+      "test": "test_browser_profile",
+      "result": "SKIP",
+      "skip_reason": "No network (HTTP Error 403: Forbidden) \u2014 browser cookie test needs internet access",
+      "checks_run": 1,
+      "artifacts": []
+    },
+    {
+      "test": "test_executor",
+      "result": "PASS",
+      "skip_reason": "",
+      "checks_run": 5,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/processes_before_executor_074809.txt",
+        "/home/claude/jarvis_v8/verification/results/artifacts/executor_nav_1781941693.txt",
+        "/home/claude/jarvis_v8/verification/results/artifacts/processes_after_executor_074813.txt",
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_executor_074813.json"
+      ]
+    },
+    {
+      "test": "test_llava",
+      "result": "SKIP",
+      "skip_reason": "Ollama not reachable \u2014 python 'ollama' package not installed. Start with: ollama serve && ollama pull llava:7b",
+      "checks_run": 3,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/ollama_status_074813.json",
+        "/home/claude/jarvis_v8/verification/results/artifacts/test_red_square.png",
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_llava_skip_074813.json"
+      ]
+    },
+    {
+      "test": "test_chat_persistence",
+      "result": "SKIP",
+      "skip_reason": "Frontend not running at http://127.0.0.1:5173 \u2014 start with 'npm run dev' to enable browser-refresh persistence test. SQLite and static checks above already passed.",
+      "checks_run": 5,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_chat_persistence_074813.json"
+      ]
+    },
+    {
+      "test": "test_sse",
+      "result": "SKIP",
+      "skip_reason": "Backend not reachable at http://127.0.0.1:8000 \u2014 {'error': '<urlopen error [Errno 111] Connection refused>'}. Start with: cd backend && python -m uvicorn main:app --port 8000",
+      "checks_run": 0,
+      "artifacts": []
+    },
+    {
+      "test": "test_playwright_recovery",
+      "result": "PASS",
+      "skip_reason": "",
+      "checks_run": 4,
+      "artifacts": [
+        "/home/claude/jarvis_v8/verification/results/artifacts/recovery_r1.png",
+        "/home/claude/jarvis_v8/verification/results/artifacts/recovery_r2.png",
+        "/home/claude/jarvis_v8/verification/results/artifacts/ram_playwright_recovery_074816.json"
+      ]
+    },
+    {
+      "test": "test_v85_wiring",
+      "result": "PASS",
+      "skip_reason": "",
+      "checks_run": 5,
+      "artifacts": []
+    },
+    {
+      "test": "test_v9_stage1",
+      "result": "PASS",
+      "skip_reason": "",
+      "checks_run": 7,
+      "artifacts": []
+    }
+  ],
+  "detail_files": [
+    "results/test_health.json",
+    "results/test_hubstaff.json",
+    "results/test_clickworker.json",
+    "results/test_zuodao.json",
+    "results/test_desktop.json",
+    "results/test_browser_profile.json",
+    "results/test_executor.json",
+    "results/test_llava.json",
+    "results/test_chat_persistence.json",
+    "results/test_sse.json",
+    "results/test_playwright_recovery.json",
+    "results/test_v85_wiring.json",
+    "results/test_v9_stage1.json"
+  ],
+  "artifacts_dir": "/home/claude/jarvis_v8/verification/results/artifacts"
+}

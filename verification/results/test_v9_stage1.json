@@ -1,0 +1,96 @@
+{
+  "test": "test_v9_stage1",
+  "result": "PASS",
+  "skip_reason": "",
+  "started": "2026-06-20T07:48:16.832625+00:00",
+  "finished": "2026-06-20T07:48:16.834016+00:00",
+  "checks": [
+    {
+      "label": "Goal/WorldState/Action are dataclasses with ids",
+      "ok": true,
+      "evidence": {
+        "goal_is_dataclass": true,
+        "goal_has_id": true,
+        "action_has_id": true,
+        "action_risk": "low",
+        "world_retries": 0
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "illegal transitions blocked; table covers all states",
+      "ok": true,
+      "evidence": {
+        "illegal_blocked": true,
+        "table_complete": true,
+        "idle_allows": [
+          "PLANNING"
+        ]
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "goal runs to COMPLETE (progress 100)",
+      "ok": true,
+      "evidence": {
+        "final_state": "COMPLETE",
+        "progress": 100
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "executor completes (1 submit, no spin) and owns approval gate",
+      "ok": true,
+      "evidence": {
+        "status": "complete",
+        "steps": 3,
+        "submit_count": 1,
+        "owns_approval": true
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "chat -> typed Goal (freelance_application, approval_required, max_jobs=3)",
+      "ok": true,
+      "evidence": {
+        "is_goal": true,
+        "goal_type": "freelance_application",
+        "approval_required": true,
+        "max_jobs": 3
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "automation_engine.py deprecated",
+      "ok": true,
+      "evidence": {
+        "deprecated": true,
+        "first_line": "\"\"\"DEPRECATED (V9): responsibilities moved to agents/orchestrator_core.py."
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "Stage 2: find_element locates clickable target + computes click point",
+      "ok": true,
+      "evidence": {
+        "found_submit": true,
+        "click_point": [
+          180,
+          420
+        ],
+        "skips_nonclickable": true,
+        "has_stage2_methods": true
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [],
+  "logs": []
+}

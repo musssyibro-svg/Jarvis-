@@ -1,0 +1,47 @@
+[
+  {
+    "label": "start",
+    "timestamp": "2026-06-20T13:44:09.268101+00:00",
+    "total_mb": 3997,
+    "used_mb": 351,
+    "available_mb": 3646,
+    "percent": 8.8,
+    "process_rss_mb": 52
+  },
+  {
+    "label": "before_executor",
+    "timestamp": "2026-06-20T13:44:09.323082+00:00",
+    "total_mb": 3997,
+    "used_mb": 351,
+    "available_mb": 3646,
+    "percent": 8.8,
+    "process_rss_mb": 54
+  },
+  {
+    "label": "before_playwright_launch",
+    "timestamp": "2026-06-20T13:44:09.328631+00:00",
+    "total_mb": 3997,
+    "used_mb": 351,
+    "available_mb": 3646,
+    "percent": 8.8,
+    "process_rss_mb": 54
+  },
+  {
+    "label": "after_playwright_launch",
+    "timestamp": "2026-06-20T13:44:12.811286+00:00",
+    "total_mb": 3997,
+    "used_mb": 412,
+    "available_mb": 3585,
+    "percent": 10.3,
+    "process_rss_mb": 54
+  },
+  {
+    "label": "end",
+    "timestamp": "2026-06-20T13:44:12.824995+00:00",
+    "total_mb": 3997,
+    "used_mb": 413,
+    "available_mb": 3584,
+    "percent": 10.3,
+    "process_rss_mb": 54
+  }
+]

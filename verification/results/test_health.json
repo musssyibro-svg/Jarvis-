@@ -1,0 +1,169 @@
+{
+  "test": "test_health",
+  "result": "FAIL",
+  "skip_reason": "",
+  "started": "2026-06-20T13:50:39.932656+00:00",
+  "finished": "2026-06-20T13:50:39.990135+00:00",
+  "checks": [
+    {
+      "label": "directory exists: backend",
+      "ok": true,
+      "evidence": {
+        "path": "/home/claude/jarvis_v8/backend",
+        "exists": true
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "directory exists: frontend",
+      "ok": true,
+      "evidence": {
+        "path": "/home/claude/jarvis_v8/frontend",
+        "exists": true
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "directory exists: verification",
+      "ok": true,
+      "evidence": {
+        "path": "/home/claude/jarvis_v8/verification",
+        "exists": true
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "directory exists: results",
+      "ok": true,
+      "evidence": {
+        "path": "/home/claude/jarvis_v8/verification/results",
+        "exists": true
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "backend /health is reachable",
+      "ok": false,
+      "evidence": {
+        "status": null,
+        "body_snippet": "",
+        "url": "http://127.0.0.1:8000/health"
+      },
+      "substantive_evidence": true,
+      "error": "<urlopen error [Errno 111] Connection refused>"
+    },
+    {
+      "label": "Ollama daemon reachable",
+      "ok": false,
+      "evidence": {
+        "host": null,
+        "installed_models": []
+      },
+      "substantive_evidence": true,
+      "error": "python 'ollama' package not installed"
+    },
+    {
+      "label": "database file exists on disk",
+      "ok": true,
+      "evidence": {
+        "path": "/home/claude/jarvis_v8/backend/jarvis.db",
+        "size_bytes": 4096
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "all required tables present",
+      "ok": false,
+      "evidence": {
+        "found_tables": [],
+        "required": [
+          "proposals",
+          "messages",
+          "automation_queue",
+          "chat_messages",
+          "v5_memory_patterns",
+          "v5_platform_memory",
+          "agent_plans"
+        ],
+        "missing": [
+          "proposals",
+          "messages",
+          "automation_queue",
+          "chat_messages",
+          "v5_memory_patterns",
+          "v5_platform_memory",
+          "agent_plans"
+        ]
+      },
+      "substantive_evidence": true,
+      "error": "missing: ['proposals', 'messages', 'automation_queue', 'chat_messages', 'v5_memory_patterns', 'v5_platform_memory', 'agent_plans'] \u2014 start backend once to run init_db()"
+    },
+    {
+      "label": "health RAM snapshot collected",
+      "ok": true,
+      "evidence": {
+        "ram_snapshots": [
+          {
+            "label": "start",
+            "timestamp": "2026-06-20T13:50:39.932849+00:00",
+            "total_mb": 3997,
+            "used_mb": 273,
+            "available_mb": 3724,
+            "percent": 6.8,
+            "process_rss_mb": 18
+          },
+          {
+            "label": "before_ollama_check",
+            "timestamp": "2026-06-20T13:50:39.988470+00:00",
+            "total_mb": 3997,
+            "used_mb": 277,
+            "available_mb": 3720,
+            "percent": 6.9,
+            "process_rss_mb": 26
+          },
+          {
+            "label": "after_ollama_check",
+            "timestamp": "2026-06-20T13:50:39.988830+00:00",
+            "total_mb": 3997,
+            "used_mb": 277,
+            "available_mb": 3720,
+            "percent": 6.9,
+            "process_rss_mb": 26
+          },
+          {
+            "label": "end",
+            "timestamp": "2026-06-20T13:50:39.989828+00:00",
+            "total_mb": 3997,
+            "used_mb": 277,
+            "available_mb": 3720,
+            "percent": 6.9,
+            "process_rss_mb": 27
+          }
+        ],
+        "ram_start_used_mb": 273,
+        "ram_end_used_mb": 277
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [
+    "/home/claude/jarvis_v8/verification/results/artifacts/ollama_status_135039.json",
+    "/home/claude/jarvis_v8/verification/results/artifacts/ram_health_135039.json"
+  ],
+  "logs": [
+    "[2026-06-20T13:50:39.932862+00:00] RAM [start]: used=273MB avail=3724MB pct=6.8%",
+    "[2026-06-20T13:50:39.933497+00:00] Artifact saved: ollama_status_135039.json",
+    "[2026-06-20T13:50:39.988491+00:00] RAM [before_ollama_check]: used=277MB avail=3720MB pct=6.9%",
+    "[2026-06-20T13:50:39.988680+00:00] Ollama health: ok=False  reason=python 'ollama' package not installed",
+    "[2026-06-20T13:50:39.988839+00:00] RAM [after_ollama_check]: used=277MB avail=3720MB pct=6.9%",
+    "[2026-06-20T13:50:39.988865+00:00] DB_PATH: /home/claude/jarvis_v8/backend/jarvis.db",
+    "[2026-06-20T13:50:39.989856+00:00] RAM [end]: used=277MB avail=3720MB pct=6.9%",
+    "[2026-06-20T13:50:39.990109+00:00] Artifact saved: ram_health_135039.json"
+  ]
+}

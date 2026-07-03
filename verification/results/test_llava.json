@@ -1,0 +1,56 @@
+{
+  "test": "test_llava",
+  "result": "SKIP",
+  "skip_reason": "Ollama not reachable \u2014 python 'ollama' package not installed. Start with: ollama serve && ollama pull llava:7b",
+  "started": "2026-06-20T13:50:50.427890+00:00",
+  "finished": "2026-06-20T13:50:50.429466+00:00",
+  "checks": [
+    {
+      "label": "vision model configured as llava:7b",
+      "ok": true,
+      "evidence": {
+        "VISION_MODEL": "llava:7b"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "llava in LARGE_MODELS (lazy-load enforced)",
+      "ok": true,
+      "evidence": {
+        "LARGE_MODELS": [
+          "llava:7b"
+        ]
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "status() returns model config",
+      "ok": true,
+      "evidence": {
+        "models": {
+          "fast": "qwen2.5:0.5b",
+          "reasoning": "deepseek-r1:1.5b",
+          "vision": "llava:7b"
+        },
+        "health_ok": false
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [
+    "/home/claude/jarvis_v8/verification/results/artifacts/ollama_status_135050.json",
+    "/home/claude/jarvis_v8/verification/results/artifacts/test_red_square.png",
+    "/home/claude/jarvis_v8/verification/results/artifacts/ram_llava_skip_135050.json"
+  ],
+  "logs": [
+    "[2026-06-20T13:50:50.428048+00:00] RAM [start]: used=413MB avail=3584MB pct=10.4%",
+    "[2026-06-20T13:50:50.428721+00:00] Artifact saved: ollama_status_135050.json",
+    "[2026-06-20T13:50:50.428951+00:00] Artifact saved: test_red_square.png",
+    "[2026-06-20T13:50:50.428974+00:00] Test image: 50\u00d750 red square PNG (124 bytes)",
+    "[2026-06-20T13:50:50.429231+00:00] SKIP: Ollama not reachable \u2014 python 'ollama' package not installed. Start with: ollama serve && ollama pull llava:7b",
+    "[2026-06-20T13:50:50.429443+00:00] Artifact saved: ram_llava_skip_135050.json"
+  ]
+}

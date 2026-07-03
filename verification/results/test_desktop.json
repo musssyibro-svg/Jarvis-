@@ -1,0 +1,126 @@
+{
+  "test": "test_desktop",
+  "result": "SKIP",
+  "skip_reason": "pyautogui not installed \u2014 live input tests (open_app/close_app/type_text/click) require: pip install pyautogui pygetwindow",
+  "started": "2026-06-20T13:50:46.817432+00:00",
+  "finished": "2026-06-20T13:50:46.827147+00:00",
+  "checks": [
+    {
+      "label": "write_file creates file on disk",
+      "ok": true,
+      "evidence": {
+        "path": "/tmp/tmpmi3btth0/jarvis_proof.txt",
+        "size_bytes": 20
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "read_file returns correct content",
+      "ok": true,
+      "evidence": {
+        "returned_content": "jarvis desktop proof"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "search_files locates file",
+      "ok": true,
+      "evidence": {
+        "count": 1,
+        "matches": [
+          {
+            "path": "/tmp/tmpmi3btth0/jarvis_proof.txt",
+            "name": "jarvis_proof.txt",
+            "is_dir": false,
+            "size": 20
+          }
+        ]
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "copy_file creates copy",
+      "ok": true,
+      "evidence": {
+        "success": true,
+        "copy_exists": true,
+        "copy_path": "/tmp/tmpmi3btth0/copy.txt"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "delete_file refuses without confirm=True",
+      "ok": true,
+      "evidence": {
+        "needs_confirmation": true,
+        "response_keys": [
+          "success",
+          "needs_confirmation",
+          "preview",
+          "message"
+        ]
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "delete_file removes file when confirm=True",
+      "ok": true,
+      "evidence": {
+        "success": true,
+        "file_gone": true,
+        "deleted_path": "/tmp/tmpmi3btth0/copy.txt"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "emergency_stop blocks mouse input",
+      "ok": true,
+      "evidence": {
+        "is_estopped": true,
+        "click_error": "EMERGENCY STOP engaged \u2014 clear it before input actions"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "file ops still work during emergency_stop",
+      "ok": true,
+      "evidence": {
+        "file_exists": true,
+        "content": "written during estop"
+      },
+      "substantive_evidence": true,
+      "error": null
+    },
+    {
+      "label": "emergency_stop clears correctly",
+      "ok": true,
+      "evidence": {
+        "is_estopped_after_clear": false,
+        "cleared_at": "13:50:46"
+      },
+      "substantive_evidence": true,
+      "error": null
+    }
+  ],
+  "artifacts": [
+    "/home/claude/jarvis_v8/verification/results/artifacts/processes_start_135046.txt",
+    "/home/claude/jarvis_v8/verification/results/artifacts/ram_desktop_135046.json",
+    "/home/claude/jarvis_v8/verification/results/artifacts/processes_end_no_input_135046.txt"
+  ],
+  "logs": [
+    "[2026-06-20T13:50:46.817668+00:00] RAM [start]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:46.820865+00:00] Artifact saved: processes_start_135046.txt",
+    "[2026-06-20T13:50:46.822092+00:00] pyautogui=False  pygetwindow=False",
+    "[2026-06-20T13:50:46.823795+00:00] RAM [after_file_ops]: used=339MB avail=3658MB pct=8.5%",
+    "[2026-06-20T13:50:46.823814+00:00] SKIP: pyautogui not installed \u2014 live input tests (open_app/close_app/type_text/click) require: pip install pyautogui pygetwindow",
+    "[2026-06-20T13:50:46.824030+00:00] Artifact saved: ram_desktop_135046.json",
+    "[2026-06-20T13:50:46.827121+00:00] Artifact saved: processes_end_no_input_135046.txt"
+  ]
+}
