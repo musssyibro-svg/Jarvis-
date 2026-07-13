@@ -44,6 +44,12 @@ def _startup():
         logger.info("Brain tables ready.")
     except Exception as e:
         logger.warning(f"Brain schema: {e}")
+    try:
+        from services.planner_service import init_planner
+        init_planner()
+        logger.info("Planner tables ready.")
+    except Exception as e:
+        logger.warning(f"Planner schema: {e}")
     logger.info("Database ready.")
 
 # ── Routers ──────────────────────────────────────────────────────────────────
@@ -60,6 +66,8 @@ from routes.orchestrator_feed import router as orchestrator_feed_router
 from routes.orchestrator import router as orchestrator_router
 from routes.agents       import router as agents_router          # V5
 from routes.brain        import router as brain_router           # V10 Brain
+from routes.planner      import router as planner_router         # V10 Planner
+from routes.system       import router as system_router          # V10 Doctor
 
 app.include_router(orchestrator_router, prefix="/orchestrator",  tags=["Orchestrator"])
 app.include_router(agents_router,       prefix="/agents",        tags=["Agents"])      # V5
@@ -74,6 +82,8 @@ app.include_router(zuodao_router,       prefix="/zuodao",        tags=["Zuodao"]
 app.include_router(automation_router,   prefix="/automation",    tags=["Automation"])
 app.include_router(orchestrator_feed_router, tags=["Orchestrator"])
 app.include_router(brain_router,        prefix="/brain",         tags=["Brain"])       # V10
+app.include_router(planner_router,      prefix="/planner",       tags=["Planner"])     # V10
+app.include_router(system_router,       prefix="/system",        tags=["System"])      # V10
 
 from services.deepseek_service import call_model, OLLAMA_MODEL, LLM_PROVIDER
 

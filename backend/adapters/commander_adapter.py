@@ -67,6 +67,14 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         result = ex.cancel(session_id)
         return {"response": result.get("message", "Cancelled."), "intent": "chat"}
 
+    # ── Long-term project planner (V10): "plan project X to ..." / "new project X"
+    #    Checked BEFORE keyword-based desktop routing: the explicit "plan
+    #    project" phrasing is unambiguous, and a goal like "...launch the store"
+    #    would otherwise be misread as a desktop 'launch' command.
+    planned = _maybe_plan_project(message)
+    if planned is not None:
+        return planned
+
     # ── Desktop / browser actions: route to ExecutorAgent (no direct execution) ─
     if intent in ("desktop", "browser"):
         # Questions are lookups, never commands: "why did we stop using
@@ -196,6 +204,44 @@ def _profile() -> str:
         return brain.profile_context()
     except Exception:
         return ""
+
+
+def _maybe_plan_project(message: str):
+    """
+    Detect explicit long-term-planning phrasing and create a tracked project
+    with auto-decomposed steps. Returns a response dict, or None if this isn't
+    a planning request (so normal routing continues).
+
+      'plan project mistore: launch the store'
+      'new project ev to research battery thermal PINNs'
+      'start a project jarvis for the assistant build'
+
+    Requires the literal word 'project' so it never hijacks the freelance
+    orchestrator's 'plan how to ...' phrasing.
+    """
+    import re
+    m = re.match(
+        r"^\s*(?:plan|new|start|track|create)\s+(?:a\s+)?project\s+"
+        r"(?:called\s+|named\s+|my\s+)?([\w-]+)\s*(?:[:—-]|\bto\b|\bfor\b)?\s*(.*)$",
+        message, re.IGNORECASE | re.DOTALL)
+    if not m:
+        return None
+    name = (m.group(1) or "").strip()
+    goal = (m.group(2) or "").strip()
+    if not name or name.lower() in ("the", "a", "an", "my", "to", "for", "called", "named"):
+        return None
+    try:
+        from services import planner_service as planner
+        r = planner.create_project(name, goal or message, title=name)
+        proj = planner.get_project(r["project_id"])
+        steps = "\n".join(f"  {i+1}. {s['text']}" for i, s in enumerate(proj["steps"]))
+        _emit("planner", f"Project '{name}' planned ({proj['total']} steps)", "success")
+        return {"response": f"Planned **{name}** — {proj['total']} steps:\n{steps}\n\n"
+                            f"Track it in the Plans panel; say 'remember for {name}: ...' "
+                            f"to attach notes and decisions.",
+                "intent": "planner", "data": {"project_id": r["project_id"]}}
+    except Exception as e:
+        return {"response": f"Couldn't create the plan: {e}", "intent": "planner"}
 
 
 _QUESTION_STARTS = ("why ", "what ", "what's", "whats ", "when ", "where ",

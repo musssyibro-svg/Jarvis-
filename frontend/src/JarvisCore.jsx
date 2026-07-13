@@ -381,8 +381,37 @@ export default function JarvisCore() {
     await fetch(API + "/brain/document/" + id, { method: "DELETE" }).catch(() => {});
     loadBrain();
   };
+  const [plans, setPlans] = useState([]);
+  const [planGoal, setPlanGoal] = useState("");
+  const [planName, setPlanName] = useState("");
+  const [doctor, setDoctor] = useState(null);
+  const loadPlans = () => {
+    fetch(API + "/planner/projects").then(r => r.json()).then(d => setPlans(d.projects || [])).catch(() => setPlans([]));
+  };
+  const createPlan = async () => {
+    if (!planName.trim()) return;
+    await fetch(API + "/planner/project", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: planName.trim(), goal: planGoal.trim(), title: planName.trim() }) }).catch(() => {});
+    setPlanName(""); setPlanGoal(""); loadPlans();
+  };
+  const cycleStep = async (stepId, cur) => {
+    const order = ["todo", "doing", "done", "blocked"];
+    const next = order[(order.indexOf(cur) + 1) % order.length];
+    await fetch(API + "/planner/step/" + stepId, { method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: next }) }).catch(() => {});
+    loadPlans();
+  };
+  const deletePlan = async (id) => {
+    await fetch(API + "/planner/project/" + id, { method: "DELETE" }).catch(() => {});
+    loadPlans();
+  };
+  const loadDoctor = () => {
+    fetch(API + "/system/doctor").then(r => r.json()).then(setDoctor).catch(() => setDoctor(null));
+  };
   useEffect(() => {
     if (panel === "Brain") loadBrain();
+    if (panel === "Plans") loadPlans();
+    if (panel === "Settings") loadDoctor();
     if (panel === "Agents") {
       fetch(API + "/agents/status").then(r => r.json())
         .then(d => {
@@ -463,7 +492,7 @@ export default function JarvisCore() {
             <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1 }}>LOCAL CORE</div>
           </div>
         </div>
-        {["Command","Agents","Tasks","Brain","Settings"].map((x) => (
+        {["Command","Agents","Tasks","Brain","Plans","Settings"].map((x) => (
           <div key={x} onClick={() => setPanel(x)} style={{ padding: "11px 12px", borderRadius: 10, fontSize: 13, cursor: "pointer", color: panel===x?C.amber:C.dim, background: panel===x?hexA(C.amber,0.07):"transparent", borderLeft: panel===x?`2px solid ${C.amber}`:"2px solid transparent" }}>{x}</div>
         ))}
         <div style={{ marginTop: "auto", ...matFrost, padding: 12, fontSize: 11, color: C.dim }}>
@@ -604,7 +633,80 @@ export default function JarvisCore() {
                   ))}
                 </div>
               )}
-              {panel !== "Agents" && panel !== "Tasks" && panel !== "Brain" && (
+              {panel === "Plans" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ ...matDeep, padding: 14 }}>
+                    <div style={{ fontSize: 12, color: C.cyan, marginBottom: 8, letterSpacing: 1 }}>NEW PROJECT PLAN</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <input value={planName} onChange={(e) => setPlanName(e.target.value)}
+                        placeholder="project name (e.g. mistore)"
+                        style={{ width: 170, background: "rgba(0,0,0,0.3)", color: C.text,
+                                 border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
+                      <input value={planGoal} onChange={(e) => setPlanGoal(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && createPlan()}
+                        placeholder="goal — Jarvis breaks it into steps"
+                        style={{ flex: 1, minWidth: 180, background: "rgba(0,0,0,0.3)", color: C.text,
+                                 border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
+                      <button onClick={createPlan} style={{ background: hexA(C.amber, 0.15), color: C.amber,
+                        border: `1px solid ${hexA(C.amber, 0.4)}`, borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 }}>
+                        Plan it
+                      </button>
+                    </div>
+                  </div>
+                  {plans.length === 0 && <div style={{ color: C.dim, fontSize: 13 }}>No plans yet. Create one above, or say "plan project mistore to launch the store" in chat.</div>}
+                  {plans.map((p) => (
+                    <div key={p.id} style={{ ...matDeep, padding: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontWeight: 700, color: C.amber }}>{p.title || p.name}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: 11, color: C.dim }}>{p.done}/{p.total} · {p.progress}%</span>
+                          <span onClick={() => deletePlan(p.id)} style={{ cursor: "pointer", color: C.crimson, fontSize: 14 }} title="Delete plan">✕</span>
+                        </div>
+                      </div>
+                      {p.goal && <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>{p.goal}</div>}
+                      <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 3, margin: "8px 0" }}>
+                        <div style={{ height: 4, width: `${p.progress}%`, background: C.emerald, borderRadius: 3 }} />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 6 }}>
+                        {p.steps.map((s) => {
+                          const col = s.status === "done" ? C.emerald : s.status === "doing" ? C.amber : s.status === "blocked" ? C.crimson : C.dim;
+                          return (
+                            <div key={s.id} onClick={() => cycleStep(s.id, s.status)}
+                              style={{ display: "flex", gap: 8, alignItems: "center", cursor: "pointer", fontSize: 12 }}
+                              title="Click to change status">
+                              <span style={{ width: 58, color: col, textTransform: "uppercase", fontSize: 10 }}>{s.status}</span>
+                              <span style={{ color: s.status === "done" ? C.dim : C.text, textDecoration: s.status === "done" ? "line-through" : "none" }}>{s.text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {panel === "Settings" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ fontSize: 12, color: C.cyan, letterSpacing: 1 }}>SYSTEM DOCTOR</div>
+                  <div style={{ fontSize: 12, color: C.dim }}>
+                    {doctor ? doctor.summary : "Running diagnostics..."}
+                  </div>
+                  {doctor && doctor.checks.map((c, i) => (
+                    <div key={i} style={{ ...matDeep, padding: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontWeight: 600, fontSize: 13 }}>
+                          <span style={{ color: c.ok ? C.emerald : C.crimson, marginRight: 8 }}>{c.ok ? "✓" : "✕"}</span>
+                          {c.name}
+                        </span>
+                        <span style={{ fontSize: 11, color: C.dim }}>{c.detail}</span>
+                      </div>
+                      {!c.ok && c.fix && (
+                        <div style={{ fontSize: 11, color: C.amber, marginTop: 6, fontFamily: "monospace" }}>→ {c.fix}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {panel !== "Agents" && panel !== "Tasks" && panel !== "Brain" && panel !== "Plans" && panel !== "Settings" && (
                 <div style={{ color: C.dim, fontSize: 13 }}>
                   {panel} panel — wired to backend next. (This view confirms the sidebar navigation now works.)
                 </div>
