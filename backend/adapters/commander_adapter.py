@@ -69,6 +69,11 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
 
     # ── Desktop / browser actions: route to ExecutorAgent (no direct execution) ─
     if intent in ("desktop", "browser"):
+        # Questions are lookups, never commands: "why did we stop using
+        # browser-use?" must not launch a browser just because it contains
+        # a keyword. Question-shaped messages go to the brain instead.
+        if _is_question(message):
+            return _handle_memory(message)
         return _route_action(message, session_id, intent)
 
     # ── Goal-driven work (freelance application etc.): OrchestratorCore ─────────
@@ -97,21 +102,29 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     if intent == "memory":
         return _handle_memory(message)
 
-    # ── Plain chat (V10: grounded in the Brain when it has something relevant) ─
+    # ── Plain chat (V10: grounded in the Brain when it has something relevant;
+    #    V10.2: personal facts are ALWAYS in context so Jarvis knows the user) ─
     from services.deepseek_service import call_model
     knowledge = _brain_context(message)
-    if knowledge:
-        _emit("brain", "Found relevant knowledge in your brain", "info")
-        prompt = (f"Relevant knowledge from the user's personal brain "
-                  f"(saved by them — treat as trusted context):\n{knowledge}\n\n"
-                  f"User message: {message}")
+    profile = _profile()
+    if knowledge or profile:
+        if knowledge:
+            _emit("brain", "Found relevant knowledge in your brain", "info")
+        parts = []
+        if profile:
+            parts.append(f"Facts about the user:\n{profile}")
+        if knowledge:
+            parts.append(f"Relevant knowledge from the user's personal brain "
+                         f"(saved by them — treat as trusted context):\n{knowledge}")
+        prompt = "\n\n".join(parts) + f"\n\nUser message: {message}"
         reply = call_model(prompt, fast=True)
         if reply.startswith("[No AI available"):
             # No LLM installed — the brain itself is still useful: answer with
             # the retrieved knowledge instead of a dead error.
             reply = ("(No AI model installed — showing what your brain knows.)\n\n"
-                     + knowledge)
-        return {"response": reply, "intent": "chat", "data": {"brain_used": True}}
+                     + (knowledge or profile))
+        return {"response": reply, "intent": "chat",
+                "data": {"brain_used": bool(knowledge)}}
     reply = call_model(message, fast=True)
     return {"response": reply, "intent": "chat"}
 
@@ -121,7 +134,12 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
 _REMEMBER_RE = None
 
 def _handle_memory(message: str) -> dict:
-    """'remember <x>' saves to the brain; anything else searches it."""
+    """
+    'remember <x>'                  -> personal fact (always in Jarvis's context)
+    'remember decision: <x>'        -> a WHY, kept for future context
+    'remember for <project>: <x>'   -> scoped to a project workspace
+    anything else                   -> searches the brain
+    """
     import re
     m = re.match(r"^\s*(?:remember|memorize|store this|save this)[:,]?\s*(?:that\s+)?(.*)",
                  message, re.IGNORECASE | re.DOTALL)
@@ -129,9 +147,18 @@ def _handle_memory(message: str) -> dict:
         from services import brain_service as brain
         if m and m.group(1).strip():
             fact = m.group(1).strip()
-            r = brain.ingest(fact[:60], fact, source="chat")
-            _emit("brain", "Saved to your brain", "success")
-            return {"response": f"Remembered ✓ — \"{fact[:120]}\"",
+            source, project = "fact", None
+            dm = re.match(r"^decision[:,]\s*(.*)", fact, re.IGNORECASE | re.DOTALL)
+            pm = re.match(r"^for\s+([\w-]+)[:,]\s*(.*)", fact, re.IGNORECASE | re.DOTALL)
+            if dm and dm.group(1).strip():
+                source, fact = "decision", dm.group(1).strip()
+            elif pm and pm.group(2).strip():
+                project, fact = pm.group(1), pm.group(2).strip()
+            r = brain.ingest(fact[:60], fact, source=source, project=project)
+            _emit("brain", f"Saved {source}" + (f" to {project}" if project else ""), "success")
+            label = {"decision": "Decision recorded", "fact": "Remembered"}[source]
+            return {"response": f"{label} ✓ — \"{fact[:120]}\""
+                                + (f" [{project}]" if project else ""),
                     "intent": "memory", "data": r}
         # recall path: search the brain, answer with the LLM over the hits
         hits = brain.search(message, k=3)
@@ -160,6 +187,27 @@ def _brain_context(message: str) -> str:
         return brain.context_for(message, k=3)
     except Exception:
         return ""
+
+
+def _profile() -> str:
+    """Personal facts, always injected (bounded); never blocks or raises."""
+    try:
+        from services import brain_service as brain
+        return brain.profile_context()
+    except Exception:
+        return ""
+
+
+_QUESTION_STARTS = ("why ", "what ", "what's", "whats ", "when ", "where ",
+                    "who ", "how ", "did ", "tell me", "explain")
+
+def _is_question(message: str) -> bool:
+    """
+    Information-seeking phrasings that must never execute an action, even when
+    they contain action keywords. Deliberately excludes 'can you...' /
+    'could you...' — those are polite commands, not questions.
+    """
+    return message.lower().strip().startswith(_QUESTION_STARTS)
 
 
 # ── Action routing through ExecutorAgent ──────────────────────────────────────

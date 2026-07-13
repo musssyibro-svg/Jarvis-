@@ -59,6 +59,11 @@ CREATE INDEX IF NOT EXISTS idx_brain_chunks_doc ON brain_chunks(doc_id);
 def init_brain() -> None:
     with conn() as db:
         db.executescript(BRAIN_SCHEMA)
+        # V2 migration: project workspace tag (Layer 3). ALTER is idempotent-ish:
+        # sqlite has no IF NOT EXISTS for columns, so probe first.
+        cols = [r["name"] for r in db.execute("PRAGMA table_info(brain_documents)")]
+        if "project" not in cols:
+            db.execute("ALTER TABLE brain_documents ADD COLUMN project TEXT")
 
 
 def _now() -> str:
@@ -201,8 +206,16 @@ def _bm25_scores(query: str, docs: list[str], k1: float = 1.5, b: float = 0.75) 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def ingest(title: str, text: str, source: str = "note") -> dict:
-    """Store a document: chunk it, embed what we can, persist everything."""
+def ingest(title: str, text: str, source: str = "note", project: str | None = None) -> dict:
+    """
+    Store a document: chunk it, embed what we can, persist everything.
+    source distinguishes knowledge kinds without extra tables:
+      note | file | chat  — general knowledge
+      fact                — short personal facts about the user (Layer 2)
+      decision            — WHY a choice was made, for future context (Layer 6)
+      chat_summary        — auto-learned conversation rollups (Layer 7)
+    project optionally scopes it to a workspace, e.g. 'mistore', 'ev' (Layer 3).
+    """
     init_brain()
     text = (text or "").strip()
     if not text:
@@ -211,14 +224,16 @@ def ingest(title: str, text: str, source: str = "note") -> dict:
     embs = _embed(chunks) if embeddings_available() else None
     with conn() as db:
         cur = db.execute(
-            "INSERT INTO brain_documents(title, source, chars, created_at) VALUES(?,?,?,?)",
-            (title.strip() or f"Untitled {_now()[:10]}", source, len(text), _now()))
+            "INSERT INTO brain_documents(title, source, chars, created_at, project) "
+            "VALUES(?,?,?,?,?)",
+            (title.strip() or f"Untitled {_now()[:10]}", source, len(text), _now(),
+             (project or "").strip().lower() or None))
         doc_id = cur.lastrowid
         for i, chunk in enumerate(chunks):
             db.execute(
                 "INSERT INTO brain_chunks(doc_id, seq, text, embedding) VALUES(?,?,?,?)",
                 (doc_id, i, chunk, _pack(embs[i]) if embs else None))
-    logger.info(f"brain: ingested '{title}' ({len(chunks)} chunks, "
+    logger.info(f"brain: ingested '{title}' ({len(chunks)} chunks, source={source}, "
                 f"{'embedded' if embs else 'keyword-only'})")
     return {"ok": True, "doc_id": doc_id, "chunks": len(chunks),
             "embedded": bool(embs)}
@@ -245,21 +260,26 @@ def _backfill_embeddings(limit: int = 64) -> int:
     return len(rows)
 
 
-def search(query: str, k: int = 4) -> dict:
+def search(query: str, k: int = 4, project: str | None = None) -> dict:
     """
     Hybrid retrieval. Vector search over embedded chunks when the model is up;
     BM25 keyword scoring over everything (and as the sole path when it isn't).
-    Returns {ok, mode, results: [{doc_id, title, text, score}]}.
+    Optional project filter scopes results to one workspace.
+    Returns {ok, mode, results: [{doc_id, title, source, project, text, score}]}.
     """
     init_brain()
     query = (query or "").strip()
     if not query:
         return {"ok": False, "error": "empty query", "results": []}
     _backfill_embeddings()
+    sql = ("SELECT c.id, c.doc_id, c.text, c.embedding, d.title, d.source, d.project "
+           "FROM brain_chunks c JOIN brain_documents d ON d.id = c.doc_id")
+    args: tuple = ()
+    if project:
+        sql += " WHERE d.project = ?"
+        args = (project.strip().lower(),)
     with conn() as db:
-        rows = db.execute(
-            "SELECT c.id, c.doc_id, c.text, c.embedding, d.title "
-            "FROM brain_chunks c JOIN brain_documents d ON d.id = c.doc_id").fetchall()
+        rows = db.execute(sql, args).fetchall()
     if not rows:
         return {"ok": True, "mode": "empty", "results": []}
 
@@ -287,6 +307,7 @@ def search(query: str, k: int = 4) -> dict:
     by_id = {r["id"]: r for r in rows}
     top = sorted(scored.items(), key=lambda kv: kv[1], reverse=True)[:k]
     results = [{"doc_id": by_id[cid]["doc_id"], "title": by_id[cid]["title"],
+                "source": by_id[cid]["source"], "project": by_id[cid]["project"],
                 "text": by_id[cid]["text"], "score": round(s, 4)}
                for cid, s in top if s > 0]
     return {"ok": True, "mode": mode, "results": results}
@@ -307,14 +328,48 @@ def context_for(query: str, k: int = 3, max_chars: int = 2400) -> str:
     return "\n\n".join(parts)
 
 
-def list_documents() -> list[dict]:
+def profile_context(max_chars: int = 700) -> str:
+    """
+    Facts about the user (source='fact'), newest first, always injected into
+    chat so Jarvis 'knows you' without needing a keyword match. Bounded so it
+    stays cheap for small models.
+    """
     init_brain()
     with conn() as db:
         rows = db.execute(
-            "SELECT d.id, d.title, d.source, d.chars, d.created_at, "
-            "COUNT(c.id) AS chunks, SUM(c.embedding IS NOT NULL) AS embedded "
-            "FROM brain_documents d LEFT JOIN brain_chunks c ON c.doc_id = d.id "
-            "GROUP BY d.id ORDER BY d.id DESC").fetchall()
+            "SELECT c.text FROM brain_chunks c JOIN brain_documents d ON d.id=c.doc_id "
+            "WHERE d.source='fact' ORDER BY d.id DESC LIMIT 30").fetchall()
+    out, used = [], 0
+    for r in rows:
+        t = r["text"].strip()
+        if used + len(t) > max_chars:
+            break
+        out.append(f"- {t}")
+        used += len(t)
+    return "\n".join(out)
+
+
+def projects() -> list[str]:
+    init_brain()
+    with conn() as db:
+        rows = db.execute(
+            "SELECT DISTINCT project FROM brain_documents "
+            "WHERE project IS NOT NULL ORDER BY project").fetchall()
+    return [r["project"] for r in rows]
+
+
+def list_documents(project: str | None = None) -> list[dict]:
+    init_brain()
+    sql = ("SELECT d.id, d.title, d.source, d.project, d.chars, d.created_at, "
+           "COUNT(c.id) AS chunks, SUM(c.embedding IS NOT NULL) AS embedded "
+           "FROM brain_documents d LEFT JOIN brain_chunks c ON c.doc_id = d.id ")
+    args: tuple = ()
+    if project:
+        sql += "WHERE d.project = ? "
+        args = (project.strip().lower(),)
+    sql += "GROUP BY d.id ORDER BY d.id DESC"
+    with conn() as db:
+        rows = db.execute(sql, args).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -326,6 +381,33 @@ def delete_document(doc_id: int) -> dict:
     return {"ok": cur.rowcount > 0, "deleted": doc_id}
 
 
+def learn_from_chat(session_id: str, messages: list[dict]) -> dict:
+    """
+    Layer 7 auto-learning: summarize a slice of conversation into the brain.
+    Called in a background thread every LEARN_EVERY messages (see main.py).
+    Skips silently when no LLM is available — never ingests error strings.
+    """
+    if not messages:
+        return {"ok": False, "error": "no messages"}
+    try:
+        from services.deepseek_service import call_model
+        transcript = "\n".join(
+            f"{m['role']}: {m['content'][:300]}" for m in messages[-24:])
+        summary = call_model(
+            "Summarize the durable facts, decisions, preferences and open tasks "
+            "from this conversation in 5 bullet points or fewer. Skip small talk. "
+            "Output ONLY the bullets.\n\n" + transcript, fast=True)
+        if not summary or summary.startswith("[") or len(summary) < 20:
+            return {"ok": False, "error": "no usable model output"}
+        title = f"Chat summary {_now()[:10]} ({session_id})"
+        r = ingest(title, summary, source="chat_summary")
+        logger.info(f"brain: auto-learned from session '{session_id}'")
+        return r
+    except Exception as e:
+        logger.warning(f"brain: learn_from_chat failed: {e}")
+        return {"ok": False, "error": str(e)}
+
+
 def status() -> dict:
     init_brain()
     with conn() as db:
@@ -333,8 +415,14 @@ def status() -> dict:
         chunks = db.execute("SELECT COUNT(*) AS n FROM brain_chunks").fetchone()["n"]
         embedded = db.execute(
             "SELECT COUNT(*) AS n FROM brain_chunks WHERE embedding IS NOT NULL").fetchone()["n"]
+        by_source = {r["source"]: r["n"] for r in db.execute(
+            "SELECT source, COUNT(*) AS n FROM brain_documents GROUP BY source")}
     return {
         "documents": docs, "chunks": chunks, "embedded_chunks": embedded,
+        "facts": by_source.get("fact", 0),
+        "decisions": by_source.get("decision", 0),
+        "chat_summaries": by_source.get("chat_summary", 0),
+        "projects": projects(),
         "embed_model": EMBED_MODEL,
         "embeddings_available": embeddings_available(force=True),
         "mode": "vector" if embeddings_available() else "keyword",

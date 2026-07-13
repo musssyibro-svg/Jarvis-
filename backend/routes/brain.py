@@ -19,11 +19,15 @@ router = APIRouter()
 class IngestIn(BaseModel):
     title: str = ""
     text: str
+    project: str = ""
+    source: str = "note"      # note | fact | decision
 
 
 @router.post("/ingest")
 def ingest(body: IngestIn):
-    r = brain.ingest(body.title, body.text, source="note")
+    source = body.source if body.source in ("note", "fact", "decision") else "note"
+    r = brain.ingest(body.title, body.text, source=source,
+                     project=body.project or None)
     if not r.get("ok"):
         raise HTTPException(400, r.get("error", "ingest failed"))
     return r
@@ -60,13 +64,18 @@ async def upload(file: UploadFile = File(...)):
 
 
 @router.get("/search")
-def search(q: str, k: int = 4):
-    return brain.search(q, k=min(max(k, 1), 20))
+def search(q: str, k: int = 4, project: str = ""):
+    return brain.search(q, k=min(max(k, 1), 20), project=project or None)
 
 
 @router.get("/documents")
-def documents():
-    return {"documents": brain.list_documents()}
+def documents(project: str = ""):
+    return {"documents": brain.list_documents(project=project or None)}
+
+
+@router.get("/projects")
+def list_projects():
+    return {"projects": brain.projects()}
 
 
 @router.delete("/document/{doc_id}")

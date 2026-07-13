@@ -5,11 +5,24 @@ questions and ground every chat. 100% local — nothing leaves your PC.
 
 ## Feeding it
 
-1. **UI**: click **Brain** in the sidebar → paste text → *Save to Brain*,
+1. **UI**: click **Brain** in the sidebar → pick a kind (*Knowledge* / *Fact
+   about me* / *Decision*), optionally a project, paste text → *Save to Brain*,
    or *upload a .txt / .md file* (.pdf works after `pip install pypdf`).
-2. **Chat**: type `remember my WeChat backup phone is ...` — anything after
-   "remember" is saved.
-3. **API**: `POST /brain/ingest {"title": "...", "text": "..."}`.
+2. **Chat**:
+   - `remember my WeChat backup phone is ...` → **fact about you**. Facts are
+     always in Jarvis's context — it knows you without being asked.
+   - `remember decision: we use SQLite because ...` → **why** you chose
+     something, retrievable months later ("why did we ...?").
+   - `remember for mistore: shipping is 18k flat` → scoped to a **project
+     workspace** (mistore, ev, jarvis — any name you like).
+3. **API**: `POST /brain/ingest {"title","text","project","source"}`.
+
+## It also learns by itself
+
+Every ~24 chat messages, Jarvis summarizes the conversation in the background
+(needs an Ollama chat model) and stores the durable facts, decisions and open
+tasks as a `chat_summary` — so it remembers past sessions without you doing
+anything. You can see (and delete) these in the Brain panel like any document.
 
 Good things to feed it: your project notes, research summaries, client info,
 account usernames, your CV, the JARVIS master context document, EV/PINN paper

@@ -351,6 +351,8 @@ export default function JarvisCore() {
   const [brainQuery, setBrainQuery] = useState("");
   const [brainResults, setBrainResults] = useState(null);
   const [noteText, setNoteText] = useState("");
+  const [noteProject, setNoteProject] = useState("");
+  const [noteKind, setNoteKind] = useState("note");
   const loadBrain = () => {
     fetch(API + "/brain/status").then(r => r.json()).then(setBrainStatus).catch(() => setBrainStatus(null));
     fetch(API + "/brain/documents").then(r => r.json()).then(d => setBrainDocs(d.documents || [])).catch(() => setBrainDocs([]));
@@ -358,7 +360,8 @@ export default function JarvisCore() {
   const saveNote = async () => {
     if (!noteText.trim()) return;
     await fetch(API + "/brain/ingest", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: noteText.slice(0, 60), text: noteText }) }).catch(() => {});
+      body: JSON.stringify({ title: noteText.slice(0, 60), text: noteText,
+                             project: noteProject.trim(), source: noteKind }) }).catch(() => {});
     setNoteText(""); loadBrain();
   };
   const uploadBrainFile = async (e) => {
@@ -522,7 +525,7 @@ export default function JarvisCore() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ fontSize: 12, color: C.dim }}>
                     {brainStatus
-                      ? `${brainStatus.documents} documents · ${brainStatus.chunks} chunks · mode: ${brainStatus.mode}`
+                      ? `${brainStatus.documents} documents · ${brainStatus.facts || 0} facts · ${brainStatus.decisions || 0} decisions · ${brainStatus.chat_summaries || 0} learned · mode: ${brainStatus.mode}`
                       : "Brain status unavailable — is the backend running?"}
                     {brainStatus && brainStatus.hint && (
                       <div style={{ color: C.amber, marginTop: 4 }}>{brainStatus.hint}</div>
@@ -534,7 +537,18 @@ export default function JarvisCore() {
                       placeholder="Paste anything you want Jarvis to know — notes, project info, research, contacts..."
                       style={{ width: "100%", minHeight: 70, background: "rgba(0,0,0,0.3)", color: C.text,
                                border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13, resize: "vertical" }} />
-                    <div style={{ display: "flex", gap: 10, marginTop: 8, alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: 10, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <select value={noteKind} onChange={(e) => setNoteKind(e.target.value)}
+                        style={{ background: "rgba(0,0,0,0.3)", color: C.text, border: `1px solid ${hexA(C.cyan, 0.2)}`,
+                                 borderRadius: 8, padding: "8px 10px", fontSize: 12 }}>
+                        <option value="note">Knowledge</option>
+                        <option value="fact">Fact about me</option>
+                        <option value="decision">Decision (why)</option>
+                      </select>
+                      <input value={noteProject} onChange={(e) => setNoteProject(e.target.value)}
+                        placeholder="project (optional)"
+                        style={{ width: 140, background: "rgba(0,0,0,0.3)", color: C.text,
+                                 border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: "8px 10px", fontSize: 12 }} />
                       <button onClick={saveNote} style={{ background: hexA(C.amber, 0.15), color: C.amber,
                         border: `1px solid ${hexA(C.amber, 0.4)}`, borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 }}>
                         Save to Brain
@@ -579,7 +593,9 @@ export default function JarvisCore() {
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{d.title}</div>
                         <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>
-                          {d.source} · {d.chars} chars · {d.chunks} chunks{d.embedded ? ` · ${d.embedded} embedded` : ""}
+                          <span style={{ color: d.source === "fact" ? C.emerald : d.source === "decision" ? C.amber : d.source === "chat_summary" ? C.cyan : C.dim }}>{d.source}</span>
+                          {d.project ? <span style={{ color: C.cyan }}> · {d.project}</span> : null}
+                          {" · "}{d.chars} chars · {d.chunks} chunks{d.embedded ? ` · ${d.embedded} embedded` : ""}
                         </div>
                       </div>
                       <span onClick={() => deleteBrainDoc(d.id)}

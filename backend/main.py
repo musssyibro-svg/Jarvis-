@@ -149,8 +149,33 @@ def chat(body: ChatIn):
         # Never let routing failure break chat — fall back to direct model call
         reply, intent, data, needs_ok = call_model(body.message, history), "chat", {}, False
     _save_msg(body.session_id, "assistant", reply)
+    _maybe_learn(body.session_id)
     return {"response": reply, "intent": intent, "data": data,
             "needs_approval": needs_ok}
+
+
+LEARN_EVERY = 24  # messages per session between auto-learn rollups
+
+def _maybe_learn(session_id: str):
+    """
+    Brain Layer 7: every LEARN_EVERY messages in a session, summarize the
+    recent slice into the brain in a background thread. Non-blocking,
+    best-effort, skips itself when no LLM is installed.
+    """
+    try:
+        with conn() as db:
+            n = db.execute("SELECT COUNT(*) AS n FROM chat_messages WHERE session_id=?",
+                           (session_id,)).fetchone()["n"]
+        if n == 0 or n % LEARN_EVERY != 0:
+            return
+        history = _get_history(session_id, limit=LEARN_EVERY)
+        import threading
+        from services.brain_service import learn_from_chat
+        threading.Thread(target=learn_from_chat, args=(session_id, history),
+                         daemon=True).start()
+        logger.info(f"brain: auto-learn triggered for session '{session_id}' ({n} msgs)")
+    except Exception as e:
+        logger.warning(f"brain auto-learn skipped: {e}")
 
 @app.post("/chat/stream")
 def chat_stream(body: ChatIn):
