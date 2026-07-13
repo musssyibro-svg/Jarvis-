@@ -22,3 +22,7 @@ pytesseract>=0.3.10
 opencv-python>=4.9.0
 numpy>=1.26.0
 schedule>=1.2.0
+
+# ── V10 Brain ──
+python-multipart>=0.0.9
+pypdf>=4.0.0

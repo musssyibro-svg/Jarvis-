@@ -346,7 +346,40 @@ export default function JarvisCore() {
   const [panel, setPanel] = useState("Command");
   const [agents, setAgents] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [brainStatus, setBrainStatus] = useState(null);
+  const [brainDocs, setBrainDocs] = useState([]);
+  const [brainQuery, setBrainQuery] = useState("");
+  const [brainResults, setBrainResults] = useState(null);
+  const [noteText, setNoteText] = useState("");
+  const loadBrain = () => {
+    fetch(API + "/brain/status").then(r => r.json()).then(setBrainStatus).catch(() => setBrainStatus(null));
+    fetch(API + "/brain/documents").then(r => r.json()).then(d => setBrainDocs(d.documents || [])).catch(() => setBrainDocs([]));
+  };
+  const saveNote = async () => {
+    if (!noteText.trim()) return;
+    await fetch(API + "/brain/ingest", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: noteText.slice(0, 60), text: noteText }) }).catch(() => {});
+    setNoteText(""); loadBrain();
+  };
+  const uploadBrainFile = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const fd = new FormData(); fd.append("file", f);
+    await fetch(API + "/brain/upload", { method: "POST", body: fd }).catch(() => {});
+    e.target.value = ""; loadBrain();
+  };
+  const searchBrain = async () => {
+    if (!brainQuery.trim()) { setBrainResults(null); return; }
+    const r = await fetch(API + "/brain/search?q=" + encodeURIComponent(brainQuery) + "&k=5")
+      .then(r => r.json()).catch(() => null);
+    setBrainResults(r);
+  };
+  const deleteBrainDoc = async (id) => {
+    await fetch(API + "/brain/document/" + id, { method: "DELETE" }).catch(() => {});
+    loadBrain();
+  };
   useEffect(() => {
+    if (panel === "Brain") loadBrain();
     if (panel === "Agents") {
       fetch(API + "/agents/status").then(r => r.json())
         .then(d => {
@@ -427,7 +460,7 @@ export default function JarvisCore() {
             <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1 }}>LOCAL CORE</div>
           </div>
         </div>
-        {["Command","Agents","Tasks","Memory","Settings"].map((x) => (
+        {["Command","Agents","Tasks","Brain","Settings"].map((x) => (
           <div key={x} onClick={() => setPanel(x)} style={{ padding: "11px 12px", borderRadius: 10, fontSize: 13, cursor: "pointer", color: panel===x?C.amber:C.dim, background: panel===x?hexA(C.amber,0.07):"transparent", borderLeft: panel===x?`2px solid ${C.amber}`:"2px solid transparent" }}>{x}</div>
         ))}
         <div style={{ marginTop: "auto", ...matFrost, padding: 12, fontSize: 11, color: C.dim }}>
@@ -485,7 +518,77 @@ export default function JarvisCore() {
                   ))}
                 </div>
               )}
-              {panel !== "Agents" && panel !== "Tasks" && (
+              {panel === "Brain" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ fontSize: 12, color: C.dim }}>
+                    {brainStatus
+                      ? `${brainStatus.documents} documents · ${brainStatus.chunks} chunks · mode: ${brainStatus.mode}`
+                      : "Brain status unavailable — is the backend running?"}
+                    {brainStatus && brainStatus.hint && (
+                      <div style={{ color: C.amber, marginTop: 4 }}>{brainStatus.hint}</div>
+                    )}
+                  </div>
+                  <div style={{ ...matDeep, padding: 14 }}>
+                    <div style={{ fontSize: 12, color: C.cyan, marginBottom: 8, letterSpacing: 1 }}>FEED YOUR BRAIN</div>
+                    <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)}
+                      placeholder="Paste anything you want Jarvis to know — notes, project info, research, contacts..."
+                      style={{ width: "100%", minHeight: 70, background: "rgba(0,0,0,0.3)", color: C.text,
+                               border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13, resize: "vertical" }} />
+                    <div style={{ display: "flex", gap: 10, marginTop: 8, alignItems: "center" }}>
+                      <button onClick={saveNote} style={{ background: hexA(C.amber, 0.15), color: C.amber,
+                        border: `1px solid ${hexA(C.amber, 0.4)}`, borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 }}>
+                        Save to Brain
+                      </button>
+                      <label style={{ color: C.cyan, fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>
+                        or upload a .txt / .md file
+                        <input type="file" accept=".txt,.md,.markdown,.pdf" onChange={uploadBrainFile} style={{ display: "none" }} />
+                      </label>
+                    </div>
+                  </div>
+                  <div style={{ ...matDeep, padding: 14 }}>
+                    <div style={{ fontSize: 12, color: C.cyan, marginBottom: 8, letterSpacing: 1 }}>SEARCH YOUR BRAIN</div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input value={brainQuery} onChange={(e) => setBrainQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && searchBrain()}
+                        placeholder="What do I know about..."
+                        style={{ flex: 1, background: "rgba(0,0,0,0.3)", color: C.text,
+                                 border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
+                      <button onClick={searchBrain} style={{ background: hexA(C.cyan, 0.15), color: C.cyan,
+                        border: `1px solid ${hexA(C.cyan, 0.4)}`, borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 }}>
+                        Search
+                      </button>
+                    </div>
+                    {brainResults && (
+                      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                        {(brainResults.results || []).length === 0 && (
+                          <div style={{ color: C.dim, fontSize: 12 }}>No matches.</div>
+                        )}
+                        {(brainResults.results || []).map((r, i) => (
+                          <div key={i} style={{ background: "rgba(0,0,0,0.25)", borderRadius: 8, padding: 10, fontSize: 12 }}>
+                            <div style={{ color: C.amber, marginBottom: 4 }}>{r.title} <span style={{ color: C.dim }}>· {r.score}</span></div>
+                            <div style={{ color: C.text, whiteSpace: "pre-wrap" }}>{r.text.slice(0, 400)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.cyan, letterSpacing: 1 }}>STORED KNOWLEDGE</div>
+                  {brainDocs.length === 0 && <div style={{ color: C.dim, fontSize: 13 }}>Brain is empty. Feed it above, or say "remember ..." in chat.</div>}
+                  {brainDocs.map((d) => (
+                    <div key={d.id} style={{ ...matDeep, padding: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{d.title}</div>
+                        <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>
+                          {d.source} · {d.chars} chars · {d.chunks} chunks{d.embedded ? ` · ${d.embedded} embedded` : ""}
+                        </div>
+                      </div>
+                      <span onClick={() => deleteBrainDoc(d.id)}
+                        style={{ cursor: "pointer", color: C.crimson, fontSize: 16, padding: "0 6px" }} title="Forget">✕</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {panel !== "Agents" && panel !== "Tasks" && panel !== "Brain" && (
                 <div style={{ color: C.dim, fontSize: 13 }}>
                   {panel} panel — wired to backend next. (This view confirms the sidebar navigation now works.)
                 </div>

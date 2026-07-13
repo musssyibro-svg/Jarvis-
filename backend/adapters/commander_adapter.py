@@ -93,10 +93,73 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         return {"response": state.get("screen_text", "") or "I couldn't read the screen.",
                 "intent": "vision", "data": state}
 
-    # ── Plain chat ─────────────────────────────────────────────────────────────
+    # ── Memory: the Brain (V10) — save and recall personal knowledge ───────────
+    if intent == "memory":
+        return _handle_memory(message)
+
+    # ── Plain chat (V10: grounded in the Brain when it has something relevant) ─
     from services.deepseek_service import call_model
+    knowledge = _brain_context(message)
+    if knowledge:
+        _emit("brain", "Found relevant knowledge in your brain", "info")
+        prompt = (f"Relevant knowledge from the user's personal brain "
+                  f"(saved by them — treat as trusted context):\n{knowledge}\n\n"
+                  f"User message: {message}")
+        reply = call_model(prompt, fast=True)
+        if reply.startswith("[No AI available"):
+            # No LLM installed — the brain itself is still useful: answer with
+            # the retrieved knowledge instead of a dead error.
+            reply = ("(No AI model installed — showing what your brain knows.)\n\n"
+                     + knowledge)
+        return {"response": reply, "intent": "chat", "data": {"brain_used": True}}
     reply = call_model(message, fast=True)
     return {"response": reply, "intent": "chat"}
+
+
+# ── Brain helpers (V10) ───────────────────────────────────────────────────────
+
+_REMEMBER_RE = None
+
+def _handle_memory(message: str) -> dict:
+    """'remember <x>' saves to the brain; anything else searches it."""
+    import re
+    m = re.match(r"^\s*(?:remember|memorize|store this|save this)[:,]?\s*(?:that\s+)?(.*)",
+                 message, re.IGNORECASE | re.DOTALL)
+    try:
+        from services import brain_service as brain
+        if m and m.group(1).strip():
+            fact = m.group(1).strip()
+            r = brain.ingest(fact[:60], fact, source="chat")
+            _emit("brain", "Saved to your brain", "success")
+            return {"response": f"Remembered ✓ — \"{fact[:120]}\"",
+                    "intent": "memory", "data": r}
+        # recall path: search the brain, answer with the LLM over the hits
+        hits = brain.search(message, k=3)
+        results = hits.get("results", [])
+        if not results:
+            return {"response": "Nothing in my brain matches that yet. "
+                                "Say 'remember ...' or feed me files in the Brain panel.",
+                    "intent": "memory"}
+        knowledge = "\n\n".join(f"[{h['title']}]\n{h['text'][:600]}" for h in results)
+        from services.deepseek_service import call_model
+        reply = call_model(
+            f"Answer the user's question using ONLY this saved knowledge:\n"
+            f"{knowledge}\n\nQuestion: {message}", fast=True)
+        if reply.startswith("[No AI available"):
+            reply = "Here's what your brain has on that:\n\n" + knowledge
+        return {"response": reply, "intent": "memory",
+                "data": {"mode": hits.get("mode"), "matches": len(results)}}
+    except Exception as e:
+        return {"response": f"Brain error: {e}", "intent": "memory"}
+
+
+def _brain_context(message: str) -> str:
+    """Best-effort brain retrieval for plain chat; never blocks or raises."""
+    try:
+        from services import brain_service as brain
+        return brain.context_for(message, k=3)
+    except Exception:
+        return ""
 
 
 # ── Action routing through ExecutorAgent ──────────────────────────────────────

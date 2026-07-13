@@ -38,6 +38,12 @@ def _startup():
         logger.info("V5 agent tables ready.")
     except Exception as e:
         logger.warning(f"V5 schema: {e}")
+    try:
+        from services.brain_service import init_brain
+        init_brain()
+        logger.info("Brain tables ready.")
+    except Exception as e:
+        logger.warning(f"Brain schema: {e}")
     logger.info("Database ready.")
 
 # ── Routers ──────────────────────────────────────────────────────────────────
@@ -53,6 +59,7 @@ from routes.automation   import router as automation_router
 from routes.orchestrator_feed import router as orchestrator_feed_router
 from routes.orchestrator import router as orchestrator_router
 from routes.agents       import router as agents_router          # V5
+from routes.brain        import router as brain_router           # V10 Brain
 
 app.include_router(orchestrator_router, prefix="/orchestrator",  tags=["Orchestrator"])
 app.include_router(agents_router,       prefix="/agents",        tags=["Agents"])      # V5
@@ -66,6 +73,7 @@ app.include_router(clickworker_router,  prefix="/clickworker",   tags=["Clickwor
 app.include_router(zuodao_router,       prefix="/zuodao",        tags=["Zuodao"])
 app.include_router(automation_router,   prefix="/automation",    tags=["Automation"])
 app.include_router(orchestrator_feed_router, tags=["Orchestrator"])
+app.include_router(brain_router,        prefix="/brain",         tags=["Brain"])       # V10
 
 from services.deepseek_service import call_model, OLLAMA_MODEL, LLM_PROVIDER
 

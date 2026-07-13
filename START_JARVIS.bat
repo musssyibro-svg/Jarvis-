@@ -31,6 +31,14 @@ if errorlevel 1 (
   echo       Ollama is running.
 )
 
+REM --- 2b. Brain: make sure the tiny embedding model is available (274MB, once) ---
+REM Non-fatal: the Brain works in keyword mode without it.
+ollama list 2>nul | findstr /i "nomic-embed-text" >nul 2>nul
+if errorlevel 1 (
+  echo       Pulling brain embedding model nomic-embed-text (274MB, first run only^)...
+  start "Ollama pull" /min cmd /c "ollama pull nomic-embed-text"
+)
+
 REM --- 3. Install backend dependencies ---
 echo [2/5] Installing backend dependencies (first run only, may take a few minutes)...
 cd backend
@@ -52,6 +60,10 @@ cd frontend
 if not exist node_modules (
   echo       Installing frontend packages (first run only)...
   call npm install
+  if errorlevel 1 (
+    echo       Retrying with China npm mirror...
+    call npm install --registry=https://registry.npmmirror.com
+  )
 )
 echo [5/5] Launching UI...
 start "Jarvis Frontend" cmd /k "npm run dev"
