@@ -84,7 +84,13 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
             return _handle_memory(message)
         return _route_action(message, session_id, intent)
 
-    # ── Goal-driven work (freelance application etc.): OrchestratorCore ─────────
+    # ── Goal-driven work ─────────────────────────────────────────────────────────
+    # Non-freelance goals ("build me a website", "plan how to pass thermodynamics")
+    # become a TRACKED project with auto-decomposed steps — Jarvis OS behavior —
+    # instead of a one-off chat reply. Freelance goals keep the orchestrator.
+    if intent == "plan" and not any(
+            k in message.lower() for k in ("job", "proposal", "bid", "freelanc", "apply")):
+        return _plan_goal(message)
     if intent in ("plan", "freelance"):
         from agents.orchestrator_core import OrchestratorCore
         from agents.commander import normalize_goal
@@ -239,6 +245,35 @@ def _maybe_plan_project(message: str):
         return {"response": f"Planned **{name}** — {proj['total']} steps:\n{steps}\n\n"
                             f"Track it in the Plans panel; say 'remember for {name}: ...' "
                             f"to attach notes and decisions.",
+                "intent": "planner", "data": {"project_id": r["project_id"]}}
+    except Exception as e:
+        return {"response": f"Couldn't create the plan: {e}", "intent": "planner"}
+
+
+_GOAL_STOPWORDS = {"plan", "how", "to", "steps", "step", "a", "an", "the", "me",
+                   "my", "for", "build", "create", "make", "set", "up", "please",
+                   "jarvis", "can", "you", "i", "want", "need", "help", "with",
+                   "do", "this", "automate", "achieve", "and", "of"}
+
+def _plan_goal(message: str) -> dict:
+    """
+    Turn a goal-shaped message into a tracked project (auto-named), so 'build
+    me a website' produces a real plan with steps in the Plans panel — the
+    Planner runs without the user having to know the 'plan project X' syntax.
+    """
+    import re
+    words = [w for w in re.findall(r"[\w-]+", message.lower())
+             if w not in _GOAL_STOPWORDS]
+    name = "-".join(words[:2]) if words else f"goal-{__import__('time').strftime('%m%d%H%M')}"
+    try:
+        from services import planner_service as planner
+        r = planner.create_project(name, message, title=name)
+        proj = planner.get_project(r["project_id"])
+        steps = "\n".join(f"  {i+1}. {s['text']}" for i, s in enumerate(proj["steps"]))
+        _emit("planner", f"Goal planned as project '{name}' ({proj['total']} steps)", "success")
+        return {"response": f"I've planned **{name}** — {proj['total']} steps:\n{steps}\n\n"
+                            f"It's tracked in the Plans panel. Say 'remember for {name}: ...' "
+                            f"to attach notes; I'll nudge you about progress.",
                 "intent": "planner", "data": {"project_id": r["project_id"]}}
     except Exception as e:
         return {"response": f"Couldn't create the plan: {e}", "intent": "planner"}

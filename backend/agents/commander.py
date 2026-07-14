@@ -44,7 +44,7 @@ INTENT_MAP = {
                 "why we", "decision", "history", "learn",
                 "pattern", "forgot", "store this", "memorize"],
     "plan":    ["plan ", "how to", "steps to", "automate", "task list",
-                "achieve", "do this for me"],
+                "achieve", "do this for me", "build ", "build me", "set up "],
     "browser": ["browse", "navigate to", "go to website", "open url", "open http"],
     "freelance": ["job", "proposal", "bid", "freelancer", "hubstaff",
                   "scan jobs", "message", "reply", "analytics", "inbox"],

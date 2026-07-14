@@ -460,6 +460,22 @@ export default function JarvisCore() {
         })).reverse(); // feed renders newest-first
         if (hist.length) setFeed((f) => [...hist, ...f].slice(0, 50));
       } catch {}
+      // Pulse: proactive notifications that fired while the app was closed
+      // (briefing, plan nudges, new jobs, system warnings).
+      try {
+        const r = await fetch(`${API}/pulse/recent?unseen=1&limit=10`);
+        if (!r.ok) return;
+        const d = await r.json();
+        const lvl = { info: C.cyan, success: C.emerald, warning: C.amber, error: C.crimson };
+        const ev = (d.events || []).map((e) => ({
+          t: (e.created_at || "").slice(11, 19), a: "PULSE",
+          c: lvl[e.level] || C.emerald, m: e.msg,
+        }));
+        if (ev.length) {
+          setFeed((f) => [...ev, ...f].slice(0, 50));
+          fetch(`${API}/pulse/seen`, { method: "POST" }).catch(() => {});
+        }
+      } catch {}
     })();
   }, [sessionId]);
   // Live event from /orchestrator/sse -> drive core state + live feed panel.

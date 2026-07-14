@@ -50,6 +50,13 @@ def _startup():
         logger.info("Planner tables ready.")
     except Exception as e:
         logger.warning(f"Planner schema: {e}")
+    try:
+        from services.pulse_service import init_pulse, start_pulse
+        init_pulse()
+        start_pulse()   # proactive heartbeat: briefing + plan/job/system nudges
+        logger.info("Pulse (proactive engine) running.")
+    except Exception as e:
+        logger.warning(f"Pulse init: {e}")
     logger.info("Database ready.")
 
 # ── Routers ──────────────────────────────────────────────────────────────────
@@ -68,6 +75,7 @@ from routes.agents       import router as agents_router          # V5
 from routes.brain        import router as brain_router           # V10 Brain
 from routes.planner      import router as planner_router         # V10 Planner
 from routes.system       import router as system_router          # V10 Doctor
+from routes.pulse        import router as pulse_router           # V11 Pulse
 
 app.include_router(orchestrator_router, prefix="/orchestrator",  tags=["Orchestrator"])
 app.include_router(agents_router,       prefix="/agents",        tags=["Agents"])      # V5
@@ -84,6 +92,7 @@ app.include_router(orchestrator_feed_router, tags=["Orchestrator"])
 app.include_router(brain_router,        prefix="/brain",         tags=["Brain"])       # V10
 app.include_router(planner_router,      prefix="/planner",       tags=["Planner"])     # V10
 app.include_router(system_router,       prefix="/system",        tags=["System"])      # V10
+app.include_router(pulse_router,        prefix="/pulse",         tags=["Pulse"])       # V11
 
 from services.deepseek_service import call_model, OLLAMA_MODEL, LLM_PROVIDER
 
