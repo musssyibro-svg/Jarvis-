@@ -114,10 +114,86 @@ def screenshot_region(x: int, y: int, w: int, h: int) -> dict:
 
 # ── OCR ───────────────────────────────────────────────────────────────────────
 
+# Tesseract's classic second trap (after the missing-binary one): the binary is
+# installed but its language data (eng.traineddata) is absent or TESSDATA_PREFIX
+# points at the wrong directory -> "Could not initialize tesseract". Self-heal:
+# verify 'eng' is loadable, and if not, download eng.traineddata (~4MB) into a
+# local tessdata dir Jarvis controls and point TESSDATA_PREFIX at it.
+_TESSDATA_OK = False
+_TESSDATA_URLS = [
+    "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
+    # mirrors for networks where raw.githubusercontent.com is unreachable
+    "https://mirror.ghproxy.com/https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
+    "https://ghproxy.net/https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
+]
+
+
+def tessdata_ready() -> bool:
+    """Can tesseract actually load English? (Doctor uses this probe.)"""
+    if not HAS_OCR:
+        return False
+    try:
+        return "eng" in pytesseract.get_languages(config="")
+    except Exception:
+        return False
+
+
+def _ensure_tessdata() -> str | None:
+    """Returns None when OCR languages are usable, else a human-readable error."""
+    global _TESSDATA_OK
+    if _TESSDATA_OK:
+        return None
+    if tessdata_ready():
+        _TESSDATA_OK = True
+        return None
+
+    # Candidate tessdata dirs: alongside the binary first, then a Jarvis-local
+    # dir that is always writable (no admin rights needed).
+    import shutil as _sh
+    import urllib.request
+    cmd = getattr(pytesseract.pytesseract, "tesseract_cmd", "tesseract")
+    resolved = _sh.which(cmd) or cmd
+    candidates = []
+    if os.environ.get("TESSDATA_PREFIX"):
+        candidates.append(Path(os.environ["TESSDATA_PREFIX"]))
+    if os.path.sep in str(resolved):
+        candidates.append(Path(resolved).parent / "tessdata")
+    local = Path(__file__).resolve().parent.parent / "tessdata"
+    candidates.append(local)
+
+    for d in candidates:
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+            target = d / "eng.traineddata"
+            if not target.exists():
+                for url in _TESSDATA_URLS:
+                    try:
+                        urllib.request.urlretrieve(url, str(target))
+                        break
+                    except Exception:
+                        continue
+            if not target.exists():
+                continue
+            os.environ["TESSDATA_PREFIX"] = str(d)
+            if tessdata_ready():
+                _TESSDATA_OK = True
+                return None
+        except Exception:
+            continue
+    return ("Tesseract is installed but its English language data is missing and "
+            "auto-download failed (no internet?). Manual fix: download "
+            "https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata "
+            f"and put it in {candidates[-1] if candidates else 'a tessdata folder'}, then "
+            "set TESSDATA_PREFIX to that folder.")
+
+
 def ocr_screen(region: dict = None) -> dict:
     """Capture screen and extract all text via Tesseract OCR."""
     if not HAS_OCR:
         return {"success": False, "error": "pytesseract not installed. Run: pip install pytesseract. Also install Tesseract: https://github.com/UB-Mannheim/tesseract/wiki"}
+    lang_err = _ensure_tessdata()
+    if lang_err:
+        return {"success": False, "error": lang_err}
 
     shot = screenshot(save=False, region=region)
     if not shot["success"]:
@@ -140,6 +216,9 @@ def ocr_image(path: str) -> dict:
     """Run OCR on an existing image file."""
     if not HAS_OCR:
         return {"success": False, "error": "pytesseract not installed"}
+    lang_err = _ensure_tessdata()
+    if lang_err:
+        return {"success": False, "error": lang_err}
     try:
         img  = Image.open(path)
         text = pytesseract.image_to_string(img)

@@ -436,10 +436,32 @@ export default function JarvisCore() {
     }
   }, [panel]);
   const [input, setInput] = useState("");
-  const [feed, setFeed] = useState([
-    { t: "09:42:12", a: "SCOUT", c: C.emerald, m: "Found 12 opportunities" },
-    { t: "09:42:18", a: "EXEC", c: C.amber, m: "Browser session ready" },
-  ]);
+  const [feed, setFeed] = useState([]);
+  // One session shared with the Chat tab, persisted in localStorage — so Core
+  // and Chat are the same conversation and messages survive a refresh.
+  const [sessionId] = useState(() => {
+    try {
+      let s = localStorage.getItem("jarvis_session_id");
+      if (!s) { s = `s_${Date.now()}`; localStorage.setItem("jarvis_session_id", s); }
+      return s;
+    } catch { return "core"; }
+  });
+  // Restore prior conversation from the backend on mount (fixes "Core doesn't
+  // save messages" — they were saved server-side but never loaded back).
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch(`${API}/chat/history/${sessionId}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        const hist = (d.messages || []).map((m) => ({
+          t: "", a: m.role === "assistant" ? "JARVIS" : "YOU",
+          c: m.role === "assistant" ? C.amber : C.cyan, m: m.content,
+        })).reverse(); // feed renders newest-first
+        if (hist.length) setFeed((f) => [...hist, ...f].slice(0, 50));
+      } catch {}
+    })();
+  }, [sessionId]);
   // Live event from /orchestrator/sse -> drive core state + live feed panel.
   const onEvent = (d) => {
     if (d.state && STATES[d.state]) setState(d.state);
@@ -470,7 +492,7 @@ export default function JarvisCore() {
       const res = await fetch(API + "/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, session_id: "core" }),
+        body: JSON.stringify({ message: msg, session_id: sessionId }),
       });
       const data = await res.json();
       const reply = data.response || data.reply || "";
@@ -727,7 +749,7 @@ export default function JarvisCore() {
         <div style={{ margin: "0 32px 28px", ...matFrost, padding: 8, display: "flex", gap: 8, alignItems: "center" }}>
           <span style={{ color: C.amber, padding: "0 8px", fontSize: 18 }}>◆</span>
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="Command Jarvis…  scan RemoteOK · open chrome · draft proposals"
+            placeholder="Command Jarvis…  open chrome · what's on my screen · remember … · plan project …"
             style={{ flex: 1, background: "transparent", border: "none", color: C.text, fontSize: 14, outline: "none" }} />
           <button onClick={send} style={btn(C.amber, true)}>Send</button>
         </div>

@@ -272,53 +272,175 @@ def _shared_executor():
     return _EXECUTOR
 
 
+# Verb grammar: match any tense/form ("open", "opening", "launch", "start up"),
+# and capture the target up to a connective ("and", "then", ",") or a follow-up
+# verb ("type", "press", "write"). This is what makes "Opening notepad type
+# hello" work instead of dying with "could not interpret command".
+import re as _re
+
+_STOP = r"(?=\s+(?:and|then|,)\b|\s+(?:type|write|press|hit)\b|[.!?]|$)"
+_OPEN_RE  = _re.compile(
+    r"\b(?:open(?:ing|s)?|launch(?:ing|es)?|start(?:ing|s)?(?:\s+up)?|run(?:ning)?)\s+"
+    r"(?:the\s+|my\s+|up\s+|app\s+)?([\w][\w .+&-]*?)" + _STOP, _re.IGNORECASE)
+_CLOSE_RE = _re.compile(
+    r"\b(?:clos(?:e|ing|es)|quit(?:ting|s)?|kill(?:ing|s)?|exit(?:ing|s)?|"
+    r"terminat(?:e|ing|es)|stop(?:ping|s)?)\s+"
+    r"(?:the\s+|my\s+|app\s+)?([\w][\w .+&-]*?)" + _STOP, _re.IGNORECASE)
+_TYPE_RE  = _re.compile(
+    r"\b(?:type|write)\s+(?:the\s+(?:text|words?)\s+)?[\"'“]?(.+?)[\"'”]?\s*$",
+    _re.IGNORECASE)
+_PRESS_RE = _re.compile(r"\b(?:press|hit)\s+(?:the\s+)?([\w]+(?:\s*\+\s*[\w]+)*)\s*(?:key)?\s*$",
+                        _re.IGNORECASE)
+
+
+def _parse_command_steps(message: str) -> list:
+    """
+    Parse a natural desktop command into an ordered list of typed Actions.
+    Handles compound phrasings: "open notepad and type hello then press enter".
+    Returns [] when nothing matched (caller falls back to the LLM parser).
+    """
+    steps = []
+    m = message.strip()
+    low = m.lower()
+
+    if "screenshot" in low or "screen shot" in low or "capture the screen" in low:
+        return [Action(action_type="screenshot", params={}, risk_level="low")]
+
+    om = _OPEN_RE.search(m)
+    if om:
+        app = om.group(1).strip().rstrip(".!?,")
+        if app:
+            steps.append(Action(action_type="open_app",
+                                params={"name_or_path": app}, risk_level="low"))
+    cm = _CLOSE_RE.search(m)
+    if cm and not om:  # "open X" phrases can contain 'stop'/'exit' words in the app name
+        app = cm.group(1).strip().rstrip(".!?,")
+        if app:
+            steps.append(Action(action_type="close_app",
+                                params={"process_name": app}, risk_level="high"))
+    tm = _TYPE_RE.search(m)
+    if tm:
+        text = tm.group(1).strip()
+        # don't re-type the pressed key ("type hello and press enter")
+        text = _re.sub(r"\s*(?:and\s+|then\s+|,\s*)?(?:press|hit)\s+\w+\s*$", "", text,
+                       flags=_re.IGNORECASE).strip()
+        if text:
+            steps.append(Action(action_type="type_text",
+                                params={"text": text}, risk_level="low"))
+    pm = _PRESS_RE.search(m)
+    if pm:
+        keys = [k.strip().lower() for k in pm.group(1).split("+") if k.strip()]
+        if len(keys) > 1:
+            steps.append(Action(action_type="hotkey", params={"keys": keys}, risk_level="low"))
+        elif keys:
+            steps.append(Action(action_type="press", params={"key": keys[0]}, risk_level="low"))
+    return steps
+
+
+def _llm_parse_steps(message: str) -> list:
+    """
+    Last-resort parser: ask the fast local model to translate the command into
+    typed steps. Returns [] if no LLM or the output isn't usable.
+    """
+    try:
+        from services.deepseek_service import call_model
+        import json as _json
+        raw = call_model(
+            "Translate this desktop command into JSON steps. Allowed actions:\n"
+            '  open_app {"name_or_path": "..."} | close_app {"process_name": "..."}\n'
+            '  type_text {"text": "..."} | press {"key": "..."} | hotkey {"keys": [...]}\n'
+            '  screenshot {} | browse {"url": "..."}\n'
+            'Reply ONLY with: {"steps":[{"action":"...","params":{...}}]}\n'
+            f"Command: {message}", fast=True)
+        jm = _re.search(r"\{.*\}", raw, _re.DOTALL)
+        if not jm:
+            return []
+        allowed = {"open_app", "close_app", "type_text", "press", "hotkey",
+                   "screenshot", "browse"}
+        out = []
+        for s in _json.loads(jm.group()).get("steps", [])[:6]:
+            a = s.get("action", "")
+            if a in allowed:
+                risk = "high" if a == "close_app" else "low"
+                out.append(Action(action_type=a, params=s.get("params", {}) or {},
+                                  risk_level=risk))
+        return out
+    except Exception:
+        return []
+
+
+_STEP_LABELS = {"open_app": "name_or_path", "close_app": "process_name",
+                "type_text": "text", "press": "key", "browse": "url"}
+
+def _step_label(a) -> str:
+    key = _STEP_LABELS.get(a.action_type)
+    val = (a.params or {}).get(key, "") if key else ""
+    val = str(val)
+    return f"{a.action_type.replace('_', ' ')} {val[:40]}".strip()
+
+
 def _route_action(message: str, session_id: str, intent: str) -> dict:
     """
-    Turn a desktop/browser chat command into an ExecutorAgent action.
-    Emits visible SSE (guardrail A). Risky actions return inline approval
-    prompt (guardrail B). NO direct desktop/browser calls here.
+    Turn a desktop/browser chat command into ExecutorAgent actions.
+    Understands compound commands ("open notepad and type hello"), any verb
+    form ("opening", "launch", "start up"), and falls back to the local LLM
+    before ever giving up. Emits visible SSE (guardrail A). Risky actions
+    return an inline approval prompt (guardrail B). NO direct execution here.
     """
     ex = _shared_executor()
     m = message.lower()
 
-    # Map common phrasings to a typed Action; ExecutorAgent decides risk + acts.
-    action = None
-    if "screenshot" in m or "screen shot" in m:
-        action = Action(action_type="screenshot", params={}, risk_level="low")
-        _emit("executor", "Taking a screenshot", "info")
-    elif "open " in m:
-        app = message.lower().split("open ", 1)[1].strip().split()[0]
-        action = Action(action_type="open_app", params={"name_or_path": app}, risk_level="low")
-        _emit("executor", f"Opening {app}", "info")
-    elif "close " in m:
-        app = message.lower().split("close ", 1)[1].strip().split()[0]
-        action = Action(action_type="close_app", params={"process_name": app}, risk_level="high")
-        _emit("executor", f"Closing {app}", "info")
-    elif intent == "browser" or "navigate" in m or "go to" in m:
-        url = ""
-        for tok in message.split():
-            if tok.startswith("http"):
-                url = tok; break
-        action = Action(action_type="browse", params={"url": url}, risk_level="low")
+    # Browser navigation first (explicit URL or browser intent)
+    if intent == "browser" or "navigate" in m or m.startswith("go to "):
+        url = next((tok for tok in message.split() if tok.startswith("http")), "")
         _emit("browser", f"Navigating to {url or 'page'}", "info")
-    else:
-        # Let the executor's own decision logic parse a generic command.
-        action = Action(action_type="parse", params={"text": message}, risk_level="medium")
-        _emit("executor", "Working on your request", "info")
+        action = Action(action_type="browse", params={"url": url}, risk_level="low")
+        result = ex.execute_action(action)
+        ok = result.get("success", False)
+        return {"response": (f"Done: opened {url} ✓" if ok
+                             else f"Couldn't navigate: {result.get('error','')}"),
+                "intent": intent, "data": result}
 
-    # Risky → inline approval prompt in chat (guardrail B), owned by ExecutorAgent
-    if ex.is_risky(action.action_type) or action.risk_level == "high":
-        ex.request_approval(session_id, action)
-        _emit("executor", f"[Approval Required] {action.action_type}?", "warning")
-        return {"response": f"This action may be destructive: {action.action_type}. "
+    steps = _parse_command_steps(message)
+    if not steps:
+        _emit("executor", "Asking the local model to interpret the command", "info")
+        steps = _llm_parse_steps(message)
+    if not steps:
+        return {"response": "I couldn't map that to an action. Try e.g. "
+                            "'open notepad', 'open notepad and type hello', "
+                            "'screenshot', or 'close calculator'.",
+                "intent": intent, "data": {"error": "unparsed"}}
+
+    # Risky step anywhere in the sequence → approval for the whole thing.
+    # (Keeps the single-pending-action model: approve executes just that step.)
+    risky = next((a for a in steps if ex.is_risky(a.action_type) or a.risk_level == "high"), None)
+    if risky:
+        ex.request_approval(session_id, risky)
+        _emit("executor", f"[Approval Required] {_step_label(risky)}?", "warning")
+        return {"response": f"This action may be destructive: {_step_label(risky)}. "
                             f"Reply 'yes' to confirm or 'cancel' to abort.",
                 "intent": intent, "needs_approval": True}
 
-    result = ex.execute_action(action)
-    ok = result.get("success", False)
-    label = action.params.get("name_or_path") or action.action_type
-    _emit("executor", f"{action.action_type} -> {'ok' if ok else 'failed'}",
-          "success" if ok else "error")
-    return {"response": (f"Done: {label} ✓" if ok
-                         else f"Couldn't do {label}: {result.get('error','')}"),
-            "intent": intent, "data": result}
+    # Execute the sequence in order; brief settle time after opening an app so
+    # a follow-up type_text lands in the newly opened window, not the browser.
+    import time
+    results, failed = [], None
+    for i, action in enumerate(steps):
+        _emit("executor", _step_label(action).capitalize(), "info")
+        result = ex.execute_action(action)
+        results.append({"step": _step_label(action), **result})
+        if not result.get("success", False):
+            failed = (action, result)
+            break
+        if action.action_type == "open_app" and i + 1 < len(steps):
+            time.sleep(1.5)
+
+    if failed:
+        action, result = failed
+        _emit("executor", f"{action.action_type} failed", "error")
+        return {"response": f"Couldn't {_step_label(action)}: {result.get('error','')}",
+                "intent": intent, "data": {"steps": results}}
+    done = " → ".join(_step_label(a) for a in steps)
+    _emit("executor", f"Done: {done}", "success")
+    return {"response": f"Done: {done} ✓", "intent": intent,
+            "data": {"steps": results}}

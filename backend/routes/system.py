@@ -57,7 +57,7 @@ def _check_model(role: str, env: str, default: str, pull_hint: str) -> dict:
 
 
 def _check_tesseract() -> dict:
-    # The trap: pytesseract (pip) can import while the tesseract BINARY is absent.
+    # Trap #1: pytesseract (pip) can import while the tesseract BINARY is absent.
     try:
         import pytesseract  # noqa: F401
     except ImportError:
@@ -67,15 +67,33 @@ def _check_tesseract() -> dict:
     binary = shutil.which("tesseract")
     if not binary and os.name == "nt":
         for c in (r"C:\Program Files\Tesseract-OCR\tesseract.exe",
-                  r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe"):
+                  r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+                  os.path.expandvars(r"%LOCALAPPDATA%\Programs\Tesseract-OCR\tesseract.exe"),
+                  os.path.expandvars(r"%LOCALAPPDATA%\Tesseract-OCR\tesseract.exe")):
             if os.path.exists(c):
                 binary = c
                 break
-    ok = bool(binary)
-    return {"name": "OCR (Tesseract)", "ok": ok,
-            "detail": f"binary at {binary}" if ok else "package OK but BINARY not found",
-            "fix": None if ok else "Install the Tesseract binary (the pip package alone "
-                                   "is not enough): https://github.com/UB-Mannheim/tesseract/wiki"}
+    if not binary:
+        return {"name": "OCR (Tesseract)", "ok": False,
+                "detail": "package OK but BINARY not found",
+                "fix": "Install the Tesseract binary (the pip package alone is not "
+                       "enough): https://github.com/UB-Mannheim/tesseract/wiki"}
+    # Trap #2: binary present but language data (eng.traineddata) missing ->
+    # "Could not initialize tesseract". vision_agent self-heals this on first
+    # OCR use by downloading eng.traineddata; the probe reports the live state.
+    try:
+        from agents.vision_agent import tessdata_ready
+        if not tessdata_ready():
+            return {"name": "OCR (Tesseract)", "ok": False,
+                    "detail": f"binary at {binary} but English language data missing",
+                    "fix": "Jarvis auto-downloads eng.traineddata on first OCR use "
+                           "(needs internet once). Manual: put "
+                           "https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata "
+                           "into the 'tessdata' folder next to tesseract.exe"}
+    except Exception:
+        pass
+    return {"name": "OCR (Tesseract)", "ok": True,
+            "detail": f"binary at {binary}, languages OK", "fix": None}
 
 
 def _check_screenshot() -> dict:

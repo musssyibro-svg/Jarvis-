@@ -50,8 +50,17 @@ def _get_ollama():
 
 # ── Health + validation ──────────────────────────────────────────────────────
 
-def _list_installed() -> list:
+# The installed-model list changes rarely but is queried before EVERY chat
+# call (an extra HTTP round-trip per message). Cache it briefly.
+_INSTALLED_CACHE = {"at": 0.0, "names": []}
+_INSTALLED_TTL = 60  # seconds
+
+
+def _list_installed(force: bool = False) -> list:
     """Return the list of installed model names, or [] if Ollama unreachable."""
+    if not force and _INSTALLED_CACHE["names"] and \
+            time.time() - _INSTALLED_CACHE["at"] < _INSTALLED_TTL:
+        return list(_INSTALLED_CACHE["names"])
     o = _get_ollama()
     if not o:
         return []
@@ -60,7 +69,11 @@ def _list_installed() -> list:
         names = []
         for m in listed.get("models", []):
             names.append(m.get("name") or m.get("model") or "")
-        return [n for n in names if n]
+        names = [n for n in names if n]
+        if names:
+            _INSTALLED_CACHE["at"] = time.time()
+            _INSTALLED_CACHE["names"] = list(names)
+        return names
     except Exception:
         return []
 

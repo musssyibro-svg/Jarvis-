@@ -196,7 +196,8 @@ def chat_stream(body: ChatIn):
         intent = "chat"
         try:
             import ollama as _ollama
-            msgs = [{"role":"system","content":"You are Jarvis v3, a freelance income AI. Be direct."},
+            from services.deepseek_service import SYSTEM_PROMPT
+            msgs = [{"role":"system","content":SYSTEM_PROMPT},
                     *history, {"role":"user","content":body.message}]
             full = ""
             for part in _ollama.chat(model=OLLAMA_MODEL, messages=msgs, stream=True):

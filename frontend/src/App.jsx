@@ -5,14 +5,14 @@ import Chat        from './pages/Chat'
 import WorkspaceHub from './pages/WorkspaceHub'
 import JarvisCore   from './JarvisCore'
 
-// V8.5: four top-level tabs only. Chat is default. All freelance/job tools
-// live as subtabs inside Workspace (WorkspaceHub).
+// Jarvis is a personal assistant first. Core (assistant hub) is the default;
+// ALL freelance/job tooling is one section, not the app's identity.
 const TABS = [
-  { id: 'jarvis',    label: 'Core',      Comp: JarvisCore },
-  { id: 'chat',      label: 'Chat',      Comp: Chat },
-  { id: 'workspace', label: 'Workspace', Comp: WorkspaceHub },
-  { id: 'dashboard', label: 'Dashboard', Comp: Dashboard },
-  { id: 'settings',  label: 'Settings',  Comp: Settings },
+  { id: 'jarvis',    label: 'Core',       Comp: JarvisCore },
+  { id: 'chat',      label: 'Chat',       Comp: Chat },
+  { id: 'workspace', label: 'Freelance',  Comp: WorkspaceHub },
+  { id: 'dashboard', label: 'Dashboard',  Comp: Dashboard },
+  { id: 'settings',  label: 'Settings',   Comp: Settings },
 ]
 
 export default function App() {

@@ -4,15 +4,15 @@ import { PageHeader, Btn } from '../components/UI'
 import { API } from '../config.js'
 
 const CHIPS = [
-  'Analyze my proposal performance',
-  'Write a bio for my freelance profile',
-  'What should I charge for Python automation?',
-  'Give me tips to win more bids',
+  'open notepad and type hello',
+  "what's on my screen?",
+  'remember for mistore: check supplier prices weekly',
+  'plan project mistore to launch the store',
 ]
 
 export default function Chat() {
   const [msgs, setMsgs] = useState([
-    { role: 'jarvis', text: 'JARVIS v3 ONLINE. How can I help you earn more on Freelancer today?' }
+    { role: 'jarvis', text: 'JARVIS ONLINE. Your PC, files, brain, plans and freelancing — what do you need?' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
