@@ -3,13 +3,16 @@ import Dashboard   from './pages/Dashboard'
 import Settings    from './pages/Settings'
 import Chat        from './pages/Chat'
 import WorkspaceHub from './pages/WorkspaceHub'
+import Agents       from './pages/Agents'
 import JarvisCore   from './JarvisCore'
 
-// Jarvis is a personal assistant first. Core (assistant hub) is the default;
-// ALL freelance/job tooling is one section, not the app's identity.
+// Jarvis is a personal assistant first. Core (assistant hub) is the default.
+// COMPUTER is PC control (desktop/vision/commander agents) — a core Jarvis
+// capability, NOT a freelance feature. Freelance is one module among others.
 const TABS = [
   { id: 'jarvis',    label: 'Core',       Comp: JarvisCore },
   { id: 'chat',      label: 'Chat',       Comp: Chat },
+  { id: 'computer',  label: 'Computer',   Comp: Agents },
   { id: 'workspace', label: 'Freelance',  Comp: WorkspaceHub },
   { id: 'dashboard', label: 'Dashboard',  Comp: Dashboard },
   { id: 'settings',  label: 'Settings',   Comp: Settings },

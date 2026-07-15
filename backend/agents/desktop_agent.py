@@ -184,10 +184,12 @@ def open_app(name_or_path: str) -> dict:
         "snipping":   ["snippingtool.exe"],
     }
     key = name_or_path.lower().replace(" ", "")
+    known = key in KNOWN
     cmd = KNOWN.get(key, [name_or_path])
     # Browsers/GUI apps live in the registry App Paths, not on PATH — launch via
     # shell 'start' so Windows resolves them (fixes "Windows cannot find 'edge'").
     SHELL_START = {"msedge.exe", "chrome.exe", "firefox.exe", "code"}
+    launched = False
     try:
         if cmd[0] in SHELL_START:
             subprocess.Popen(["cmd.exe", "/c", "start", "", *cmd],
@@ -195,18 +197,95 @@ def open_app(name_or_path: str) -> dict:
         else:
             subprocess.Popen(cmd, shell=False,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        time.sleep(1.2)
-        return {"success": True, "action": "open_app", "app": name_or_path, "resolved": cmd[0]}
+        launched = True
     except (FileNotFoundError, OSError):
-        # Fallback: let Windows resolve via 'start' (handles raw names + App Paths)
+        pass
+    except Exception as e:
+        return {"success": False, "action": "open_app", "error": str(e)}
+
+    if launched:
+        time.sleep(1.2)
+        if known:
+            # Trusted mapping: the exe exists and started. Report the extra
+            # confirmation when we have it, but don't second-guess a known app.
+            return {"success": True, "action": "open_app", "app": name_or_path,
+                    "resolved": cmd[0], "method": "direct",
+                    "verified": _app_visible(name_or_path)}
+        if _app_visible(name_or_path):
+            return {"success": True, "action": "open_app", "app": name_or_path,
+                    "resolved": cmd[0], "method": "direct", "verified": True}
+
+    # Self-recovery, like a human would:
+    # 1) let the Windows shell resolve the raw name (App Paths, PATH, aliases)
+    if os.name == "nt":
         try:
             subprocess.Popen(["cmd.exe", "/c", "start", "", name_or_path], shell=False,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return {"success": True, "action": "open_app", "app": name_or_path, "resolved": "via start"}
-        except Exception as e:
-            return {"success": False, "action": "open_app", "error": f"Could not find or open '{name_or_path}': {e}"}
-    except Exception as e:
-        return {"success": False, "action": "open_app", "error": str(e)}
+            time.sleep(2.0)
+            if _app_visible(name_or_path):
+                return {"success": True, "action": "open_app", "app": name_or_path,
+                        "resolved": "shell start", "method": "start", "verified": True}
+        except Exception:
+            pass
+        # 2) search the Start Menu (works for ANY installed app: WeChat, Photoshop…)
+        if _start_menu_launch(name_or_path):
+            if _app_visible(name_or_path):
+                return {"success": True, "action": "open_app", "app": name_or_path,
+                        "resolved": "start menu search", "method": "start_menu",
+                        "verified": True}
+            # Search ran but we can't see a matching window — Enter may still
+            # have launched something whose title differs. Be honest about it.
+            return {"success": True, "action": "open_app", "app": name_or_path,
+                    "resolved": "start menu search", "method": "start_menu",
+                    "verified": False,
+                    "note": "launched via Start Menu but couldn't visually confirm — check your screen"}
+    return {"success": False, "action": "open_app",
+            "error": f"Could not find or open '{name_or_path}' "
+                     f"(tried direct launch, shell start, Start Menu search)"}
+
+
+def _app_visible(name: str) -> bool:
+    """Best-effort check that an app is actually up: window title or process."""
+    n = (name or "").lower().strip()
+    if not n:
+        return False
+    try:
+        if HAS_WINDOWS:
+            for t in gw.getAllTitles():
+                if t and n in t.lower():
+                    return True
+    except Exception:
+        pass
+    try:
+        compact = n.replace(" ", "")
+        for p in psutil.process_iter(["name"]):
+            pn = (p.info.get("name") or "").lower()
+            if pn and (compact[:12] in pn or pn.replace(".exe", "") in compact):
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def _start_menu_launch(name: str) -> bool:
+    """
+    Recovery path for apps not on PATH: press Win, type the app name into
+    Start Menu search, press Enter — exactly what a human does when a direct
+    launch fails. Returns False when input control isn't available.
+    """
+    if _require("pyautogui") is not None:
+        return False
+    try:
+        with _lock:
+            pyautogui.press("win")
+            time.sleep(0.9)
+            pyautogui.typewrite(name, interval=0.05)
+            time.sleep(1.4)                       # let search results populate
+            pyautogui.press("enter")
+        time.sleep(2.5)                           # app startup time
+        return True
+    except Exception:
+        return False
 
 
 def close_app(process_name: str) -> dict:

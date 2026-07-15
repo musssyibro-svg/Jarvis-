@@ -7,7 +7,6 @@ import Analytics from './Analytics'
 import Tasks     from './Tasks'
 import Notes     from './Notes'
 import AutoMode  from './AutoMode'
-import Agents    from './Agents'
 
 // V8.5: groups every freelance/job tool under the Workspace tab as subtabs.
 // Existing page components are reused unchanged.
@@ -17,7 +16,6 @@ const SUBTABS = [
   { id: 'proposals', label: 'Proposals', Comp: Proposals },
   { id: 'messages',  label: 'Messages',  Comp: Messages },
   { id: 'automode',  label: 'Auto Mode', Comp: AutoMode },
-  { id: 'agents',    label: 'Agents',    Comp: Agents },
   { id: 'analytics', label: 'Analytics', Comp: Analytics },
   { id: 'tasks',     label: 'Tasks',     Comp: Tasks },
   { id: 'notes',     label: 'Notes',     Comp: Notes },
