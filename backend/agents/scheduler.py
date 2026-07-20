@@ -44,10 +44,23 @@ def start_schedule(config: dict, every_minutes: int = 60) -> dict:
         # V9: scheduler drives the OrchestratorCore state machine, not the
         # legacy automation_engine pipeline.
         from agents.orchestrator_core import OrchestratorCore
+        from agents.v9_models import Goal
         STATE.emit("scheduler", f"Scheduled run triggered (every {every_minutes}m)")
-        goal = dict(config)
-        goal.setdefault("goal_type", "freelance_application")
-        goal.setdefault("auto_apply", False)   # scheduled runs default to safe (queue, don't auto-submit)
+        c = dict(config)
+        # set_goal requires a typed Goal — passing the raw config dict crashed
+        # every scheduled run with AttributeError on goal.goal_type.
+        goal = Goal(
+            goal_type="freelance_application",
+            objective=f"Scheduled auto mode across {', '.join(c.get('platforms', []))}",
+            constraints={"platforms": c.get("platforms", ["remoteok"]),
+                         "your_name": c.get("your_name", ""),
+                         "your_skills": c.get("your_skills", ""),
+                         "max_jobs": c.get("max_per_platform", 10),
+                         "min_score": c.get("min_score", 30),
+                         "auto_apply": False},  # scheduled runs queue, never auto-submit
+            approval_required=True,
+            success_condition={"min_applied": 0},
+        )
         core = OrchestratorCore()
         core.set_goal(goal)
         core.run()

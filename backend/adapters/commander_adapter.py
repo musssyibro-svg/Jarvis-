@@ -341,6 +341,15 @@ def _parse_command_steps(message: str) -> list:
     if "screenshot" in low or "screen shot" in low or "capture the screen" in low:
         return [Action(action_type="screenshot", params={}, risk_level="low")]
 
+    # "click (on) the Submit button" / "click Save" → vision-guided click
+    km = _re.search(r"\bclick\s+(?:on\s+)?(?:the\s+)?[\"'“]?(.+?)[\"'”]?"
+                    r"(?:\s+button|\s+link|\s+tab)?\s*$", m, _re.IGNORECASE)
+    if km and not _OPEN_RE.search(m) and not _TYPE_RE.search(m):
+        target = km.group(1).strip().rstrip(".!?,")
+        if target and not _re.fullmatch(r"[\d, ]+", target):
+            return [Action(action_type="click_text", params={"text": target},
+                           risk_level="low")]
+
     om = _OPEN_RE.search(m)
     if om:
         app = om.group(1).strip().rstrip(".!?,")
@@ -456,8 +465,10 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
                             f"Reply 'yes' to confirm or 'cancel' to abort.",
                 "intent": intent, "needs_approval": True}
 
-    # Execute the sequence in order; brief settle time after opening an app so
-    # a follow-up type_text lands in the newly opened window, not the browser.
+    # Execute the sequence in order. After opening an app, WAIT for its window
+    # and focus it before any keystroke — a fixed sleep typed into the wrong
+    # window whenever the app was slow to start ("open notepad type hello"
+    # putting 'hello' in the browser).
     import time
     results, failed = [], None
     for i, action in enumerate(steps):
@@ -468,7 +479,21 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
             failed = (action, result)
             break
         if action.action_type == "open_app" and i + 1 < len(steps):
-            time.sleep(1.5)
+            nxt = steps[i + 1].action_type
+            if nxt in ("type_text", "press", "hotkey", "click", "click_text"):
+                try:
+                    from agents import desktop_agent as da
+                    target = (action.params or {}).get("name_or_path", "")
+                    w = da.wait_for_window(target, timeout=8)
+                    if w.get("success"):
+                        da.focus_window(target)
+                        _emit("executor", f"{target} window ready — continuing", "info")
+                    else:
+                        _emit("executor", f"Couldn't confirm {target} window — "
+                                          f"continuing anyway", "warning")
+                    time.sleep(0.5)
+                except Exception:
+                    time.sleep(1.5)
 
     if failed:
         action, result = failed

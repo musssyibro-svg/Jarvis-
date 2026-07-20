@@ -225,6 +225,38 @@ def vision_analyze(body: dict):
     result.pop("b64", None)
     return result
 
+@router.post("/vision/locate-text")
+def vision_locate_text(body: dict):
+    """Word-level OCR: returns screen coordinates of the text (for clicking)."""
+    from agents.vision_agent import locate_text_coords
+    return locate_text_coords(body.get("text",""))
+
+@router.post("/vision/click-text")
+def vision_click_text(body: dict):
+    """See → act: find the text on screen and click it."""
+    from agents.vision_agent import click_text
+    if not body.get("text"):
+        raise HTTPException(400, "text required")
+    return click_text(body["text"])
+
+
+# ── Chained desktop execution (multi-step, atomic) ───────────────────────────
+
+@router.post("/desktop/chain")
+def desktop_chain(body: dict):
+    """
+    Run a SEQUENCE of desktop steps as one task:
+      {"steps": [{"action":"open_app","params":{"name_or_path":"notepad"}},
+                 {"action":"type_text","params":{"text":"hello"}},
+                 {"action":"hotkey","params":{"keys":["ctrl","s"]}}]}
+    Waits for windows between steps; stops and reports on first failure.
+    """
+    from agents.desktop_agent import execute_chain
+    steps = body.get("steps") or []
+    if not steps:
+        raise HTTPException(400, "steps required")
+    return execute_chain(steps)
+
 
 # ── Planner ───────────────────────────────────────────────────────────────────
 
@@ -334,6 +366,71 @@ def memory_recall(key: str):
 def memory_all():
     from agents.memory_agent import MemoryAgent
     return MemoryAgent.get_all_kv()
+
+# ── Agent Registry: add/remove/run custom agents at runtime ───────────────────
+
+class InstallAgentRequest(BaseModel):
+    name: str
+    code: str
+    description: str = ""
+
+@router.get("/registry")
+def registry_list():
+    """All registered agents (built-in + custom) with metadata + enabled state."""
+    from agents.registry import registry, AGENT_TEMPLATE
+    out = []
+    for name, entry in registry.list_agents().items():
+        meta = dict(entry["metadata"])
+        out.append({"name": name, "enabled": entry["enabled"],
+                    "source": meta.get("source", "internal"),
+                    "kind": meta.get("kind", ""),
+                    "description": meta.get("description", ""),
+                    "permissions": meta.get("permissions", []),
+                    "registered_at": meta.get("registered_at", "")})
+    return {"agents": out, "template": AGENT_TEMPLATE}
+
+@router.post("/registry/install")
+def registry_install(body: InstallAgentRequest):
+    """Paste Python code → live agent. Persisted to agents/custom/ + DB."""
+    from agents.registry import registry
+    r = registry.install_from_code(body.name, body.code, body.description)
+    if not r.get("ok"):
+        raise HTTPException(400, r.get("error", "install failed"))
+    return r
+
+@router.post("/registry/{name}/toggle")
+def registry_toggle(name: str, body: dict = None):
+    from agents.registry import registry
+    entry = registry.list_agents().get(name)
+    if not entry:
+        raise HTTPException(404, f"agent '{name}' not found")
+    on = not entry["enabled"] if body is None or "enabled" not in (body or {}) \
+         else bool(body["enabled"])
+    registry.enable(name, on)
+    if entry["metadata"].get("source") == "custom":
+        try:
+            from models.db import conn
+            with conn() as db:
+                db.execute("UPDATE custom_agents SET enabled=? WHERE name=?",
+                           (1 if on else 0, name))
+        except Exception:
+            pass
+    return {"ok": True, "name": name, "enabled": on}
+
+@router.delete("/registry/{name}")
+def registry_uninstall(name: str):
+    from agents.registry import registry
+    r = registry.uninstall(name)
+    if not r.get("ok"):
+        raise HTTPException(400, r.get("error", "uninstall failed"))
+    return r
+
+@router.post("/registry/{name}/run")
+def registry_run(name: str, body: dict = None):
+    """Run any registered agent directly with a context dict."""
+    from agents.registry import registry
+    return registry.run_agent(name, (body or {}).get("context", body or {}))
+
 
 # ── Ollama health + model management (V8) ────────────────────────────────────
 @router.get("/ollama/status")

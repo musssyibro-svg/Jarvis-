@@ -1,7 +1,14 @@
 """
 agents/proposal_agent.py
 ProposalAgent — generates proposals, applications, and reply drafts.
-Uses DeepSeek-R1 via Ollama. Respects rate limiting via sleep.
+Uses the local LLM via Ollama. Respects rate limiting via sleep.
+
+Contract: run(context) accepts EITHER
+  {"qualified_jobs": [job, ...]}   — batch mode (orchestrator pipeline)
+  {"job": job}                     — single-job mode (V9 core calls per job)
+Both paths generate, save to the proposals table, and return the entries.
+The old mismatch (core passing "job", agent reading "qualified_jobs") was the
+root cause of the permanent "ProposalAgent complete: 0 generated" log line.
 """
 import time
 from agents.base_agent import BaseAgent
@@ -11,17 +18,24 @@ class ProposalAgent(BaseAgent):
     name = "proposal"
 
     def run(self, context: dict) -> dict:
-        jobs        = context.get("qualified_jobs", [])
-        your_name   = context.get("your_name", "Ibrahim")
-        your_skills = context.get("your_skills", "Python, automation, web scraping, AI integration, FastAPI")
-        max_generate = context.get("max_generate", 5)
+        jobs = context.get("qualified_jobs")
+        if jobs is None:
+            single = context.get("job")
+            jobs = [single] if single else []
+        profile = self._profile(context)
+        max_generate = int(context.get("max_generate", profile.get("max_generate", 10)))
         feed        = []
         generated   = []
 
         for job in jobs[:max_generate]:
             feed.append(self.log(f"Generating for: {job.get('title','')[:50]}"))
             try:
-                text = self._generate(job, your_name, your_skills)
+                text = self._generate(job, profile)
+                if not text or text.startswith(("[No AI available", "[Ollama error")):
+                    feed.append(self.log(
+                        f"LLM unavailable — used template for: {job.get('title','')[:40]}",
+                        "warning"))
+                    text = self._template(job, profile)
                 entry = {
                     "job_id":           job.get("job_id"),
                     "platform":         job.get("platform"),
@@ -45,8 +59,23 @@ class ProposalAgent(BaseAgent):
         feed.append(self.log(f"ProposalAgent complete: {len(generated)} generated"))
         return {"generated": generated, "feed": feed}
 
-    def _generate(self, job: dict, your_name: str, your_skills: str) -> str:
+    def _profile(self, context: dict) -> dict:
+        """Persistent profile, with any per-run overrides from the caller."""
+        try:
+            from services.profile_service import get_profile
+            profile = get_profile()
+        except Exception:
+            profile = {"name": "Ibrahim",
+                       "skills": "Python, automation, web scraping, AI integration, FastAPI"}
+        if context.get("your_name"):
+            profile["name"] = context["your_name"]
+        if context.get("your_skills"):
+            profile["skills"] = context["your_skills"]
+        return profile
+
+    def _generate(self, job: dict, profile: dict) -> str:
         from services.deepseek_service import call_model
+        from services.profile_service import prompt_block
         platform = job.get("platform", "freelance")
         prompt = f"""Write a professional job application for {platform}.
 
@@ -55,8 +84,7 @@ Company: {job.get('company','the company')}
 Description: {job.get('description','')}
 Budget: {job.get('budget','not specified')}
 
-Applicant: {your_name}
-Skills: {your_skills}
+{prompt_block(profile)}
 
 Rules:
 - Under 200 words
@@ -64,9 +92,18 @@ Rules:
 - Mention 1-2 directly relevant skills
 - Include a realistic timeline
 - End with a confident call to action
-- Sign off as: {your_name}
+- Sign off as: {profile.get('name','')}
 Output ONLY the application/proposal text."""
         return call_model(prompt)
+
+    def _template(self, job: dict, profile: dict) -> str:
+        """Offline fallback so a missing LLM never produces zero output."""
+        name = profile.get("name", "")
+        return (f"Hi,\n\nI read your post \"{job.get('title','')}\" and it lines up "
+                f"directly with what I do: {profile.get('skills','')}. "
+                f"I can start right away and will share progress early so you can "
+                f"course-correct before anything is final.\n\n"
+                f"When would you like to see a first result?\n\n— {name}")
 
     def _save(self, entry: dict):
         from models.db import conn

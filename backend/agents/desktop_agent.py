@@ -288,6 +288,82 @@ def _start_menu_launch(name: str) -> bool:
         return False
 
 
+def wait_for_window(title_contains: str, timeout: float = 8.0) -> dict:
+    """
+    Block until a window whose title contains the string appears (or the app's
+    process shows up). This is the glue that makes chained commands reliable:
+    'open notepad' → wait_for_window('notepad') → type — instead of typing
+    into whatever window happened to have focus 1.5s later.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if _app_visible(title_contains):
+            return {"success": True, "action": "wait_for_window",
+                    "title": title_contains,
+                    "waited": round(timeout - (deadline - time.time()), 1)}
+        time.sleep(0.4)
+    return {"success": False, "action": "wait_for_window",
+            "error": f"Window '{title_contains}' did not appear within {timeout}s"}
+
+
+def execute_chain(steps: list) -> dict:
+    """
+    Run a list of desktop steps ATOMICALLY, with the human-like waits between
+    them: after opening an app, wait for its window and focus it before the
+    next input step. Each step: {"action": "...", "params": {...}}.
+    Stops at the first failure and reports exactly where it broke.
+    """
+    ACTIONS = {
+        "open_app":     lambda p: open_app(p.get("name_or_path") or p.get("app", "")),
+        "close_app":    lambda p: close_app(p.get("process_name") or p.get("app", "")),
+        "type_text":    lambda p: type_text_raw(p.get("text", "")),
+        "press":        lambda p: press(p.get("key", "")),
+        "hotkey":       lambda p: hotkey(*p.get("keys", [])),
+        "click":        lambda p: click(p.get("x"), p.get("y"),
+                                        p.get("button", "left"), p.get("clicks", 1)),
+        "move":         lambda p: move(p.get("x", 0), p.get("y", 0)),
+        "wait":         lambda p: ({"success": True, "action": "wait"},
+                                   time.sleep(min(float(p.get("seconds", 1)), 15)))[0],
+        "wait_for_window": lambda p: wait_for_window(p.get("title", ""),
+                                                     float(p.get("timeout", 8))),
+        "focus_window": lambda p: focus_window(p.get("title", "")),
+        "open_url":     lambda p: open_url(p.get("url", "")),
+        "write_file":   lambda p: write_file(p.get("path", ""), p.get("content", "")),
+        "screenshot":   lambda p: __import__("agents.vision_agent", fromlist=["screenshot"]).screenshot(),
+        "click_text":   lambda p: __import__("agents.vision_agent", fromlist=["click_text"]).click_text(p.get("text", "")),
+    }
+    results = []
+    for i, s in enumerate(steps or []):
+        action = (s or {}).get("action", "")
+        params = (s or {}).get("params", {}) or {}
+        fn = ACTIONS.get(action)
+        if fn is None:
+            results.append({"step": i + 1, "action": action, "success": False,
+                            "error": f"unknown action '{action}'"})
+            return {"success": False, "steps": results,
+                    "failed_at": i + 1, "error": f"unknown action '{action}'"}
+        try:
+            r = fn(params)
+        except Exception as e:
+            r = {"success": False, "error": str(e)}
+        results.append({"step": i + 1, "action": action, **(r or {})})
+        if not (r or {}).get("success", False):
+            return {"success": False, "steps": results, "failed_at": i + 1,
+                    "error": (r or {}).get("error", f"{action} failed")}
+        # Human-like settle: opened app → wait for its window, then focus it
+        # so follow-up keystrokes land in the right place.
+        if action == "open_app":
+            target = params.get("name_or_path") or params.get("app", "")
+            nxt = steps[i + 1]["action"] if i + 1 < len(steps) else None
+            if nxt in ("type_text", "press", "hotkey", "click", "click_text"):
+                w = wait_for_window(target, timeout=8)
+                results.append({"step": f"{i + 1}b", "action": "wait_for_window", **w})
+                if w.get("success"):
+                    focus_window(target)
+                time.sleep(0.5)
+    return {"success": True, "steps": results, "count": len(results)}
+
+
 def close_app(process_name: str) -> dict:
     """
     Close an application by process/image name (e.g. 'notepad.exe' or 'chrome').

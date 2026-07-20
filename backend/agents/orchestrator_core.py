@@ -4,10 +4,16 @@ State machine with an EXPLICIT transition table. Owns Goal + WorldState +
 AgentState + progress + retry counter. Uses typed models from v9_models.
 Absorbs services/automation_engine.py responsibilities.
 """
+import threading
 from enum import Enum
 
 from agents.orchestrator import STATE          # existing SSE feed
 from agents.v9_models import Goal, WorldState
+
+# One workflow at a time. The UI polls aggressively and users double-click —
+# without this, every POST /automation/start stacked another full scan
+# (the duplicate [SCOUT] runs in the field logs).
+_RUN_LOCK = threading.Lock()
 
 
 class AgentState(Enum):
@@ -89,6 +95,17 @@ class OrchestratorCore:
             self.state = AgentState.FAILED
             return self.snapshot()
 
+        if not _RUN_LOCK.acquire(blocking=False):
+            self.error = "another workflow is already running"
+            self.state = AgentState.FAILED
+            self._emit("orchestrator", "Workflow already running — skipped duplicate start", "warning")
+            return self.snapshot()
+        try:
+            return self._run_locked()
+        finally:
+            _RUN_LOCK.release()
+
+    def _run_locked(self) -> dict:
         while self.state not in (AgentState.COMPLETE, AgentState.FAILED):
             self._transitions += 1
             if self._transitions > self.MAX_TRANSITIONS:
@@ -137,11 +154,28 @@ class OrchestratorCore:
             c = self.goal.constraints or {}
             res = ScoutAgent().run({
                 "platforms":        c.get("platforms", ["remoteok", "weworkremotely", "hubstaff"]),
-                "max_per_platform": c.get("max_jobs", 5),
+                "max_per_platform": c.get("max_jobs", 10),
                 "category":         self.goal.objective,
             })
             self.world.jobs = res.get("jobs", [])
+            STATE.update_stats(jobs_found=len(self.world.jobs))
             self._emit("scout", f"{len(self.world.jobs)} jobs found", "success")
+
+            # Score + filter: bad-fit jobs are dropped HERE so ProposalAgent
+            # only ever writes for jobs worth bidding on.
+            from agents.score_agent import ScoreAgent
+            from services.profile_service import get_profile
+            profile = get_profile()
+            sres = ScoreAgent().run({
+                "jobs":        self.world.jobs,
+                "min_score":   int(c.get("min_score", profile.get("min_score", 30))),
+                "your_skills": c.get("your_skills") or profile.get("skills", ""),
+            })
+            qualified = sres.get("qualified", [])
+            STATE.update_stats(jobs_qualified=len(qualified))
+            self._emit("score", f"{len(qualified)}/{len(self.world.jobs)} jobs qualified "
+                                f"(rest ignored as bad fit)", "success")
+            self.world.jobs = qualified
         except Exception as e:
             self.error = f"scout failed: {e}"
             self.transition_state(AgentState.FAILED)
@@ -159,14 +193,46 @@ class OrchestratorCore:
         self._emit("proposal", f"Drafting proposals for {len(self.world.jobs)} job(s)")
         try:
             from agents.proposal_agent import ProposalAgent
-            agent = ProposalAgent()
             c = self.goal.constraints or {}
-            for job in self.world.jobs[: c.get("max_jobs", 5)]:
-                res = agent.run({"job": job,
-                                 "your_name":   c.get("your_name", ""),
-                                 "your_skills": c.get("your_skills", "")})
-                self.world.proposals.append({"job": job, "proposal": res})
-            self._emit("proposal", f"{len(self.world.proposals)} drafted", "success")
+            # ONE batch call with the contract ProposalAgent actually reads
+            # ("qualified_jobs"). The old per-job {"job": ...} call always
+            # iterated an empty list — the permanent "0 generated" bug.
+            res = ProposalAgent().run({
+                "qualified_jobs": self.world.jobs,
+                "your_name":      c.get("your_name", ""),
+                "your_skills":    c.get("your_skills", ""),
+                "max_generate":   c.get("max_jobs", 10),
+            })
+            generated = res.get("generated", [])
+            for entry in generated:
+                self.world.proposals.append({"job": entry, "proposal": entry})
+            STATE.update_stats(proposals_gen=len(generated))
+            self._emit("proposal", f"{len(generated)} drafted", "success")
+
+            # Queue every draft for human review — this is what fills the
+            # Auto Mode QUEUE tab. Previously nothing ever reached the queue
+            # unless auto_apply was set, so the tab stayed empty forever.
+            from agents.orchestrator import _queue_for_approval
+            _queue_for_approval(generated)
+            self._emit("orchestrator",
+                       f"{len(generated)} proposal(s) queued — review them in "
+                       f"Freelance ▸ Auto Mode ▸ Queue", "success")
+
+            # Optional hands-off mode: submit without the extra approve click.
+            try:
+                from services.profile_service import get_profile
+                if generated and (c.get("auto_submit") or get_profile().get("auto_submit")):
+                    from models.db import conn
+                    from datetime import datetime, timezone
+                    now = datetime.now(timezone.utc).isoformat()
+                    with conn() as db:
+                        db.execute("UPDATE automation_queue SET status='approved',"
+                                   "processed_at=? WHERE status='pending'", (now,))
+                    from services.bid_executor import execute_all_approved
+                    execute_all_approved()
+                    self._emit("executor", "auto_submit is ON — submitting queued bids", "warning")
+            except Exception as e:
+                self._emit("executor", f"auto-submit skipped: {e}", "warning")
         except Exception as e:
             self.error = f"proposal failed: {e}"
             self.transition_state(AgentState.FAILED)

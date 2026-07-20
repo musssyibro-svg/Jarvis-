@@ -26,3 +26,6 @@ schedule>=1.2.0
 # ── V10 Brain ──
 python-multipart>=0.0.9
 pypdf>=4.0.0
+
+# ── V12 Sessions + Credential Vault ──
+cryptography>=42.0.0

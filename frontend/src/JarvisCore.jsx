@@ -405,6 +405,24 @@ export default function JarvisCore() {
     await fetch(API + "/planner/project/" + id, { method: "DELETE" }).catch(() => {});
     loadPlans();
   };
+  const [runningPlans, setRunningPlans] = useState({});
+  const runPlan = async (id) => {
+    setRunningPlans((r) => ({ ...r, [id]: true }));
+    await fetch(API + "/planner/project/" + id + "/execute", { method: "POST" }).catch(() => {});
+    // poll progress while it runs, then refresh a final time
+    const poll = setInterval(async () => {
+      loadPlans();
+      try {
+        const r = await fetch(API + "/planner/project/" + id + "/executing");
+        const d = await r.json();
+        if (!d.executing) {
+          clearInterval(poll);
+          setRunningPlans((x) => ({ ...x, [id]: false }));
+          loadPlans();
+        }
+      } catch { clearInterval(poll); setRunningPlans((x) => ({ ...x, [id]: false })); }
+    }, 3000);
+  };
   const loadDoctor = () => {
     fetch(API + "/system/doctor").then(r => r.json()).then(setDoctor).catch(() => setDoctor(null));
   };
@@ -698,6 +716,13 @@ export default function JarvisCore() {
                         <span style={{ fontWeight: 700, color: C.amber }}>{p.title || p.name}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                           <span style={{ fontSize: 11, color: C.dim }}>{p.done}/{p.total} · {p.progress}%</span>
+                          <button onClick={() => runPlan(p.id)} disabled={runningPlans[p.id]}
+                            title="Jarvis executes every step: desktop actions run for real, think-steps get their deliverable written and attached"
+                            style={{ background: hexA(C.emerald, 0.15), color: runningPlans[p.id] ? C.dim : C.emerald,
+                                     border: `1px solid ${hexA(C.emerald, 0.4)}`, borderRadius: 6,
+                                     padding: "4px 12px", cursor: runningPlans[p.id] ? "wait" : "pointer", fontSize: 11 }}>
+                            {runningPlans[p.id] ? "⟳ running…" : "▶ RUN"}
+                          </button>
                           <span onClick={() => deletePlan(p.id)} style={{ cursor: "pointer", color: C.crimson, fontSize: 14 }} title="Delete plan">✕</span>
                         </div>
                       </div>
@@ -714,9 +739,22 @@ export default function JarvisCore() {
                               title="Click to change status">
                               <span style={{ width: 58, color: col, textTransform: "uppercase", fontSize: 10 }}>{s.status}</span>
                               <span style={{ color: s.status === "done" ? C.dim : C.text, textDecoration: s.status === "done" ? "line-through" : "none" }}>{s.text}</span>
+                              {s.note && <span style={{ color: C.dim, fontSize: 10 }} title={s.note}>📎</span>}
                             </div>
                           );
                         })}
+                        {p.steps.some((s) => s.note) && (
+                          <details style={{ marginTop: 4 }}>
+                            <summary style={{ fontSize: 10, color: C.dim, cursor: "pointer" }}>step outputs / notes</summary>
+                            {p.steps.filter((s) => s.note).map((s) => (
+                              <div key={"n" + s.id} style={{ fontSize: 11, color: C.text, background: "rgba(0,0,0,0.3)",
+                                borderLeft: `2px solid ${C.emerald}`, borderRadius: 4, padding: 8, margin: "6px 0", whiteSpace: "pre-wrap" }}>
+                                <div style={{ color: C.dim, fontSize: 10, marginBottom: 3 }}>step {s.seq}: {s.text}</div>
+                                {s.note}
+                              </div>
+                            ))}
+                          </details>
+                        )}
                       </div>
                     </div>
                   ))}

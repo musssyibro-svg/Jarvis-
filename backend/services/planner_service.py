@@ -222,6 +222,144 @@ def list_projects() -> list[dict]:
         return [_project_dict(db, p) for p in rows]
 
 
+# ── Auto-execution ────────────────────────────────────────────────────────────
+# The planner used to STOP after displaying steps. execute_project() closes the
+# loop: each todo step is either translated into real desktop/browser actions
+# and executed, or (for think-work like "define scope") the LLM produces the
+# deliverable text and attaches it to the step. Either way the step advances
+# without the user driving every click.
+
+import json as _json
+import threading as _threading
+
+_exec_lock = _threading.Lock()
+_executing: set[int] = set()
+
+# Actions the planner may run unattended. Deliberately excludes destructive
+# primitives (close_app, delete_file, run_command) — those stay human-approved.
+_SAFE_ACTIONS = {"open_app", "type_text", "press", "hotkey", "screenshot",
+                 "open_url", "wait", "wait_for_window", "focus_window",
+                 "click_text", "write_file", "move", "click"}
+
+
+def _emit(msg: str, level: str = "info"):
+    try:
+        from agents.orchestrator import STATE
+        STATE.emit("planner", msg, level)
+    except Exception:
+        pass
+
+
+def _step_to_actions(step_text: str, goal: str) -> dict:
+    """
+    Ask the LLM whether this step is something the PC can DO right now
+    (concrete desktop/browser actions) or think-work to produce as text.
+    Returns {"kind": "actions"|"text", "actions": [...]} — never raises.
+    """
+    try:
+        from services.deepseek_service import call_model
+        raw = call_model(
+            "You control a Windows PC. Decide if this project step is something "
+            "you can DO right now with desktop actions, or knowledge work.\n"
+            f"Project goal: {goal}\nStep: {step_text}\n\n"
+            'If doable, reply ONLY: {"kind":"actions","actions":[{"action":"open_app|open_url|type_text|press|hotkey|screenshot|write_file","params":{...}}]}\n'
+            'If knowledge work, reply ONLY: {"kind":"text"}', fast=True)
+        m = re.search(r"\{.*\}", raw, re.DOTALL)
+        if m:
+            d = _json.loads(m.group())
+            if d.get("kind") == "actions":
+                actions = [a for a in d.get("actions", [])[:8]
+                           if a.get("action") in _SAFE_ACTIONS]
+                if actions:
+                    return {"kind": "actions", "actions": actions}
+            return {"kind": "text"}
+    except Exception as e:
+        logger.warning(f"planner: step classification failed: {e}")
+    return {"kind": "text"}
+
+
+def _do_text_step(step_text: str, goal: str) -> str:
+    """Produce the step's deliverable as text (advice, draft, checklist)."""
+    try:
+        from services.deepseek_service import call_model
+        out = call_model(
+            f"You are Jarvis executing a project step for the user.\n"
+            f"Project goal: {goal}\nStep: {step_text}\n\n"
+            f"Produce the actual deliverable/output for this step (concise, "
+            f"concrete, immediately usable). Output ONLY the deliverable.")
+        if out and not out.startswith("["):
+            return out[:2000]
+    except Exception:
+        pass
+    return ""
+
+
+def execute_project(project_id: int) -> dict:
+    """
+    Run every todo step of a project, in order. Safe to call from a background
+    task. Executable steps run through the desktop chain executor; think-steps
+    get their deliverable generated and attached as the step note.
+    """
+    pid = int(project_id)
+    with _exec_lock:
+        if pid in _executing:
+            return {"ok": False, "error": "project already executing"}
+        _executing.add(pid)
+    try:
+        proj = get_project(pid)
+        if not proj:
+            return {"ok": False, "error": f"no project {pid}"}
+        _emit(f"Auto-executing project '{proj['title']}' "
+              f"({sum(1 for s in proj['steps'] if s['status']=='todo')} steps to go)")
+        done_ct, blocked_ct = 0, 0
+        for step in proj["steps"]:
+            if step["status"] not in ("todo", "doing"):
+                continue
+            set_step_status(step["id"], "doing")
+            _emit(f"Step {step['seq']}: {step['text'][:70]}")
+            plan = _step_to_actions(step["text"], proj["goal"] or proj["title"])
+            if plan["kind"] == "actions":
+                try:
+                    from agents.desktop_agent import execute_chain
+                    result = execute_chain(plan["actions"])
+                except Exception as e:
+                    result = {"success": False, "error": str(e)}
+                if result.get("success"):
+                    set_step_status(step["id"], "done",
+                                    note=f"executed {len(plan['actions'])} action(s)")
+                    _emit(f"Step {step['seq']} done ✓", "success")
+                    done_ct += 1
+                else:
+                    set_step_status(step["id"], "blocked",
+                                    note=f"execution failed: {result.get('error','')[:200]}")
+                    _emit(f"Step {step['seq']} blocked: {result.get('error','')[:80]}",
+                          "warning")
+                    blocked_ct += 1
+            else:
+                deliverable = _do_text_step(step["text"], proj["goal"] or proj["title"])
+                if deliverable:
+                    set_step_status(step["id"], "done", note=deliverable[:1000])
+                    _emit(f"Step {step['seq']} done ✓ (deliverable attached)", "success")
+                    done_ct += 1
+                else:
+                    set_step_status(step["id"], "blocked",
+                                    note="needs your input — no LLM available "
+                                         "or step requires human judgment")
+                    blocked_ct += 1
+        _emit(f"Project '{proj['title']}' auto-run finished: "
+              f"{done_ct} done, {blocked_ct} blocked",
+              "success" if blocked_ct == 0 else "warning")
+        return {"ok": True, "done": done_ct, "blocked": blocked_ct}
+    finally:
+        with _exec_lock:
+            _executing.discard(pid)
+
+
+def is_executing(project_id: int) -> bool:
+    with _exec_lock:
+        return int(project_id) in _executing
+
+
 def summary_line() -> str:
     """One-line status of active projects, for chat/status surfaces."""
     projs = [p for p in list_projects() if p["status"] == "active"]

@@ -41,6 +41,19 @@ async def start_auto(req: AutoRequest, background_tasks: BackgroundTasks):
     return {"message": "Auto mode started (OrchestratorCore)", "platforms": req.platforms,
             "goal_id": goal.goal_id}
 
+# ── Freelance profile (persistent — feeds every proposal prompt) ─────────────
+
+@router.get("/profile")
+def get_profile():
+    from services.profile_service import get_profile as gp
+    return gp()
+
+@router.post("/profile")
+def save_profile(body: dict):
+    from services.profile_service import save_profile as sp
+    return sp(body or {})
+
+
 @router.post("/stop")
 def stop_auto():
     from services.automation_engine import _state

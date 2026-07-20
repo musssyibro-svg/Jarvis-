@@ -1,14 +1,26 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #root { height: 100%; }
 body {
-  background: #040a10;
+  /* Layered ambient background: deep space blue with cyan + violet glows that
+     slowly drift — the whole app sits on this instead of flat black. */
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(0,212,255,0.10), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(167,139,250,0.09), transparent 60%),
+    radial-gradient(700px 400px at 50% 50%, rgba(0,255,136,0.03), transparent 70%),
+    linear-gradient(160deg, #030810 0%, #050d18 45%, #040a12 100%);
+  background-attachment: fixed;
   color: #a8d8ea;
   font-family: 'Courier New', monospace;
   overflow: hidden;
 }
-::-webkit-scrollbar { width: 4px; }
+::selection { background: rgba(0,212,255,0.35); color: #eaffff; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
-::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 2px; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0,212,255,0.45), rgba(167,139,250,0.35));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.6); }
 
 @keyframes scanline   { 0%{top:0%;opacity:1} 95%{opacity:1} 100%{top:100%;opacity:0} }
 @keyframes pulseglow  { 0%,100%{opacity:0.4} 50%{opacity:1} }
@@ -19,6 +31,39 @@ body {
   0%,100% { text-shadow: 0 0 10px rgba(0,212,255,0.4); }
   50%     { text-shadow: 0 0 26px rgba(0,212,255,0.95), 0 0 6px rgba(0,212,255,0.6); }
 }
+@keyframes border-flow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes float-slow {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-4px); }
+}
 
 .hud-glow { animation: hud-glow 3s ease-in-out infinite; }
 .fade-in  { animation: fadeIn 0.25s ease; }
+
+/* Animated gradient hairline — used as the app's top accent strip. */
+.accent-strip {
+  height: 2px;
+  background: linear-gradient(90deg,
+    rgba(0,212,255,0)   0%,  rgba(0,212,255,0.9) 25%,
+    rgba(167,139,250,0.9) 50%, rgba(0,255,136,0.9) 75%,
+    rgba(0,212,255,0)   100%);
+  background-size: 200% 100%;
+  animation: border-flow 6s linear infinite;
+}
+
+/* Cards everywhere pick up depth on hover without touching inline styles. */
+div[style*="border-radius"][style*="border: 1px solid"],
+div[style*="borderRadius"] { transition: box-shadow 0.2s ease; }
+
+button { transition: box-shadow 0.15s ease, transform 0.1s ease, background 0.15s ease; }
+button:hover:not(:disabled) { box-shadow: 0 0 12px rgba(0,212,255,0.25); }
+button:active:not(:disabled) { transform: translateY(1px); }
+
+input, textarea, select { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(0,212,255,0.55) !important;
+  box-shadow: 0 0 0 2px rgba(0,212,255,0.12);
+}

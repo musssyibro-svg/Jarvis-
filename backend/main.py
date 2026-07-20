@@ -57,6 +57,24 @@ def _startup():
         logger.info("Pulse (proactive engine) running.")
     except Exception as e:
         logger.warning(f"Pulse init: {e}")
+    try:
+        from services.vault import init_vault
+        init_vault()
+        logger.info("Credential vault ready.")
+    except Exception as e:
+        logger.warning(f"Vault init: {e}")
+    try:
+        from agents.registry import load_custom_agents
+        n = load_custom_agents()
+        logger.info(f"Custom agents loaded: {n}")
+    except Exception as e:
+        logger.warning(f"Custom agent load: {e}")
+    try:
+        from services.session_manager import start_reply_monitor
+        start_reply_monitor()   # inbox sweeps (opt-in via monitor_inbox setting)
+        logger.info("Reply monitor armed.")
+    except Exception as e:
+        logger.warning(f"Reply monitor: {e}")
     logger.info("Database ready.")
 
 # ── Routers ──────────────────────────────────────────────────────────────────
@@ -76,6 +94,7 @@ from routes.brain        import router as brain_router           # V10 Brain
 from routes.planner      import router as planner_router         # V10 Planner
 from routes.system       import router as system_router          # V10 Doctor
 from routes.pulse        import router as pulse_router           # V11 Pulse
+from routes.sessions     import router as sessions_router        # V12 login sessions + vault
 
 app.include_router(orchestrator_router, prefix="/orchestrator",  tags=["Orchestrator"])
 app.include_router(agents_router,       prefix="/agents",        tags=["Agents"])      # V5
@@ -93,6 +112,7 @@ app.include_router(brain_router,        prefix="/brain",         tags=["Brain"])
 app.include_router(planner_router,      prefix="/planner",       tags=["Planner"])     # V10
 app.include_router(system_router,       prefix="/system",        tags=["System"])      # V10
 app.include_router(pulse_router,        prefix="/pulse",         tags=["Pulse"])       # V11
+app.include_router(sessions_router,     prefix="/sessions",      tags=["Sessions"])    # V12
 
 from services.deepseek_service import call_model, OLLAMA_MODEL, LLM_PROVIDER
 

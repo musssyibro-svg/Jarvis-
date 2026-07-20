@@ -10,7 +10,7 @@ DELETE /planner/step/{id}                                             — remove
 DELETE /planner/project/{id}                                          — remove a project
 POST   /planner/decompose            {goal}                           — preview steps (no save)
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 from services import planner_service as planner
@@ -95,3 +95,25 @@ def delete_project(project_id: int):
 @router.post("/decompose")
 def decompose(body: GoalIn):
     return {"goal": body.goal, "steps": planner.decompose(body.goal)}
+
+
+@router.post("/project/{project_id}/execute")
+def execute_project(project_id: int, background_tasks: BackgroundTasks):
+    """
+    AUTO-RUN the project: every todo step is executed (desktop actions) or
+    produced (LLM deliverable attached as the step note). Watch the live feed.
+    """
+    if planner.is_executing(project_id):
+        return {"ok": True, "already_running": True}
+    p = planner.get_project(project_id)
+    if not p:
+        raise HTTPException(404, f"No project {project_id}")
+    background_tasks.add_task(planner.execute_project, project_id)
+    return {"ok": True, "executing": True, "project": p["title"],
+            "message": "Auto-execution started — watch the live feed and the "
+                       "step notes for results."}
+
+
+@router.get("/project/{project_id}/executing")
+def executing(project_id: int):
+    return {"executing": planner.is_executing(project_id)}

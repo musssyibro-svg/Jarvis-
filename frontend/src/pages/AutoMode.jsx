@@ -29,9 +29,17 @@ export default function AutoMode() {
   const [execStatus,  setExecStatus] = useState(null)
   const [queue,       setQueue]      = useState([])
   const [feed,        setFeed]       = useState([])
-  const [selected,    setSelected]   = useState(['hubstaff','remoteok','weworkremotely'])
+  const [selected,    setSelected]   = useState(['hubstaff','remoteok','weworkremotely','peopleperhour'])
   const [yourName,    setYourName]   = useState('Ibrahim')
   const [yourSkills,  setYourSkills] = useState('Python, automation, web scraping, AI integration, FastAPI')
+  const [hourlyRate,  setHourlyRate] = useState('15')
+  const [portfolio,   setPortfolio]  = useState('')
+  const [autoSubmit,  setAutoSubmit] = useState(false)
+  const [profileSaved,setProfileSaved]= useState(false)
+  const [sessions,    setSessions]   = useState([])
+  const [sessBusy,    setSessBusy]   = useState(false)
+  const [vaultForm,   setVaultForm]  = useState({ platform:'freelancer', username:'', password:'' })
+  const [vaultMsg,    setVaultMsg]   = useState('')
   const [expanded,    setExpanded]   = useState({})
   const feedRef  = useRef(null)
   const sseRef   = useRef(null)
@@ -66,6 +74,64 @@ export default function AutoMode() {
     return () => clearInterval(t)
   }, [])
 
+  // Load the persistent profile + platform login status once on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch(`${API}/automation/profile`)
+        if (r.ok) {
+          const p = await r.json()
+          if (p.name)        setYourName(p.name)
+          if (p.skills)      setYourSkills(p.skills)
+          if (p.hourly_rate) setHourlyRate(String(p.hourly_rate))
+          if (p.portfolio)   setPortfolio(p.portfolio)
+          setAutoSubmit(!!p.auto_submit)
+        }
+      } catch {}
+      loadSessions(false)
+    })()
+  }, [])
+
+  const loadSessions = async (refresh) => {
+    setSessBusy(true)
+    try {
+      const r = await fetch(`${API}/sessions/status${refresh?'?refresh=1':''}`)
+      if (r.ok) setSessions((await r.json()).platforms || [])
+    } catch {} finally { setSessBusy(false) }
+  }
+
+  const openLogin = async (pid) => {
+    try {
+      const r = await fetch(`${API}/sessions/open-login/${pid}`, {method:'POST'})
+      const d = await r.json()
+      setVaultMsg(d.message || d.error || '')
+    } catch(e) { setVaultMsg(String(e)) }
+  }
+
+  const saveVault = async () => {
+    if (!vaultForm.username || !vaultForm.password) { setVaultMsg('Enter username and password'); return }
+    try {
+      const r = await fetch(`${API}/sessions/vault`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(vaultForm)
+      })
+      const d = await r.json()
+      setVaultMsg(r.ok ? `Saved ✓ (encrypted locally as ${d.username})` : (d.detail||'failed'))
+      if (r.ok) setVaultForm(f => ({...f, password:''}))
+    } catch(e) { setVaultMsg(String(e)) }
+  }
+
+  const saveProfile = async () => {
+    try {
+      await fetch(`${API}/automation/profile`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ name:yourName, skills:yourSkills, hourly_rate:hourlyRate,
+                               portfolio, auto_submit:autoSubmit })
+      })
+      setProfileSaved(true); setTimeout(()=>setProfileSaved(false), 2000)
+    } catch {}
+  }
+
   const loadStatus     = async () => { try { const r = await fetch(`${API}/orchestrator/status`); if (r.ok) setStatus(await r.json()) } catch {} }
   const loadExecStatus = async () => { try { const r = await fetch(`${API}/automation/executor/status`); if (r.ok) setExecStatus(await r.json()) } catch {} }
   const loadQueue      = async () => {
@@ -77,9 +143,10 @@ export default function AutoMode() {
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const startPipeline = async () => {
+    await saveProfile()   // scan always uses the freshest profile
     await fetch(`${API}/orchestrator/start`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ platforms:selected, your_name:yourName, your_skills:yourSkills, max_per_platform:10, min_score:30, max_generate:5 })
+      body: JSON.stringify({ platforms:selected, your_name:yourName, your_skills:yourSkills, max_per_platform:15, min_score:30, max_generate:10 })
     })
     loadStatus()
   }
@@ -156,6 +223,61 @@ export default function AutoMode() {
 
           {/* Left column */}
           <div>
+            {/* Platform login sessions */}
+            <div style={{...S.card, borderColor:'rgba(167,139,250,0.3)'}}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div style={{...S.label, color:'rgba(167,139,250,0.6)'}}>STEP 0 — PLATFORM LOGINS</div>
+                <button onClick={()=>loadSessions(true)} disabled={sessBusy}
+                  style={{ fontSize:'8px', color:'#a78bfa', background:'none', border:'1px solid rgba(167,139,250,0.3)', padding:'3px 10px', borderRadius:'3px', cursor:'pointer', fontFamily:'monospace' }}>
+                  {sessBusy ? '⟳ CHECKING…' : '↺ RE-CHECK'}
+                </button>
+              </div>
+              <p style={{ fontSize:'10px', color:'rgba(255,255,255,0.35)', lineHeight:1.6, margin:'8px 0 10px' }}>
+                Log in <strong style={{color:'#a78bfa'}}>once</strong> per platform — Jarvis keeps the session in its own
+                browser profile and reuses it for form-filling and bid submission. Credentials you save
+                below are <strong style={{color:'#a78bfa'}}>encrypted on this PC</strong> and only used to pre-fill login forms.
+              </p>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:'6px', marginBottom:'10px' }}>
+                {sessions.length===0 && <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.25)', fontFamily:'monospace' }}>{sessBusy?'Checking sessions…':'No status yet — press RE-CHECK'}</span>}
+                {sessions.map(s => {
+                  const c = s.logged_in===true ? '#00ff88' : s.logged_in===false ? '#ff4444' : '#ff9500'
+                  return (
+                    <div key={s.platform} style={{ display:'flex', alignItems:'center', gap:'6px', border:`1px solid ${c}44`, background:`${c}0d`, borderRadius:'3px', padding:'5px 8px' }}>
+                      <span style={{ width:6, height:6, borderRadius:'50%', background:c, boxShadow:`0 0 5px ${c}` }} />
+                      <span style={{ fontSize:'9px', color:'#c8e8f0', fontFamily:'monospace' }}>{s.label}</span>
+                      <span style={{ fontSize:'8px', color:c, fontFamily:'monospace' }}>
+                        {s.logged_in===true ? 'LOGGED IN' : s.logged_in===false ? 'LOGGED OUT' : '?'}
+                      </span>
+                      {s.logged_in!==true && (
+                        <button onClick={()=>openLogin(s.platform)}
+                          style={{ fontSize:'8px', color:'#a78bfa', background:'none', border:'1px solid rgba(167,139,250,0.4)', borderRadius:'2px', padding:'2px 6px', cursor:'pointer', fontFamily:'monospace' }}>
+                          LOGIN
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ borderTop:'1px solid rgba(167,139,250,0.15)', paddingTop:'10px' }}>
+                <div style={{ fontSize:'8px', color:'rgba(167,139,250,0.5)', letterSpacing:'0.15em', marginBottom:'6px' }}>CREDENTIAL VAULT (LOCAL, ENCRYPTED)</div>
+                <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
+                  <select value={vaultForm.platform} onChange={e=>setVaultForm(f=>({...f,platform:e.target.value}))}
+                    style={{...S.inp, width:'130px', cursor:'pointer'}}>
+                    {['freelancer','upwork','fiverr','peopleperhour','hubstaff','contra','wellfound'].map(p=><option key={p} value={p}>{p}</option>)}
+                  </select>
+                  <input value={vaultForm.username} onChange={e=>setVaultForm(f=>({...f,username:e.target.value}))}
+                    placeholder="email / username" style={{...S.inp, flex:1, minWidth:'120px'}} />
+                  <input type="password" value={vaultForm.password} onChange={e=>setVaultForm(f=>({...f,password:e.target.value}))}
+                    placeholder="password" style={{...S.inp, flex:1, minWidth:'100px'}} />
+                  <button onClick={saveVault}
+                    style={{ padding:'6px 12px', borderRadius:'3px', border:'1px solid #a78bfa', background:'rgba(167,139,250,0.12)', color:'#a78bfa', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
+                    🔐 SAVE
+                  </button>
+                </div>
+                {vaultMsg && <div style={{ fontSize:'9px', color:'#a78bfa', marginTop:'6px', fontFamily:'monospace' }}>{vaultMsg}</div>}
+              </div>
+            </div>
+
             {/* Platform selector */}
             <div style={S.card}>
               <div style={S.label}>STEP 1 — SELECT PLATFORMS</div>
@@ -169,22 +291,43 @@ export default function AutoMode() {
               </div>
             </div>
 
-            {/* Profile */}
+            {/* Profile — persisted; feeds every proposal the LLM writes */}
             <div style={S.card}>
-              <div style={S.label}>STEP 2 — YOUR PROFILE</div>
-              <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>YOUR NAME</div>
-              <input value={yourName} onChange={e=>setYourName(e.target.value)} style={{...S.inp, marginBottom:'10px'}} />
+              <div style={S.label}>STEP 2 — YOUR PROFILE (SAVED &amp; USED IN EVERY PROPOSAL)</div>
+              <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:'8px', marginBottom:'10px' }}>
+                <div>
+                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>YOUR NAME</div>
+                  <input value={yourName} onChange={e=>setYourName(e.target.value)} style={S.inp} />
+                </div>
+                <div>
+                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>RATE ($/HR)</div>
+                  <input value={hourlyRate} onChange={e=>setHourlyRate(e.target.value)} style={S.inp} />
+                </div>
+              </div>
               <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>YOUR SKILLS</div>
-              <textarea value={yourSkills} onChange={e=>setYourSkills(e.target.value)} rows={3} style={{...S.inp, resize:'vertical'}} />
+              <textarea value={yourSkills} onChange={e=>setYourSkills(e.target.value)} rows={2} style={{...S.inp, resize:'vertical', marginBottom:'10px'}} />
+              <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>PORTFOLIO / PAST WORK HIGHLIGHTS</div>
+              <textarea value={portfolio} onChange={e=>setPortfolio(e.target.value)} rows={2} style={{...S.inp, resize:'vertical', marginBottom:'10px'}}
+                placeholder="e.g. Built a price-monitoring scraper handling 50k pages/day; automated invoice pipeline for a retail store…" />
+              <div style={{ display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap' }}>
+                <button onClick={saveProfile}
+                  style={{ padding:'7px 16px', borderRadius:'3px', border:'1px solid #00d4ff', background:'rgba(0,212,255,0.1)', color: profileSaved?'#00ff88':'#00d4ff', fontFamily:'monospace', fontSize:'9px', cursor:'pointer', letterSpacing:'0.08em' }}>
+                  {profileSaved ? '✓ SAVED' : '💾 SAVE PROFILE'}
+                </button>
+                <label style={{ display:'flex', alignItems:'center', gap:'6px', fontSize:'10px', color: autoSubmit?'#ff9500':'rgba(255,255,255,0.4)', cursor:'pointer' }}>
+                  <input type="checkbox" checked={autoSubmit} onChange={e=>setAutoSubmit(e.target.checked)} style={{ accentColor:'#ff9500' }} />
+                  Full auto-submit (skip the approve click — Jarvis bids on its own)
+                </label>
+              </div>
             </div>
 
             {/* Start/Stop pipeline */}
             <div style={S.card}>
               <div style={S.label}>STEP 3 — SCAN & GENERATE</div>
               <p style={{ fontSize:'11px', color:'rgba(255,255,255,0.4)', lineHeight:1.6, marginBottom:'12px' }}>
-                Jarvis will scan selected platforms, score jobs, and draft proposals.
-                They will appear in the <strong style={{color:'#ff9500'}}>QUEUE</strong> tab for your review.
-                Nothing is submitted until you approve.
+                Full pipeline: <strong style={{color:'#00d4ff'}}>scan</strong> → <strong style={{color:'#ff9500'}}>score &amp; drop bad fits</strong> → <strong style={{color:'#00ff88'}}>write a proposal for every good job</strong> → queue.
+                Drafts appear in the <strong style={{color:'#ff9500'}}>QUEUE</strong> tab — one click submits them through your logged-in browser.
+                {autoSubmit ? ' Auto-submit is ON: Jarvis will bid without asking.' : ' Nothing is submitted until you say yes.'}
               </p>
               <div style={{ display:'flex', gap:'8px' }}>
                 <button onClick={startPipeline} disabled={running||selected.length===0}

@@ -367,6 +367,18 @@ class ExecutorAgent(BaseAgent):
                 cx, cy = el["click_point"]
                 self._emit(f"[Executor] Clicking '{el.get('text')}' at ({cx},{cy})")
                 return da.click(cx, cy)
+            if t == "click_text":
+                # Vision-guided click: OCR the screen, find the text, click it.
+                target = p.get("text", "")
+                self._emit(f"[Executor] Looking for '{target}' on screen")
+                from agents import vision_agent as va
+                r = va.click_text(target)
+                if r.get("success"):
+                    self._emit(f"[Executor] Clicked '{target}' at ({r.get('x')},{r.get('y')})",
+                               "success")
+                return r
+            if t == "wait_for_window":
+                return da.wait_for_window(p.get("title", ""), float(p.get("timeout", 8)))
             if t == "type_text":
                 self._emit("[Executor] Typing text")
                 return da.type_text(p.get("text", ""))

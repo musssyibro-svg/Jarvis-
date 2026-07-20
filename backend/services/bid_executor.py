@@ -57,7 +57,10 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         await asyncio.sleep(2.5)
 
         if "login" in page.url.lower():
-            return {"success": False, "message": "NOT_LOGGED_IN — open Edge/Chromium profile and log into Freelancer first"}
+            return {"success": False, "message":
+                    "NOT_LOGGED_IN — use Freelance ▸ Auto Mode ▸ Platform Logins "
+                    "(or POST /sessions/open-login/freelancer) to log in once; "
+                    "Jarvis reuses that session afterwards"}
 
         # Try to open the bid form if it's behind a button
         BID_BUTTON_SELECTORS = [

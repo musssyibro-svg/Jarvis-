@@ -279,20 +279,42 @@ def analyze_screen(question: str = "") -> dict:
         pass
 
     # ── Fallback: OCR text -> reasoning model ─────────────────────────────────
+    # ALWAYS produce an answer here. The old code only asked the LLM when the
+    # caller passed a question, so "AI analyze" with the default prompt
+    # returned raw OCR and nothing else — the "can screenshot but can't
+    # analyze" complaint.
     screen_text = ""
+    ocr_error = None
     if not vision_used:
         ocr_result = ocr_screen()
-        screen_text = ocr_result.get("text", "") if ocr_result.get("success") else ""
-        if question:
+        if ocr_result.get("success"):
+            screen_text = ocr_result.get("text", "")
+        else:
+            ocr_error = ocr_result.get("error", "OCR failed")
+        answer = None
+        if screen_text.strip():
+            prompt = (f"You are Jarvis looking at the user's screen through OCR. "
+                      f"The extracted screen text is:\n---\n{screen_text[:2500]}\n---\n\n"
+                      f"Question: {q}\n"
+                      f"Answer concretely from the text above. Then, on a new line "
+                      f"starting with 'Suggested next action:', suggest ONE next "
+                      f"desktop action if any is obviously useful (or 'none').")
             try:
                 from services.ollama_manager import reason
-                answer = reason(
-                    f"Screen OCR text:\n{screen_text[:1500]}\n\nQuestion: {q}\nAnswer from the text above."
-                )
-            except Exception as e:
-                answer = f"AI analysis unavailable: {e}"
+                answer = reason(prompt)
+            except Exception:
+                answer = None
+            if not answer:
+                try:
+                    from services.deepseek_service import call_model
+                    answer = call_model(prompt, fast=True)
+                except Exception as e:
+                    answer = f"AI analysis unavailable: {e}"
         else:
-            answer = None
+            answer = (f"I captured the screen but couldn't read any text from it"
+                      + (f" ({ocr_error})" if ocr_error else "")
+                      + ". Install/fix Tesseract OCR, or pull the llava vision "
+                        "model in Ollama for true image understanding.")
 
     return {
         "success":     True,
@@ -305,6 +327,96 @@ def analyze_screen(question: str = "") -> dict:
         "answer":      answer,
         "ai_answer":   answer,   # backward-compat with existing UI key
     }
+
+
+def locate_text_coords(search_text: str, region: dict = None) -> dict:
+    """
+    Find WHERE text is on screen (not just whether it exists).
+    Uses pytesseract.image_to_data for word-level bounding boxes, matching the
+    full search phrase across consecutive words. Returns the click point of the
+    best match — this is what lets Jarvis SEE a button and click it.
+    """
+    if not HAS_OCR:
+        return {"success": False, "error": "pytesseract not installed"}
+    lang_err = _ensure_tessdata()
+    if lang_err:
+        return {"success": False, "error": lang_err}
+
+    shot = screenshot(save=False, region=region)
+    if not shot.get("success"):
+        return shot
+    try:
+        img = Image.open(io.BytesIO(base64.b64decode(shot["b64"])))
+        data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+        words = [w.strip().lower() for w in data["text"]]
+        target = [w for w in search_text.lower().split() if w]
+        if not target:
+            return {"success": False, "error": "empty search text"}
+
+        matches = []
+        n = len(words)
+        for i in range(n):
+            if not words[i]:
+                continue
+            # phrase match: consecutive OCR words on the same line
+            j, k = i, 0
+            boxes = []
+            while j < n and k < len(target):
+                if not words[j]:
+                    j += 1
+                    continue
+                if target[k] in words[j] or words[j] in target[k]:
+                    boxes.append(j)
+                    k += 1
+                    j += 1
+                else:
+                    break
+            if k == len(target):
+                left  = min(data["left"][b] for b in boxes)
+                top   = min(data["top"][b] for b in boxes)
+                right = max(data["left"][b] + data["width"][b] for b in boxes)
+                bot   = max(data["top"][b] + data["height"][b] for b in boxes)
+                conf  = sum(float(data["conf"][b]) for b in boxes) / len(boxes)
+                # region offsets so coordinates are absolute screen positions
+                ox = (region or {}).get("left", 0)
+                oy = (region or {}).get("top", 0)
+                matches.append({
+                    "text": " ".join(data["text"][b] for b in boxes),
+                    "x": ox + (left + right) // 2,
+                    "y": oy + (top + bot) // 2,
+                    "box": [ox + left, oy + top, ox + right, oy + bot],
+                    "confidence": round(conf, 1),
+                })
+        if not matches:
+            return {"success": True, "found": False, "search": search_text, "matches": []}
+        matches.sort(key=lambda m: -m["confidence"])
+        best = matches[0]
+        return {"success": True, "found": True, "search": search_text,
+                "x": best["x"], "y": best["y"], "best": best,
+                "matches": matches[:10]}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def click_text(search_text: str, region: dict = None, button: str = "left") -> dict:
+    """
+    The see→act primitive: OCR the screen, locate the text, move the mouse
+    there and click it. Verifies afterwards by re-reading the screen.
+    """
+    loc = locate_text_coords(search_text, region=region)
+    if not loc.get("success"):
+        return loc
+    if not loc.get("found"):
+        return {"success": False, "error": f"'{search_text}' not visible on screen",
+                "found": False}
+    from agents import desktop_agent as da
+    move_res = da.move(loc["x"], loc["y"], duration=0.25)
+    if not move_res.get("success"):
+        return move_res
+    click_res = da.click(loc["x"], loc["y"], button=button)
+    click_res.update({"target": search_text, "x": loc["x"], "y": loc["y"],
+                      "matched": loc.get("best", {}).get("text", "")})
+    return click_res
 
 
 def find_image_on_screen(template_path: str, confidence: float = 0.8) -> dict:

@@ -126,7 +126,7 @@ export default function Agents() {
     try { setInsights(await apiFetch(`${API}/agents/memory/insights`)) } catch(e) { setInsights({error:e.message}) }
   }
 
-  const TABS = ['commander','desktop','vision','planner','memory','feed']
+  const TABS = ['commander','desktop','vision','planner','registry','memory','feed']
 
   return (
     <div style={{ padding:20, overflowY:'auto', height:'100%', boxSizing:'border-box' }}>
@@ -359,7 +359,13 @@ export default function Agents() {
                 <button onClick={analyzeScreen} style={btn(C.purple)}>🤖 AI ANALYZE SCREEN</button>
                 <div style={{ height:1,background:'rgba(255,255,255,0.06)',margin:'2px 0' }} />
                 <input value={findText} onChange={e=>setFindText(e.target.value)} style={inp} placeholder="Text to find on screen…" />
-                <button onClick={findOnScreen} style={btn(C.orange)}>🔎 FIND TEXT ON SCREEN</button>
+                <div style={{ display:'flex', gap:7 }}>
+                  <button onClick={findOnScreen} style={{...btn(C.orange), flex:1}}>🔎 FIND TEXT</button>
+                  <button onClick={async()=>{ if(!findText.trim())return
+                    try { setOcrResult(await apiPost(`${API}/agents/vision/click-text`, {text:findText})) }
+                    catch(e){ setOcrResult({error:e.message}) } }}
+                    style={{...btn(C.green), flex:1}}>🎯 FIND + CLICK IT</button>
+                </div>
               </div>
             </div>
           </div>
@@ -382,9 +388,17 @@ export default function Agents() {
                     {ocrResult.found ? '✓ FOUND' : '✗ NOT FOUND'}: "{ocrResult.search}"
                   </div>
                 )}
-                {ocrResult.ai_answer && (
-                  <div style={{ background:'rgba(0,4,8,0.8)',padding:10,borderRadius:3,fontSize:11,color:'rgba(200,230,240,0.8)',lineHeight:1.7,marginBottom:8 }}>
-                    {ocrResult.ai_answer}
+                {(ocrResult.ai_answer || ocrResult.answer) && (
+                  <div style={{ background:'rgba(0,4,8,0.8)',padding:10,borderRadius:3,fontSize:11,color:'rgba(200,230,240,0.8)',lineHeight:1.7,marginBottom:8,borderLeft:`2px solid ${C.purple}` }}>
+                    <div style={{ fontSize:8, color:C.purple, letterSpacing:'0.15em', marginBottom:5, fontFamily:'monospace' }}>
+                      AI ANALYSIS {ocrResult.method ? `(${ocrResult.method})` : ''}
+                    </div>
+                    {ocrResult.ai_answer || ocrResult.answer}
+                  </div>
+                )}
+                {ocrResult.target && ocrResult.success && (
+                  <div style={{ fontFamily:'monospace', fontSize:11, color:C.green, marginBottom:8 }}>
+                    ✓ Clicked "{ocrResult.matched || ocrResult.target}" at ({ocrResult.x},{ocrResult.y})
                   </div>
                 )}
                 {ocrResult.text && (
@@ -467,6 +481,9 @@ export default function Agents() {
         </div>
       )}
 
+      {/* ── REGISTRY (add / manage custom agents) ── */}
+      {tab==='registry' && <RegistryPanel />}
+
       {/* ── MEMORY ── */}
       {tab==='memory' && (
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14 }}>
@@ -535,6 +552,115 @@ export default function Agents() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function RegistryPanel() {
+  const [agents,   setAgents]   = useState([])
+  const [template, setTemplate] = useState('')
+  const [name,     setName]     = useState('')
+  const [desc,     setDesc]     = useState('')
+  const [code,     setCode]     = useState('')
+  const [msg,      setMsg]      = useState(null)
+  const [runOut,   setRunOut]   = useState(null)
+
+  const load = async () => {
+    try {
+      const r = await apiFetch(`${API}/agents/registry`)
+      setAgents(r.agents || [])
+      if (r.template && !code) setTemplate(r.template)
+    } catch {}
+  }
+  useEffect(() => { load() }, [])
+
+  const install = async () => {
+    if (!name.trim() || !code.trim()) { setMsg({err:'Name and code required'}); return }
+    try {
+      const r = await apiPost(`${API}/agents/registry/install`, {name, code, description:desc})
+      setMsg({ok:`Installed '${r.name}' (${r.kind}) ✓ — it's live now`})
+      setName(''); setCode(''); setDesc(''); load()
+    } catch(e) { setMsg({err:e.message}) }
+  }
+
+  const toggle = async (n) => { try { await apiPost(`${API}/agents/registry/${n}/toggle`, {}); load() } catch(e){ alert(e.message) } }
+  const remove = async (n) => {
+    if (!confirm(`Remove custom agent '${n}'?`)) return
+    try { await fetch(`${API}/agents/registry/${n}`, {method:'DELETE'}); load() } catch(e){ alert(e.message) }
+  }
+  const runAgent = async (n) => {
+    try { setRunOut({agent:n, ...(await apiPost(`${API}/agents/registry/${n}/run`, {context:{}}))}) }
+    catch(e) { setRunOut({agent:n, error:e.message}) }
+  }
+
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+      <div>
+        <div style={card}>
+          <div style={label}>ADD AGENT — PASTE PYTHON, IT GOES LIVE</div>
+          <p style={{ fontSize:11, color:'rgba(255,255,255,0.35)', lineHeight:1.6, marginBottom:10 }}>
+            Any class with a <code style={{color:C.green}}>run(context)</code> method (or a plain
+            <code style={{color:C.green}}> run(context)</code> function) becomes a Jarvis agent:
+            saved to <code style={{color:C.accent}}>agents/custom/</code>, registered instantly,
+            reloaded on every restart, callable by the orchestrator and from this panel.
+          </p>
+          <div style={{ display:'flex', gap:7, marginBottom:8 }}>
+            <input value={name} onChange={e=>setName(e.target.value)} style={{...inp, flex:1}} placeholder="agent_name (letters/underscores)" />
+            <input value={desc} onChange={e=>setDesc(e.target.value)} style={{...inp, flex:2}} placeholder="what it does (optional)" />
+          </div>
+          <textarea value={code} onChange={e=>setCode(e.target.value)} rows={12}
+            style={{...inp, fontFamily:'monospace', fontSize:10, resize:'vertical', marginBottom:8}}
+            placeholder={template || 'class MyAgent:\n    def run(self, context):\n        return {"ok": True}'} />
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={install} style={btn(C.green)}>⬢ INSTALL AGENT</button>
+            <button onClick={()=>setCode(template)} style={btn('rgba(255,255,255,0.25)')}>USE TEMPLATE</button>
+          </div>
+          {msg?.ok  && <div style={{ marginTop:8, fontSize:10, color:C.green,  fontFamily:'monospace' }}>{msg.ok}</div>}
+          {msg?.err && <div style={{ marginTop:8, fontSize:10, color:C.red,    fontFamily:'monospace' }}>{msg.err}</div>}
+        </div>
+        {runOut && (
+          <div style={card}>
+            <div style={label}>RUN OUTPUT — {runOut.agent}</div>
+            <pre style={{ background:'rgba(0,4,8,0.9)', padding:10, borderRadius:3, fontSize:10, color:'rgba(200,230,240,0.7)', maxHeight:220, overflowY:'auto', whiteSpace:'pre-wrap' }}>
+              {JSON.stringify(runOut, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
+      <div>
+        <div style={card}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+            <div style={label}>REGISTERED AGENTS ({agents.length})</div>
+            <button onClick={load} style={{ ...btn('rgba(255,255,255,0.2)'), padding:'3px 8px', fontSize:8 }}>↺</button>
+          </div>
+          {agents.map(a => (
+            <div key={a.name} style={{ padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
+                <Dot on={a.enabled} />
+                <span style={{ fontSize:12, fontWeight:600, color:'#c4e4ef', fontFamily:'monospace' }}>{a.name}</span>
+                <span style={{ fontSize:8, padding:'1px 6px', borderRadius:2, fontFamily:'monospace',
+                  background: a.source==='custom' ? 'rgba(167,139,250,0.15)' : 'rgba(0,212,255,0.1)',
+                  color: a.source==='custom' ? C.purple : C.accent,
+                  border:`1px solid ${a.source==='custom'?C.purple:C.accent}33` }}>
+                  {a.source.toUpperCase()}
+                </span>
+                <span style={{ flex:1 }} />
+                <button onClick={()=>runAgent(a.name)} style={{ ...btn(C.green), fontSize:8, padding:'3px 9px' }}>▶ RUN</button>
+                <button onClick={()=>toggle(a.name)} style={{ ...btn(C.orange), fontSize:8, padding:'3px 9px' }}>{a.enabled?'DISABLE':'ENABLE'}</button>
+                {a.source==='custom' && (
+                  <button onClick={()=>remove(a.name)} style={{ ...btn(C.red), fontSize:8, padding:'3px 9px' }}>✕</button>
+                )}
+              </div>
+              {(a.description || a.kind) && (
+                <div style={{ fontSize:9, color:'rgba(255,255,255,0.3)', fontFamily:'monospace', paddingLeft:15 }}>
+                  {a.kind}{a.kind && a.description ? ' — ' : ''}{a.description}
+                </div>
+              )}
+            </div>
+          ))}
+          {agents.length===0 && <div style={{ color:'rgba(255,255,255,0.2)', fontSize:11 }}>Loading registry…</div>}
+        </div>
+      </div>
     </div>
   )
 }
