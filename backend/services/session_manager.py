@@ -174,6 +174,34 @@ def _strip(entries: list[dict]) -> list[dict]:
     return [{k: v for k, v in e.items() if k != "_ts"} for e in entries]
 
 
+def is_logged_in(platform: str, max_age: int = 900) -> bool | None:
+    """
+    Pre-submission session check. Returns True/False/None(unknown). Uses the
+    cache when fresh; otherwise runs a real check. This is what stops the
+    RemoteOK-style failure cascade of bidding while logged out — the executor
+    calls it and skips (not fails) when the session isn't valid.
+    """
+    platform = (platform or "").strip().lower()
+    if platform not in PLATFORMS:
+        return None
+    now = time.time()
+    with _cache_lock:
+        cached = _cache.get(platform)
+    if cached and now - cached.get("_ts", 0) < max_age:
+        return cached.get("logged_in")
+    res = check_status([platform], refresh=True)
+    for p in res.get("platforms", []):
+        if p["platform"] == platform:
+            return p.get("logged_in")
+    return None
+
+
+def logged_in_platforms() -> list[str]:
+    """Platforms currently known to be logged in (from cache; cheap)."""
+    with _cache_lock:
+        return [p for p, e in _cache.items() if e.get("logged_in") is True]
+
+
 # ── Interactive login window ──────────────────────────────────────────────────
 
 USERNAME_SELECTORS = [
@@ -199,12 +227,11 @@ def open_login(platform: str) -> dict:
         return {"ok": True, "already_open": True,
                 "message": f"A login window for {PLATFORMS[platform]['label']} is already open."}
 
-    from core.browser_lock import acquire
-    lock = acquire(f"login:{platform}")
-    if not lock.get("ok"):
-        return {"ok": False, "error": lock.get("message", "Browser busy"),
-                "busy_with": lock.get("busy_with")}
-
+    # A login window is a SEPARATE visible browser the human drives; it must NOT
+    # hold the global browser lock, or "Browser busy (owned by login:freelancer)"
+    # freezes status checks and bid submission for the 15 minutes the window
+    # stays open (exactly the bug in the screenshots). Guard concurrency with a
+    # per-platform flag instead, and leave the shared lock free.
     t = threading.Thread(target=_login_window_worker, args=(platform,), daemon=True)
     t.start()
     cred = None
@@ -223,7 +250,6 @@ def open_login(platform: str) -> dict:
 
 
 def _login_window_worker(platform: str) -> None:
-    from core.browser_lock import release
     meta = PLATFORMS[platform]
     _login_windows[platform] = True
     try:
@@ -277,7 +303,6 @@ def _login_window_worker(platform: str) -> None:
         print(f"[session_manager] login window failed for {platform}: {e}")
     finally:
         _login_windows.pop(platform, None)
-        release(f"login:{platform}")
         # Session probably changed — refresh this platform's cached status.
         with _cache_lock:
             _cache.pop(platform, None)

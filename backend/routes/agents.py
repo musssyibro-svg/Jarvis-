@@ -432,6 +432,13 @@ def registry_run(name: str, body: dict = None):
     return registry.run_agent(name, (body or {}).get("context", body or {}))
 
 
+@router.get("/tools")
+def list_tools():
+    """Deterministic action shortcuts the Tool Registry resolves without the LLM."""
+    from services.tool_registry import list_tools
+    return {"tools": list_tools()}
+
+
 # ── Ollama health + model management (V8) ────────────────────────────────────
 @router.get("/ollama/status")
 def ollama_status():

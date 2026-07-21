@@ -77,24 +77,46 @@ class ProposalAgent(BaseAgent):
         from services.deepseek_service import call_model
         from services.profile_service import prompt_block
         platform = job.get("platform", "freelance")
-        prompt = f"""Write a professional job application for {platform}.
+        job_type = job.get("job_type", "")
+
+        # Tailor the angle to the role so a technical profile doesn't dump
+        # "Python automation" into an admin/non-technical posting.
+        if job_type in ("dev", "data"):
+            angle = ("This is a technical role — lead with the concrete technical "
+                     "approach and the specific tools you'd use.")
+        elif job_type in ("admin", "writing", "design", "other"):
+            angle = (f"This is a '{job_type or 'general'}' role, NOT a software job. "
+                     f"Do NOT pitch Python/automation/coding unless the post explicitly "
+                     f"asks for it. Focus on reliability, communication, organisation, "
+                     f"and directly relevant transferable strengths.")
+        else:
+            angle = "Match the proposal to exactly what the post asks for."
+
+        prompt = f"""Write a specific, winning freelance proposal for {platform}.
 
 Job Title: {job.get('title','')}
 Company: {job.get('company','the company')}
 Description: {job.get('description','')}
 Budget: {job.get('budget','not specified')}
+Detected role type: {job_type or 'unknown'}
 
 {prompt_block(profile)}
 
+{angle}
+
 Rules:
-- Under 200 words
-- Open by proving you understand the specific problem
-- Mention 1-2 directly relevant skills
-- Include a realistic timeline
-- End with a confident call to action
+- Under 180 words, plain and human — no corporate filler.
+- BANNED phrases (never use): "I am confident in my ability", "I am the perfect
+  fit", "I have a proven track record", "leverage my skills". They read as spam.
+- First sentence MUST reference a concrete detail from THIS job description.
+- Name 1-2 skills that are actually relevant to THIS role (see role type above).
+- Give a realistic next step or timeline.
 - Sign off as: {profile.get('name','')}
-Output ONLY the application/proposal text."""
-        return call_model(prompt)
+Output ONLY the proposal text."""
+        # fast model: proposals are short and the prompt is tightly constrained,
+        # so the light model is plenty — and far quicker than deepseek-r1's
+        # <think> passes, which is a big part of why the pipeline felt slow.
+        return call_model(prompt, fast=True)
 
     def _template(self, job: dict, profile: dict) -> str:
         """Offline fallback so a missing LLM never produces zero output."""

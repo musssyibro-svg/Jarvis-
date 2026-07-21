@@ -37,4 +37,30 @@ ollama pull llava:7b          # true screenshot understanding for vision
 pip install cryptography      # enables the credential vault
 ```
 
+## 6. Turn on the Income Engine (the "make money on its own" part)
+**Freelance ▸ Auto Mode ▸ ⚙ INCOME ENGINE ▸ START EARNING (24/7)**. From then on
+Jarvis loops on its own — scan → score → draft → queue — every N minutes, ranks
+jobs by fit and pay, and drops bad matches. No RUN button. The **Cycles** counter
+ticks up each loop. It only auto-submits if you turned on Full auto-submit; else
+it just queues drafts for your one-click approval.
+
+---
+
+## How platforms behave (why RemoteOK bids were "failing")
+- **Bid platforms** (Freelancer, PeoplePerHour, Upwork) — Jarvis submits the
+  proposal for you once you're logged in.
+- **Job boards** (RemoteOK, We Work Remotely, Remote.co, Wellfound) — these have
+  **no on-site bid form**; you apply through the employer's own link. Jarvis now
+  marks these **"ready — apply via job link"** instead of failing them. That's
+  the fix for the wall of red FAILED badges.
+- **Talent platforms** (Contra, Hubstaff, Fiverr) — clients contact you from your
+  profile; there's nothing to bid on.
+
+## Desktop commands are now direct (the "qq" fix)
+"open qq", "open chrome", "check my qq messages", "what's on my screen" run
+immediately as real actions — no more the planner inventing "open Telegram and
+search qq". Known commands skip the LLM entirely, so they're fast and correct.
+
+---
+
 That's it. No logins in chat, no other files needed.

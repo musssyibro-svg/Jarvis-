@@ -40,6 +40,8 @@ export default function AutoMode() {
   const [sessBusy,    setSessBusy]   = useState(false)
   const [vaultForm,   setVaultForm]  = useState({ platform:'freelancer', username:'', password:'' })
   const [vaultMsg,    setVaultMsg]   = useState('')
+  const [income,      setIncome]     = useState(null)
+  const [intervalMin, setIntervalMin]= useState(20)
   const [expanded,    setExpanded]   = useState({})
   const feedRef  = useRef(null)
   const sseRef   = useRef(null)
@@ -68,9 +70,9 @@ export default function AutoMode() {
 
   // ── Polling ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const poll = () => { loadStatus(); loadQueue(); loadExecStatus() }
+    const poll = () => { loadStatus(); loadQueue(); loadExecStatus(); loadIncome() }
     poll()
-    const t = setInterval(poll, 2500)
+    const t = setInterval(poll, 3000)
     return () => clearInterval(t)
   }, [])
 
@@ -133,6 +135,14 @@ export default function AutoMode() {
   }
 
   const loadStatus     = async () => { try { const r = await fetch(`${API}/orchestrator/status`); if (r.ok) setStatus(await r.json()) } catch {} }
+  const loadIncome     = async () => { try { const r = await fetch(`${API}/automation/income/status`); if (r.ok) { const d = await r.json(); setIncome(d); if (d.interval_min) setIntervalMin(d.interval_min) } } catch {} }
+  const toggleIncome   = async () => {
+    if (income?.enabled) { await fetch(`${API}/automation/income/stop`, {method:'POST'}) }
+    else { await fetch(`${API}/automation/income/start`, {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ interval_min: Number(intervalMin)||20, platforms: selected }) }) }
+    loadIncome()
+  }
+  const incomeRunNow   = async () => { await fetch(`${API}/automation/income/run-now`, {method:'POST'}); loadIncome() }
   const loadExecStatus = async () => { try { const r = await fetch(`${API}/automation/executor/status`); if (r.ok) setExecStatus(await r.json()) } catch {} }
   const loadQueue      = async () => {
     try {
@@ -343,6 +353,59 @@ export default function AutoMode() {
               </div>
             </div>
 
+            {/* Income Engine — the always-on loop */}
+            <div style={{...S.card, borderColor: income?.enabled ? 'rgba(0,255,136,0.5)' : 'rgba(255,149,0,0.3)',
+                         boxShadow: income?.enabled ? '0 0 20px rgba(0,255,136,0.12)' : 'none' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div style={{...S.label, color: income?.enabled ? '#00ff88' : '#ff9500'}}>
+                  ⚙ INCOME ENGINE {income?.enabled ? '— RUNNING 24/7' : '— OFF'}
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <span style={{ width:8, height:8, borderRadius:'50%',
+                    background: income?.enabled ? '#00ff88' : 'rgba(255,255,255,0.2)',
+                    boxShadow: income?.enabled ? '0 0 8px #00ff88' : 'none',
+                    animation: income?.enabled ? 'pulse 1.6s infinite' : 'none' }} />
+                </div>
+              </div>
+              <p style={{ fontSize:'11px', color:'rgba(255,255,255,0.4)', lineHeight:1.6, margin:'6px 0 12px' }}>
+                No button-pressing. Jarvis loops <strong style={{color:'#00d4ff'}}>scan → score → draft → queue</strong> every
+                few minutes on the platforms you're logged into, ranks jobs by fit &amp; pay, and drops bad matches.
+                {autoSubmit ? ' Auto-submit is ON — it also bids for you.' : ' Approve from the Queue when you\'re ready.'}
+              </p>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'12px' }}>
+                {[['CYCLES', income?.cycles ?? 0, '#00ff88'],
+                  ['EVERY', `${income?.interval_min ?? intervalMin}m`, '#00d4ff'],
+                  ['STATUS', income?.enabled ? 'LIVE' : 'idle', income?.enabled ? '#00ff88' : '#888']].map(([l,v,c]) => (
+                  <div key={l} style={{ background:'rgba(0,10,20,0.6)', border:`1px solid ${c}22`, borderRadius:'3px', padding:'9px', textAlign:'center' }}>
+                    <div style={{ fontSize:'8px', color:`${c}99`, letterSpacing:'0.15em', marginBottom:'3px' }}>{l}</div>
+                    <div style={{ fontSize:'17px', fontWeight:'700', color:c }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+                <button onClick={toggleIncome}
+                  style={{ padding:'9px 18px', borderRadius:'3px',
+                    border:`1px solid ${income?.enabled ? '#ff4444' : '#00ff88'}`,
+                    background: income?.enabled ? 'rgba(255,68,68,0.1)' : 'rgba(0,255,136,0.12)',
+                    color: income?.enabled ? '#ff4444' : '#00ff88',
+                    fontFamily:'monospace', fontSize:'10px', cursor:'pointer', letterSpacing:'0.1em' }}>
+                  {income?.enabled ? '■ STOP ENGINE' : '▶ START EARNING (24/7)'}
+                </button>
+                {income?.enabled && (
+                  <button onClick={incomeRunNow}
+                    style={{ padding:'9px 14px', borderRadius:'3px', border:'1px solid #00d4ff', background:'rgba(0,212,255,0.1)', color:'#00d4ff', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
+                    ⚡ RUN CYCLE NOW
+                  </button>
+                )}
+                <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:'10px', color:'rgba(255,255,255,0.4)' }}>
+                  every
+                  <input type="number" min="2" value={intervalMin} onChange={e=>setIntervalMin(e.target.value)}
+                    style={{...S.inp, width:'54px', padding:'5px'}} />
+                  min
+                </label>
+              </div>
+            </div>
+
             {/* Executor controls */}
             <div style={{...S.card, borderColor:'rgba(0,255,136,0.2)'}}>
               <div style={{...S.label, color:'rgba(0,255,136,0.5)'}}>STEP 4 — SUBMIT APPROVED BIDS</div>
@@ -469,7 +532,7 @@ export default function AutoMode() {
               const app      = payload.application || ''
               const job      = payload.job || {}
               const isOpen   = expanded[q.id]
-              const SC = { pending:'#ff9500', approved:'#00ff88', done:'#888', rejected:'#ff4444', failed:'#ff4444', executing:'#a78bfa' }
+              const SC = { pending:'#ff9500', approved:'#00ff88', done:'#888', rejected:'#ff4444', failed:'#ff4444', executing:'#a78bfa', ready:'#00d4ff', needs_login:'#ff9500' }
               const sc = SC[q.status] || '#888'
 
               return (
@@ -478,6 +541,8 @@ export default function AutoMode() {
                   <div style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap', cursor:'pointer' }} onClick={() => setExpanded(e=>({...e,[q.id]:!e[q.id]}))}>
                     <Badge label={q.status} color={sc} />
                     <Badge label={q.platform} color="#00d4ff" />
+                    {job.job_type && job.job_type !== 'other' && <Badge label={job.job_type} color="#a78bfa" />}
+                    {job.est_pay > 0 && <Badge label={`~$${job.est_pay}`} color="#00ff88" />}
                     <span style={{ fontSize:'12px', fontWeight:'600', color:'#c4e4ef', flex:1 }}>{q.job_title}</span>
                     {q.status === 'executing' && <span style={{ fontSize:'9px', color:'#a78bfa', fontFamily:'monospace', animation:'pulse 1s infinite' }}>● SUBMITTING…</span>}
                     <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.25)', fontFamily:'monospace' }}>{isOpen?'▲':'▼'}</span>
@@ -527,6 +592,8 @@ export default function AutoMode() {
                           </button>
                         )}
                         {q.status === 'done' && <span style={{ fontSize:'10px', color:'#00ff88', fontFamily:'monospace', alignSelf:'center' }}>✓ BID SUBMITTED</span>}
+                        {q.status === 'ready' && <span style={{ fontSize:'10px', color:'#00d4ff', fontFamily:'monospace', alignSelf:'center' }}>↗ APPLY VIA JOB LINK (job board — no on-site bidding)</span>}
+                        {q.status === 'needs_login' && <span style={{ fontSize:'10px', color:'#ff9500', fontFamily:'monospace', alignSelf:'center' }}>🔐 LOG IN TO {String(q.platform).toUpperCase()} THEN RE-SUBMIT</span>}
                         {q.status === 'failed' && <span style={{ fontSize:'10px', color:'#ff4444', fontFamily:'monospace', alignSelf:'center' }}>✗ FAILED — check feed for details</span>}
                       </div>
                     </div>

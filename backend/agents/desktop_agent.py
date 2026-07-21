@@ -331,6 +331,7 @@ def execute_chain(steps: list) -> dict:
         "write_file":   lambda p: write_file(p.get("path", ""), p.get("content", "")),
         "screenshot":   lambda p: __import__("agents.vision_agent", fromlist=["screenshot"]).screenshot(),
         "click_text":   lambda p: __import__("agents.vision_agent", fromlist=["click_text"]).click_text(p.get("text", "")),
+        "analyze":      lambda p: __import__("agents.vision_agent", fromlist=["analyze_screen"]).analyze_screen(p.get("question", "")),
     }
     results = []
     for i, s in enumerate(steps or []):

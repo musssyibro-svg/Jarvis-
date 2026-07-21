@@ -54,6 +54,31 @@ def save_profile(body: dict):
     return sp(body or {})
 
 
+# ── Income engine (always-on freelance loop) ─────────────────────────────────
+
+@router.get("/income/status")
+def income_status():
+    from services.income_engine import status
+    return status()
+
+@router.post("/income/start")
+def income_start(body: dict = None):
+    from services.income_engine import start
+    b = body or {}
+    return start(interval_min=b.get("interval_min"), platforms=b.get("platforms"),
+                 max_jobs=b.get("max_jobs"))
+
+@router.post("/income/stop")
+def income_stop():
+    from services.income_engine import stop
+    return stop()
+
+@router.post("/income/run-now")
+def income_run_now():
+    from services.income_engine import run_once_now
+    return run_once_now()
+
+
 @router.post("/stop")
 def stop_auto():
     from services.automation_engine import _state

@@ -22,3 +22,10 @@ frontend/dist/
 
 # OS
 .DS_Store
+
+# local runtime artifacts (never commit — secrets/state)
+backend/vault.key
+backend/browser-profile/
+backend/screenshots/
+backend/agents/custom/*.py
+!backend/agents/custom/__init__.py

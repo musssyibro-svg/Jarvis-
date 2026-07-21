@@ -75,6 +75,17 @@ def _startup():
         logger.info("Reply monitor armed.")
     except Exception as e:
         logger.warning(f"Reply monitor: {e}")
+    try:
+        from services.planner_service import start_watchdog
+        start_watchdog()        # auto-complete plans + recover stalled steps
+    except Exception as e:
+        logger.warning(f"Plan watchdog: {e}")
+    try:
+        from services.income_engine import start_watchdog as start_income
+        start_income()          # resume the always-on income engine if it was enabled
+        logger.info("Income engine armed.")
+    except Exception as e:
+        logger.warning(f"Income engine: {e}")
     logger.info("Database ready.")
 
 # ── Routers ──────────────────────────────────────────────────────────────────

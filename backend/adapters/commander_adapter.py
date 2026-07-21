@@ -67,6 +67,20 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         result = ex.cancel(session_id)
         return {"response": result.get("message", "Cancelled."), "intent": "chat"}
 
+    # ── Tool Registry FIRST (the qq fix): known commands run directly as a
+    #    desktop chain instead of being handed to the LLM planner, which would
+    #    hallucinate ("open Telegram, search qq…"). Deterministic before
+    #    generative. Skipped for explicit "plan project …" phrasing.
+    if not _is_question(message) and not _re.match(
+            r"^\s*(?:plan|new|start|track|create)\s+(?:a\s+)?project\b", message, _re.I):
+        try:
+            from services.tool_registry import resolve_steps
+            tool_steps = resolve_steps(message)
+        except Exception:
+            tool_steps = None
+        if tool_steps:
+            return _run_tool_chain(message, tool_steps)
+
     # ── Long-term project planner (V10): "plan project X to ..." / "new project X"
     #    Checked BEFORE keyword-based desktop routing: the explicit "plan
     #    project" phrasing is unambiguous, and a goal like "...launch the store"
@@ -421,6 +435,39 @@ def _step_label(a) -> str:
     val = (a.params or {}).get(key, "") if key else ""
     val = str(val)
     return f"{a.action_type.replace('_', ' ')} {val[:40]}".strip()
+
+
+def _run_tool_chain(message: str, steps: list) -> dict:
+    """
+    Execute a Tool-Registry chain (open app, wait, screenshot, analyze…) directly
+    and return a chat response. If the chain includes an 'analyze' step, its
+    answer becomes the reply — so "check my qq messages" comes back with the
+    actual summary, not just "done".
+    """
+    _emit("commander", f"Recognised a direct command — running it (no planning needed)", "info")
+    labels = " → ".join(s.get("action", "").replace("_", " ") for s in steps)
+    _emit("executor", labels, "info")
+    try:
+        from agents.desktop_agent import execute_chain
+        result = execute_chain(steps)
+    except Exception as e:
+        return {"response": f"Couldn't run that: {e}", "intent": "executor",
+                "data": {"error": str(e)}}
+
+    # Surface an analyze answer if present.
+    answer = None
+    for s in result.get("steps", []):
+        if s.get("action") == "analyze" and (s.get("answer") or s.get("ai_answer")):
+            answer = s.get("answer") or s.get("ai_answer")
+    if not result.get("success"):
+        fa = result.get("failed_at")
+        return {"response": f"Ran {fa-1 if fa else 0}/{len(steps)} steps, then hit: "
+                            f"{result.get('error','')}. {answer or ''}".strip(),
+                "intent": "executor", "data": result}
+    if answer:
+        _emit("vision", "Screen read complete", "success")
+        return {"response": answer, "intent": "vision", "data": result}
+    return {"response": f"Done ✓ ({labels})", "intent": "executor", "data": result}
 
 
 def _route_action(message: str, session_id: str, intent: str) -> dict:

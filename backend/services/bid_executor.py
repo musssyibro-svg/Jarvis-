@@ -197,6 +197,42 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
     job          = payload.get("job", {})
     proposal_txt = payload.get("application", "")
     job_url      = job.get("link") or job.get("url") or ""
+    platform     = item.get("platform", "")
+
+    # ── Platform-kind gate — the root fix for the RemoteOK FAILED cascade ───────
+    # RemoteOK / WeWorkRemotely / Remote.co are job BOARDS: there is no on-site
+    # bid form to fill, so a "bid" there could only ever fail. Talent platforms
+    # (Contra/Hubstaff/Fiverr) don't take bids either. For all of these, mark the
+    # item 'ready' (a SUCCESS state meaning "apply externally"), attach the link
+    # and note — never 'failed'.
+    from services import platform_meta
+    if not platform_meta.submittable(platform):
+        note = platform_meta.apply_note(platform)
+        with conn() as db:
+            db.execute("UPDATE automation_queue SET status='ready',processed_at=? WHERE id=?",
+                       (_now(), qid))
+        STATE.emit("executor",
+                   f"'{item['job_title'][:45]}' is on a {platform_meta.KIND_LABEL[platform_meta.kind(platform)]} — "
+                   f"proposal ready, apply via the job link", "info")
+        return {"success": True, "status": "ready", "external": True,
+                "message": note or "Ready to apply externally", "link": job_url}
+
+    # Bid platform: the session MUST be valid before we try, or we get the
+    # logged-out failure cascade. Validate first; skip (not fail) if logged out.
+    try:
+        from services import session_manager
+        logged = session_manager.is_logged_in(platform)
+    except Exception:
+        logged = None
+    if logged is False:
+        with conn() as db:
+            db.execute("UPDATE automation_queue SET status='needs_login',processed_at=? WHERE id=?",
+                       (_now(), qid))
+        STATE.emit("executor",
+                   f"Skipped '{item['job_title'][:45]}' — not logged in to {platform}. "
+                   f"Log in via Platform Logins, then re-submit.", "warning")
+        return {"success": False, "status": "needs_login",
+                "message": f"Not logged in to {platform} — log in and retry"}
 
     if not job_url:
         with conn() as db:
