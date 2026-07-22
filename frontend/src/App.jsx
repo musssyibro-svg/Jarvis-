@@ -23,43 +23,27 @@ export default function App() {
   const Active = (TABS.find(t => t.id === tab) || TABS[0]).Comp
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden' }}>
-      {/* Animated accent hairline across the very top */}
-      <div className="accent-strip" />
-      {/* Top tab bar */}
-      <nav style={{ display:'flex', gap:'2px', padding:'8px 12px', alignItems:'center',
-        borderBottom:'1px solid rgba(0,212,255,0.15)',
-        background:'linear-gradient(90deg, rgba(4,10,16,0.98), rgba(8,14,26,0.95), rgba(4,10,16,0.98))',
-        backdropFilter:'blur(6px)', zIndex:2 }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:'#0a0e14' }}>
+      {/* Top tab bar — plain, no animation */}
+      <nav style={{ display:'flex', gap:'2px', padding:'0 12px', alignItems:'center', height:'46px', flexShrink:0,
+        borderBottom:'1px solid rgba(255,255,255,0.07)', background:'#0d1219', zIndex:2 }}>
         <div style={{ display:'flex', alignItems:'center', gap:'8px', marginRight:'24px' }}>
-          <div style={{ width:9, height:9, borderRadius:'50%',
-            background:'radial-gradient(circle, #7df9ff, #00d4ff)',
-            boxShadow:'0 0 10px #00d4ff, 0 0 22px rgba(0,212,255,0.5)',
-            animation:'pulseglow 2.5s ease-in-out infinite' }}/>
-          <span className="hud-glow" style={{ color:'#00d4ff', fontFamily:'monospace', fontSize:'14px', letterSpacing:'0.2em', fontWeight:700 }}>JARVIS</span>
-          <span style={{ color:'rgba(167,139,250,0.7)', fontFamily:'monospace', fontSize:'9px', letterSpacing:'0.25em', marginTop:2 }}>OS · V12</span>
+          <div style={{ width:7, height:7, borderRadius:'50%', background:'#00d4ff' }}/>
+          <span style={{ color:'#e8f4fa', fontSize:'14px', letterSpacing:'0.18em', fontWeight:700 }}>JARVIS</span>
         </div>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
-            padding:'8px 20px', border:'none', borderRadius:'6px 6px 0 0', cursor:'pointer',
-            fontFamily:'monospace', fontSize:'11px', letterSpacing:'0.12em',
-            background: tab===t.id
-              ? 'linear-gradient(180deg, rgba(0,212,255,0.18), rgba(0,212,255,0.04))'
-              : 'transparent',
-            color: tab===t.id ? '#7df1ff' : 'rgba(255,255,255,0.45)',
-            borderBottom: tab===t.id ? '2px solid #00d4ff' : '2px solid transparent',
-            textShadow: tab===t.id ? '0 0 12px rgba(0,212,255,0.6)' : 'none',
-            transition:'all 0.15s',
-          }}>{t.label.toUpperCase()}</button>
+            padding:'6px 18px', border:'none', borderRadius:'6px', fontSize:'12px', letterSpacing:'0.04em',
+            background: tab===t.id ? 'rgba(0,212,255,0.12)' : 'transparent',
+            color: tab===t.id ? '#7df1ff' : 'rgba(255,255,255,0.5)',
+            fontWeight: tab===t.id ? 600 : 400,
+          }}>{t.label}</button>
         ))}
       </nav>
 
-      {/* Active page */}
-      <main style={{ flex:1, overflow:'auto', position:'relative' }}>
-        <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0,
-          backgroundImage:`linear-gradient(rgba(0,212,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.025) 1px,transparent 1px)`,
-          backgroundSize:'40px 40px' }}/>
-        <div style={{ position:'relative', zIndex:1, height:'100%' }}><Active /></div>
+      {/* Active page — flex child that owns its own scrolling; never clips. */}
+      <main style={{ flex:1, minHeight:0, overflow:'hidden', position:'relative' }}>
+        <div style={{ height:'100%', overflow:'auto' }}><Active /></div>
       </main>
     </div>
   )

@@ -26,284 +26,14 @@ function drawHex(ctx, x, y, r) {
   ctx.closePath(); ctx.stroke();
 }
 
-function NeuralCore({ state }) {
-  const ref = useRef(null), stateRef = useRef(state), shockRef = useRef(0), prev = useRef(state);
-  useEffect(() => {
-    if (prev.current !== state) { shockRef.current = 1; prev.current = state; }
-    stateRef.current = state;
-  }, [state]);
-  useEffect(() => {
-    const canvas = ref.current, ctx = canvas.getContext("2d");
-    let raf, t = 0;
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
-    const size = () => {
-      const r = canvas.getBoundingClientRect();
-      canvas.width = r.width * DPR; canvas.height = r.height * DPR;
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    };
-    size();
-    const ro = new ResizeObserver(size); ro.observe(canvas);
-
-    // ambient drifting motes (survive forever; live in dead space at low opacity)
-    const MOTES = 40;
-    const motes = Array.from({ length: MOTES }, () => ({
-      x: Math.random(), y: Math.random(),
-      vx: (Math.random() - 0.5) * 0.0004, vy: (Math.random() - 0.5) * 0.0004,
-      sz: 0.5 + Math.random() * 1.3,
-    }));
-
-    const PN = 64;
-    const parts = Array.from({ length: PN }, (_, i) => ({
-      a: (i / PN) * Math.PI * 2, r: 0, base: 0.5 + Math.random() * 0.5,
-      sp: 0.0015 + Math.random() * 0.004, sz: 0.7 + Math.random() * 2.0,
-    }));
-
-    const draw = () => {
-      const st = stateRef.current, s = STATES[st] || STATES.idle, col = s.color;
-      const r = canvas.getBoundingClientRect(), cx = r.width / 2, cy = r.height / 2;
-      const R = Math.min(cx, cy);
-      // SCENE OCCUPANCY ~80%, orb +30%, orbit +20% vs 3.5
-      const ORB = R * 0.21, ORBIT = R * 0.94;
-      ctx.clearRect(0, 0, r.width, r.height);
-      t += 0.016 * s.speed;
-
-      // ── ambient layer: parallax scan line + drifting motes + hex mesh (3-7%) ──
-      ctx.save(); ctx.globalAlpha = 0.045; ctx.strokeStyle = col; ctx.lineWidth = 0.5;
-      const hx = 30;
-      for (let y = 0; y < r.height + hx; y += hx * 0.86)
-        for (let x = 0; x < r.width + hx; x += hx * 1.5) {
-          const ox = (Math.floor(y / (hx * 0.86)) % 2) * hx * 0.75;
-          drawHex(ctx, x + ox, y, hx * 0.5);
-        }
-      ctx.restore();
-      // drifting motes
-      ctx.save();
-      motes.forEach((m) => {
-        m.x += m.vx; m.y += m.vy;
-        if (m.x < 0) m.x = 1; if (m.x > 1) m.x = 0;
-        if (m.y < 0) m.y = 1; if (m.y > 1) m.y = 0;
-        ctx.beginPath(); ctx.arc(m.x * r.width, m.y * r.height, m.sz, 0, Math.PI * 2);
-        ctx.fillStyle = hexA(col, 0.06); ctx.fill();
-      });
-      ctx.restore();
-      // slow vertical scan sweep
-      const sweepY = ((t * 0.06) % 1) * r.height;
-      const sg = ctx.createLinearGradient(0, sweepY - 60, 0, sweepY + 60);
-      sg.addColorStop(0, hexA(col, 0)); sg.addColorStop(0.5, hexA(col, 0.04)); sg.addColorStop(1, hexA(col, 0));
-      ctx.fillStyle = sg; ctx.fillRect(0, sweepY - 60, r.width, 120);
-
-      // ambient core glow
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-      g.addColorStop(0, hexA(col, 0.15)); g.addColorStop(1, hexA(col, 0));
-      ctx.fillStyle = g; ctx.fillRect(0, 0, r.width, r.height);
-
-      // ── outer orbit ring with ticks ──
-      ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * 0.1);
-      ctx.strokeStyle = hexA(col, 0.16); ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(0, 0, ORBIT, 0, Math.PI * 2); ctx.stroke();
-      for (let i = 0; i < 60; i++) {
-        const a = (i / 60) * Math.PI * 2, r1 = ORBIT - (i % 5 === 0 ? 9 : 4);
-        ctx.beginPath(); ctx.moveTo(Math.cos(a) * ORBIT, Math.sin(a) * ORBIT);
-        ctx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1);
-        ctx.strokeStyle = hexA(col, 0.22); ctx.stroke();
-      }
-      ctx.restore();
-
-      // breathing rings
-      for (let i = 0; i < 3; i++) {
-        const rr = R * 0.34 + i * R * 0.16 + Math.sin(t + i) * 5;
-        ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2);
-        ctx.strokeStyle = hexA(col, 0.09 + i * 0.05); ctx.lineWidth = 1; ctx.stroke();
-      }
-
-      // ── STATE-DRIVEN COGNITION (deterministic, not random) ──
-      if (st === "thinking") {
-        // geometry lock: triangulation mesh that snaps into place
-        const lock = (Math.sin(t * 1.5) + 1) / 2;
-        const pts = 7, rad = R * 0.5;
-        const nodes = Array.from({ length: pts }, (_, i) => {
-          const a = (i / pts) * Math.PI * 2 + t * 0.2;
-          return [cx + Math.cos(a) * rad, cy + Math.sin(a) * rad];
-        });
-        ctx.strokeStyle = hexA(col, 0.25 + lock * 0.3); ctx.lineWidth = 1;
-        for (let i = 0; i < pts; i++)
-          for (let j = i + 1; j < pts; j++) {
-            ctx.beginPath(); ctx.moveTo(nodes[i][0], nodes[i][1]); ctx.lineTo(nodes[j][0], nodes[j][1]); ctx.stroke();
-          }
-        nodes.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
-      } else if (st === "scouting") {
-        // inbound scan sweeps: radar arc from edge toward core
-        for (let k = 0; k < 3; k++) {
-          const prog = ((t * 0.4 + k / 3) % 1);
-          const rr = R * (1 - prog);
-          ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2);
-          ctx.strokeStyle = hexA(col, prog * 0.4); ctx.lineWidth = 1.5; ctx.stroke();
-        }
-      } else if (st === "proposing") {
-        // ring segmentation assembling into a complete ring
-        const segs = 12, built = Math.floor(((t * 0.5) % 1) * segs) + 1;
-        for (let i = 0; i < built; i++) {
-          const a0 = (i / segs) * Math.PI * 2;
-          ctx.beginPath(); ctx.arc(cx, cy, R * 0.55, a0, a0 + (Math.PI * 2 / segs) * 0.7);
-          ctx.strokeStyle = hexA(col, 0.6); ctx.lineWidth = 3; ctx.stroke();
-        }
-      } else if (st === "executing") {
-        // beam convergence: multiple lines snapping to core
-        for (let i = 0; i < 8; i++) {
-          const a = (i / 8) * Math.PI * 2 + t * 0.5;
-          const conv = (Math.sin(t * 3 + i) + 1) / 2;
-          const r0 = R * 0.85, r1 = ORB + (R * 0.5 - ORB) * (1 - conv);
-          ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
-          ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
-          ctx.strokeStyle = hexA(col, 0.5); ctx.lineWidth = 2; ctx.stroke();
-        }
-      } else {
-        // idle / default: minimal rotating arc accents
-        for (let i = 0; i < 2; i++) {
-          const a0 = t * (i % 2 ? -0.5 : 0.7) + i * 2.1;
-          ctx.beginPath(); ctx.arc(cx, cy, R * 0.55 + i * 14, a0, a0 + Math.PI * 0.5);
-          ctx.strokeStyle = hexA(col, 0.4); ctx.lineWidth = 2; ctx.stroke();
-        }
-      }
-
-      // agent beams (directional energy entering core)
-      if (s.beam) {
-        const beamCol = s.beam === "left" ? C.emerald : s.beam === "right" ? C.amber : C.cyan;
-        const from = s.beam === "left" ? [0, cy] : s.beam === "right" ? [r.width, cy] : [cx, r.height];
-        const pulse = (Math.sin(t * 4) + 1) / 2;
-        const lg = ctx.createLinearGradient(from[0], from[1], cx, cy);
-        lg.addColorStop(0, hexA(beamCol, 0)); lg.addColorStop(1, hexA(beamCol, 0.5 * pulse + 0.2));
-        ctx.strokeStyle = lg; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.moveTo(from[0], from[1]); ctx.lineTo(cx, cy); ctx.stroke();
-        const tp = (t * 0.5) % 1;
-        ctx.beginPath(); ctx.arc(from[0] + (cx - from[0]) * tp, from[1] + (cy - from[1]) * tp, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = beamCol; ctx.fill();
-      }
-
-      // shockwave on state change
-      if (shockRef.current > 0) {
-        const sw = shockRef.current;
-        ctx.beginPath(); ctx.arc(cx, cy, (1 - sw) * R, 0, Math.PI * 2);
-        ctx.strokeStyle = hexA(col, sw * 0.6); ctx.lineWidth = 2; ctx.stroke();
-        shockRef.current = Math.max(0, sw - 0.02);
-      }
-
-      // approval crimson lock ring (freeze feel)
-      if (st === "approval") {
-        ctx.save(); ctx.translate(cx, cy); ctx.rotate(-t * 0.25);
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2;
-          ctx.beginPath(); ctx.arc(0, 0, R * 0.46, a, a + Math.PI / 6);
-          ctx.strokeStyle = hexA(C.crimson, 0.75); ctx.lineWidth = 3.5; ctx.stroke();
-        }
-        ctx.restore();
-      }
-
-      // orbiting particles (slow in approval, fast in executing)
-      parts.forEach((p) => {
-        p.a += p.sp * (1 + s.speed);
-        const rr = (R * 0.5 + R * 0.45 * p.base);
-        const x = cx + Math.cos(p.a) * rr, y = cy + Math.sin(p.a) * rr * 0.82;
-        ctx.beginPath(); ctx.arc(x, y, p.sz, 0, Math.PI * 2);
-        ctx.fillStyle = hexA(col, 0.65); ctx.fill();
-      });
-
-      // ── metallic core orb (bigger) ──
-      const pulse = 1 + Math.sin(t * 2) * 0.07, orbR = ORB * pulse;
-      const cg = ctx.createRadialGradient(cx - orbR * 0.3, cy - orbR * 0.3, 0, cx, cy, orbR);
-      cg.addColorStop(0, "#ffffff"); cg.addColorStop(0.25, hexA(col, 0.95));
-      cg.addColorStop(0.65, hexA(col, 0.4)); cg.addColorStop(1, hexA(col, 0));
-      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, orbR, 0, Math.PI * 2); ctx.fill();
-      // inner core ring detail
-      ctx.beginPath(); ctx.arc(cx, cy, orbR * 0.6, 0, Math.PI * 2);
-      ctx.strokeStyle = hexA("#ffffff", 0.25); ctx.lineWidth = 1; ctx.stroke();
-
-      // waveform sync when speaking
-      if (st === "speaking") {
-        ctx.beginPath();
-        for (let i = -26; i <= 26; i++) {
-          const x = cx + i * 5, y = cy + Math.sin(t * 6 + i * 0.5) * 14 * Math.exp(-Math.abs(i) / 16);
-          i === -26 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = hexA(col, 0.9); ctx.lineWidth = 2; ctx.stroke();
-      }
-
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, []);
-  return <canvas ref={ref} style={{ width: "100%", height: "100%", display: "block" }} />;
-}
-
-// constellation with moving packets + radar sweep
-function Constellation({ state }) {
-  const ref = useRef(null), stateRef = useRef(state);
-  stateRef.current = state;
-  useEffect(() => {
-    const canvas = ref.current, ctx = canvas.getContext("2d");
-    let raf, t = 0;
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
-    const size = () => { const r = canvas.getBoundingClientRect();
-      canvas.width = r.width * DPR; canvas.height = r.height * DPR; ctx.setTransform(DPR,0,0,DPR,0,0); };
-    size(); const ro = new ResizeObserver(size); ro.observe(canvas);
-    const nodes = {
-      scout: [0.2,0.25,C.emerald,"Scout"], planner:[0.8,0.25,C.cyan,"Planner"],
-      core:[0.5,0.52,C.amber,"Core"], memory:[0.2,0.82,C.cyan,"Memory"],
-      executor:[0.8,0.82,C.amber,"Executor"], proposal:[0.5,0.14,C.amber,"Proposal"],
-    };
-    const links = [["scout","core"],["planner","core"],["memory","core"],["executor","core"],["proposal","core"],["scout","planner"],["memory","executor"]];
-    const activeFor = { scouting:"scout", proposing:"proposal", executing:"executor" };
-    const draw = () => {
-      const r = canvas.getBoundingClientRect(); ctx.clearRect(0,0,r.width,r.height);
-      t += 0.016;
-      const active = activeFor[stateRef.current];
-      // faint radar sweep
-      const cx2 = nodes.core[0]*r.width, cy2 = nodes.core[1]*r.height;
-      ctx.save(); ctx.translate(cx2,cy2); ctx.rotate(t*0.6);
-      const rg = ctx.createConicGradient ? ctx.createConicGradient(0,0,0) : null;
-      ctx.globalAlpha = 0.05;
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,r.width*0.5,0,Math.PI*0.25); ctx.closePath();
-      ctx.fillStyle = C.amber; ctx.fill(); ctx.restore();
-      // links
-      links.forEach(([a,b]) => {
-        const on = active && (a===active||b===active);
-        const [ax,ay]=nodes[a],[bx,by]=nodes[b];
-        ctx.beginPath(); ctx.moveTo(ax*r.width,ay*r.height); ctx.lineTo(bx*r.width,by*r.height);
-        ctx.strokeStyle = on ? hexA(nodes[active][2],0.6) : "rgba(255,255,255,0.07)";
-        ctx.lineWidth = on?1.4:0.7; ctx.stroke();
-        // moving packet along active edges (and a slow ambient one everywhere)
-        const speed = on?0.6:0.15, tp=((t*speed)%1);
-        if (on || Math.random()<0.5) {
-          ctx.beginPath();
-          ctx.arc((ax+(bx-ax)*tp)*r.width,(ay+(by-ay)*tp)*r.height, on?2.4:1.2,0,Math.PI*2);
-          ctx.fillStyle = on?nodes[active][2]:"rgba(255,255,255,0.2)"; ctx.fill();
-        }
-      });
-      // nodes
-      Object.entries(nodes).forEach(([k,[x,y,c,label]]) => {
-        const on = k===active||k==="core";
-        const pr = (k==="core"?5:3.2) + (on?Math.sin(t*3)*0.8:0);
-        ctx.beginPath(); ctx.arc(x*r.width,y*r.height,pr,0,Math.PI*2);
-        ctx.fillStyle = on?c:"#2a2e38"; ctx.fill();
-        ctx.strokeStyle = hexA(c,0.5); ctx.lineWidth=0.6; ctx.stroke();
-        ctx.fillStyle = on?c:C.dim; ctx.font="7px Inter, sans-serif"; ctx.textAlign="center";
-        ctx.fillText(label, x*r.width, y*r.height-8);
-      });
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, []);
-  return <canvas ref={ref} style={{ width:"100%", height:"100%", display:"block" }} />;
-}
+// (Decorative canvas animations removed — status is shown as real text.)
 
 const matDeep  = { background: C.surfaceDeep, border: "1px solid rgba(255,255,255,0.05)", borderRadius: 18 };
 const matFrost = { background: "rgba(28,32,40,0.5)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" };
 const matMetal = (c) => ({ background: `linear-gradient(135deg, ${hexA(c,0.16)}, ${hexA(c,0.04)})`, border: `1px solid ${hexA(c,0.35)}`, borderRadius: 16, boxShadow: `inset 0 1px 0 ${hexA("#ffffff",0.08)}, 0 0 24px ${hexA(c,0.12)}` });
 const btn = (c, filled) => ({ padding: "12px 20px", borderRadius: 12, border: filled?"none":`1px solid ${hexA(c,0.4)}`, background: filled?c:"transparent", color: filled?"#0a0a0a":c, fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: 0.3 });
 const now = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
+const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; };
 
 const API = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL) || "http://127.0.0.1:8000";
 
@@ -344,6 +74,9 @@ function useOrchestratorFeed(onEvent) {
 export default function JarvisCore() {
   const [state, setState] = useState("idle");
   const [panel, setPanel] = useState("Command");
+  const [sys, setSys] = useState(null);          // REAL cpu/ram/disk from /stats
+  const [health, setHealth] = useState(null);    // REAL model/provider from /health
+  const [incomeStat, setIncomeStat] = useState(null);
   const [agents, setAgents] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [brainStatus, setBrainStatus] = useState(null);
@@ -353,6 +86,24 @@ export default function JarvisCore() {
   const [noteText, setNoteText] = useState("");
   const [noteProject, setNoteProject] = useState("");
   const [noteKind, setNoteKind] = useState("note");
+  const [workflows, setWorkflows] = useState([]);
+  const [wfName, setWfName] = useState("");
+  const [wfText, setWfText] = useState("");
+  const [wfMsg, setWfMsg] = useState("");
+  const loadWorkflows = () => fetch(API + "/workflows").then(r => r.json())
+    .then(d => setWorkflows(d.workflows || [])).catch(() => setWorkflows([]));
+  const teachWorkflow = async () => {
+    if (!wfName.trim() || !wfText.trim()) { setWfMsg("Give it a name and describe what to do."); return; }
+    try {
+      const r = await fetch(API + "/workflows", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: wfName.trim(), text: wfText.trim() }) });
+      const d = await r.json();
+      setWfMsg(r.ok ? `Learned "${d.name}" (${d.step_count} steps). Say "run my ${d.name}".` : (d.detail || "couldn't learn that"));
+      if (r.ok) { setWfName(""); setWfText(""); loadWorkflows(); }
+    } catch (e) { setWfMsg(String(e)); }
+  };
+  const runWorkflow = (n) => fetch(API + `/workflows/${encodeURIComponent(n)}/run`, { method: "POST" }).then(() => loadWorkflows());
+  const delWorkflow = (n) => fetch(API + `/workflows/${encodeURIComponent(n)}`, { method: "DELETE" }).then(() => loadWorkflows());
   const loadBrain = () => {
     fetch(API + "/brain/status").then(r => r.json()).then(setBrainStatus).catch(() => setBrainStatus(null));
     fetch(API + "/brain/documents").then(r => r.json()).then(d => setBrainDocs(d.documents || [])).catch(() => setBrainDocs([]));
@@ -429,6 +180,7 @@ export default function JarvisCore() {
   useEffect(() => {
     if (panel === "Brain") loadBrain();
     if (panel === "Plans") loadPlans();
+    if (panel === "Skills") loadWorkflows();
     if (panel === "Settings") loadDoctor();
     if (panel === "Agents") {
       fetch(API + "/agents/status").then(r => r.json())
@@ -517,15 +269,23 @@ export default function JarvisCore() {
     const id = setInterval(() => { i = (i+1)%seq.length; setState(seq[i]); }, 3800);
     return () => clearInterval(id);
   }, [connected]);
-  const send = async () => {
-    if (!input.trim()) return;
-    const msg = input;
+  // Real system telemetry — replaces the hardcoded "9.9 / 16 GB" fake numbers.
+  useEffect(() => {
+    const poll = () => {
+      fetch(API + "/stats").then(r => r.json()).then(setSys).catch(() => {});
+      fetch(API + "/health").then(r => r.json()).then(setHealth).catch(() => {});
+      fetch(API + "/automation/income/status").then(r => r.json()).then(setIncomeStat).catch(() => {});
+    };
+    poll(); const t = setInterval(poll, 4000); return () => clearInterval(t);
+  }, []);
+
+  const runCommand = async (msg) => {
+    if (!msg || !msg.trim()) return;
     setFeed((f) => [{ t: now(), a: "YOU", c: C.cyan, m: msg }, ...f].slice(0, 50));
-    setState("thinking"); setInput("");
+    setState("thinking");
     try {
       const res = await fetch(API + "/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: msg, session_id: sessionId }),
       });
       const data = await res.json();
@@ -533,11 +293,16 @@ export default function JarvisCore() {
       if (reply) setFeed((f) => [{ t: now(), a: "JARVIS", c: C.amber, m: reply }, ...f].slice(0, 50));
     } catch (err) {
       setFeed((f) => [{ t: now(), a: "ERROR", c: C.crimson, m: "Backend unreachable" }, ...f].slice(0, 50));
-    }
+    } finally { setState("idle"); }
+  };
+  const send = async () => {
+    if (!input.trim()) return;
+    const msg = input; setInput("");
+    await runCommand(msg);
   };
   const s = STATES[state];
   return (
-    <div style={{ height: "100vh", display: "flex", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif", overflow: "hidden" }}>
+    <div style={{ height: "100%", display: "flex", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif", overflow: "hidden" }}>
       <aside style={{ width: "18%", minWidth: 190, padding: 20, display: "flex", flexDirection: "column", gap: 6, borderRight: "1px solid rgba(255,255,255,0.04)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
           <div style={{ width: 36, height: 36, ...matMetal(C.amber), display: "grid", placeItems: "center" }}>
@@ -548,26 +313,76 @@ export default function JarvisCore() {
             <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1 }}>LOCAL CORE</div>
           </div>
         </div>
-        {["Command","Agents","Tasks","Brain","Plans","Settings"].map((x) => (
+        {["Command","Agents","Skills","Brain","Plans","Settings"].map((x) => (
           <div key={x} onClick={() => setPanel(x)} style={{ padding: "11px 12px", borderRadius: 10, fontSize: 13, cursor: "pointer", color: panel===x?C.amber:C.dim, background: panel===x?hexA(C.amber,0.07):"transparent", borderLeft: panel===x?`2px solid ${C.amber}`:"2px solid transparent" }}>{x}</div>
         ))}
         <div style={{ marginTop: "auto", ...matFrost, padding: 12, fontSize: 11, color: C.dim }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}><span>RAM</span><span style={{ color: C.emerald }}>9.9 / 16 GB</span></div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}><span>Model</span><span style={{ color: C.amber }}>qwen2 · fast</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>RAM</span>
+            <span style={{ color: sys && sys.ram > 85 ? C.crimson : C.emerald }}>{sys ? `${Math.round(sys.ram)}%` : "—"}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+            <span>CPU</span><span style={{ color: C.cyan }}>{sys ? `${Math.round(sys.cpu)}%` : "—"}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+            <span>Model</span><span style={{ color: C.amber }}>{health?.model ? String(health.model).split(":")[0] : "—"}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+            <span>Ollama</span><span style={{ color: health?.ollama ? C.emerald : C.crimson }}>{health?.ollama ? "up" : "down"}</span>
+          </div>
         </div>
       </aside>
       <main style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
-        <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
-          <NeuralCore state={state} />
-          <div style={{ position: "absolute", top: 24, left: 0, right: 0, textAlign: "center", pointerEvents: "none" }}>
-            <div style={{ fontSize: 12, color: C.dim, letterSpacing: 1 }}>Good morning</div>
-            <div style={{ fontSize: 27, fontWeight: 600, marginTop: 4 }}>How can I <span style={{ color: C.amber, fontStyle: "italic" }}>assist</span>?</div>
-          </div>
-          <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, textAlign: "center", pointerEvents: "none" }}>
-            <span style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: s.color }}>◦ {s.label}</span>
-          </div>
+        <div style={{ flex: 1, position: "relative", minHeight: 0, overflow: "auto" }}>
+          {/* Real status board — replaces the fake animated core. Everything here
+              is live data, not decoration. */}
+          {panel === "Command" && (
+            <div style={{ padding: "26px 28px", display: "flex", flexDirection: "column", gap: 18 }}>
+              <div>
+                <div style={{ fontSize: 12, color: C.dim, letterSpacing: 1 }}>{greeting()}</div>
+                <div style={{ fontSize: 26, fontWeight: 600, marginTop: 2 }}>How can I <span style={{ color: C.amber, fontStyle: "italic" }}>assist</span>?</div>
+              </div>
+
+              {/* Live status tiles */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+                {[
+                  ["STATUS", s.label, s.color],
+                  ["INCOME ENGINE", incomeStat?.enabled ? `on · ${incomeStat.cycles ?? 0} cycles` : "off", incomeStat?.enabled ? C.emerald : C.dim],
+                  ["RAM", sys ? `${Math.round(sys.ram)}%` : "—", sys && sys.ram > 85 ? C.crimson : C.cyan],
+                  ["MODEL", health?.model ? String(health.model).split(":")[0] : "—", C.amber],
+                ].map(([l, v, c]) => (
+                  <div key={l} style={{ ...matDeep, padding: "12px 14px" }}>
+                    <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 6 }}>{l}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: c }}>
+                      {l === "STATUS" && <span className="livedot" style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: c, marginRight: 7 }} />}
+                      {v}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Quick actions that ACTUALLY RUN on click (no blank inputs). */}
+              <div>
+                <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 8 }}>Quick actions</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {[
+                    "what's on my screen",
+                    "open notepad and type hello",
+                    "scan freelance jobs now",
+                    "open chrome",
+                    "check my qq messages",
+                  ].map((q) => (
+                    <button key={q} onClick={() => runCommand(q)}
+                      style={{ ...btn(C.cyan), background: hexA(C.cyan, 0.08), fontSize: 12, padding: "8px 12px" }}>
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           {panel !== "Command" && (
-            <div style={{ position: "absolute", top: 90, left: 24, right: 24, bottom: 24, ...matFrost, padding: 22, overflowY: "auto" }}>
+            <div style={{ position: "absolute", inset: 0, ...matFrost, borderRadius: 0, padding: 22, overflowY: "auto" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <span style={{ fontSize: 16, fontWeight: 700, color: C.amber, letterSpacing: 1 }}>{panel}</span>
                 <span onClick={() => setPanel("Command")} style={{ cursor: "pointer", color: C.dim, fontSize: 18 }}>✕</span>
@@ -586,6 +401,41 @@ export default function JarvisCore() {
                   <div style={{ ...matDeep, padding: 14, color: C.dim, fontSize: 12, borderStyle: "dashed" }}>
                     + Add Agent — coming with the agent registry (backend/agents/registry.py)
                   </div>
+                </div>
+              )}
+              {panel === "Skills" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ ...matDeep, padding: 14 }}>
+                    <div style={{ fontSize: 12, color: C.cyan, letterSpacing: 1, marginBottom: 8 }}>TEACH A TASK ONCE</div>
+                    <div style={{ fontSize: 12, color: C.dim, marginBottom: 10, lineHeight: 1.6 }}>
+                      Describe it in plain words — Jarvis turns it into real steps and remembers it.
+                      Later just say <span style={{ color: C.amber }}>"run my &lt;name&gt;"</span>. You can also type
+                      <span style={{ color: C.amber }}> teach &lt;name&gt;: …</span> in chat.
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <input value={wfName} onChange={(e) => setWfName(e.target.value)} placeholder="name (e.g. morning)"
+                        style={{ width: 150, background: "rgba(0,0,0,0.3)", color: C.text, border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
+                      <input value={wfText} onChange={(e) => setWfText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && teachWorkflow()}
+                        placeholder="open chrome, open notepad, type my notes"
+                        style={{ flex: 1, minWidth: 200, background: "rgba(0,0,0,0.3)", color: C.text, border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
+                      <button onClick={teachWorkflow} style={btn(C.emerald)}>Learn it</button>
+                    </div>
+                    {wfMsg && <div style={{ fontSize: 12, color: C.emerald, marginTop: 8 }}>{wfMsg}</div>}
+                  </div>
+                  {workflows.length === 0 && <div style={{ color: C.dim, fontSize: 13 }}>No saved tasks yet. Teach one above.</div>}
+                  {workflows.map((w) => (
+                    <div key={w.id} style={{ ...matDeep, padding: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontWeight: 700, color: C.amber }}>{w.name}</span>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <span style={{ fontSize: 11, color: C.dim }}>{w.step_count} steps · ran {w.runs || 0}×{w.last_status ? ` · ${w.last_status}` : ""}</span>
+                          <button onClick={() => runWorkflow(w.name)} style={{ ...btn(C.emerald), padding: "5px 12px", fontSize: 12 }}>▶ Run</button>
+                          <span onClick={() => delWorkflow(w.name)} style={{ cursor: "pointer", color: C.crimson, fontSize: 14 }} title="Delete">✕</span>
+                        </div>
+                      </div>
+                      {w.description && <div style={{ fontSize: 11, color: C.dim, marginTop: 4 }}>{w.description}</div>}
+                    </div>
+                  ))}
                 </div>
               )}
               {panel === "Tasks" && (
@@ -809,9 +659,20 @@ export default function JarvisCore() {
         </div>
       </main>
       <aside style={{ width: "25%", minWidth: 250, padding: 20, display: "flex", flexDirection: "column", gap: 14, borderLeft: "1px solid rgba(255,255,255,0.04)" }}>
-        <div style={{ ...matFrost, padding: 14, height: 240, display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>Agent Network</div>
-          <div style={{ flex: 1 }}><Constellation state={state} /></div>
+        <div style={{ ...matFrost, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.5, textTransform: "uppercase" }}>System</div>
+          {[
+            ["State", s.label, s.color],
+            ["CPU", sys ? `${Math.round(sys.cpu)}%` : "—", C.cyan],
+            ["RAM", sys ? `${Math.round(sys.ram)}%` : "—", sys && sys.ram > 85 ? C.crimson : C.emerald],
+            ["Disk", sys ? `${Math.round(sys.disk)}%` : "—", C.dim],
+            ["Ollama", health?.ollama ? "online" : "offline", health?.ollama ? C.emerald : C.crimson],
+            ["Income", incomeStat?.enabled ? `on · ${incomeStat.cycles ?? 0}` : "off", incomeStat?.enabled ? C.emerald : C.dim],
+          ].map(([k, v, c]) => (
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+              <span style={{ color: C.dim }}>{k}</span><span style={{ color: c }}>{v}</span>
+            </div>
+          ))}
         </div>
         <div style={{ ...matDeep, padding: 14, flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Live Feed</div>

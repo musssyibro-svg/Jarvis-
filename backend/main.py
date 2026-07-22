@@ -81,6 +81,12 @@ def _startup():
     except Exception as e:
         logger.warning(f"Plan watchdog: {e}")
     try:
+        from services.workflow_service import init_workflows
+        init_workflows()        # learned/replayable tasks
+        logger.info("Workflow store ready.")
+    except Exception as e:
+        logger.warning(f"Workflow init: {e}")
+    try:
         from services.income_engine import start_watchdog as start_income
         start_income()          # resume the always-on income engine if it was enabled
         logger.info("Income engine armed.")
@@ -106,6 +112,7 @@ from routes.planner      import router as planner_router         # V10 Planner
 from routes.system       import router as system_router          # V10 Doctor
 from routes.pulse        import router as pulse_router           # V11 Pulse
 from routes.sessions     import router as sessions_router        # V12 login sessions + vault
+from routes.workflows    import router as workflows_router       # V13 learned workflows
 
 app.include_router(orchestrator_router, prefix="/orchestrator",  tags=["Orchestrator"])
 app.include_router(agents_router,       prefix="/agents",        tags=["Agents"])      # V5
@@ -124,6 +131,7 @@ app.include_router(planner_router,      prefix="/planner",       tags=["Planner"
 app.include_router(system_router,       prefix="/system",        tags=["System"])      # V10
 app.include_router(pulse_router,        prefix="/pulse",         tags=["Pulse"])       # V11
 app.include_router(sessions_router,     prefix="/sessions",      tags=["Sessions"])    # V12
+app.include_router(workflows_router,    prefix="/workflows",     tags=["Workflows"])   # V13
 
 from services.deepseek_service import call_model, OLLAMA_MODEL, LLM_PROVIDER
 

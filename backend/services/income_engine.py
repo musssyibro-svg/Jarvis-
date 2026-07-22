@@ -31,7 +31,11 @@ from models.db import conn
 SETTINGS_KEY = "income_engine"
 
 DEFAULTS = {
-    "enabled":      False,
+    # ON by default — the user's repeated ask is "scan on its own, always". Safe:
+    # it only scans + drafts + queues; it never auto-submits unless the profile
+    # opts in, and bid platforms are skipped unless logged in. Turn off anytime
+    # from the Income Engine card (the choice persists).
+    "enabled":      True,
     "interval_min": 20,          # minutes between cycles
     "platforms":    ["remoteok", "peopleperhour", "freelancer", "weworkremotely"],
     "max_jobs":     15,

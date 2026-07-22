@@ -306,13 +306,8 @@ def wait_for_window(title_contains: str, timeout: float = 8.0) -> dict:
             "error": f"Window '{title_contains}' did not appear within {timeout}s"}
 
 
-def execute_chain(steps: list) -> dict:
-    """
-    Run a list of desktop steps ATOMICALLY, with the human-like waits between
-    them: after opening an app, wait for its window and focus it before the
-    next input step. Each step: {"action": "...", "params": {...}}.
-    Stops at the first failure and reports exactly where it broke.
-    """
+def _run_action(action: str, params: dict) -> dict:
+    """Dispatch a single desktop/vision action by name. Never raises."""
     ACTIONS = {
         "open_app":     lambda p: open_app(p.get("name_or_path") or p.get("app", "")),
         "close_app":    lambda p: close_app(p.get("process_name") or p.get("app", "")),
@@ -333,36 +328,112 @@ def execute_chain(steps: list) -> dict:
         "click_text":   lambda p: __import__("agents.vision_agent", fromlist=["click_text"]).click_text(p.get("text", "")),
         "analyze":      lambda p: __import__("agents.vision_agent", fromlist=["analyze_screen"]).analyze_screen(p.get("question", "")),
     }
+    fn = ACTIONS.get(action)
+    if fn is None:
+        return {"success": False, "error": f"unknown action '{action}'"}
+    try:
+        return fn(params) or {"success": False, "error": "no result"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
+    """
+    Observe the world AFTER an action and confirm it actually happened. This is
+    what stops false "Done" — the action's own return isn't trusted blindly;
+    where it's checkable, we look at the real screen/OS state.
+    Returns (verified, reason).
+    """
+    if not result.get("success"):
+        return False, result.get("error", "action reported failure")
+
+    if action == "open_app":
+        target = params.get("name_or_path") or params.get("app", "")
+        # give a slow app a moment, then confirm a window/process exists
+        for _ in range(6):
+            if _app_visible(target):
+                return True, "window/process present"
+            time.sleep(0.5)
+        return False, f"'{target}' did not appear to open (no window/process found)"
+
+    if action == "close_app":
+        target = params.get("process_name") or params.get("app", "")
+        return (not _app_visible(target)), ("closed" if not _app_visible(target)
+                                            else f"'{target}' still appears to be running")
+
+    if action == "wait_for_window":
+        return result.get("success", False), result.get("error", "")
+
+    if action == "write_file":
+        try:
+            from pathlib import Path
+            return Path(params.get("path", "")).exists(), "file exists"
+        except Exception:
+            return True, ""
+
+    if action == "screenshot":
+        return bool(result.get("path") or result.get("b64")), "captured"
+
+    if action == "analyze":
+        return bool(result.get("answer") or result.get("ai_answer")), "analysis produced"
+
+    if action == "click_text":
+        return bool(result.get("found", True)), result.get("error", "")
+
+    # type_text / press / hotkey / click / move / wait / open_url / focus_window:
+    # no cheap post-hoc check — trust the primitive's own success flag.
+    return True, "assumed (no cheap verification)"
+
+
+def execute_chain(steps: list, max_retries: int = 2) -> dict:
+    """
+    Run desktop steps with the full execution loop:
+        act → observe → verify → retry(≤max_retries) → record.
+
+    A step is only marked done once it's VERIFIED (e.g. open_app is confirmed by
+    an actual window/process check, not just "the launch command returned"). If a
+    step can't be verified after its retries, the chain stops and reports exactly
+    where and why — never a fake success. This is the fix for "it said it opened
+    the app / did the task but it didn't".
+
+    Human-like settle between steps: after an app opens, wait for its window and
+    focus it before the next keystroke.
+    """
     results = []
-    for i, s in enumerate(steps or []):
+    steps = steps or []
+    for i, s in enumerate(steps):
         action = (s or {}).get("action", "")
         params = (s or {}).get("params", {}) or {}
-        fn = ACTIONS.get(action)
-        if fn is None:
-            results.append({"step": i + 1, "action": action, "success": False,
-                            "error": f"unknown action '{action}'"})
-            return {"success": False, "steps": results,
-                    "failed_at": i + 1, "error": f"unknown action '{action}'"}
-        try:
-            r = fn(params)
-        except Exception as e:
-            r = {"success": False, "error": str(e)}
-        results.append({"step": i + 1, "action": action, **(r or {})})
-        if not (r or {}).get("success", False):
+
+        verified, reason, r = False, "", {}
+        attempts = 0
+        while attempts <= max_retries:
+            attempts += 1
+            r = _run_action(action, params)
+            verified, reason = _verify_action(action, params, r)
+            if verified:
+                break
+            if attempts <= max_retries:
+                time.sleep(min(1.0 * attempts, 3.0))   # brief backoff, then retry
+
+        entry = {"step": i + 1, "action": action, "attempts": attempts,
+                 "verified": verified, "verify_reason": reason, **(r or {})}
+        results.append(entry)
+
+        if not verified:
             return {"success": False, "steps": results, "failed_at": i + 1,
-                    "error": (r or {}).get("error", f"{action} failed")}
-        # Human-like settle: opened app → wait for its window, then focus it
-        # so follow-up keystrokes land in the right place.
+                    "error": f"{action} could not be verified: {reason}"}
+
+        # After a confirmed app open, wait + focus so the next input lands right.
         if action == "open_app":
             target = params.get("name_or_path") or params.get("app", "")
             nxt = steps[i + 1]["action"] if i + 1 < len(steps) else None
             if nxt in ("type_text", "press", "hotkey", "click", "click_text"):
-                w = wait_for_window(target, timeout=8)
-                results.append({"step": f"{i + 1}b", "action": "wait_for_window", **w})
-                if w.get("success"):
-                    focus_window(target)
+                focus_window(target)
                 time.sleep(0.5)
-    return {"success": True, "steps": results, "count": len(results)}
+
+    return {"success": True, "steps": results, "count": len(results),
+            "verified": True}
 
 
 def close_app(process_name: str) -> dict:

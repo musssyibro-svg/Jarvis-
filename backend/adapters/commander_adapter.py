@@ -67,6 +67,23 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         result = ex.cancel(session_id)
         return {"response": result.get("message", "Cancelled."), "intent": "chat"}
 
+    # ── Learned workflows: "teach <name>: <steps>" and "run my <name>" ─────────
+    taught = _maybe_teach_workflow(message)
+    if taught is not None:
+        return taught
+    if not _is_question(message):
+        try:
+            from services.workflow_service import find_run_command, run as run_wf
+            wf_name = find_run_command(message)
+        except Exception:
+            wf_name = None
+        if wf_name:
+            import threading
+            threading.Thread(target=run_wf, args=(wf_name,), daemon=True).start()
+            return {"response": f"Running your saved workflow '{wf_name}' — watch the "
+                                f"live feed. I'll verify each step.",
+                    "intent": "workflow", "data": {"workflow": wf_name}}
+
     # ── Tool Registry FIRST (the qq fix): known commands run directly as a
     #    desktop chain instead of being handed to the LLM planner, which would
     #    hallucinate ("open Telegram, search qq…"). Deterministic before
@@ -437,6 +454,32 @@ def _step_label(a) -> str:
     return f"{a.action_type.replace('_', ' ')} {val[:40]}".strip()
 
 
+def _maybe_teach_workflow(message: str):
+    """
+    'teach <name>: <do this then that>' or 'learn workflow <name>: ...' saves a
+    replayable task. Returns a response dict, or None if not a teach request.
+    """
+    m = _re.match(r"^\s*(?:teach|learn|remember\s+workflow|save\s+task|create\s+task)"
+                  r"\s+(?:workflow\s+|task\s+)?(?:called\s+|named\s+)?"
+                  r"([\w -]{2,40}?)\s*[:=]\s*(.+)$", message or "", _re.I | _re.S)
+    if not m:
+        return None
+    name, body = m.group(1).strip(), m.group(2).strip()
+    try:
+        from services.workflow_service import teach
+        r = teach(name, body)
+        if not r.get("ok"):
+            return {"response": f"I couldn't turn that into runnable steps: "
+                                f"{r.get('error','')}", "intent": "workflow"}
+        steps = " → ".join(s.get("action", "").replace("_", " ") for s in r["steps"])
+        _emit("workflow", f"Learned workflow '{r['name']}' ({r['step_count']} steps)", "success")
+        return {"response": f"Learned **{r['name']}** ({r['step_count']} steps: {steps}). "
+                            f"Say \"run my {r['name']}\" anytime and I'll do it.",
+                "intent": "workflow", "data": r}
+    except Exception as e:
+        return {"response": f"Couldn't save that task: {e}", "intent": "workflow"}
+
+
 def _run_tool_chain(message: str, steps: list) -> dict:
     """
     Execute a Tool-Registry chain (open app, wait, screenshot, analyze…) directly
@@ -512,42 +555,26 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
                             f"Reply 'yes' to confirm or 'cancel' to abort.",
                 "intent": intent, "needs_approval": True}
 
-    # Execute the sequence in order. After opening an app, WAIT for its window
-    # and focus it before any keystroke — a fixed sleep typed into the wrong
-    # window whenever the app was slow to start ("open notepad type hello"
-    # putting 'hello' in the browser).
-    import time
-    results, failed = [], None
-    for i, action in enumerate(steps):
-        _emit("executor", _step_label(action).capitalize(), "info")
-        result = ex.execute_action(action)
-        results.append({"step": _step_label(action), **result})
-        if not result.get("success", False):
-            failed = (action, result)
-            break
-        if action.action_type == "open_app" and i + 1 < len(steps):
-            nxt = steps[i + 1].action_type
-            if nxt in ("type_text", "press", "hotkey", "click", "click_text"):
-                try:
-                    from agents import desktop_agent as da
-                    target = (action.params or {}).get("name_or_path", "")
-                    w = da.wait_for_window(target, timeout=8)
-                    if w.get("success"):
-                        da.focus_window(target)
-                        _emit("executor", f"{target} window ready — continuing", "info")
-                    else:
-                        _emit("executor", f"Couldn't confirm {target} window — "
-                                          f"continuing anyway", "warning")
-                    time.sleep(0.5)
-                except Exception:
-                    time.sleep(1.5)
+    # Run through the VERIFIED execution engine (execute_chain): each step is
+    # confirmed against real OS/screen state and retried, so we never claim a
+    # step succeeded when it didn't. Convert typed Actions to the chain schema.
+    chain = [{"action": a.action_type, "params": a.params or {}} for a in steps]
+    labels = " → ".join(_step_label(a) for a in steps)
+    _emit("executor", labels, "info")
+    try:
+        from agents.desktop_agent import execute_chain
+        result = execute_chain(chain)
+    except Exception as e:
+        return {"response": f"Couldn't run that: {e}", "intent": intent,
+                "data": {"error": str(e)}}
 
-    if failed:
-        action, result = failed
-        _emit("executor", f"{action.action_type} failed", "error")
-        return {"response": f"Couldn't {_step_label(action)}: {result.get('error','')}",
-                "intent": intent, "data": {"steps": results}}
-    done = " → ".join(_step_label(a) for a in steps)
-    _emit("executor", f"Done: {done}", "success")
-    return {"response": f"Done: {done} ✓", "intent": intent,
-            "data": {"steps": results}}
+    if not result.get("success"):
+        fa = result.get("failed_at", 0)
+        done_n = max(0, fa - 1)
+        _emit("executor", result.get("error", "step failed"), "error")
+        return {"response": f"I got {done_n}/{len(steps)} steps done, then couldn't "
+                            f"verify: {result.get('error','')}. I didn't mark it done "
+                            f"because it didn't actually complete.",
+                "intent": intent, "data": result}
+    _emit("executor", f"Verified done: {labels}", "success")
+    return {"response": f"Done ✓ (verified: {labels})", "intent": intent, "data": result}
