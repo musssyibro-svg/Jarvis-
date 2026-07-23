@@ -454,6 +454,15 @@ def maybe_complete(project_id: int) -> bool:
                                 dedupe_key=f"plans:done:{proj['name']}")
         except Exception:
             pass
+        try:   # reflect on the project + fire an event
+            from services import reflection, event_bus
+            reflection.reflect(f"project '{proj['title']}'",
+                               [{"success": s["status"] == "done", "action": "step",
+                                 "step": s["seq"]} for s in proj["steps"]],
+                               True, kind="plan", workflow_name=proj["name"])
+            event_bus.publish("plan.done", {"name": proj["name"]})
+        except Exception:
+            pass
         return True
     return False
 

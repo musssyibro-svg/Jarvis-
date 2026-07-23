@@ -175,6 +175,13 @@ class OrchestratorCore:
             STATE.update_stats(jobs_qualified=len(qualified))
             self._emit("score", f"{len(qualified)}/{len(self.world.jobs)} jobs qualified "
                                 f"(rest ignored as bad fit)", "success")
+            if qualified:
+                try:
+                    from services import event_bus
+                    event_bus.publish("job.found", {"count": len(qualified),
+                                      "top": qualified[0].get("title", "")[:60]})
+                except Exception:
+                    pass
             self.world.jobs = qualified
         except Exception as e:
             self.error = f"scout failed: {e}"

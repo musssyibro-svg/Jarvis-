@@ -160,7 +160,8 @@ def run(name: str) -> dict:
         pass
     from agents.desktop_agent import execute_chain
     result = execute_chain(wf["steps"])
-    status = "done" if result.get("success") else "failed"
+    ok = result.get("success", False)
+    status = "done" if ok else "failed"
     with conn() as db:
         db.execute("UPDATE workflows SET runs=runs+1, last_run=?, last_status=? WHERE name=?",
                    (_now(), status, _key(name)))
@@ -168,12 +169,23 @@ def run(name: str) -> dict:
         from agents.orchestrator import STATE
         STATE.emit("workflow",
                    f"Workflow '{wf['name']}' {status}"
-                   + ("" if result.get("success") else f": {result.get('error','')}"),
-                   "success" if result.get("success") else "error")
+                   + ("" if ok else f": {result.get('error','')}"),
+                   "success" if ok else "error")
     except Exception:
         pass
-    return {"ok": result.get("success", False), "status": status,
-            "name": wf["name"], "result": result}
+    # Reflect (learn from this run) + announce on the event bus.
+    try:
+        from services import reflection
+        reflection.reflect(f"workflow '{wf['name']}'", result.get("steps", []), ok,
+                           kind="workflow", workflow_name=wf["name"])
+    except Exception:
+        pass
+    try:
+        from services import event_bus
+        event_bus.publish("workflow.done", {"name": wf["name"], "ok": ok})
+    except Exception:
+        pass
+    return {"ok": ok, "status": status, "name": wf["name"], "result": result}
 
 
 def list_workflows() -> list[dict]:

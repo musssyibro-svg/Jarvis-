@@ -269,14 +269,18 @@ export default function JarvisCore() {
     const id = setInterval(() => { i = (i+1)%seq.length; setState(seq[i]); }, 3800);
     return () => clearInterval(id);
   }, [connected]);
+  const [worldSummary, setWorldSummary] = useState("");
+  const [brainEvents, setBrainEvents] = useState([]);
   // Real system telemetry — replaces the hardcoded "9.9 / 16 GB" fake numbers.
   useEffect(() => {
     const poll = () => {
       fetch(API + "/stats").then(r => r.json()).then(setSys).catch(() => {});
       fetch(API + "/health").then(r => r.json()).then(setHealth).catch(() => {});
       fetch(API + "/automation/income/status").then(r => r.json()).then(setIncomeStat).catch(() => {});
+      fetch(API + "/world/summary").then(r => r.json()).then(d => setWorldSummary(d.summary || "")).catch(() => {});
+      fetch(API + "/events/recent?limit=6").then(r => r.json()).then(d => setBrainEvents(d.events || [])).catch(() => {});
     };
-    poll(); const t = setInterval(poll, 4000); return () => clearInterval(t);
+    poll(); const t = setInterval(poll, 5000); return () => clearInterval(t);
   }, []);
 
   const runCommand = async (msg) => {
@@ -341,6 +345,7 @@ export default function JarvisCore() {
               <div>
                 <div style={{ fontSize: 12, color: C.dim, letterSpacing: 1 }}>{greeting()}</div>
                 <div style={{ fontSize: 26, fontWeight: 600, marginTop: 2 }}>How can I <span style={{ color: C.amber, fontStyle: "italic" }}>assist</span>?</div>
+                {worldSummary && <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>Right now: {worldSummary}</div>}
               </div>
 
               {/* Live status tiles */}
@@ -369,7 +374,7 @@ export default function JarvisCore() {
                     "what's on my screen",
                     "open notepad and type hello",
                     "scan freelance jobs now",
-                    "open chrome",
+                    "what can you do",
                     "check my qq messages",
                   ].map((q) => (
                     <button key={q} onClick={() => runCommand(q)}
@@ -379,6 +384,21 @@ export default function JarvisCore() {
                   ))}
                 </div>
               </div>
+
+              {/* What just changed — the Brain's event feed (real, not decoration) */}
+              {brainEvents.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 8 }}>What Jarvis noticed</div>
+                  <div style={{ ...matDeep, padding: "10px 14px", display: "flex", flexDirection: "column", gap: 5 }}>
+                    {brainEvents.map((e, i) => (
+                      <div key={i} style={{ fontSize: 12, color: C.dim, display: "flex", gap: 8 }}>
+                        <span style={{ color: C.cyan, minWidth: 96 }}>{e.type}</span>
+                        <span>{Object.entries(e.data || {}).map(([k, v]) => `${k}: ${v}`).join(", ")}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {panel !== "Command" && (

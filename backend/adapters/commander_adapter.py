@@ -67,6 +67,26 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         result = ex.cancel(session_id)
         return {"response": result.get("message", "Cancelled."), "intent": "chat"}
 
+    # ── "what can you do?" / "what's my status?" answered from the Brain ────────
+    low = message.lower().strip()
+    if low in ("what can you do", "what can you do?", "what are your capabilities",
+               "help", "capabilities", "what can you do for me"):
+        try:
+            from services import capability_registry
+            return {"response": "Here's what I can do right now:\n\n"
+                                + capability_registry.describe()
+                                + "\n\nTeach me more with \"teach <name>: <steps>\".",
+                    "intent": "brain"}
+        except Exception:
+            pass
+    if low in ("status", "what's your status", "whats your status", "what's going on",
+               "what are you doing", "system status"):
+        try:
+            from services import world_model
+            return {"response": "Right now: " + world_model.summary(), "intent": "brain"}
+        except Exception:
+            pass
+
     # ── Learned workflows: "teach <name>: <steps>" and "run my <name>" ─────────
     taught = _maybe_teach_workflow(message)
     if taught is not None:

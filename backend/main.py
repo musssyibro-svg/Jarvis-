@@ -87,6 +87,12 @@ def _startup():
     except Exception as e:
         logger.warning(f"Workflow init: {e}")
     try:
+        from services.brain_core import start as start_brain
+        start_brain()           # world model sensing + event-first proactive loop
+        logger.info("Brain online (world model + event bus).")
+    except Exception as e:
+        logger.warning(f"Brain init: {e}")
+    try:
         from services.income_engine import start_watchdog as start_income
         start_income()          # resume the always-on income engine if it was enabled
         logger.info("Income engine armed.")
@@ -113,6 +119,7 @@ from routes.system       import router as system_router          # V10 Doctor
 from routes.pulse        import router as pulse_router           # V11 Pulse
 from routes.sessions     import router as sessions_router        # V12 login sessions + vault
 from routes.workflows    import router as workflows_router       # V13 learned workflows
+from routes.mind         import router as mind_router            # V14 Brain / World / Capabilities
 
 app.include_router(orchestrator_router, prefix="/orchestrator",  tags=["Orchestrator"])
 app.include_router(agents_router,       prefix="/agents",        tags=["Agents"])      # V5
@@ -132,6 +139,7 @@ app.include_router(system_router,       prefix="/system",        tags=["System"]
 app.include_router(pulse_router,        prefix="/pulse",         tags=["Pulse"])       # V11
 app.include_router(sessions_router,     prefix="/sessions",      tags=["Sessions"])    # V12
 app.include_router(workflows_router,    prefix="/workflows",     tags=["Workflows"])   # V13
+app.include_router(mind_router,                                  tags=["Brain"])       # V14 (paths self-prefixed)
 
 from services.deepseek_service import call_model, OLLAMA_MODEL, LLM_PROVIDER
 
