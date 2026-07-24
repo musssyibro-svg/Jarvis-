@@ -183,13 +183,54 @@ def open_app(name_or_path: str) -> dict:
         "paint":      ["mspaint.exe"],
         "snipping":   ["snippingtool.exe"],
     }
+    if _app_visible(name_or_path):
+        return {"success": True, "action": "open_app", "app": name_or_path,
+                "resolved": "already open", "method": "focus", "verified": True}
+
     key = name_or_path.lower().replace(" ", "")
     known = key in KNOWN
-    cmd = KNOWN.get(key, [name_or_path])
-    # Browsers/GUI apps live in the registry App Paths, not on PATH — launch via
-    # shell 'start' so Windows resolves them (fixes "Windows cannot find 'edge'").
+    cmd = KNOWN.get(key, None)
+
+    # 1) A resolved/cached real path wins for anything not in the tiny KNOWN map
+    #    (QQ, Doubao, WeChat, …). This is what stops the "Windows cannot find
+    #    the file qq" dialog: we launch the actual .exe, or nothing.
+    if cmd is None:
+        try:
+            from services.app_resolver import resolve as resolve_app
+            real = resolve_app(name_or_path)
+        except Exception:
+            real = None
+        if real:
+            try:
+                if real.lower().endswith(".lnk"):
+                    os.startfile(real)          # shell-launch a shortcut
+                else:
+                    subprocess.Popen([real], shell=False,
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                time.sleep(1.4)
+                return {"success": True, "action": "open_app", "app": name_or_path,
+                        "resolved": real, "method": "resolved",
+                        "verified": _app_visible(name_or_path)}
+            except Exception:
+                pass
+        # 2) No known path — use the Start-Menu-search keystroke trick (this is
+        #    what actually worked for QQ the first time). Never `cmd /c start qq`,
+        #    which pops the "cannot find the file" dialog.
+        if os.name == "nt" and _start_menu_launch(name_or_path):
+            time.sleep(1.5)
+            vis = _app_visible(name_or_path)
+            return {"success": vis, "action": "open_app", "app": name_or_path,
+                    "resolved": "start menu search", "method": "start_menu",
+                    "verified": vis,
+                    **({} if vis else {"error": f"Searched the Start Menu for "
+                       f"'{name_or_path}' but no matching window opened — it may not "
+                       f"be installed, or its window title differs."})}
+        return {"success": False, "action": "open_app",
+                "error": f"Could not find '{name_or_path}'. If it's installed, open it "
+                         f"once manually so I can learn its location."}
+
+    # KNOWN app: launch its mapped command directly.
     SHELL_START = {"msedge.exe", "chrome.exe", "firefox.exe", "code"}
-    launched = False
     try:
         if cmd[0] in SHELL_START:
             subprocess.Popen(["cmd.exe", "/c", "start", "", *cmd],
@@ -197,51 +238,22 @@ def open_app(name_or_path: str) -> dict:
         else:
             subprocess.Popen(cmd, shell=False,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        launched = True
     except (FileNotFoundError, OSError):
-        pass
+        # mapped exe not found on this machine — try discovery before giving up
+        if os.name == "nt" and _start_menu_launch(name_or_path):
+            time.sleep(1.5)
+            vis = _app_visible(name_or_path)
+            return {"success": vis, "action": "open_app", "app": name_or_path,
+                    "method": "start_menu", "verified": vis}
+        return {"success": False, "action": "open_app",
+                "error": f"'{name_or_path}' is not installed where expected."}
     except Exception as e:
         return {"success": False, "action": "open_app", "error": str(e)}
 
-    if launched:
-        time.sleep(1.2)
-        if known:
-            # Trusted mapping: the exe exists and started. Report the extra
-            # confirmation when we have it, but don't second-guess a known app.
-            return {"success": True, "action": "open_app", "app": name_or_path,
-                    "resolved": cmd[0], "method": "direct",
-                    "verified": _app_visible(name_or_path)}
-        if _app_visible(name_or_path):
-            return {"success": True, "action": "open_app", "app": name_or_path,
-                    "resolved": cmd[0], "method": "direct", "verified": True}
-
-    # Self-recovery, like a human would:
-    # 1) let the Windows shell resolve the raw name (App Paths, PATH, aliases)
-    if os.name == "nt":
-        try:
-            subprocess.Popen(["cmd.exe", "/c", "start", "", name_or_path], shell=False,
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(2.0)
-            if _app_visible(name_or_path):
-                return {"success": True, "action": "open_app", "app": name_or_path,
-                        "resolved": "shell start", "method": "start", "verified": True}
-        except Exception:
-            pass
-        # 2) search the Start Menu (works for ANY installed app: WeChat, Photoshop…)
-        if _start_menu_launch(name_or_path):
-            if _app_visible(name_or_path):
-                return {"success": True, "action": "open_app", "app": name_or_path,
-                        "resolved": "start menu search", "method": "start_menu",
-                        "verified": True}
-            # Search ran but we can't see a matching window — Enter may still
-            # have launched something whose title differs. Be honest about it.
-            return {"success": True, "action": "open_app", "app": name_or_path,
-                    "resolved": "start menu search", "method": "start_menu",
-                    "verified": False,
-                    "note": "launched via Start Menu but couldn't visually confirm — check your screen"}
-    return {"success": False, "action": "open_app",
-            "error": f"Could not find or open '{name_or_path}' "
-                     f"(tried direct launch, shell start, Start Menu search)"}
+    time.sleep(1.2)
+    return {"success": True, "action": "open_app", "app": name_or_path,
+            "resolved": cmd[0], "method": "direct",
+            "verified": _app_visible(name_or_path)}
 
 
 def _app_visible(name: str) -> bool:
@@ -381,8 +393,51 @@ def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
         return bool(result.get("found", True)), result.get("error", "")
 
     # type_text / press / hotkey / click / move / wait / open_url / focus_window:
+    if action == "type_text":
+        # Real check where possible: select-all + copy + read the clipboard, and
+        # confirm the typed text actually landed in the focused field. This is
+        # what catches "notepad opened but nothing was typed" instead of trusting
+        # the keystroke call. Non-destructive for editors; skipped if clipboard
+        # tooling is unavailable (then we stay honest with a note).
+        text = (params.get("text") or "").strip()
+        if not text:
+            return True, "empty text"
+        got = _read_focused_text()
+        if got is None:
+            return True, "typed (couldn't verify — clipboard unavailable)"
+        norm_got = " ".join(got.lower().split())
+        norm_txt = " ".join(text.lower().split())
+        if norm_txt and norm_txt in norm_got:
+            return True, "confirmed via clipboard"
+        return False, ("typed but the text isn't in the focused field — the window "
+                       "probably didn't have keyboard focus")
+
     # no cheap post-hoc check — trust the primitive's own success flag.
     return True, "assumed (no cheap verification)"
+
+
+def _read_focused_text() -> str | None:
+    """Ctrl+A, Ctrl+C the focused control and return its text (None if we can't)."""
+    if not HAS_PYAUTOGUI or _emergency_stop.is_set():
+        return None
+    try:
+        import pyperclip
+    except ImportError:
+        return None
+    try:
+        with _lock:
+            pyautogui.hotkey("ctrl", "a")
+            time.sleep(0.1)
+            pyautogui.hotkey("ctrl", "c")
+            time.sleep(0.15)
+        return pyperclip.paste()
+    except Exception:
+        return None
+
+
+# Actions that must NOT be blindly re-run on a failed verify (retyping would
+# duplicate text / re-click). They get one honest attempt.
+_NO_RETRY = {"type_text", "click", "click_text", "press", "hotkey"}
 
 
 def execute_chain(steps: list, max_retries: int = 2) -> dict:
@@ -405,15 +460,16 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
         action = (s or {}).get("action", "")
         params = (s or {}).get("params", {}) or {}
 
+        retries = 0 if action in _NO_RETRY else max_retries
         verified, reason, r = False, "", {}
         attempts = 0
-        while attempts <= max_retries:
+        while attempts <= retries:
             attempts += 1
             r = _run_action(action, params)
             verified, reason = _verify_action(action, params, r)
             if verified:
                 break
-            if attempts <= max_retries:
+            if attempts <= retries:
                 time.sleep(min(1.0 * attempts, 3.0))   # brief backoff, then retry
 
         entry = {"step": i + 1, "action": action, "attempts": attempts,
@@ -424,13 +480,20 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
             return {"success": False, "steps": results, "failed_at": i + 1,
                     "error": f"{action} could not be verified: {reason}"}
 
-        # After a confirmed app open, wait + focus so the next input lands right.
+        # After a confirmed app open, if a keystroke/click follows, the window
+        # MUST be foreground or the input lands nowhere. Confirm focus and STOP
+        # honestly if we can't get it — never type into the void and claim done.
         if action == "open_app":
             target = params.get("name_or_path") or params.get("app", "")
             nxt = steps[i + 1]["action"] if i + 1 < len(steps) else None
             if nxt in ("type_text", "press", "hotkey", "click", "click_text"):
-                focus_window(target)
-                time.sleep(0.5)
+                fw = focus_window(target)
+                results.append({"step": f"{i + 1}b", "action": "focus_window", **fw})
+                if not fw.get("confirmed", fw.get("success", False)):
+                    return {"success": False, "steps": results, "failed_at": i + 1,
+                            "error": f"opened {target} but couldn't bring it to the "
+                                     f"foreground to continue — nothing was typed/clicked"}
+                time.sleep(0.4)
 
     return {"success": True, "steps": results, "count": len(results),
             "verified": True}
@@ -506,18 +569,60 @@ def close_window(title_contains: str) -> dict:
 
 
 def focus_window(title_contains: str) -> dict:
-    """Bring a window to the foreground."""
+    """Bring a window to the foreground, robustly, and CONFIRM it worked."""
     if not HAS_WINDOWS:
         return {"success": False, "error": "pygetwindow not available"}
     try:
-        wins = gw.getWindowsWithTitle(title_contains)
+        wins = [w for w in gw.getWindowsWithTitle(title_contains) if w.title.strip()]
         if not wins:
             return {"success": False, "error": f"No window with '{title_contains}'"}
-        wins[0].activate()
-        time.sleep(0.3)
-        return {"success": True, "action": "focus_window", "title": title_contains}
+        win = wins[0]
+        for attempt in range(3):
+            try:
+                if getattr(win, "isMinimized", False):
+                    win.restore()
+                    time.sleep(0.2)
+                win.activate()
+            except Exception:
+                # pygetwindow's activate can throw on some Windows builds; a
+                # minimize+restore reliably steals foreground as a fallback.
+                try:
+                    win.minimize(); time.sleep(0.15); win.restore()
+                except Exception:
+                    pass
+            time.sleep(0.25)
+            if _is_foreground(title_contains):
+                return {"success": True, "action": "focus_window",
+                        "title": title_contains, "confirmed": True}
+        # Last resort: click the window's center to force keyboard focus there.
+        try:
+            cx = win.left + max(win.width // 2, 10)
+            cy = win.top + max(win.height // 2, 10)
+            if HAS_PYAUTOGUI and not _emergency_stop.is_set():
+                pyautogui.click(cx, cy)
+                time.sleep(0.2)
+        except Exception:
+            pass
+        confirmed = _is_foreground(title_contains)
+        return {"success": confirmed, "action": "focus_window",
+                "title": title_contains, "confirmed": confirmed,
+                **({} if confirmed else
+                   {"error": f"couldn't bring '{title_contains}' to the foreground"})}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+def _is_foreground(title_contains: str) -> bool:
+    """Is a window matching this title currently the active/foreground window?"""
+    if not HAS_WINDOWS:
+        return False
+    try:
+        active = gw.getActiveWindow()
+        if active and active.title and title_contains.lower() in active.title.lower():
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def minimize_window(title_contains: str) -> dict:

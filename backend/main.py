@@ -1,4 +1,4 @@
-"""main.py — Jarvis v3 Backend"""
+"""main.py — Jarvis OS backend"""
 from __future__ import annotations
 import json, os, logging
 from datetime import datetime, timezone
@@ -20,7 +20,8 @@ load_dotenv(BASE_DIR / ".env")
 CORS_ORIGINS = os.getenv("CORS_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000").split(",")
 
-app = FastAPI(title="Jarvis v3", version="3.0.0", docs_url="/api/docs")
+JARVIS_VERSION = "14.0"
+app = FastAPI(title="Jarvis OS", version=JARVIS_VERSION, docs_url="/api/docs")
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
@@ -28,7 +29,7 @@ from models.db import conn, init_db
 
 @app.on_event("startup")
 def _startup():
-    logger.info("Jarvis V5 starting...")
+    logger.info(f"Jarvis OS v{JARVIS_VERSION} starting...")
     init_db()
     # V5: init extra tables for agents, memory, plans
     try:
@@ -86,6 +87,11 @@ def _startup():
         logger.info("Workflow store ready.")
     except Exception as e:
         logger.warning(f"Workflow init: {e}")
+    try:
+        from services.app_resolver import init_app_paths
+        init_app_paths()        # remembered executable paths (qq/doubao/wechat)
+    except Exception as e:
+        logger.warning(f"App-path store init: {e}")
     try:
         from services.brain_core import start as start_brain
         start_brain()           # world model sensing + event-first proactive loop
@@ -170,7 +176,7 @@ def _sse(chunk="", done=False):
     return f"data: {json.dumps({'chunk': chunk, 'done': done})}\n\n"
 
 @app.get("/")
-def root(): return {"app": "Jarvis v3", "running": True, "docs": "/api/docs"}
+def root(): return {"app": "Jarvis OS", "version": JARVIS_VERSION, "running": True, "docs": "/api/docs"}
 
 @app.get("/health")
 def health():
@@ -180,7 +186,7 @@ def health():
     except Exception: pass
     return {
         "status":    "online",
-        "version":   "8.0.0",
+        "version":   JARVIS_VERSION,
         "provider":  LLM_PROVIDER,
         "ollama":    ollama_ok,
         "ollama_ok": ollama_ok,
@@ -191,7 +197,9 @@ def health():
 def stats():
     try:
         disk = "C:\\" if os.name == "nt" else "/"
-        return {"cpu": psutil.cpu_percent(interval=0.3),
+        # interval=None is non-blocking (reads since the last call) — the old
+        # 0.3s blocking sample ran on every dashboard poll and wasted CPU.
+        return {"cpu": psutil.cpu_percent(interval=None),
                 "ram": psutil.virtual_memory().percent,
                 "disk": psutil.disk_usage(disk).percent}
     except Exception: return {"cpu": 0, "ram": 0, "disk": 0}

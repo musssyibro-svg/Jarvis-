@@ -132,7 +132,7 @@ export default function Agents() {
     <div style={{ padding:20, overflowY:'auto', height:'100%', boxSizing:'border-box' }}>
       {/* Header */}
       <div style={{ marginBottom:18 }}>
-        <div style={{ fontSize:9,color:'rgba(0,212,255,0.35)',letterSpacing:'0.2em',marginBottom:4 }}>JARVIS V5 // AGENT ECOSYSTEM</div>
+        <div style={{ fontSize:9,color:'rgba(0,212,255,0.35)',letterSpacing:'0.2em',marginBottom:4 }}>AGENT CONTROL</div>
         <div style={{ fontSize:17,fontWeight:700,color:C.accent,letterSpacing:'0.05em' }}>⬡ AGENT CONTROL</div>
       </div>
 

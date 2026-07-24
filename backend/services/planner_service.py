@@ -144,7 +144,13 @@ def decompose(goal: str) -> list[str]:
     try:
         from services.deepseek_service import call_model
         raw = call_model(
-            "Break this goal into 4-8 concrete, ordered, actionable steps. "
+            "You are planning steps to run on a WINDOWS DESKTOP PC that you control "
+            "directly (you can open apps, type, click, screenshot). "
+            "Break this goal into 3-6 concrete desktop steps. "
+            "HARD RULES: never write phone/mobile steps ('open your phone', 'tap "
+            "Apps'), never invent website signup/login steps unless the goal asks, "
+            "never say 'Douyin'. If the goal is 'open <app> and ask X', the steps are: "
+            "open the app, wait for it, type X, press Enter. "
             "Output ONLY the steps, one per line, no numbering, no preamble.\n\n"
             f"Goal: {goal}", fast=True)
         if raw and not raw.startswith("["):
@@ -316,26 +322,55 @@ def _step_to_actions(step_text: str, goal: str) -> dict:
     (concrete desktop/browser actions) or think-work to produce as text.
     Returns {"kind": "actions"|"text", "actions": [...]} — never raises.
     """
+    # Deterministic first: if the step text itself is a known command, use it.
+    try:
+        from services.tool_registry import resolve_steps
+        reg = resolve_steps(step_text)
+        if reg:
+            return {"kind": "actions", "actions": reg}
+    except Exception:
+        pass
     try:
         from services.deepseek_service import call_model
         raw = call_model(
-            "You control a Windows PC. Decide if this project step is something "
-            "you can DO right now with desktop actions, or knowledge work.\n"
+            "You control a WINDOWS DESKTOP PC directly. Decide if this step is a "
+            "desktop action you can DO now, or knowledge work.\n"
+            "Desktop actions only — never phone/mobile, never website signup.\n"
             f"Project goal: {goal}\nStep: {step_text}\n\n"
-            'If doable, reply ONLY: {"kind":"actions","actions":[{"action":"open_app|open_url|type_text|press|hotkey|screenshot|write_file","params":{...}}]}\n'
+            'If doable, reply ONLY with compact JSON (double quotes, commas between '
+            'items): {"kind":"actions","actions":[{"action":"open_app","params":{"name_or_path":"notepad"}}]}\n'
+            'Allowed actions: open_app, open_url, type_text, press, hotkey, screenshot, write_text.\n'
             'If knowledge work, reply ONLY: {"kind":"text"}', fast=True)
-        m = re.search(r"\{.*\}", raw, re.DOTALL)
-        if m:
-            d = _json.loads(m.group())
-            if d.get("kind") == "actions":
-                actions = [a for a in d.get("actions", [])[:8]
-                           if a.get("action") in _SAFE_ACTIONS]
-                if actions:
-                    return {"kind": "actions", "actions": actions}
-            return {"kind": "text"}
+        d = _loads_lenient(raw)
+        if d and d.get("kind") == "actions":
+            actions = [a for a in d.get("actions", [])[:8]
+                       if a.get("action") in _SAFE_ACTIONS]
+            if actions:
+                return {"kind": "actions", "actions": actions}
+        return {"kind": "text"}
     except Exception as e:
         logger.warning(f"planner: step classification failed: {e}")
     return {"kind": "text"}
+
+
+def _loads_lenient(raw: str):
+    """Extract and parse the first JSON object from possibly-messy LLM output."""
+    if not raw:
+        return None
+    m = re.search(r"\{.*\}", raw, re.DOTALL)
+    if not m:
+        return None
+    blob = m.group()
+    candidates = [blob]
+    q = blob.replace("'", '"')                        # single -> double quotes
+    candidates.append(q)
+    candidates.append(re.sub(r",\s*([}\]])", r"\1", q))   # + strip trailing commas
+    for attempt in candidates:
+        try:
+            return _json.loads(attempt)
+        except Exception:
+            continue
+    return None
 
 
 def _do_text_step(step_text: str, goal: str) -> str:

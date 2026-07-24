@@ -17,8 +17,8 @@ const LEVEL_COLOR = { info:'#00d4ff', success:'#00ff88', warning:'#ff9500', erro
 
 const S = {
   page:    { padding:'24px', overflowY:'auto', height:'100%', boxSizing:'border-box' },
-  card:    { border:'1px solid rgba(0,212,255,0.15)', borderRadius:'4px', padding:'18px', background:'rgba(0,10,20,0.75)', marginBottom:'12px' },
-  label:   { fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'12px' },
+  card:    { border:'1px solid rgba(0,212,255,0.15)', borderRadius:'4px', padding:'13px', background:'rgba(0,10,20,0.75)', marginBottom:'9px' },
+  label:   { fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'9px' },
   inp:     { width:'100%', background:'rgba(0,10,20,0.8)', border:'1px solid rgba(0,212,255,0.2)', outline:'none', color:'#c8e8f0', padding:'7px 10px', fontSize:'11px', fontFamily:'monospace', borderRadius:'3px', boxSizing:'border-box' },
   tabBtn:  (active) => ({ padding:'5px 14px', borderRadius:'3px', border:`1px solid ${active?'#00d4ff':'rgba(255,255,255,0.1)'}`, background:active?'rgba(0,212,255,0.1)':'transparent', color:active?'#00d4ff':'rgba(255,255,255,0.35)', cursor:'pointer', fontFamily:'monospace', fontSize:'9px', letterSpacing:'0.1em' }),
 }
@@ -72,7 +72,7 @@ export default function AutoMode() {
   useEffect(() => {
     const poll = () => { loadStatus(); loadQueue(); loadExecStatus(); loadIncome() }
     poll()
-    const t = setInterval(poll, 3000)
+    const t = setInterval(poll, 6000)
     return () => clearInterval(t)
   }, [])
 
@@ -206,13 +206,15 @@ export default function AutoMode() {
   const pendingQ     = queue.filter(q => q.status === 'pending').length
   const approvedQ    = queue.filter(q => q.status === 'approved').length
   const doneQ        = queue.filter(q => q.status === 'done').length
+  const readyQ       = queue.filter(q => q.status === 'ready').length
+  const needsLoginQ  = queue.filter(q => q.status === 'needs_login').length
 
   return (
     <div style={S.page}>
       {/* ── Header ── */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px', flexWrap:'wrap', gap:'10px' }}>
         <div>
-          <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.4)', letterSpacing:'0.2em', marginBottom:'4px' }}>JARVIS OS // V4</div>
+          <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.4)', letterSpacing:'0.2em', marginBottom:'4px' }}>AUTONOMOUS FREELANCE</div>
           <div style={{ fontSize:'18px', fontWeight:'700', color:'#00d4ff', letterSpacing:'0.05em' }}>⟳ AUTONOMOUS MODE</div>
         </div>
         <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
@@ -448,6 +450,13 @@ export default function AutoMode() {
                   </button>
                 )}
               </div>
+              {(readyQ>0 || needsLoginQ>0) && (
+                <div style={{ marginTop:'10px', fontSize:'10px', lineHeight:1.6, color:'rgba(255,255,255,0.5)' }}>
+                  {readyQ>0 && <div style={{ color:'#00d4ff' }}>↗ {readyQ} proposal(s) are <strong>ready to apply externally</strong> — those platforms (RemoteOK, WWR, Remote.co) are job boards with no on-site bidding. Open each from the Queue and apply via its link. They didn't fail; there's just nothing to auto-submit there.</div>}
+                  {needsLoginQ>0 && <div style={{ color:'#ff9500' }}>🔐 {needsLoginQ} need you logged in to that platform first (STEP 0 above), then re-submit.</div>}
+                  <div style={{ color:'rgba(255,255,255,0.4)', marginTop:4 }}>To actually auto-submit bids, scan a <strong>bid platform</strong> (Freelancer / PeoplePerHour / Upwork) you're logged into.</div>
+                </div>
+              )}
             </div>
           </div>
 

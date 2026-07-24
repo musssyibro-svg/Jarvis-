@@ -23,8 +23,8 @@ import re
 # of the qq fix. open_app() already resolves anything installed via the Start
 # Menu, so listing here just means "recognise this word as an app to launch".
 KNOWN_APPS = {
-    "qq", "wechat", "weixin", "tim", "dingtalk", "telegram", "whatsapp",
-    "discord", "slack", "signal", "line", "skype",
+    "qq", "wechat", "weixin", "tim", "dingtalk", "doubao", "douyin", "kimi",
+    "telegram", "whatsapp", "discord", "slack", "signal", "line", "skype",
     "chrome", "googlechrome", "edge", "msedge", "firefox", "browser",
     "notepad", "notepad++", "notes", "calculator", "calc", "explorer",
     "files", "cmd", "terminal", "powershell", "word", "excel", "powerpoint",
@@ -79,6 +79,24 @@ def resolve_steps(text: str) -> list[dict] | None:
                 "question": f"What new or unread messages are visible in {app}? "
                             f"List each sender and a one-line summary. If none are "
                             f"visible, say so."}},
+        ]
+
+    # ── "open <app> and ask/type/say/search <text>" → open, focus, type, enter ──
+    # This is the doubao case: "open doubao and ask it how it is" must actually
+    # type the question into the app, not just open it and claim done.
+    am = re.match(r"^\s*(?:open|launch|start|run)\s+(?:the\s+|my\s+)?([\w][\w .+&-]*?)\s+"
+                  r"(?:and\s+|then\s+)?(?:ask(?:\s+it)?|tell(?:\s+it)?|say|search(?:\s+for)?|"
+                  r"type|write|send|message)\s+[\"'“]?(.+?)[\"'”]?\s*$", low)
+    if am and _looks_like_known_app(am.group(1)):
+        app = _canon_app(am.group(1))
+        text = am.group(2).strip()
+        # "ask it how it is" -> ask the natural question
+        text = re.sub(r"^it\s+", "", text).strip() or text
+        return [
+            {"action": "open_app",        "params": {"name_or_path": app}},
+            {"action": "wait_for_window", "params": {"title": app, "timeout": 12}},
+            {"action": "type_text",       "params": {"text": text}},
+            {"action": "press",           "params": {"key": "enter"}},
         ]
 
     # ── plain "open <app>" / "launch <app>" / "start <app>" ────────────────────

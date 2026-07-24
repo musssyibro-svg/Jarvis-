@@ -113,8 +113,12 @@ def snapshot(fast: bool = True) -> dict:
 
 
 def summary() -> str:
-    """One-paragraph natural-language state, for injecting into the Brain/LLM."""
-    s = snapshot(fast=False)
+    """
+    One-paragraph natural-language state. Reads the CACHED snapshot (refreshed by
+    the background poller) — the frontend polls this every few seconds, and
+    recomputing process/window enumeration each time was a real CPU drain.
+    """
+    s = get_cached()
     parts = []
     if s["apps"]:
         parts.append("open apps: " + ", ".join(s["apps"]))
@@ -163,7 +167,7 @@ def _poll_loop():
                 _diff_and_publish(prev, cur)
         except Exception:
             pass
-        time.sleep(15)
+        time.sleep(25)   # gentle cadence — enough to catch app/login changes
 
 
 def get_cached() -> dict:

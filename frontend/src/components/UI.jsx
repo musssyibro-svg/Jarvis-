@@ -103,7 +103,7 @@ export const Btn = ({ children, onClick, disabled, variant = 'primary', small })
 export const PageHeader = ({ breadcrumb, title }) => (
   <div style={{ marginBottom: '22px' }}>
     <div style={{ fontSize: '9px', color: 'rgba(0,212,255,0.5)', letterSpacing: '0.3em', marginBottom: '4px' }}>
-      JARVIS v3 // {breadcrumb}
+      JARVIS // {breadcrumb}
     </div>
     <h1 style={{
       fontSize: '20px', color: '#00d4ff', letterSpacing: '0.1em',

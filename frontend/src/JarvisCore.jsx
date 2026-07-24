@@ -280,7 +280,7 @@ export default function JarvisCore() {
       fetch(API + "/world/summary").then(r => r.json()).then(d => setWorldSummary(d.summary || "")).catch(() => {});
       fetch(API + "/events/recent?limit=6").then(r => r.json()).then(d => setBrainEvents(d.events || [])).catch(() => {});
     };
-    poll(); const t = setInterval(poll, 5000); return () => clearInterval(t);
+    poll(); const t = setInterval(poll, 8000); return () => clearInterval(t);
   }, []);
 
   const runCommand = async (msg) => {

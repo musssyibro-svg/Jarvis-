@@ -125,7 +125,7 @@ export default function Workspace() {
       {/* Header */}
       <div style={{ marginBottom:'20px' }}>
         <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.3em', marginBottom:'4px' }}>
-          JARVIS v3 // AGENT WORKSPACE
+          JARVIS // AGENT WORKSPACE
         </div>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'10px' }}>
           <h1 style={{ fontSize:'20px', color:'#00d4ff', letterSpacing:'0.1em', textShadow:'0 0 20px rgba(0,212,255,0.4)', fontFamily:'sans-serif', margin:0 }}>
