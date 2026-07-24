@@ -29,3 +29,6 @@ backend/browser-profile/
 backend/screenshots/
 backend/agents/custom/*.py
 !backend/agents/custom/__init__.py
+
+# scratch workspace (local only)
+scratchpad/
