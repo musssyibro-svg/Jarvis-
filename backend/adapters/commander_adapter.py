@@ -156,12 +156,15 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
                             f"Watch the live feed for progress.",
                 "intent": "orchestrator", "data": {"goal_id": goal.goal_id}}
 
-    # ── Vision: perception only ────────────────────────────────────────────────
+    # ── Vision: real screen understanding (screenshot -> analyze) ──────────────
+    #   Route through the verified chain so it screenshots + runs the vision LLM
+    #   and returns the actual analysis (not raw OCR). This is the same path as
+    #   "what's on my screen", now used for ALL vision-intent phrasings.
     if intent == "vision":
-        from agents.perception_agent import perception
-        state = perception.observe(message)
-        return {"response": state.get("screen_text", "") or "I couldn't read the screen.",
-                "intent": "vision", "data": state}
+        return _run_tool_chain(message, [
+            {"action": "screenshot", "params": {}},
+            {"action": "analyze",    "params": {"question": message}},
+        ])
 
     # ── Memory: the Brain (V10) — save and recall personal knowledge ───────────
     if intent == "memory":

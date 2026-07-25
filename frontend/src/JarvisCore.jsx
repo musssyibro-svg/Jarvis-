@@ -340,67 +340,91 @@ export default function JarvisCore() {
         <div style={{ flex: 1, position: "relative", minHeight: 0, overflow: "auto" }}>
           {/* Real status board — replaces the fake animated core. Everything here
               is live data, not decoration. */}
-          {panel === "Command" && (
-            <div style={{ padding: "26px 28px", display: "flex", flexDirection: "column", gap: 18 }}>
-              <div>
-                <div style={{ fontSize: 12, color: C.dim, letterSpacing: 1 }}>{greeting()}</div>
-                <div style={{ fontSize: 26, fontWeight: 600, marginTop: 2 }}>How can I <span style={{ color: C.amber, fontStyle: "italic" }}>assist</span>?</div>
-                {worldSummary && <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>Right now: {worldSummary}</div>}
-              </div>
-
-              {/* Live status tiles */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-                {[
-                  ["STATUS", s.label, s.color],
-                  ["INCOME ENGINE", incomeStat?.enabled ? `on · ${incomeStat.cycles ?? 0} cycles` : "off", incomeStat?.enabled ? C.emerald : C.dim],
-                  ["RAM", sys ? `${Math.round(sys.ram)}%` : "—", sys && sys.ram > 85 ? C.crimson : C.cyan],
-                  ["MODEL", health?.model ? String(health.model).split(":")[0] : "—", C.amber],
-                ].map(([l, v, c]) => (
-                  <div key={l} style={{ ...matDeep, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 6 }}>{l}</div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: c }}>
-                      {l === "STATUS" && <span className="livedot" style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: c, marginRight: 7 }} />}
-                      {v}
-                    </div>
+          {panel === "Command" && (() => {
+            const busy = ["thinking","executing","scouting","proposing"].includes(state);
+            const sectionLabel = { fontSize: 10, color: C.dim, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 9 };
+            return (
+            <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
+              {/* ── State banner: the living heart. Animates ONLY when working. ── */}
+              <div className={busy ? "alive" : ""} style={{
+                ...matMetal(s.color), padding: "18px 22px",
+                display: "flex", alignItems: "center", gap: 16, position: "relative", overflow: "hidden",
+              }}>
+                {busy && <div className="busy-sweep" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />}
+                {busy
+                  ? <span className="think-ring" style={{ color: s.color }} />
+                  : <span style={{ width: 14, height: 14, borderRadius: "50%", background: s.color, boxShadow: `0 0 10px ${s.color}` }} />}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: C.dim, letterSpacing: 1 }}>{greeting()} · Jarvis is</div>
+                  <div style={{ fontSize: 21, fontWeight: 700, color: s.color }}>{s.label}</div>
+                  {worldSummary && <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{worldSummary}</div>}
+                </div>
+                {incomeStat?.enabled && (
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1 }}>INCOME ENGINE</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: C.emerald }}>{incomeStat.cycles ?? 0} <span style={{ fontSize: 11, color: C.dim }}>cycles</span></div>
                   </div>
-                ))}
+                )}
               </div>
 
-              {/* Quick actions that ACTUALLY RUN on click (no blank inputs). */}
+              {/* ── System status: real telemetry, smooth transitions ── */}
               <div>
-                <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 8 }}>Quick actions</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div style={sectionLabel}>System status</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
                   {[
-                    "what's on my screen",
-                    "open notepad and type hello",
-                    "scan freelance jobs now",
-                    "what can you do",
-                    "check my qq messages",
-                  ].map((q) => (
+                    ["CPU", sys ? Math.round(sys.cpu) : null, "%", sys && sys.cpu > 85 ? C.crimson : C.cyan],
+                    ["RAM", sys ? Math.round(sys.ram) : null, "%", sys && sys.ram > 85 ? C.crimson : C.emerald],
+                    ["OLLAMA", null, health?.ollama ? "online" : "offline", health?.ollama ? C.emerald : C.crimson],
+                    ["MODEL", null, health?.model ? String(health.model).split(":")[0] : "—", C.amber],
+                  ].map(([l, v, unit, c]) => (
+                    <div key={l} style={{ ...matDeep, padding: "12px 14px" }}>
+                      <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1.4, marginBottom: 6 }}>{l}</div>
+                      <div className="smooth" style={{ fontSize: 17, fontWeight: 700, color: c }}>
+                        {v != null ? v : ""}<span style={{ fontSize: v != null ? 11 : 14, color: v != null ? C.dim : c, marginLeft: v != null ? 1 : 0 }}>{unit}</span>
+                      </div>
+                      {typeof v === "number" && (
+                        <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 2, marginTop: 7 }}>
+                          <div className="progress-fill" style={{ height: 3, width: `${v}%`, background: c, borderRadius: 2 }} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Ask / quick actions ── */}
+              <div>
+                <div style={sectionLabel}>Ask Jarvis</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {["what's on my screen","open notepad and type hello","scan freelance jobs now","what can you do","check my qq messages"].map((q) => (
                     <button key={q} onClick={() => runCommand(q)}
-                      style={{ ...btn(C.cyan), background: hexA(C.cyan, 0.08), fontSize: 12, padding: "8px 12px" }}>
+                      style={{ ...btn(C.cyan), background: hexA(C.cyan, 0.07), fontSize: 12, padding: "8px 13px", borderRadius: 10 }}>
                       {q}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* What just changed — the Brain's event feed (real, not decoration) */}
-              {brainEvents.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 8 }}>What Jarvis noticed</div>
-                  <div style={{ ...matDeep, padding: "10px 14px", display: "flex", flexDirection: "column", gap: 5 }}>
-                    {brainEvents.map((e, i) => (
-                      <div key={i} style={{ fontSize: 12, color: C.dim, display: "flex", gap: 8 }}>
-                        <span style={{ color: C.cyan, minWidth: 96 }}>{e.type}</span>
-                        <span>{Object.entries(e.data || {}).map(([k, v]) => `${k}: ${v}`).join(", ")}</span>
-                      </div>
-                    ))}
-                  </div>
+              {/* ── Activity timeline: the living record (chat + real events, newest first) ── */}
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <div style={sectionLabel}>Activity timeline</div>
+                <div style={{ ...matDeep, padding: "6px 4px", maxHeight: 260, overflowY: "auto" }}>
+                  {feed.length === 0 && brainEvents.length === 0 && (
+                    <div style={{ color: C.dim, fontSize: 12, padding: 12 }}>Nothing yet — ask Jarvis something, or it'll show what it notices here.</div>
+                  )}
+                  {feed.slice(0, 40).map((f, i) => (
+                    <div key={i} className="tl-row" style={{ display: "flex", gap: 10, alignItems: "baseline", padding: "6px 12px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: f.c, marginTop: 5, flexShrink: 0 }} />
+                      <span style={{ color: C.dim, fontSize: 10, width: 58, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{f.t}</span>
+                      <span style={{ color: f.c, fontSize: 10, textTransform: "uppercase", width: 62, flexShrink: 0 }}>{f.a}</span>
+                      <span style={{ color: C.text, fontSize: 12, opacity: 0.9 }}>{f.m}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
-          )}
+            );
+          })()}
           {panel !== "Command" && (
             <div style={{ position: "absolute", inset: 0, ...matFrost, borderRadius: 0, padding: 22, overflowY: "auto" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>

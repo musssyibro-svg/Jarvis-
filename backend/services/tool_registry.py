@@ -85,19 +85,23 @@ def resolve_steps(text: str) -> list[dict] | None:
     # This is the doubao case: "open doubao and ask it how it is" must actually
     # type the question into the app, not just open it and claim done.
     am = re.match(r"^\s*(?:open|launch|start|run)\s+(?:the\s+|my\s+)?([\w][\w .+&-]*?)\s+"
-                  r"(?:and\s+|then\s+)?(?:ask(?:\s+it)?|tell(?:\s+it)?|say|search(?:\s+for)?|"
+                  r"(?:and\s+|then\s+)?(ask(?:\s+it)?|tell(?:\s+it)?|say|search(?:\s+for)?|"
                   r"type|write|send|message)\s+[\"'“]?(.+?)[\"'”]?\s*$", low)
     if am and _looks_like_known_app(am.group(1)):
         app = _canon_app(am.group(1))
-        text = am.group(2).strip()
-        # "ask it how it is" -> ask the natural question
-        text = re.sub(r"^it\s+", "", text).strip() or text
-        return [
+        verb = am.group(2)
+        text = am.group(3).strip()
+        text = re.sub(r"^it\s+", "", text).strip() or text   # "ask it how..." -> "how..."
+        steps = [
             {"action": "open_app",        "params": {"name_or_path": app}},
             {"action": "wait_for_window", "params": {"title": app, "timeout": 12}},
             {"action": "type_text",       "params": {"text": text}},
-            {"action": "press",           "params": {"key": "enter"}},
         ]
+        # Press Enter only for send/ask/search verbs (chat & search boxes submit
+        # on Enter). For "type/write" into an editor like Notepad, leave it be.
+        if not verb.startswith(("type", "write")):
+            steps.append({"action": "press", "params": {"key": "enter"}})
+        return steps
 
     # ── plain "open <app>" / "launch <app>" / "start <app>" ────────────────────
     om = re.match(r"^\s*(?:open|launch|start|run|fire up)\s+(?:the\s+|my\s+|up\s+)?"

@@ -90,15 +90,23 @@ class PerceptionAgent(BaseAgent):
         try:
             from agents.vision_agent import analyze_screen
             r = analyze_screen(question or "Describe the current screen state")
+            # analyze_screen returns the LLM result under 'answer'/'ai_answer' and
+            # the raw OCR under 'screen_text'. The old code read 'text'/'analysis'/
+            # 'ocr_text' — none of which exist — so it always returned "" and the
+            # vision path looked broken. Read the real keys, preferring the AI
+            # analysis over raw OCR.
+            answer = r.get("answer") or r.get("ai_answer") or r.get("screen_text", "")
             return {
                 "ok":          bool(r.get("success", r.get("ok", False))),
-                "screen_text": r.get("text") or r.get("analysis") or r.get("ocr_text", ""),
+                "analysis":    r.get("answer") or r.get("ai_answer") or "",
+                "screen_text": answer,
+                "raw_text":    r.get("screen_text", ""),
                 "method":      r.get("method", "unknown"),
                 "error":       r.get("error"),
                 "elements":    [],
             }
         except Exception as e:
-            return {"ok": False, "screen_text": "", "method": "none",
+            return {"ok": False, "screen_text": "", "analysis": "", "method": "none",
                     "error": str(e), "elements": []}
 
     # ── Stage 2: structured browser perception (DOM + bbox + clickable) ─────────

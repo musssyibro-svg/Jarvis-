@@ -220,8 +220,19 @@ def chat(body: ChatIn):
         data     = result.get("data", {})
         needs_ok = bool(result.get("needs_approval"))
     except Exception as e:
-        # Never let routing failure break chat — fall back to direct model call
-        reply, intent, data, needs_ok = call_model(body.message, history), "chat", {}, False
+        # Routing failed. DON'T silently pretend it was plain chat — that hid real
+        # feature failures and made everything "feel identical". Log loudly, emit
+        # to the live feed, and tell the user the feature path errored.
+        import traceback
+        logger.error(f"handle_chat FAILED for {body.message!r}: {e}\n{traceback.format_exc()}")
+        try:
+            from agents.orchestrator import STATE
+            STATE.emit("commander", f"Routing error: {e}", "error")
+        except Exception:
+            pass
+        reply    = (f"That command hit an error in the feature path (not plain chat): "
+                    f"{e}. I'm flagging it instead of pretending it worked.")
+        intent, data, needs_ok = "error", {"error": str(e)}, False
     _save_msg(body.session_id, "assistant", reply)
     _maybe_learn(body.session_id)
     return {"response": reply, "intent": intent, "data": data,

@@ -456,9 +456,27 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
     """
     results = []
     steps = steps or []
+    last_opened = None            # the app we most recently opened in this chain
+    _INPUT = {"type_text", "press", "hotkey", "click", "click_text"}
     for i, s in enumerate(steps):
         action = (s or {}).get("action", "")
         params = (s or {}).get("params", {}) or {}
+
+        # Before ANY keyboard/mouse input, the app we opened must be foreground —
+        # otherwise the input lands in the wrong window (the "notepad opens but
+        # doesn't type" bug, which also happens when wait_for_window sits between
+        # open and type). Confirm focus here regardless of step ordering, and
+        # STOP HONESTLY if we can't get it — never type into the void.
+        if action in _INPUT and last_opened:
+            if not _is_foreground(last_opened):
+                fw = focus_window(last_opened)
+                results.append({"step": f"{i}.focus", "action": "focus_window", **fw})
+                if not fw.get("confirmed", fw.get("success", False)):
+                    return {"success": False, "steps": results, "failed_at": i + 1,
+                            "error": f"opened {last_opened} but couldn't bring it to the "
+                                     f"foreground — nothing was typed/clicked, so I'm not "
+                                     f"claiming this worked"}
+                time.sleep(0.3)
 
         retries = 0 if action in _NO_RETRY else max_retries
         verified, reason, r = False, "", {}
@@ -480,20 +498,12 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
             return {"success": False, "steps": results, "failed_at": i + 1,
                     "error": f"{action} could not be verified: {reason}"}
 
-        # After a confirmed app open, if a keystroke/click follows, the window
-        # MUST be foreground or the input lands nowhere. Confirm focus and STOP
-        # honestly if we can't get it — never type into the void and claim done.
         if action == "open_app":
-            target = params.get("name_or_path") or params.get("app", "")
-            nxt = steps[i + 1]["action"] if i + 1 < len(steps) else None
-            if nxt in ("type_text", "press", "hotkey", "click", "click_text"):
-                fw = focus_window(target)
-                results.append({"step": f"{i + 1}b", "action": "focus_window", **fw})
-                if not fw.get("confirmed", fw.get("success", False)):
-                    return {"success": False, "steps": results, "failed_at": i + 1,
-                            "error": f"opened {target} but couldn't bring it to the "
-                                     f"foreground to continue — nothing was typed/clicked"}
-                time.sleep(0.4)
+            last_opened = params.get("name_or_path") or params.get("app", "")
+            # settle + focus immediately so a following screenshot/analyze also
+            # captures THIS app, not whatever was in front before.
+            focus_window(last_opened)
+            time.sleep(0.4)
 
     return {"success": True, "steps": results, "count": len(results),
             "verified": True}

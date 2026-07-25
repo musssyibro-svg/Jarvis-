@@ -81,15 +81,31 @@ def income_run_now():
 
 @router.post("/stop")
 def stop_auto():
-    from services.automation_engine import _state
-    _state["running"] = False
-    _state["stage"] = "stopped"
-    return {"message": "Stop signal sent"}
+    # Consolidated onto the real orchestrator + income engine. The old code wrote
+    # services.automation_engine._state, a dead dict nothing reads — a legacy
+    # no-op. Stop both the pipeline feed and the always-on loop.
+    from agents.orchestrator import STATE
+    STATE.set(running=False, stage="stopped")
+    STATE.emit("orchestrator", "Auto mode stop requested")
+    try:
+        from services.income_engine import stop as income_stop
+        income_stop()
+    except Exception:
+        pass
+    return {"message": "Stopped orchestrator + income engine"}
 
 @router.get("/status")
 def auto_status():
-    from services.automation_engine import get_state
-    return get_state()
+    # Real state from the orchestrator feed + income engine, not the dead
+    # automation_engine._state the old code returned.
+    from agents.orchestrator import STATE
+    s = STATE.get()
+    try:
+        from services.income_engine import status as income_status
+        s = {**s, "income": income_status()}
+    except Exception:
+        pass
+    return s
 
 @router.get("/queue")
 def list_queue(status: Optional[str] = None, limit: int = 100):
