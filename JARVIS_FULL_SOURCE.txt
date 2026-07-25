@@ -83,18 +83,18 @@ TABLE OF CONTENTS
  74. backend/routes/mind.py
  75. backend/routes/orchestrator.py
  76. backend/routes/orchestrator_feed.py
- 77. backend/routes/planner.py
- 78. backend/routes/proposals.py
- 79. backend/routes/pulse.py
- 80. backend/routes/scraper.py
- 81. backend/routes/sessions.py
- 82. backend/routes/system.py
- 83. backend/routes/workflows.py
- 84. backend/routes/zuodao.py
- 85. backend/services/__init__.py
- 86. backend/services/analytics_service.py
- 87. backend/services/app_resolver.py
- 88. backend/services/automation_engine.py
+ 77. backend/routes/os_console.py
+ 78. backend/routes/planner.py
+ 79. backend/routes/proposals.py
+ 80. backend/routes/pulse.py
+ 81. backend/routes/scraper.py
+ 82. backend/routes/sessions.py
+ 83. backend/routes/system.py
+ 84. backend/routes/workflows.py
+ 85. backend/routes/zuodao.py
+ 86. backend/services/__init__.py
+ 87. backend/services/analytics_service.py
+ 88. backend/services/app_resolver.py
  89. backend/services/bid_executor.py
  90. backend/services/brain_core.py
  91. backend/services/brain_service.py
@@ -109,31 +109,31 @@ TABLE OF CONTENTS
 100. backend/services/income_engine.py
 101. backend/services/model_router.py
 102. backend/services/ollama_manager.py
-103. backend/services/planner_service.py
-104. backend/services/platform_meta.py
-105. backend/services/profile_service.py
-106. backend/services/pulse_service.py
-107. backend/services/reflection.py
-108. backend/services/session_manager.py
-109. backend/services/tool_registry.py
-110. backend/services/vault.py
-111. backend/services/workflow_service.py
-112. backend/services/world_model.py
-113. backend/services/zuodao_service.py
-114. frontend/index.html
-115. frontend/package.json
-116. frontend/src/App.jsx
-117. frontend/src/JarvisCore.jsx
-118. frontend/src/components/Sidebar.jsx
-119. frontend/src/components/UI.jsx
-120. frontend/src/config.js
-121. frontend/src/index.css
-122. frontend/src/main.jsx
-123. frontend/src/pages/Agents.jsx
-124. frontend/src/pages/Analytics.jsx
-125. frontend/src/pages/AutoMode.jsx
-126. frontend/src/pages/Chat.jsx
-127. frontend/src/pages/Dashboard.jsx
+103. backend/services/os_state.py
+104. backend/services/planner_service.py
+105. backend/services/platform_meta.py
+106. backend/services/profile_service.py
+107. backend/services/pulse_service.py
+108. backend/services/reflection.py
+109. backend/services/session_manager.py
+110. backend/services/tool_registry.py
+111. backend/services/trace.py
+112. backend/services/vault.py
+113. backend/services/workflow_service.py
+114. backend/services/world_model.py
+115. backend/services/zuodao_service.py
+116. frontend/index.html
+117. frontend/package.json
+118. frontend/src/App.jsx
+119. frontend/src/JarvisOS.jsx
+120. frontend/src/components/UI.jsx
+121. frontend/src/config.js
+122. frontend/src/index.css
+123. frontend/src/main.jsx
+124. frontend/src/pages/Agents.jsx
+125. frontend/src/pages/Analytics.jsx
+126. frontend/src/pages/AutoMode.jsx
+127. frontend/src/pages/Chat.jsx
 128. frontend/src/pages/Jobs.jsx
 129. frontend/src/pages/Messages.jsx
 130. frontend/src/pages/Notes.jsx
@@ -2321,8 +2321,13 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     if not message or not message.strip():
         return {"response": "Say something and I'll get to work.", "intent": "chat"}
 
+    # Trace this request end-to-end so the exact path is visible (diagnostics).
+    from services import trace
+    trace.start("chat", message)
+
     from agents.commander import detect_intent  # pure intent detection only
     intent = detect_intent(message)
+    trace.step("commander.detect_intent", f"intent={intent}", ok=True)
     _emit("commander", f"Message received -> intent: {intent}")
 
     # ── Confirm / cancel: delegate to ExecutorAgent's approval lifecycle ────────
@@ -2393,7 +2398,11 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         except Exception:
             tool_steps = None
         if tool_steps:
+            trace.step("tool_registry.resolve_steps",
+                       f"{len(tool_steps)} steps: " +
+                       ",".join(s.get("action", "") for s in tool_steps), ok=True)
             return _run_tool_chain(message, tool_steps)
+        trace.step("tool_registry.resolve_steps", "no deterministic match", ok=None)
 
     # ── Long-term project planner (V10): "plan project X to ..." / "new project X"
     #    Checked BEFORE keyword-based desktop routing: the explicit "plan
@@ -2787,13 +2796,20 @@ def _run_tool_chain(message: str, steps: list) -> dict:
     answer becomes the reply — so "check my qq messages" comes back with the
     actual summary, not just "done".
     """
+    from services import trace
     _emit("commander", f"Recognised a direct command — running it (no planning needed)", "info")
     labels = " → ".join(s.get("action", "").replace("_", " ") for s in steps)
     _emit("executor", labels, "info")
     try:
         from agents.desktop_agent import execute_chain
         result = execute_chain(steps)
+        for st in result.get("steps", []):
+            trace.step(f"desktop.{st.get('action','?')}",
+                       st.get("verify_reason") or st.get("error", ""),
+                       ok=st.get("verified", st.get("success")))
     except Exception as e:
+        trace.step("desktop.execute_chain", str(e), ok=False)
+        trace.finish(f"exception: {e}", ok=False)
         return {"response": f"Couldn't run that: {e}", "intent": "executor",
                 "data": {"error": str(e)}}
 
@@ -2804,12 +2820,15 @@ def _run_tool_chain(message: str, steps: list) -> dict:
             answer = s.get("answer") or s.get("ai_answer")
     if not result.get("success"):
         fa = result.get("failed_at")
+        trace.finish(result.get("error", "chain failed"), ok=False)
         return {"response": f"Ran {fa-1 if fa else 0}/{len(steps)} steps, then hit: "
                             f"{result.get('error','')}. {answer or ''}".strip(),
                 "intent": "executor", "data": result}
     if answer:
         _emit("vision", "Screen read complete", "success")
+        trace.finish("screen analysed", ok=True)
         return {"response": answer, "intent": "vision", "data": result}
+    trace.finish(f"done: {labels}", ok=True)
     return {"response": f"Done ✓ ({labels})", "intent": "executor", "data": result}
 
 
@@ -2861,10 +2880,17 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
     chain = [{"action": a.action_type, "params": a.params or {}} for a in steps]
     labels = " → ".join(_step_label(a) for a in steps)
     _emit("executor", labels, "info")
+    from services import trace
     try:
         from agents.desktop_agent import execute_chain
         result = execute_chain(chain)
+        for st in result.get("steps", []):
+            trace.step(f"desktop.{st.get('action','?')}",
+                       st.get("verify_reason") or st.get("error", ""),
+                       ok=st.get("verified", st.get("success")))
     except Exception as e:
+        trace.step("desktop.execute_chain", str(e), ok=False)
+        trace.finish(f"exception: {e}", ok=False)
         return {"response": f"Couldn't run that: {e}", "intent": intent,
                 "data": {"error": str(e)}}
 
@@ -2872,11 +2898,13 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
         fa = result.get("failed_at", 0)
         done_n = max(0, fa - 1)
         _emit("executor", result.get("error", "step failed"), "error")
+        trace.finish(result.get("error", "step failed"), ok=False)
         return {"response": f"I got {done_n}/{len(steps)} steps done, then couldn't "
                             f"verify: {result.get('error','')}. I didn't mark it done "
                             f"because it didn't actually complete.",
                 "intent": intent, "data": result}
     _emit("executor", f"Verified done: {labels}", "success")
+    trace.finish(f"verified: {labels}", ok=True)
     return {"response": f"Done ✓ (verified: {labels})", "intent": intent, "data": result}
 ```
 
@@ -2884,7 +2912,7 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 # FILE 28/151: backend/agents/__init__.py
 ################################################################################
 ```py
-from .orchestrator import STATE, start_pipeline
+from .orchestrator import STATE
 ```
 
 ################################################################################
@@ -4674,13 +4702,14 @@ Give specific actionable advice. Be concise."""
 ################################################################################
 ```py
 """
-agents/orchestrator.py
-The central Jarvis orchestrator.
-Controls the full pipeline:
-  Scout → Score → Proposal → Memory → (Browser on approval)
+agents/orchestrator.py — shared live-state bus (SSE feed) + approval queueing.
 
-Uses SSE-compatible event queue for live frontend feed.
-Thread-safe state. No race conditions.
+The old thread-pipeline that lived here (run_pipeline/start_pipeline) was
+superseded by agents/orchestrator_core.py and had no callers left, so it was
+removed. What remains is what the whole system genuinely shares:
+  * STATE — the thread-safe event/state object every module emits to, which the
+    UI streams over /orchestrator/feed.
+  * _queue_for_approval — puts generated proposals in front of the human.
 """
 import json
 import queue
@@ -4761,117 +4790,6 @@ STATE = _State()
 
 # ── Orchestrator ─────────────────────────────────────────────────────────────
 
-def run_pipeline(config: dict):
-    """
-    Main pipeline. Run in a background thread.
-    config keys:
-      platforms, your_name, your_skills, max_per_platform,
-      min_score, max_generate, headless
-    """
-    if STATE.get()["running"]:
-        STATE.emit("orchestrator", "Pipeline already running — skipped")
-        return
-
-    STATE.set(running=True, stage="starting", progress=0)
-    STATE.emit("orchestrator", f"Pipeline started — platforms: {config.get('platforms')}")
-
-    try:
-        # ── 1. SCOUT ────────────────────────────────────────────────────────
-        STATE.set(stage="scouting", progress=10)
-        STATE.emit("scout", "Scanning platforms for opportunities...")
-
-        from agents.scout_agent import ScoutAgent
-        scout_result = ScoutAgent().run({
-            "platforms":          config.get("platforms", ["remoteok"]),
-            "max_per_platform":   config.get("max_per_platform", 10),
-        })
-        jobs     = scout_result["jobs"]
-        jobs_found = len(jobs)
-        STATE.update_stats(jobs_found=jobs_found)
-
-        for e in scout_result.get("feed", []):
-            STATE.emit(e["agent"], e["msg"])
-
-        STATE.set(progress=30)
-
-        # ── 2. SCORE ────────────────────────────────────────────────────────
-        STATE.set(stage="scoring", progress=35)
-        STATE.emit("score", f"Scoring {jobs_found} opportunities...")
-
-        from agents.score_agent import ScoreAgent
-        from agents.memory_agent import MemoryAgent
-        win_patterns = MemoryAgent.get_win_patterns()
-        score_result = ScoreAgent().run({
-            "jobs":        jobs,
-            "min_score":   config.get("min_score", 30),
-            "your_skills": config.get("your_skills", "python automation"),
-            "win_patterns": win_patterns,
-        })
-        qualified = score_result["qualified"]
-        STATE.update_stats(jobs_qualified=len(qualified))
-
-        for e in score_result.get("feed", []):
-            STATE.emit(e["agent"], e["msg"])
-
-        STATE.emit("score", f"{len(qualified)} jobs qualified for proposals")
-        STATE.set(progress=55)
-
-        # ── 3. PROPOSAL ─────────────────────────────────────────────────────
-        STATE.set(stage="generating", progress=60)
-        STATE.emit("proposal", f"Generating proposals for top {min(len(qualified),config.get('max_generate',5))} jobs...")
-
-        from agents.proposal_agent import ProposalAgent
-        proposal_result = ProposalAgent().run({
-            "qualified_jobs": qualified,
-            "your_name":      config.get("your_name", "Ibrahim"),
-            "your_skills":    config.get("your_skills", "Python, automation"),
-            "max_generate":   config.get("max_generate", 5),
-        })
-        generated = proposal_result["generated"]
-        STATE.update_stats(proposals_gen=len(generated))
-
-        for e in proposal_result.get("feed", []):
-            STATE.emit(e["agent"], e["msg"])
-
-        STATE.set(progress=80)
-
-        # ── 4. MEMORY ───────────────────────────────────────────────────────
-        STATE.set(stage="learning", progress=85)
-        STATE.emit("memory", "Updating memory from outcomes...")
-
-        memory_result = MemoryAgent().run({})
-        insights = memory_result.get("insights", {})
-
-        for e in memory_result.get("feed", []):
-            STATE.emit(e["agent"], e["msg"])
-
-        if insights.get("best_platform"):
-            STATE.emit("memory", f"Best platform: {insights['best_platform']}")
-        if insights.get("top_pattern"):
-            STATE.emit("memory", f"Top win keyword: {insights['top_pattern']}")
-
-        STATE.set(progress=95)
-
-        # ── 5. QUEUE FOR APPROVAL ───────────────────────────────────────────
-        STATE.set(stage="queueing", progress=98)
-        _queue_for_approval(generated)
-        STATE.emit("orchestrator", f"Queued {len(generated)} proposals for approval")
-
-        # ── DONE ────────────────────────────────────────────────────────────
-        now = datetime.now(timezone.utc).isoformat()
-        STATE.update_stats(last_run=now)
-        STATE.update_stats(cycles_inc=1)
-        STATE.set(stage="complete", progress=100)
-        STATE.emit("orchestrator",
-                   f"✓ Cycle complete — {jobs_found} found, {len(qualified)} qualified, {len(generated)} proposals generated")
-
-    except Exception as e:
-        STATE.set(stage="error")
-        STATE.emit("orchestrator", f"Pipeline error: {e}", "error")
-    finally:
-        STATE.set(running=False)
-
-
 def _queue_for_approval(generated: list):
     from models.db import conn
     now = datetime.now(timezone.utc).isoformat()
@@ -4890,13 +4808,6 @@ def _queue_for_approval(generated: list):
                      "apply", json.dumps({"application": item.get("proposal_text",""), "job": item}),
                      "pending", now)
                 )
-
-
-def start_pipeline(config: dict):
-    """Start the pipeline in a background daemon thread."""
-    t = threading.Thread(target=run_pipeline, args=(config,), daemon=True)
-    t.start()
-    return t
 ```
 
 ################################################################################
@@ -7061,6 +6972,7 @@ from routes.pulse        import router as pulse_router           # V11 Pulse
 from routes.sessions     import router as sessions_router        # V12 login sessions + vault
 from routes.workflows    import router as workflows_router       # V13 learned workflows
 from routes.mind         import router as mind_router            # V14 Brain / World / Capabilities
+from routes.os_console   import router as os_router              # V15 OS console (unified state)
 
 app.include_router(orchestrator_router, prefix="/orchestrator",  tags=["Orchestrator"])
 app.include_router(agents_router,       prefix="/agents",        tags=["Agents"])      # V5
@@ -7081,6 +6993,7 @@ app.include_router(pulse_router,        prefix="/pulse",         tags=["Pulse"])
 app.include_router(sessions_router,     prefix="/sessions",      tags=["Sessions"])    # V12
 app.include_router(workflows_router,    prefix="/workflows",     tags=["Workflows"])   # V13
 app.include_router(mind_router,                                  tags=["Brain"])       # V14 (paths self-prefixed)
+app.include_router(os_router,           prefix="/os",            tags=["OS Console"])  # V15
 
 from services.deepseek_service import call_model, OLLAMA_MODEL, LLM_PROVIDER
 
@@ -10111,7 +10024,58 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 77/151: backend/routes/planner.py
+# FILE 77/151: backend/routes/os_console.py
+################################################################################
+```py
+"""
+routes/os_console.py — the operating console's data surface.
+
+GET  /os/state        one live snapshot of everything (replaces 6+ separate polls)
+GET  /os/traces       recent request traces (exact execution path per request)
+GET  /os/traces/{id}  one trace in full
+GET  /os/diagnostics  health of the routing itself: failures + worst component
+"""
+from fastapi import APIRouter, HTTPException
+
+router = APIRouter()
+
+
+@router.get("/state")
+def os_state(timeline: int = 40):
+    from services.os_state import snapshot
+    return snapshot(timeline_limit=timeline)
+
+
+@router.get("/traces")
+def os_traces(limit: int = 20):
+    from services import trace
+    return {"traces": trace.recent(limit), "summary": trace.summary()}
+
+
+@router.get("/traces/{trace_id}")
+def os_trace(trace_id: str):
+    from services import trace
+    t = trace.get(trace_id)
+    if not t:
+        raise HTTPException(404, "trace not found")
+    return t
+
+
+@router.get("/diagnostics")
+def os_diagnostics():
+    """Is the routing itself healthy? Surfaces silent failures instead of hiding them."""
+    from services import trace, capability_registry
+    return {
+        "traces": trace.summary(),
+        "recent": trace.recent(8),
+        "capabilities": [{"name": c["name"], "available": c["available"],
+                          "missing": c["missing"]}
+                         for c in capability_registry.list_dicts()],
+    }
+```
+
+################################################################################
+# FILE 78/151: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -10236,7 +10200,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 78/151: backend/routes/proposals.py
+# FILE 79/151: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -10442,7 +10406,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 79/151: backend/routes/pulse.py
+# FILE 80/151: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -10476,7 +10440,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 80/151: backend/routes/scraper.py
+# FILE 81/151: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -10620,7 +10584,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 81/151: backend/routes/sessions.py
+# FILE 82/151: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -10701,7 +10665,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 82/151: backend/routes/system.py
+# FILE 83/151: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -10900,7 +10864,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 83/151: backend/routes/workflows.py
+# FILE 84/151: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -10966,7 +10930,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 84/151: backend/routes/zuodao.py
+# FILE 85/151: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -11061,7 +11025,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 85/151: backend/services/__init__.py
+# FILE 86/151: backend/services/__init__.py
 ################################################################################
 ```py
 from .deepseek_service import call_model, generate_proposal, generate_reply_draft, auto_work_job
@@ -11069,7 +11033,7 @@ from .analytics_service import get_analytics
 ```
 
 ################################################################################
-# FILE 86/151: backend/services/analytics_service.py
+# FILE 87/151: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -11171,7 +11135,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 87/151: backend/services/app_resolver.py
+# FILE 88/151: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -11367,209 +11331,6 @@ def list_known() -> list[dict]:
         return [dict(r) for r in rows]
     except Exception:
         return []
-```
-
-################################################################################
-# FILE 88/151: backend/services/automation_engine.py
-################################################################################
-```py
-"""DEPRECATED (V9): responsibilities moved to agents/orchestrator_core.py.
-Kept import-safe for backward compatibility; do not extend. Scheduler and routes
-now drive OrchestratorCore instead of run_auto_mode()."""
-"""
-services/automation_engine.py
-AUTO MODE — scans all platforms, filters jobs, queues applications.
-Runs as background task. Frontend polls /automation/status for progress.
-"""
-
-import json
-import threading
-from datetime import datetime, timezone
-
-_state = {
-    "running":    False,
-    "enabled":    False,
-    "progress":   0,
-    "stage":      "idle",
-    "log":        [],
-    "stats": {
-        "jobs_found":    0,
-        "apps_queued":   0,
-        "tasks_found":   0,
-        "last_run":      None,
-    }
-}
-_lock = threading.Lock()
-
-
-def get_state() -> dict:
-    with _lock:
-        return dict(_state)
-
-
-def _log(msg: str):
-    ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
-    with _lock:
-        _state["log"].append(f"[{ts}] {msg}")
-        if len(_state["log"]) > 100:
-            _state["log"] = _state["log"][-100:]
-    print(f"[AutoMode] {msg}")
-
-
-def _set(key: str, val):
-    with _lock:
-        _state[key] = val
-
-
-def run_auto_mode(platforms: list[str], your_name: str, your_skills: str, max_jobs: int = 10):
-    """Main automation loop. Call from background thread."""
-    if _state["running"]:
-        return
-    _set("running", True)
-    _set("progress", 0)
-    _set("log", [])
-    _state["stats"]["jobs_found"] = 0
-    _state["stats"]["apps_queued"] = 0
-    _state["stats"]["tasks_found"] = 0
-
-    try:
-        from models.db import conn
-
-        total_platforms = len(platforms)
-        per_step = 80 // max(total_platforms, 1)
-
-        for i, platform_name in enumerate(platforms):
-            _set("stage", f"scanning_{platform_name}")
-            _log(f"Scanning {platform_name}...")
-            _set("progress", 10 + i * per_step)
-
-            jobs = _scan_platform(platform_name, max_jobs)
-            if not jobs:
-                _log(f"{platform_name}: no jobs found")
-                continue
-
-            _log(f"{platform_name}: {len(jobs)} jobs found")
-            _state["stats"]["jobs_found"] += len(jobs)
-
-            # Save to platform_jobs table
-            now = datetime.now(timezone.utc).isoformat()
-            with conn() as db:
-                for j in jobs:
-                    try:
-                        db.execute(
-                            """INSERT OR IGNORE INTO platform_jobs
-                               (job_id, platform, title, description, skills, company, link, budget, date_posted, scraped_at)
-                               VALUES (?,?,?,?,?,?,?,?,?,?)""",
-                            (j.get("job_id"), platform_name, j.get("title"),
-                             j.get("description"), json.dumps(j.get("skills", [])),
-                             j.get("company", ""), j.get("link", ""),
-                             j.get("budget", ""), j.get("date_posted", ""), now)
-                        )
-                    except Exception:
-                        pass
-
-            # Filter: skip jobs with no description
-            quality = [j for j in jobs if len(j.get("description", "")) > 30]
-            _log(f"{platform_name}: {len(quality)} quality jobs after filter")
-
-            # Queue applications
-            _set("stage", f"generating_applications_{platform_name}")
-            _set("progress", 10 + i * per_step + per_step // 2)
-
-            with conn() as db:
-                for j in quality[:5]:  # max 5 per platform per run
-                    exists = db.execute(
-                        "SELECT id FROM automation_queue WHERE job_id=? AND platform=?",
-                        (j.get("job_id"), platform_name)
-                    ).fetchone()
-                    if exists:
-                        continue
-                    try:
-                        app_text = _gen_application(j, platform_name, your_name, your_skills)
-                        db.execute(
-                            """INSERT INTO automation_queue
-                               (platform, job_id, job_title, action, payload, status, created_at)
-                               VALUES (?,?,?,?,?,?,?)""",
-                            (platform_name, j.get("job_id"), j.get("title"),
-                             "apply", json.dumps({"application": app_text, "job": j}),
-                             "pending", now)
-                        )
-                        _state["stats"]["apps_queued"] += 1
-                        _log(f"Queued application: {j.get('title', '')[:50]}")
-                    except Exception as e:
-                        _log(f"Failed to queue {j.get('title','')[:30]}: {e}")
-
-        # Scan microtask platforms
-        if "clickworker" in platforms:
-            _set("stage", "scanning_clickworker")
-            _log("Scanning Clickworker tasks...")
-            from services.clickworker_service import fetch_public_tasks
-            tasks = fetch_public_tasks(max_tasks=10)
-            _state["stats"]["tasks_found"] += len(tasks)
-            _log(f"Clickworker: {len(tasks)} tasks found")
-
-        if "zuodao" in platforms:
-            _set("stage", "scanning_zuodao")
-            _log("Scanning Zuodao tasks...")
-            from services.zuodao_service import fetch_tasks
-            tasks = fetch_tasks(max_tasks=10)
-            _state["stats"]["tasks_found"] += len(tasks)
-            _log(f"Zuodao: {len(tasks)} tasks found")
-
-        _state["stats"]["last_run"] = datetime.now(timezone.utc).isoformat()
-        _set("stage", "complete")
-        _set("progress", 100)
-        _log(f"Auto mode complete. Jobs: {_state['stats']['jobs_found']}, Apps queued: {_state['stats']['apps_queued']}")
-
-    except Exception as e:
-        _log(f"Auto mode error: {e}")
-        _set("stage", "error")
-    finally:
-        _set("running", False)
-
-
-def _scan_platform(name: str, max_jobs: int) -> list[dict]:
-    try:
-        if name == "hubstaff":
-            from platforms.hubstaff import HubstaffPlatform
-            return HubstaffPlatform().scan_jobs(max_jobs)
-        elif name == "remoteok":
-            from platforms.remoteok import RemoteOKPlatform
-            return RemoteOKPlatform().scan_jobs(max_jobs)
-        elif name == "weworkremotely":
-            from platforms.weworkremotely import WeWorkRemotelyPlatform
-            return WeWorkRemotelyPlatform().scan_jobs(max_jobs)
-        elif name == "remoteco":
-            from platforms.remoteco import RemoteCoPlatform
-            return RemoteCoPlatform().scan_jobs(max_jobs)
-        elif name == "wellfound":
-            from platforms.wellfound import WellfoundPlatform
-            return WellfoundPlatform().scan_jobs(max_jobs)
-        elif name == "peopleperhour":
-            from platforms.peopleperhour import PeoplePerHourPlatform
-            return PeoplePerHourPlatform().scan_jobs(max_jobs)
-        elif name == "contra":
-            from platforms.contra import ContraPlatform
-            return ContraPlatform().scan_jobs(max_jobs)
-    except Exception as e:
-        print(f"[AutoMode] _scan_platform({name}) error: {e}")
-    return []
-
-
-def _gen_application(job: dict, platform: str, your_name: str, your_skills: str) -> str:
-    try:
-        from services.deepseek_service import call_model
-        return call_model(
-            f"""Write a professional job application for {platform}.
-Job: {job.get('title')} | Company: {job.get('company','the company')}
-Description: {job.get('description','')}
-Applicant: {your_name} | Skills: {your_skills}
-Under 180 words. Reference the role. Highlight relevant skills. Clear CTA. Sign as {your_name}.
-Output ONLY the application message.""",
-            fast=True
-        )
-    except Exception:
-        return f"Hi, I am applying for {job.get('title','')}. Please consider my application. — {your_name}"
 ```
 
 ################################################################################
@@ -14425,7 +14186,179 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 103/151: backend/services/planner_service.py
+# FILE 103/151: backend/services/os_state.py
+################################################################################
+```py
+"""
+services/os_state.py — ONE live snapshot of the whole system.
+
+The UI used to poll /stats + /health + /world/summary + /events/recent +
+/orchestrator/status + /automation/queue + /automation/income/status separately.
+That was both a CPU drain and the reason the app felt like disconnected widgets:
+every panel had its own truth.
+
+This returns the entire operating state in a single call, shaped the way an OS
+console wants to display it:
+
+    { status, goal, subsystems{...}, queue, plans, timeline, system, traces }
+
+Every field is real. Nothing here is a placeholder — if a subsystem can't report,
+it says so ("unknown"/"offline") rather than inventing a value.
+"""
+from datetime import datetime, timezone
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _safe(fn, default=None):
+    try:
+        return fn()
+    except Exception:
+        return default
+
+
+def snapshot(timeline_limit: int = 40) -> dict:
+    from agents.orchestrator import STATE
+
+    feed_state = _safe(STATE.get, {}) or {}
+    stats = feed_state.get("stats", {}) or {}
+
+    # ── system telemetry ──────────────────────────────────────────────────────
+    def _sys():
+        import os as _os
+        import psutil
+        disk = "C:\\" if _os.name == "nt" else "/"
+        return {"cpu": round(psutil.cpu_percent(interval=None)),
+                "ram": round(psutil.virtual_memory().percent),
+                "disk": round(psutil.disk_usage(disk).percent)}
+    system = _safe(_sys, {"cpu": 0, "ram": 0, "disk": 0})
+
+    def _ollama():
+        from services.ollama_manager import resolve_models
+        info = resolve_models()
+        return {"online": bool(info.get("installed")),
+                "models": info.get("installed", [])[:6],
+                "fast": info.get("resolved", {}).get("fast"),
+                "reasoning": info.get("resolved", {}).get("reasoning"),
+                "vision": info.get("resolved", {}).get("vision")}
+    ollama = _safe(_ollama, {"online": False, "models": []})
+
+    world = _safe(lambda: __import__("services.world_model", fromlist=["get_cached"]).get_cached(), {}) or {}
+    income = _safe(lambda: __import__("services.income_engine", fromlist=["status"]).status(), {}) or {}
+
+    # ── queue (freelance automation) ──────────────────────────────────────────
+    def _queue():
+        from models.db import conn
+        with conn() as db:
+            rows = db.execute("SELECT status, COUNT(*) c FROM automation_queue "
+                              "GROUP BY status").fetchall()
+        return {r["status"]: r["c"] for r in rows}
+    queue = _safe(_queue, {})
+
+    # ── plans ─────────────────────────────────────────────────────────────────
+    def _plans():
+        from services import planner_service
+        return [{"id": p["id"], "title": p["title"], "progress": p["progress"],
+                 "done": p["done"], "total": p["total"],
+                 "doing": next((s["text"] for s in p["steps"] if s["status"] == "doing"), None)}
+                for p in planner_service.list_projects() if p["status"] == "active"][:5]
+    plans = _safe(_plans, [])
+
+    # ── memory / brain ────────────────────────────────────────────────────────
+    def _memory():
+        from models.db import conn
+        with conn() as db:
+            docs = db.execute("SELECT COUNT(*) n FROM brain_documents").fetchone()["n"]
+            refl = db.execute("SELECT COUNT(*) n FROM brain_documents "
+                              "WHERE source='reflection'").fetchone()["n"]
+        return {"documents": docs, "reflections": refl}
+    memory = _safe(_memory, {"documents": 0, "reflections": 0})
+
+    def _workflows():
+        from services.workflow_service import list_workflows
+        return [{"name": w["name"], "runs": w["runs"], "status": w["last_status"]}
+                for w in list_workflows()][:6]
+    workflows = _safe(_workflows, [])
+
+    # ── current goal / activity ───────────────────────────────────────────────
+    stage = feed_state.get("stage", "idle")
+    running = bool(feed_state.get("running"))
+    goal = None
+    if plans:
+        p = plans[0]
+        goal = {"text": p["title"], "detail": p.get("doing") or f"{p['done']}/{p['total']} steps",
+                "progress": p["progress"], "source": "plan"}
+    elif income.get("enabled"):
+        goal = {"text": "Earning — scanning freelance platforms",
+                "detail": f"cycle {income.get('cycles', 0)} · every {income.get('interval_min', 20)}m",
+                "progress": None, "source": "income"}
+
+    # ── subsystems: what each part of Jarvis is doing RIGHT NOW ───────────────
+    logins = world.get("logins", []) or []
+    apps = world.get("apps", []) or []
+    subsystems = {
+        "brain":     {"state": "thinking" if running else "ready",
+                      "detail": stage if running else "idle",
+                      "ok": True},
+        "desktop":   {"state": "watching" if apps else "ready",
+                      "detail": (", ".join(apps[:4]) if apps else "no tracked apps open"),
+                      "ok": True},
+        "vision":    {"state": "ready" if ollama.get("vision") else "limited",
+                      "detail": (f"vision model: {ollama.get('vision')}" if ollama.get("vision")
+                                 else "OCR only — pull llava for true screen understanding"),
+                      "ok": bool(ollama.get("vision"))},
+        "browser":   {"state": "logged in" if logins else "no sessions",
+                      "detail": (", ".join(logins) if logins else "log in from Freelance ▸ Platform Logins"),
+                      "ok": bool(logins)},
+        "automation":{"state": "running" if income.get("enabled") else "paused",
+                      "detail": f"{income.get('cycles', 0)} cycles · "
+                                f"{queue.get('pending', 0)} awaiting approval",
+                      "ok": bool(income.get("enabled"))},
+        "memory":    {"state": "learning" if memory["reflections"] else "ready",
+                      "detail": f"{memory['documents']} docs · {memory['reflections']} reflections",
+                      "ok": True},
+        "models":    {"state": "online" if ollama.get("online") else "offline",
+                      "detail": (ollama.get("fast") or "no model") ,
+                      "ok": bool(ollama.get("online"))},
+    }
+
+    return {
+        "ts": _now(),
+        "status": {"stage": stage, "running": running,
+                   "label": _stage_label(stage, running)},
+        "goal": goal,
+        "subsystems": subsystems,
+        "system": system,
+        "ollama": ollama,
+        "income": income,
+        "queue": queue,
+        "plans": plans,
+        "workflows": workflows,
+        "memory": memory,
+        "stats": stats,
+        "timeline": (feed_state.get("feed", []) or [])[-timeline_limit:][::-1],
+        "traces": _safe(lambda: __import__("services.trace", fromlist=["summary"]).summary(), {}),
+    }
+
+
+_STAGE_LABELS = {
+    "idle": "Idle", "starting": "Starting", "scouting": "Scanning for work",
+    "scoring": "Scoring opportunities", "generating": "Drafting proposals",
+    "proposing": "Drafting proposals", "executing": "Executing",
+    "queueing": "Queueing for approval", "learning": "Learning",
+    "complete": "Finished", "error": "Needs attention", "stopped": "Stopped",
+}
+
+
+def _stage_label(stage: str, running: bool) -> str:
+    label = _STAGE_LABELS.get(stage, stage.title() if stage else "Idle")
+    return label if running or stage not in ("idle", "") else "Ready"
+```
+
+################################################################################
+# FILE 104/151: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -15005,7 +14938,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 104/151: backend/services/platform_meta.py
+# FILE 105/151: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -15087,7 +15020,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 105/151: backend/services/profile_service.py
+# FILE 106/151: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -15162,7 +15095,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 106/151: backend/services/pulse_service.py
+# FILE 107/151: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -15439,7 +15372,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 107/151: backend/services/reflection.py
+# FILE 108/151: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -15540,7 +15473,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 108/151: backend/services/session_manager.py
+# FILE 109/151: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -15911,7 +15844,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 109/151: backend/services/tool_registry.py
+# FILE 110/151: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -16068,7 +16001,140 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 110/151: backend/services/vault.py
+# FILE 111/151: backend/services/trace.py
+################################################################################
+```py
+"""
+services/trace.py — execution tracing. Every request records the EXACT path it took.
+
+The recurring complaint was "I changed the code but the app feels identical" — and
+the cause, twice now, was a request quietly taking a legacy path or dying in a
+silent `except`. Tracing removes the guesswork: each request opens a trace, every
+hop appends a step (with timing and outcome), and the whole path is visible at
+/os/traces and in the UI's diagnostics panel.
+
+    trace: chat "open notepad and type hello"
+      ├─ commander.detect_intent        2ms   -> desktop
+      ├─ tool_registry.resolve_steps    1ms   -> 3 steps
+      ├─ desktop.execute_chain        842ms   -> open_app ok, focus ok, type ok
+      └─ result                              -> verified done
+
+Design: thread-local current trace so hops don't have to pass an id around;
+bounded ring buffer; never raises; near-zero cost when nothing is tracing.
+"""
+import threading
+import time
+import uuid
+from collections import deque
+from datetime import datetime, timezone
+
+_local = threading.local()
+_traces = deque(maxlen=60)
+_lock = threading.Lock()
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+class _Trace:
+    def __init__(self, kind: str, label: str):
+        self.id = uuid.uuid4().hex[:8]
+        self.kind = kind                 # chat | workflow | plan | income | api
+        self.label = label
+        self.started = time.time()
+        self.started_at = _now()
+        self.steps: list[dict] = []
+        self.result = None
+        self.ok = None
+        self.duration_ms = None
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "kind": self.kind, "label": self.label,
+                "started_at": self.started_at, "steps": self.steps,
+                "result": self.result, "ok": self.ok,
+                "duration_ms": self.duration_ms}
+
+
+def start(kind: str, label: str) -> str:
+    """Begin a trace on this thread. Returns its id."""
+    try:
+        t = _Trace(kind, label[:160])
+        _local.current = t
+        with _lock:
+            _traces.append(t)
+        return t.id
+    except Exception:
+        return ""
+
+
+def step(component: str, detail: str = "", ok: bool | None = None, **extra) -> None:
+    """Record a hop in the current trace (no-op if nothing is tracing)."""
+    t = getattr(_local, "current", None)
+    if t is None:
+        return
+    try:
+        t.steps.append({
+            "component": component,
+            "detail": str(detail)[:200],
+            "ok": ok,
+            "at_ms": int((time.time() - t.started) * 1000),
+            **{k: str(v)[:120] for k, v in extra.items()},
+        })
+    except Exception:
+        pass
+
+
+def finish(result: str = "", ok: bool = True) -> None:
+    """Close the current trace."""
+    t = getattr(_local, "current", None)
+    if t is None:
+        return
+    try:
+        t.result = str(result)[:300]
+        t.ok = ok
+        t.duration_ms = int((time.time() - t.started) * 1000)
+    finally:
+        _local.current = None
+
+
+def current_id() -> str | None:
+    t = getattr(_local, "current", None)
+    return t.id if t else None
+
+
+def recent(limit: int = 20) -> list[dict]:
+    with _lock:
+        items = list(_traces)
+    return [t.to_dict() for t in items[-limit:]][::-1]
+
+
+def get(trace_id: str) -> dict | None:
+    with _lock:
+        for t in _traces:
+            if t.id == trace_id:
+                return t.to_dict()
+    return None
+
+
+def summary() -> dict:
+    """Health at a glance: how many recent requests failed, and where."""
+    items = recent(30)
+    done = [t for t in items if t.get("ok") is not None]
+    failed = [t for t in done if not t["ok"]]
+    # which component most often reported a failure
+    comp: dict[str, int] = {}
+    for t in failed:
+        for s in t["steps"]:
+            if s.get("ok") is False:
+                comp[s["component"]] = comp.get(s["component"], 0) + 1
+    worst = max(comp.items(), key=lambda kv: kv[1])[0] if comp else None
+    return {"recent": len(items), "completed": len(done), "failed": len(failed),
+            "worst_component": worst}
+```
+
+################################################################################
+# FILE 112/151: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -16196,7 +16262,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 111/151: backend/services/workflow_service.py
+# FILE 113/151: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -16434,7 +16500,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 112/151: backend/services/world_model.py
+# FILE 114/151: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -16623,7 +16689,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 113/151: backend/services/zuodao_service.py
+# FILE 115/151: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -16740,7 +16806,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 114/151: frontend/index.html
+# FILE 116/151: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -16758,7 +16824,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 115/151: frontend/package.json
+# FILE 117/151: frontend/package.json
 ################################################################################
 ```json
 {
@@ -16782,912 +16848,454 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 116/151: frontend/src/App.jsx
+# FILE 118/151: frontend/src/App.jsx
 ################################################################################
 ```jsx
-import { useState } from 'react'
-import Dashboard   from './pages/Dashboard'
-import Settings    from './pages/Settings'
-import Chat        from './pages/Chat'
-import WorkspaceHub from './pages/WorkspaceHub'
-import Agents       from './pages/Agents'
-import JarvisCore   from './JarvisCore'
-
-// Jarvis is a personal assistant first. Core (assistant hub) is the default.
-// COMPUTER is PC control (desktop/vision/commander agents) — a core Jarvis
-// capability, NOT a freelance feature. Freelance is one module among others.
-const TABS = [
-  { id: 'jarvis',    label: 'Core',       Comp: JarvisCore },
-  { id: 'chat',      label: 'Chat',       Comp: Chat },
-  { id: 'computer',  label: 'Computer',   Comp: Agents },
-  { id: 'workspace', label: 'Freelance',  Comp: WorkspaceHub },
-  { id: 'dashboard', label: 'Dashboard',  Comp: Dashboard },
-  { id: 'settings',  label: 'Settings',   Comp: Settings },
-]
+/**
+ * App.jsx — entry point.
+ *
+ * Jarvis is no longer "an app with tabs". JarvisOS is a single operating console:
+ * the status strip, subsystem view, activity timeline and command bar are always
+ * live, and everything else renders inside that shell.
+ */
+import JarvisOS from './JarvisOS'
 
 export default function App() {
-  const [tab, setTab] = useState('jarvis')   // Chat is the default entry point
-  const Active = (TABS.find(t => t.id === tab) || TABS[0]).Comp
-
-  return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:'#0a0e14' }}>
-      {/* Top tab bar — plain, no animation */}
-      <nav style={{ display:'flex', gap:'2px', padding:'0 12px', alignItems:'center', height:'46px', flexShrink:0,
-        borderBottom:'1px solid rgba(255,255,255,0.07)', background:'#0d1219', zIndex:2 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'8px', marginRight:'24px' }}>
-          <div style={{ width:7, height:7, borderRadius:'50%', background:'#00d4ff' }}/>
-          <span style={{ color:'#e8f4fa', fontSize:'14px', letterSpacing:'0.18em', fontWeight:700 }}>JARVIS</span>
-        </div>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            padding:'6px 18px', border:'none', borderRadius:'6px', fontSize:'12px', letterSpacing:'0.04em',
-            background: tab===t.id ? 'rgba(0,212,255,0.12)' : 'transparent',
-            color: tab===t.id ? '#7df1ff' : 'rgba(255,255,255,0.5)',
-            fontWeight: tab===t.id ? 600 : 400,
-          }}>{t.label}</button>
-        ))}
-      </nav>
-
-      {/* Active page — flex child that owns its own scrolling; never clips. */}
-      <main style={{ flex:1, minHeight:0, overflow:'hidden', position:'relative' }}>
-        <div style={{ height:'100%', overflow:'auto' }}><Active /></div>
-      </main>
-    </div>
-  )
+  return <JarvisOS />
 }
 ```
 
 ################################################################################
-# FILE 117/151: frontend/src/JarvisCore.jsx
+# FILE 119/151: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
-import React, { useEffect, useRef, useState } from "react";
+/**
+ * JarvisOS.jsx — the operating console.
+ *
+ * This replaces the "app with pages" model. The shell is ALWAYS live: the status
+ * strip, the subsystem rail, the activity timeline and the command bar never go
+ * away, no matter what you're looking at. Surfaces (Console / Freelance /
+ * Computer / Plans / Skills / Diagnostics) render inside it, sharing one visual
+ * language — so it reads as a single system, not a set of screens.
+ *
+ * Everything on screen is driven by ONE backend call (GET /os/state) plus the SSE
+ * feed. Nothing is a placeholder: if a subsystem can't report, it says so.
+ * Motion appears only when Jarvis is genuinely working.
+ */
+import { useState, useEffect, useRef, useCallback } from "react";
+import { API } from "./config.js";
 
-const C = {
-  bg: "#090B10", surfaceDeep: "#0d1017", text: "#eef0f4", dim: "#7e828d",
-  amber: "#F2B84B", emerald: "#3CE6A7", cyan: "#87E7FF", crimson: "#FF5A5F",
+import Chat from "./pages/Chat";
+import Agents from "./pages/Agents";
+import WorkspaceHub from "./pages/WorkspaceHub";
+import Settings from "./pages/Settings";
+
+/* ── One visual language ─────────────────────────────────────────────────── */
+export const T = {
+  bg: "#080b11", panel: "#0d1220", panelSoft: "rgba(255,255,255,0.028)",
+  line: "rgba(255,255,255,0.075)", text: "#e6edf5", dim: "#7d8798",
+  cyan: "#54d6ff", green: "#3ee6a8", amber: "#f5b544",
+  red: "#ff5f6d", violet: "#a98bff",
 };
-const STATES = {
-  idle:      { label: "Idle",              color: C.cyan,    speed: 0.45, beam: null },
-  thinking:  { label: "Thinking",          color: C.cyan,    speed: 1.4,  beam: null },
-  scouting:  { label: "Scouting",          color: C.emerald, speed: 1.1,  beam: "left" },
-  proposing: { label: "Drafting Proposal", color: C.amber,   speed: 1.0,  beam: "right" },
-  executing: { label: "Executing",         color: C.amber,   speed: 1.9,  beam: "bottom" },
-  approval:  { label: "Approval Required", color: C.crimson, speed: 0.5,  beam: null },
-  speaking:  { label: "Responding",        color: C.emerald, speed: 1.0,  beam: null },
+
+const card = {
+  background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14,
 };
-function hexA(hex, a) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-}
-function drawHex(ctx, x, y, r) {
-  ctx.beginPath();
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2, px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
-    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-  }
-  ctx.closePath(); ctx.stroke();
-}
+const sectionLabel = {
+  fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
+  color: T.dim, marginBottom: 10, fontWeight: 600,
+};
 
-// (Decorative canvas animations removed — status is shown as real text.)
+const SURFACES = [
+  { id: "console",   label: "Console",   icon: "◈" },
+  { id: "chat",      label: "Chat",      icon: "◉" },
+  { id: "computer",  label: "Computer",  icon: "⬒" },
+  { id: "freelance", label: "Earn",      icon: "◆" },
+  { id: "diag",      label: "Diagnostics", icon: "◇" },
+  { id: "settings",  label: "Settings",  icon: "⚙" },
+];
 
-const matDeep  = { background: C.surfaceDeep, border: "1px solid rgba(255,255,255,0.05)", borderRadius: 18 };
-const matFrost = { background: "rgba(28,32,40,0.5)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" };
-const matMetal = (c) => ({ background: `linear-gradient(135deg, ${hexA(c,0.16)}, ${hexA(c,0.04)})`, border: `1px solid ${hexA(c,0.35)}`, borderRadius: 16, boxShadow: `inset 0 1px 0 ${hexA("#ffffff",0.08)}, 0 0 24px ${hexA(c,0.12)}` });
-const btn = (c, filled) => ({ padding: "12px 20px", borderRadius: 12, border: filled?"none":`1px solid ${hexA(c,0.4)}`, background: filled?c:"transparent", color: filled?"#0a0a0a":c, fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: 0.3 });
-const now = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
-const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; };
+const LEVEL_COLOR = { info: T.cyan, success: T.green, warning: T.amber, error: T.red };
 
-const API = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL) || "http://127.0.0.1:8000";
+/* Subsystem accent colours — consistent everywhere they appear. */
+const SUB_COLOR = {
+  brain: T.violet, desktop: T.cyan, vision: T.amber, browser: T.green,
+  automation: T.green, memory: T.violet, models: T.cyan,
+};
 
-// Consumes /orchestrator/sse. Auto-reconnects. Reports connection state so the
-// component can fall back to the demo timer only while disconnected.
-function useOrchestratorFeed(onEvent) {
-  const [connected, setConnected] = useState(false);
-  const esRef = useRef(null);
-  const cbRef = useRef(onEvent);
-  cbRef.current = onEvent;
-  useEffect(() => {
-    let stopped = false;
-    let retry;
-    const connect = () => {
-      if (stopped) return;
-      const es = new EventSource(API + "/orchestrator/sse");
-      esRef.current = es;
-      es.onopen = () => setConnected(true);
-      es.onmessage = (e) => {
-        try {
-          const d = JSON.parse(e.data);
-          if (d.ping) return;
-          cbRef.current && cbRef.current(d);
-        } catch (_) { /* ignore malformed frame */ }
-      };
-      es.onerror = () => {
-        setConnected(false);
-        es.close();
-        if (!stopped) retry = setTimeout(connect, 3000);
-      };
-    };
-    connect();
-    return () => { stopped = true; clearTimeout(retry); esRef.current && esRef.current.close(); };
-  }, []);
-  return { connected };
-}
-
-export default function JarvisCore() {
-  const [state, setState] = useState("idle");
-  const [panel, setPanel] = useState("Command");
-  const [sys, setSys] = useState(null);          // REAL cpu/ram/disk from /stats
-  const [health, setHealth] = useState(null);    // REAL model/provider from /health
-  const [incomeStat, setIncomeStat] = useState(null);
-  const [agents, setAgents] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [brainStatus, setBrainStatus] = useState(null);
-  const [brainDocs, setBrainDocs] = useState([]);
-  const [brainQuery, setBrainQuery] = useState("");
-  const [brainResults, setBrainResults] = useState(null);
-  const [noteText, setNoteText] = useState("");
-  const [noteProject, setNoteProject] = useState("");
-  const [noteKind, setNoteKind] = useState("note");
-  const [workflows, setWorkflows] = useState([]);
-  const [wfName, setWfName] = useState("");
-  const [wfText, setWfText] = useState("");
-  const [wfMsg, setWfMsg] = useState("");
-  const loadWorkflows = () => fetch(API + "/workflows").then(r => r.json())
-    .then(d => setWorkflows(d.workflows || [])).catch(() => setWorkflows([]));
-  const teachWorkflow = async () => {
-    if (!wfName.trim() || !wfText.trim()) { setWfMsg("Give it a name and describe what to do."); return; }
-    try {
-      const r = await fetch(API + "/workflows", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: wfName.trim(), text: wfText.trim() }) });
-      const d = await r.json();
-      setWfMsg(r.ok ? `Learned "${d.name}" (${d.step_count} steps). Say "run my ${d.name}".` : (d.detail || "couldn't learn that"));
-      if (r.ok) { setWfName(""); setWfText(""); loadWorkflows(); }
-    } catch (e) { setWfMsg(String(e)); }
-  };
-  const runWorkflow = (n) => fetch(API + `/workflows/${encodeURIComponent(n)}/run`, { method: "POST" }).then(() => loadWorkflows());
-  const delWorkflow = (n) => fetch(API + `/workflows/${encodeURIComponent(n)}`, { method: "DELETE" }).then(() => loadWorkflows());
-  const loadBrain = () => {
-    fetch(API + "/brain/status").then(r => r.json()).then(setBrainStatus).catch(() => setBrainStatus(null));
-    fetch(API + "/brain/documents").then(r => r.json()).then(d => setBrainDocs(d.documents || [])).catch(() => setBrainDocs([]));
-  };
-  const saveNote = async () => {
-    if (!noteText.trim()) return;
-    await fetch(API + "/brain/ingest", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: noteText.slice(0, 60), text: noteText,
-                             project: noteProject.trim(), source: noteKind }) }).catch(() => {});
-    setNoteText(""); loadBrain();
-  };
-  const uploadBrainFile = async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    const fd = new FormData(); fd.append("file", f);
-    await fetch(API + "/brain/upload", { method: "POST", body: fd }).catch(() => {});
-    e.target.value = ""; loadBrain();
-  };
-  const searchBrain = async () => {
-    if (!brainQuery.trim()) { setBrainResults(null); return; }
-    const r = await fetch(API + "/brain/search?q=" + encodeURIComponent(brainQuery) + "&k=5")
-      .then(r => r.json()).catch(() => null);
-    setBrainResults(r);
-  };
-  const deleteBrainDoc = async (id) => {
-    await fetch(API + "/brain/document/" + id, { method: "DELETE" }).catch(() => {});
-    loadBrain();
-  };
-  const [plans, setPlans] = useState([]);
-  const [planGoal, setPlanGoal] = useState("");
-  const [planName, setPlanName] = useState("");
-  const [doctor, setDoctor] = useState(null);
-  const loadPlans = () => {
-    fetch(API + "/planner/projects").then(r => r.json()).then(d => setPlans(d.projects || [])).catch(() => setPlans([]));
-  };
-  const createPlan = async () => {
-    if (!planName.trim()) return;
-    await fetch(API + "/planner/project", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: planName.trim(), goal: planGoal.trim(), title: planName.trim() }) }).catch(() => {});
-    setPlanName(""); setPlanGoal(""); loadPlans();
-  };
-  const cycleStep = async (stepId, cur) => {
-    const order = ["todo", "doing", "done", "blocked"];
-    const next = order[(order.indexOf(cur) + 1) % order.length];
-    await fetch(API + "/planner/step/" + stepId, { method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: next }) }).catch(() => {});
-    loadPlans();
-  };
-  const deletePlan = async (id) => {
-    await fetch(API + "/planner/project/" + id, { method: "DELETE" }).catch(() => {});
-    loadPlans();
-  };
-  const [runningPlans, setRunningPlans] = useState({});
-  const runPlan = async (id) => {
-    setRunningPlans((r) => ({ ...r, [id]: true }));
-    await fetch(API + "/planner/project/" + id + "/execute", { method: "POST" }).catch(() => {});
-    // poll progress while it runs, then refresh a final time
-    const poll = setInterval(async () => {
-      loadPlans();
-      try {
-        const r = await fetch(API + "/planner/project/" + id + "/executing");
-        const d = await r.json();
-        if (!d.executing) {
-          clearInterval(poll);
-          setRunningPlans((x) => ({ ...x, [id]: false }));
-          loadPlans();
-        }
-      } catch { clearInterval(poll); setRunningPlans((x) => ({ ...x, [id]: false })); }
-    }, 3000);
-  };
-  const loadDoctor = () => {
-    fetch(API + "/system/doctor").then(r => r.json()).then(setDoctor).catch(() => setDoctor(null));
-  };
-  useEffect(() => {
-    if (panel === "Brain") loadBrain();
-    if (panel === "Plans") loadPlans();
-    if (panel === "Skills") loadWorkflows();
-    if (panel === "Settings") loadDoctor();
-    if (panel === "Agents") {
-      fetch(API + "/agents/status").then(r => r.json())
-        .then(d => {
-          // backend shape: {commander:"online", desktop:{...}, vision:{...}, intent_map:[...]}
-          const list = [];
-          Object.entries(d || {}).forEach(([k, v]) => {
-            if (k === "intent_map") return;
-            if (v && typeof v === "object" && !Array.isArray(v)) {
-              list.push({ name: k, status: v.status || v.state || (v.available ? "online" : "idle"), ...v });
-            } else {
-              list.push({ name: k, status: String(v) });
-            }
-          });
-          setAgents(list);
-        })
-        .catch(() => setAgents([]));
-    }
-    if (panel === "Tasks") {
-      fetch(API + "/automation/platform-jobs?limit=25").then(r => r.json())
-        .then(d => setJobs(d.jobs || []))
-        .catch(() => setJobs([]));
-    }
-  }, [panel]);
-  const [input, setInput] = useState("");
+export default function JarvisOS() {
+  const [surface, setSurface] = useState("console");
+  const [os, setOs] = useState(null);
   const [feed, setFeed] = useState([]);
-  // One session shared with the Chat tab, persisted in localStorage — so Core
-  // and Chat are the same conversation and messages survive a refresh.
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [reply, setReply] = useState(null);
+  const sseRef = useRef(null);
+
   const [sessionId] = useState(() => {
     try {
       let s = localStorage.getItem("jarvis_session_id");
       if (!s) { s = `s_${Date.now()}`; localStorage.setItem("jarvis_session_id", s); }
       return s;
-    } catch { return "core"; }
+    } catch { return "console"; }
   });
-  // Restore prior conversation from the backend on mount (fixes "Core doesn't
-  // save messages" — they were saved server-side but never loaded back).
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch(`${API}/chat/history/${sessionId}`);
-        if (!r.ok) return;
-        const d = await r.json();
-        const hist = (d.messages || []).map((m) => ({
-          t: "", a: m.role === "assistant" ? "JARVIS" : "YOU",
-          c: m.role === "assistant" ? C.amber : C.cyan, m: m.content,
-        })).reverse(); // feed renders newest-first
-        if (hist.length) setFeed((f) => [...hist, ...f].slice(0, 50));
-      } catch {}
-      // Pulse: proactive notifications that fired while the app was closed
-      // (briefing, plan nudges, new jobs, system warnings).
-      try {
-        const r = await fetch(`${API}/pulse/recent?unseen=1&limit=10`);
-        if (!r.ok) return;
-        const d = await r.json();
-        const lvl = { info: C.cyan, success: C.emerald, warning: C.amber, error: C.crimson };
-        const ev = (d.events || []).map((e) => ({
-          t: (e.created_at || "").slice(11, 19), a: "PULSE",
-          c: lvl[e.level] || C.emerald, m: e.msg,
-        }));
-        if (ev.length) {
-          setFeed((f) => [...ev, ...f].slice(0, 50));
-          fetch(`${API}/pulse/seen`, { method: "POST" }).catch(() => {});
-        }
-      } catch {}
-    })();
-  }, [sessionId]);
-  // Live event from /orchestrator/sse -> drive core state + live feed panel.
-  const onEvent = (d) => {
-    if (d.state && STATES[d.state]) setState(d.state);
-    const colorMap = { info: C.cyan, success: C.emerald, warning: C.amber, error: C.crimson };
-    setFeed((prev) => [{
-      t: (d.ts && String(d.ts).slice(11, 19)) || now(),
-      a: (d.agent || "SYS").toUpperCase(),
-      c: colorMap[d.level] || C.dim,
-      m: d.msg || "",
-    }, ...prev].slice(0, 50));
-  };
-  const { connected } = useOrchestratorFeed(onEvent);
 
-  // Demo timer runs ONLY while the feed is disconnected (pure-frontend preview).
+  /* ONE poll for the whole console. */
   useEffect(() => {
-    if (connected) return;
-    const seq = ["idle","thinking","scouting","proposing","executing","approval","speaking"];
-    let i = 0;
-    const id = setInterval(() => { i = (i+1)%seq.length; setState(seq[i]); }, 3800);
-    return () => clearInterval(id);
-  }, [connected]);
-  const [worldSummary, setWorldSummary] = useState("");
-  const [brainEvents, setBrainEvents] = useState([]);
-  // Real system telemetry — replaces the hardcoded "9.9 / 16 GB" fake numbers.
-  useEffect(() => {
-    const poll = () => {
-      fetch(API + "/stats").then(r => r.json()).then(setSys).catch(() => {});
-      fetch(API + "/health").then(r => r.json()).then(setHealth).catch(() => {});
-      fetch(API + "/automation/income/status").then(r => r.json()).then(setIncomeStat).catch(() => {});
-      fetch(API + "/world/summary").then(r => r.json()).then(d => setWorldSummary(d.summary || "")).catch(() => {});
-      fetch(API + "/events/recent?limit=6").then(r => r.json()).then(d => setBrainEvents(d.events || [])).catch(() => {});
+    let alive = true;
+    const load = async () => {
+      try {
+        const r = await fetch(`${API}/os/state?timeline=40`);
+        if (r.ok && alive) setOs(await r.json());
+      } catch { /* backend down — the strip shows it */ }
     };
-    poll(); const t = setInterval(poll, 8000); return () => clearInterval(t);
+    load();
+    const t = setInterval(load, 6000);
+    return () => { alive = false; clearInterval(t); };
   }, []);
 
-  const runCommand = async (msg) => {
-    if (!msg || !msg.trim()) return;
-    setFeed((f) => [{ t: now(), a: "YOU", c: C.cyan, m: msg }, ...f].slice(0, 50));
-    setState("thinking");
+  /* Live activity via SSE — the timeline updates the instant something happens. */
+  useEffect(() => {
+    const connect = () => {
+      const es = new EventSource(`${API}/orchestrator/feed`);
+      es.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data);
+          if (d.ping) return;
+          setFeed((f) => [{ ...d, _k: Math.random() }, ...f].slice(0, 120));
+        } catch { /* ignore malformed frame */ }
+      };
+      es.onerror = () => { es.close(); setTimeout(connect, 4000); };
+      sseRef.current = es;
+    };
+    connect();
+    return () => sseRef.current?.close();
+  }, []);
+
+  const run = useCallback(async (text) => {
+    const msg = (text ?? input).trim();
+    if (!msg) return;
+    setInput(""); setBusy(true); setReply(null);
+    setFeed((f) => [{ ts: hhmm(), agent: "you", msg, level: "info", _k: Math.random() }, ...f]);
     try {
-      const res = await fetch(API + "/chat", {
+      const r = await fetch(`${API}/chat`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: msg, session_id: sessionId }),
       });
-      const data = await res.json();
-      const reply = data.response || data.reply || "";
-      if (reply) setFeed((f) => [{ t: now(), a: "JARVIS", c: C.amber, m: reply }, ...f].slice(0, 50));
-    } catch (err) {
-      setFeed((f) => [{ t: now(), a: "ERROR", c: C.crimson, m: "Backend unreachable" }, ...f].slice(0, 50));
-    } finally { setState("idle"); }
-  };
-  const send = async () => {
-    if (!input.trim()) return;
-    const msg = input; setInput("");
-    await runCommand(msg);
-  };
-  const s = STATES[state];
+      const d = await r.json();
+      setReply({ text: d.response || "", intent: d.intent });
+      setFeed((f) => [{ ts: hhmm(), agent: "jarvis", msg: d.response || "", level: d.intent === "error" ? "error" : "success", _k: Math.random() }, ...f]);
+    } catch (e) {
+      setReply({ text: `Backend unreachable: ${e.message}`, intent: "error" });
+    } finally { setBusy(false); }
+  }, [input, sessionId]);
+
+  const online = !!os;
+  const working = !!os?.status?.running || busy;
+  const statusLabel = busy ? "Thinking" : (os?.status?.label || (online ? "Ready" : "Offline"));
+  const statusColor = !online ? T.red : working ? T.amber : T.green;
+
   return (
-    <div style={{ height: "100%", display: "flex", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif", overflow: "hidden" }}>
-      <aside style={{ width: "18%", minWidth: 190, padding: 20, display: "flex", flexDirection: "column", gap: 6, borderRight: "1px solid rgba(255,255,255,0.04)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
-          <div style={{ width: 36, height: 36, ...matMetal(C.amber), display: "grid", placeItems: "center" }}>
-            <span style={{ color: C.amber, fontSize: 16 }}>◆</span>
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, letterSpacing: 3, color: C.amber, fontSize: 15 }}>JARVIS</div>
-            <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1 }}>LOCAL CORE</div>
-          </div>
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column",
+                  background: T.bg, color: T.text,
+                  fontFamily: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
+
+      {/* ── Status strip: always visible, always true ── */}
+      <header style={{ height: 52, flexShrink: 0, display: "flex", alignItems: "center",
+                       gap: 18, padding: "0 18px", borderBottom: `1px solid ${T.line}`,
+                       background: "rgba(10,14,22,0.9)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {working
+            ? <span className="think-ring" style={{ color: statusColor }} />
+            : <span style={{ width: 9, height: 9, borderRadius: "50%", background: statusColor,
+                             boxShadow: `0 0 10px ${statusColor}` }} />}
+          <span style={{ fontWeight: 700, letterSpacing: "0.2em", fontSize: 14 }}>JARVIS</span>
         </div>
-        {["Command","Agents","Skills","Brain","Plans","Settings"].map((x) => (
-          <div key={x} onClick={() => setPanel(x)} style={{ padding: "11px 12px", borderRadius: 10, fontSize: 13, cursor: "pointer", color: panel===x?C.amber:C.dim, background: panel===x?hexA(C.amber,0.07):"transparent", borderLeft: panel===x?`2px solid ${C.amber}`:"2px solid transparent" }}>{x}</div>
-        ))}
-        <div style={{ marginTop: "auto", ...matFrost, padding: 12, fontSize: 11, color: C.dim }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>RAM</span>
-            <span style={{ color: sys && sys.ram > 85 ? C.crimson : C.emerald }}>{sys ? `${Math.round(sys.ram)}%` : "—"}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-            <span>CPU</span><span style={{ color: C.cyan }}>{sys ? `${Math.round(sys.cpu)}%` : "—"}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-            <span>Model</span><span style={{ color: C.amber }}>{health?.model ? String(health.model).split(":")[0] : "—"}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-            <span>Ollama</span><span style={{ color: health?.ollama ? C.emerald : C.crimson }}>{health?.ollama ? "up" : "down"}</span>
-          </div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{ color: statusColor, fontSize: 13, fontWeight: 600 }}>{statusLabel}</span>
+          {os?.goal && <span style={{ color: T.dim, fontSize: 12 }}>· {os.goal.text}</span>}
         </div>
-      </aside>
-      <main style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
-        <div style={{ flex: 1, position: "relative", minHeight: 0, overflow: "auto" }}>
-          {/* Real status board — replaces the fake animated core. Everything here
-              is live data, not decoration. */}
-          {panel === "Command" && (() => {
-            const busy = ["thinking","executing","scouting","proposing"].includes(state);
-            const sectionLabel = { fontSize: 10, color: C.dim, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 9 };
+        <div style={{ flex: 1 }} />
+        <Metric label="CPU" value={os?.system?.cpu} unit="%" danger={os?.system?.cpu > 85} />
+        <Metric label="RAM" value={os?.system?.ram} unit="%" danger={os?.system?.ram > 85} />
+        <div style={{ fontSize: 11, color: T.dim }}>
+          {os?.ollama?.online
+            ? <span>{(os.ollama.fast || "model").split(":")[0]}</span>
+            : <span style={{ color: T.red }}>ollama offline</span>}
+        </div>
+      </header>
+
+      {/* ── Body: rail · surface · timeline (all persistent) ── */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
+
+        <nav style={{ width: 76, flexShrink: 0, borderRight: `1px solid ${T.line}`,
+                      display: "flex", flexDirection: "column", gap: 2, padding: "10px 8px" }}>
+          {SURFACES.map((s) => {
+            const on = surface === s.id;
             return (
-            <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
-              {/* ── State banner: the living heart. Animates ONLY when working. ── */}
-              <div className={busy ? "alive" : ""} style={{
-                ...matMetal(s.color), padding: "18px 22px",
-                display: "flex", alignItems: "center", gap: 16, position: "relative", overflow: "hidden",
-              }}>
-                {busy && <div className="busy-sweep" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />}
-                {busy
-                  ? <span className="think-ring" style={{ color: s.color }} />
-                  : <span style={{ width: 14, height: 14, borderRadius: "50%", background: s.color, boxShadow: `0 0 10px ${s.color}` }} />}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: C.dim, letterSpacing: 1 }}>{greeting()} · Jarvis is</div>
-                  <div style={{ fontSize: 21, fontWeight: 700, color: s.color }}>{s.label}</div>
-                  {worldSummary && <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{worldSummary}</div>}
-                </div>
-                {incomeStat?.enabled && (
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1 }}>INCOME ENGINE</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.emerald }}>{incomeStat.cycles ?? 0} <span style={{ fontSize: 11, color: C.dim }}>cycles</span></div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── System status: real telemetry, smooth transitions ── */}
-              <div>
-                <div style={sectionLabel}>System status</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-                  {[
-                    ["CPU", sys ? Math.round(sys.cpu) : null, "%", sys && sys.cpu > 85 ? C.crimson : C.cyan],
-                    ["RAM", sys ? Math.round(sys.ram) : null, "%", sys && sys.ram > 85 ? C.crimson : C.emerald],
-                    ["OLLAMA", null, health?.ollama ? "online" : "offline", health?.ollama ? C.emerald : C.crimson],
-                    ["MODEL", null, health?.model ? String(health.model).split(":")[0] : "—", C.amber],
-                  ].map(([l, v, unit, c]) => (
-                    <div key={l} style={{ ...matDeep, padding: "12px 14px" }}>
-                      <div style={{ fontSize: 9, color: C.dim, letterSpacing: 1.4, marginBottom: 6 }}>{l}</div>
-                      <div className="smooth" style={{ fontSize: 17, fontWeight: 700, color: c }}>
-                        {v != null ? v : ""}<span style={{ fontSize: v != null ? 11 : 14, color: v != null ? C.dim : c, marginLeft: v != null ? 1 : 0 }}>{unit}</span>
-                      </div>
-                      {typeof v === "number" && (
-                        <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 2, marginTop: 7 }}>
-                          <div className="progress-fill" style={{ height: 3, width: `${v}%`, background: c, borderRadius: 2 }} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── Ask / quick actions ── */}
-              <div>
-                <div style={sectionLabel}>Ask Jarvis</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {["what's on my screen","open notepad and type hello","scan freelance jobs now","what can you do","check my qq messages"].map((q) => (
-                    <button key={q} onClick={() => runCommand(q)}
-                      style={{ ...btn(C.cyan), background: hexA(C.cyan, 0.07), fontSize: 12, padding: "8px 13px", borderRadius: 10 }}>
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── Activity timeline: the living record (chat + real events, newest first) ── */}
-              <div style={{ flex: 1, minHeight: 0 }}>
-                <div style={sectionLabel}>Activity timeline</div>
-                <div style={{ ...matDeep, padding: "6px 4px", maxHeight: 260, overflowY: "auto" }}>
-                  {feed.length === 0 && brainEvents.length === 0 && (
-                    <div style={{ color: C.dim, fontSize: 12, padding: 12 }}>Nothing yet — ask Jarvis something, or it'll show what it notices here.</div>
-                  )}
-                  {feed.slice(0, 40).map((f, i) => (
-                    <div key={i} className="tl-row" style={{ display: "flex", gap: 10, alignItems: "baseline", padding: "6px 12px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: f.c, marginTop: 5, flexShrink: 0 }} />
-                      <span style={{ color: C.dim, fontSize: 10, width: 58, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{f.t}</span>
-                      <span style={{ color: f.c, fontSize: 10, textTransform: "uppercase", width: 62, flexShrink: 0 }}>{f.a}</span>
-                      <span style={{ color: C.text, fontSize: 12, opacity: 0.9 }}>{f.m}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+              <button key={s.id} onClick={() => setSurface(s.id)} title={s.label}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+                         padding: "10px 4px", borderRadius: 10, border: "none",
+                         background: on ? "rgba(84,214,255,0.12)" : "transparent",
+                         color: on ? T.cyan : T.dim, fontSize: 9, letterSpacing: "0.06em" }}>
+                <span style={{ fontSize: 16 }}>{s.icon}</span>{s.label}
+              </button>
             );
-          })()}
-          {panel !== "Command" && (
-            <div style={{ position: "absolute", inset: 0, ...matFrost, borderRadius: 0, padding: 22, overflowY: "auto" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: C.amber, letterSpacing: 1 }}>{panel}</span>
-                <span onClick={() => setPanel("Command")} style={{ cursor: "pointer", color: C.dim, fontSize: 18 }}>✕</span>
+          })}
+        </nav>
+
+        <main style={{ flex: 1, minWidth: 0, overflow: "auto" }}>
+          {surface === "console"   && <Console os={os} onRun={run} reply={reply} busy={busy} />}
+          {surface === "chat"      && <Chat />}
+          {surface === "computer"  && <Agents />}
+          {surface === "freelance" && <WorkspaceHub />}
+          {surface === "diag"      && <Diagnostics />}
+          {surface === "settings"  && <Settings />}
+        </main>
+
+        {/* Timeline — the sense that something is always happening. */}
+        <aside style={{ width: 300, flexShrink: 0, borderLeft: `1px solid ${T.line}`,
+                        display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <div style={{ padding: "12px 14px 8px", ...sectionLabel, marginBottom: 0 }}>Activity</div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "4px 10px 12px" }}>
+            {feed.length === 0 && (
+              <div style={{ color: T.dim, fontSize: 12, padding: 8 }}>
+                Quiet. Ask Jarvis something and this fills up live.
               </div>
-              {panel === "Agents" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {agents.length === 0 && <div style={{ color: C.dim, fontSize: 13 }}>No agents reported by backend.</div>}
-                  {agents.map((a, i) => (
-                    <div key={i} style={{ ...matDeep, padding: 14, display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ fontWeight: 600 }}>{a.name || a.id || `agent ${i}`}</span>
-                      <span style={{ color: (a.status === "online" || a.online) ? C.emerald : C.dim, fontSize: 11, textTransform: "uppercase" }}>
-                        {a.status || (a.online ? "online" : "idle")}
-                      </span>
-                    </div>
-                  ))}
-                  <div style={{ ...matDeep, padding: 14, color: C.dim, fontSize: 12, borderStyle: "dashed" }}>
-                    + Add Agent — coming with the agent registry (backend/agents/registry.py)
+            )}
+            {feed.map((f) => (
+              <div key={f._k} className="tl-row"
+                   style={{ display: "flex", gap: 8, padding: "6px 4px",
+                            borderBottom: `1px solid rgba(255,255,255,0.03)` }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", marginTop: 6, flexShrink: 0,
+                               background: LEVEL_COLOR[f.level] || T.dim }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 9, color: T.dim, letterSpacing: "0.08em",
+                                textTransform: "uppercase" }}>
+                    {f.ts} · {f.agent}
+                  </div>
+                  <div style={{ fontSize: 12, color: T.text, opacity: 0.9, wordBreak: "break-word" }}>
+                    {String(f.msg || "").slice(0, 260)}
                   </div>
                 </div>
-              )}
-              {panel === "Skills" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ ...matDeep, padding: 14 }}>
-                    <div style={{ fontSize: 12, color: C.cyan, letterSpacing: 1, marginBottom: 8 }}>TEACH A TASK ONCE</div>
-                    <div style={{ fontSize: 12, color: C.dim, marginBottom: 10, lineHeight: 1.6 }}>
-                      Describe it in plain words — Jarvis turns it into real steps and remembers it.
-                      Later just say <span style={{ color: C.amber }}>"run my &lt;name&gt;"</span>. You can also type
-                      <span style={{ color: C.amber }}> teach &lt;name&gt;: …</span> in chat.
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <input value={wfName} onChange={(e) => setWfName(e.target.value)} placeholder="name (e.g. morning)"
-                        style={{ width: 150, background: "rgba(0,0,0,0.3)", color: C.text, border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
-                      <input value={wfText} onChange={(e) => setWfText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && teachWorkflow()}
-                        placeholder="open chrome, open notepad, type my notes"
-                        style={{ flex: 1, minWidth: 200, background: "rgba(0,0,0,0.3)", color: C.text, border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
-                      <button onClick={teachWorkflow} style={btn(C.emerald)}>Learn it</button>
-                    </div>
-                    {wfMsg && <div style={{ fontSize: 12, color: C.emerald, marginTop: 8 }}>{wfMsg}</div>}
-                  </div>
-                  {workflows.length === 0 && <div style={{ color: C.dim, fontSize: 13 }}>No saved tasks yet. Teach one above.</div>}
-                  {workflows.map((w) => (
-                    <div key={w.id} style={{ ...matDeep, padding: 14 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontWeight: 700, color: C.amber }}>{w.name}</span>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{ fontSize: 11, color: C.dim }}>{w.step_count} steps · ran {w.runs || 0}×{w.last_status ? ` · ${w.last_status}` : ""}</span>
-                          <button onClick={() => runWorkflow(w.name)} style={{ ...btn(C.emerald), padding: "5px 12px", fontSize: 12 }}>▶ Run</button>
-                          <span onClick={() => delWorkflow(w.name)} style={{ cursor: "pointer", color: C.crimson, fontSize: 14 }} title="Delete">✕</span>
-                        </div>
-                      </div>
-                      {w.description && <div style={{ fontSize: 11, color: C.dim, marginTop: 4 }}>{w.description}</div>}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {panel === "Tasks" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {jobs.length === 0 && <div style={{ color: C.dim, fontSize: 13 }}>No jobs scraped yet — run "scan jobs" or start the pipeline, then reopen this panel.</div>}
-                  {jobs.map((j, i) => (
-                    <div key={j.id || i} style={{ ...matDeep, padding: 14 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                        <span style={{ fontWeight: 600, fontSize: 13 }}>{j.title || j.name || "Untitled job"}</span>
-                        {(j.score != null) && <span style={{ color: C.amber, fontSize: 12 }}>{j.score}</span>}
-                      </div>
-                      <div style={{ display: "flex", gap: 12, marginTop: 6, fontSize: 11, color: C.dim }}>
-                        <span style={{ color: C.cyan, textTransform: "uppercase" }}>{j.platform || "?"}</span>
-                        {j.budget && <span>{j.budget}</span>}
-                        {j.link && <a href={j.link} target="_blank" rel="noreferrer" style={{ color: C.emerald }}>open ↗</a>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {panel === "Brain" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ fontSize: 12, color: C.dim }}>
-                    {brainStatus
-                      ? `${brainStatus.documents} documents · ${brainStatus.facts || 0} facts · ${brainStatus.decisions || 0} decisions · ${brainStatus.chat_summaries || 0} learned · mode: ${brainStatus.mode}`
-                      : "Brain status unavailable — is the backend running?"}
-                    {brainStatus && brainStatus.hint && (
-                      <div style={{ color: C.amber, marginTop: 4 }}>{brainStatus.hint}</div>
-                    )}
-                  </div>
-                  <div style={{ ...matDeep, padding: 14 }}>
-                    <div style={{ fontSize: 12, color: C.cyan, marginBottom: 8, letterSpacing: 1 }}>FEED YOUR BRAIN</div>
-                    <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)}
-                      placeholder="Paste anything you want Jarvis to know — notes, project info, research, contacts..."
-                      style={{ width: "100%", minHeight: 70, background: "rgba(0,0,0,0.3)", color: C.text,
-                               border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13, resize: "vertical" }} />
-                    <div style={{ display: "flex", gap: 10, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
-                      <select value={noteKind} onChange={(e) => setNoteKind(e.target.value)}
-                        style={{ background: "rgba(0,0,0,0.3)", color: C.text, border: `1px solid ${hexA(C.cyan, 0.2)}`,
-                                 borderRadius: 8, padding: "8px 10px", fontSize: 12 }}>
-                        <option value="note">Knowledge</option>
-                        <option value="fact">Fact about me</option>
-                        <option value="decision">Decision (why)</option>
-                      </select>
-                      <input value={noteProject} onChange={(e) => setNoteProject(e.target.value)}
-                        placeholder="project (optional)"
-                        style={{ width: 140, background: "rgba(0,0,0,0.3)", color: C.text,
-                                 border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: "8px 10px", fontSize: 12 }} />
-                      <button onClick={saveNote} style={{ background: hexA(C.amber, 0.15), color: C.amber,
-                        border: `1px solid ${hexA(C.amber, 0.4)}`, borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 }}>
-                        Save to Brain
-                      </button>
-                      <label style={{ color: C.cyan, fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>
-                        or upload a .txt / .md file
-                        <input type="file" accept=".txt,.md,.markdown,.pdf" onChange={uploadBrainFile} style={{ display: "none" }} />
-                      </label>
-                    </div>
-                  </div>
-                  <div style={{ ...matDeep, padding: 14 }}>
-                    <div style={{ fontSize: 12, color: C.cyan, marginBottom: 8, letterSpacing: 1 }}>SEARCH YOUR BRAIN</div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <input value={brainQuery} onChange={(e) => setBrainQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && searchBrain()}
-                        placeholder="What do I know about..."
-                        style={{ flex: 1, background: "rgba(0,0,0,0.3)", color: C.text,
-                                 border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
-                      <button onClick={searchBrain} style={{ background: hexA(C.cyan, 0.15), color: C.cyan,
-                        border: `1px solid ${hexA(C.cyan, 0.4)}`, borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 }}>
-                        Search
-                      </button>
-                    </div>
-                    {brainResults && (
-                      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                        {(brainResults.results || []).length === 0 && (
-                          <div style={{ color: C.dim, fontSize: 12 }}>No matches.</div>
-                        )}
-                        {(brainResults.results || []).map((r, i) => (
-                          <div key={i} style={{ background: "rgba(0,0,0,0.25)", borderRadius: 8, padding: 10, fontSize: 12 }}>
-                            <div style={{ color: C.amber, marginBottom: 4 }}>{r.title} <span style={{ color: C.dim }}>· {r.score}</span></div>
-                            <div style={{ color: C.text, whiteSpace: "pre-wrap" }}>{r.text.slice(0, 400)}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 12, color: C.cyan, letterSpacing: 1 }}>STORED KNOWLEDGE</div>
-                  {brainDocs.length === 0 && <div style={{ color: C.dim, fontSize: 13 }}>Brain is empty. Feed it above, or say "remember ..." in chat.</div>}
-                  {brainDocs.map((d) => (
-                    <div key={d.id} style={{ ...matDeep, padding: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{d.title}</div>
-                        <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>
-                          <span style={{ color: d.source === "fact" ? C.emerald : d.source === "decision" ? C.amber : d.source === "chat_summary" ? C.cyan : C.dim }}>{d.source}</span>
-                          {d.project ? <span style={{ color: C.cyan }}> · {d.project}</span> : null}
-                          {" · "}{d.chars} chars · {d.chunks} chunks{d.embedded ? ` · ${d.embedded} embedded` : ""}
-                        </div>
-                      </div>
-                      <span onClick={() => deleteBrainDoc(d.id)}
-                        style={{ cursor: "pointer", color: C.crimson, fontSize: 16, padding: "0 6px" }} title="Forget">✕</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {panel === "Plans" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ ...matDeep, padding: 14 }}>
-                    <div style={{ fontSize: 12, color: C.cyan, marginBottom: 8, letterSpacing: 1 }}>NEW PROJECT PLAN</div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <input value={planName} onChange={(e) => setPlanName(e.target.value)}
-                        placeholder="project name (e.g. mistore)"
-                        style={{ width: 170, background: "rgba(0,0,0,0.3)", color: C.text,
-                                 border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
-                      <input value={planGoal} onChange={(e) => setPlanGoal(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && createPlan()}
-                        placeholder="goal — Jarvis breaks it into steps"
-                        style={{ flex: 1, minWidth: 180, background: "rgba(0,0,0,0.3)", color: C.text,
-                                 border: `1px solid ${hexA(C.cyan, 0.2)}`, borderRadius: 8, padding: 10, fontSize: 13 }} />
-                      <button onClick={createPlan} style={{ background: hexA(C.amber, 0.15), color: C.amber,
-                        border: `1px solid ${hexA(C.amber, 0.4)}`, borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 }}>
-                        Plan it
-                      </button>
-                    </div>
-                  </div>
-                  {plans.length === 0 && <div style={{ color: C.dim, fontSize: 13 }}>No plans yet. Create one above, or say "plan project mistore to launch the store" in chat.</div>}
-                  {plans.map((p) => (
-                    <div key={p.id} style={{ ...matDeep, padding: 14 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontWeight: 700, color: C.amber }}>{p.title || p.name}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <span style={{ fontSize: 11, color: C.dim }}>{p.done}/{p.total} · {p.progress}%</span>
-                          <button onClick={() => runPlan(p.id)} disabled={runningPlans[p.id]}
-                            title="Jarvis executes every step: desktop actions run for real, think-steps get their deliverable written and attached"
-                            style={{ background: hexA(C.emerald, 0.15), color: runningPlans[p.id] ? C.dim : C.emerald,
-                                     border: `1px solid ${hexA(C.emerald, 0.4)}`, borderRadius: 6,
-                                     padding: "4px 12px", cursor: runningPlans[p.id] ? "wait" : "pointer", fontSize: 11 }}>
-                            {runningPlans[p.id] ? "⟳ running…" : "▶ RUN"}
-                          </button>
-                          <span onClick={() => deletePlan(p.id)} style={{ cursor: "pointer", color: C.crimson, fontSize: 14 }} title="Delete plan">✕</span>
-                        </div>
-                      </div>
-                      {p.goal && <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>{p.goal}</div>}
-                      <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 3, margin: "8px 0" }}>
-                        <div style={{ height: 4, width: `${p.progress}%`, background: C.emerald, borderRadius: 3 }} />
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 6 }}>
-                        {p.steps.map((s) => {
-                          const col = s.status === "done" ? C.emerald : s.status === "doing" ? C.amber : s.status === "blocked" ? C.crimson : C.dim;
-                          return (
-                            <div key={s.id} onClick={() => cycleStep(s.id, s.status)}
-                              style={{ display: "flex", gap: 8, alignItems: "center", cursor: "pointer", fontSize: 12 }}
-                              title="Click to change status">
-                              <span style={{ width: 58, color: col, textTransform: "uppercase", fontSize: 10 }}>{s.status}</span>
-                              <span style={{ color: s.status === "done" ? C.dim : C.text, textDecoration: s.status === "done" ? "line-through" : "none" }}>{s.text}</span>
-                              {s.note && <span style={{ color: C.dim, fontSize: 10 }} title={s.note}>📎</span>}
-                            </div>
-                          );
-                        })}
-                        {p.steps.some((s) => s.note) && (
-                          <details style={{ marginTop: 4 }}>
-                            <summary style={{ fontSize: 10, color: C.dim, cursor: "pointer" }}>step outputs / notes</summary>
-                            {p.steps.filter((s) => s.note).map((s) => (
-                              <div key={"n" + s.id} style={{ fontSize: 11, color: C.text, background: "rgba(0,0,0,0.3)",
-                                borderLeft: `2px solid ${C.emerald}`, borderRadius: 4, padding: 8, margin: "6px 0", whiteSpace: "pre-wrap" }}>
-                                <div style={{ color: C.dim, fontSize: 10, marginBottom: 3 }}>step {s.seq}: {s.text}</div>
-                                {s.note}
-                              </div>
-                            ))}
-                          </details>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {panel === "Settings" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ fontSize: 12, color: C.cyan, letterSpacing: 1 }}>SYSTEM DOCTOR</div>
-                  <div style={{ fontSize: 12, color: C.dim }}>
-                    {doctor ? doctor.summary : "Running diagnostics..."}
-                  </div>
-                  {doctor && doctor.checks.map((c, i) => (
-                    <div key={i} style={{ ...matDeep, padding: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontWeight: 600, fontSize: 13 }}>
-                          <span style={{ color: c.ok ? C.emerald : C.crimson, marginRight: 8 }}>{c.ok ? "✓" : "✕"}</span>
-                          {c.name}
-                        </span>
-                        <span style={{ fontSize: 11, color: C.dim }}>{c.detail}</span>
-                      </div>
-                      {!c.ok && c.fix && (
-                        <div style={{ fontSize: 11, color: C.amber, marginTop: 6, fontFamily: "monospace" }}>→ {c.fix}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {panel !== "Agents" && panel !== "Tasks" && panel !== "Brain" && panel !== "Plans" && panel !== "Settings" && (
-                <div style={{ color: C.dim, fontSize: 13 }}>
-                  {panel} panel — wired to backend next. (This view confirms the sidebar navigation now works.)
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        {state === "approval" && (
-          <div style={{ margin: "0 32px 12px", ...matMetal(C.crimson), padding: 18 }}>
-            <div style={{ fontSize: 11, letterSpacing: 1.5, color: C.crimson, textTransform: "uppercase", marginBottom: 8 }}>⬡ Approval Required</div>
-            <div style={{ fontSize: 13, color: C.text, marginBottom: 14, opacity: 0.85 }}>Submit application to RemoteOK — Python Developer. This sends a real proposal.</div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button style={btn(C.amber, true)}>Approve &amp; Submit</button>
-              <button style={btn(C.dim, false)}>Review First</button>
-            </div>
-          </div>
-        )}
-        <div style={{ margin: "0 32px 28px", ...matFrost, padding: 8, display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ color: C.amber, padding: "0 8px", fontSize: 18 }}>◆</span>
-          <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="Command Jarvis…  open chrome · what's on my screen · remember … · plan project …"
-            style={{ flex: 1, background: "transparent", border: "none", color: C.text, fontSize: 14, outline: "none" }} />
-          <button onClick={send} style={btn(C.amber, true)}>Send</button>
-        </div>
-      </main>
-      <aside style={{ width: "25%", minWidth: 250, padding: 20, display: "flex", flexDirection: "column", gap: 14, borderLeft: "1px solid rgba(255,255,255,0.04)" }}>
-        <div style={{ ...matFrost, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.5, textTransform: "uppercase" }}>System</div>
-          {[
-            ["State", s.label, s.color],
-            ["CPU", sys ? `${Math.round(sys.cpu)}%` : "—", C.cyan],
-            ["RAM", sys ? `${Math.round(sys.ram)}%` : "—", sys && sys.ram > 85 ? C.crimson : C.emerald],
-            ["Disk", sys ? `${Math.round(sys.disk)}%` : "—", C.dim],
-            ["Ollama", health?.ollama ? "online" : "offline", health?.ollama ? C.emerald : C.crimson],
-            ["Income", incomeStat?.enabled ? `on · ${incomeStat.cycles ?? 0}` : "off", incomeStat?.enabled ? C.emerald : C.dim],
-          ].map(([k, v, c]) => (
-            <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-              <span style={{ color: C.dim }}>{k}</span><span style={{ color: c }}>{v}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ ...matDeep, padding: 14, flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ fontSize: 10, color: C.dim, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Live Feed</div>
-          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 9 }}>
-            {feed.map((f, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, fontSize: 11, fontFamily: "monospace" }}>
-                <span style={{ color: C.dim }}>{f.t}</span>
-                <span style={{ color: f.c, textTransform: "uppercase" }}>[{f.a}]</span>
-                <span>{f.m}</span>
               </div>
             ))}
           </div>
-        </div>
-      </aside>
+        </aside>
+      </div>
+
+      {/* ── Command bar: always there, whatever you're looking at ── */}
+      <div style={{ flexShrink: 0, borderTop: `1px solid ${T.line}`, padding: "10px 14px",
+                    background: "rgba(10,14,22,0.9)", display: "flex", gap: 10, alignItems: "center" }}>
+        <span style={{ color: working ? T.amber : T.cyan, fontSize: 15 }}>{working ? "◐" : "›"}</span>
+        <input value={input} onChange={(e) => setInput(e.target.value)}
+               onKeyDown={(e) => e.key === "Enter" && run()}
+               placeholder="Tell Jarvis what to do —  open notepad and type hello  ·  what's on my screen  ·  teach morning: …"
+               style={{ flex: 1, background: "transparent", border: "none", outline: "none",
+                        color: T.text, fontSize: 14 }} />
+        <button onClick={() => run()} disabled={busy}
+                style={{ padding: "8px 18px", borderRadius: 10, border: "none",
+                         background: busy ? "rgba(255,255,255,0.08)" : T.cyan,
+                         color: busy ? T.dim : "#04202b", fontWeight: 700, fontSize: 13 }}>
+          {busy ? "Working…" : "Run"}
+        </button>
+      </div>
     </div>
   );
 }
-```
 
-################################################################################
-# FILE 118/151: frontend/src/components/Sidebar.jsx
-################################################################################
-```jsx
-import { useEffect, useState } from 'react'
-import { API } from '../config.js'
+/* ── Console surface: goal + subsystems + what it just said ─────────────── */
+function Console({ os, onRun, reply, busy }) {
+  const subs = os?.subsystems || {};
+  return (
+    <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 20 }}>
 
-const NAV = [
-  { id:'dashboard',   icon:'⬡', label:'DASHBOARD',   group:'main' },
-  { id:'chat',        icon:'◉', label:'AI TERMINAL',  group:'main' },
-  { id:'agents',      icon:'⬢', label:'AGENTS',       group:'main', highlight:true },
-  { id:'automode',    icon:'⟳', label:'AUTONOMOUS',   group:'main', highlight:true },
-  { id:'workspace',   icon:'▦', label:'WORKSPACE',    group:'work' },
-  { id:'jobs',        icon:'◎', label:'JOB SCANNER',  group:'work' },
-  { id:'proposals',   icon:'◈', label:'PROPOSALS',    group:'work' },
-  { id:'messages',    icon:'✉', label:'MESSAGES',     group:'work' },
-  { id:'analytics',   icon:'▲', label:'ANALYTICS',    group:'data' },
-  { id:'tasks',       icon:'☑', label:'TASKS',        group:'data' },
-  { id:'notes',       icon:'✎', label:'NOTES',        group:'data' },
-  { id:'settings',    icon:'⚙', label:'SETTINGS',     group:'data' },
-]
+      {/* Current goal */}
+      <div>
+        <div style={sectionLabel}>Current goal</div>
+        <div style={{ ...card, padding: 18 }} className={os?.status?.running ? "alive" : ""}>
+          {os?.goal ? (
+            <>
+              <div style={{ fontSize: 17, fontWeight: 600 }}>{os.goal.text}</div>
+              <div style={{ fontSize: 12, color: T.dim, marginTop: 4 }}>{os.goal.detail}</div>
+              {typeof os.goal.progress === "number" && (
+                <div style={{ height: 4, background: "rgba(255,255,255,0.06)",
+                              borderRadius: 3, marginTop: 12 }}>
+                  <div className="progress-fill"
+                       style={{ height: 4, width: `${os.goal.progress}%`,
+                                background: T.green, borderRadius: 3 }} />
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ color: T.dim, fontSize: 13 }}>
+              No active goal. Give Jarvis one below — or start the income engine in Earn
+              and it'll work on its own.
+            </div>
+          )}
+        </div>
+      </div>
 
-export default function Sidebar({ tab, setTab }) {
-  const [clock,   setClock]    = useState(new Date())
-  const [online,  setOnline]   = useState(null)
-  const [running, setRunning]  = useState(false)
-  const [pending, setPending]  = useState(0)
+      {/* Last response */}
+      {(reply || busy) && (
+        <div>
+          <div style={sectionLabel}>Jarvis</div>
+          <div style={{ ...card, padding: 16, borderLeft: `2px solid ${reply?.intent === "error" ? T.red : T.cyan}` }}>
+            {busy && !reply
+              ? <span style={{ color: T.dim, fontSize: 13 }}><span className="think-ring" style={{ color: T.amber, marginRight: 8, verticalAlign: "middle" }} />thinking…</span>
+              : <div style={{ fontSize: 13.5, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{reply?.text}</div>}
+          </div>
+        </div>
+      )}
 
-  useEffect(() => {
-    const t = setInterval(() => setClock(new Date()), 1000)
-    return () => clearInterval(t)
-  }, [])
+      {/* Subsystems — what every part of Jarvis is doing right now */}
+      <div>
+        <div style={sectionLabel}>Subsystems</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(215px, 1fr))", gap: 10 }}>
+          {Object.entries(subs).map(([name, s]) => {
+            const c = SUB_COLOR[name] || T.cyan;
+            const active = ["thinking", "running", "watching", "learning"].includes(s.state);
+            return (
+              <div key={name} style={{ ...card, padding: 14 }} className={active ? "alive" : ""}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+                  <span className={active ? "livedot" : ""}
+                        style={{ width: 6, height: 6, borderRadius: "50%",
+                                 background: s.ok ? c : T.dim }} />
+                  <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+                                 color: T.dim, fontWeight: 600 }}>{name}</span>
+                  <span style={{ flex: 1 }} />
+                  <span style={{ fontSize: 11, color: s.ok ? c : T.dim }}>{s.state}</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: T.dim, lineHeight: 1.45 }}>{s.detail}</div>
+              </div>
+            );
+          })}
+          {Object.keys(subs).length === 0 && (
+            <div style={{ color: T.dim, fontSize: 13 }}>Waiting for the backend…</div>
+          )}
+        </div>
+      </div>
 
-  useEffect(() => {
-    const ping = async () => {
-      try { const r = await fetch(`${API}/health`); setOnline(r.ok) } catch { setOnline(false) }
-      try {
-        const r = await fetch(`${API}/orchestrator/status`)
-        if(r.ok) { const d = await r.json(); setRunning(d.running) }
-      } catch{}
-      try {
-        const r = await fetch(`${API}/automation/queue?limit=100`)
-        if(r.ok) { const d = await r.json(); setPending((d.queue||[]).filter(q=>q.status==='pending').length) }
-      } catch{}
-    }
-    ping(); const t = setInterval(ping, 6000); return () => clearInterval(t)
-  }, [])
+      {/* Quick starts */}
+      <div>
+        <div style={sectionLabel}>Try</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {["what's on my screen", "open notepad and type hello", "what can you do",
+            "status", "check my qq messages"].map((q) => (
+            <button key={q} onClick={() => onRun(q)}
+              style={{ padding: "8px 13px", borderRadius: 10, fontSize: 12,
+                       background: "rgba(84,214,255,0.07)", color: T.cyan,
+                       border: `1px solid rgba(84,214,255,0.25)` }}>{q}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const dotColor = online===null?'#ff9500':online?'#00ff88':'#ff4444'
+/* ── Diagnostics: the exact execution path of every request ─────────────── */
+function Diagnostics() {
+  const [data, setData] = useState(null);
+  const [open, setOpen] = useState(null);
+  const load = () => fetch(`${API}/os/diagnostics`).then((r) => r.json())
+    .then(setData).catch(() => setData(null));
+  useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, []);
 
   return (
-    <aside style={{ width:'210px', flexShrink:0, display:'flex', flexDirection:'column', borderRight:'1px solid rgba(0,212,255,0.15)', background:'rgba(0,4,10,0.97)' }}>
-      <div style={{ padding:'20px 20px 16px', borderBottom:'1px solid rgba(0,212,255,0.1)' }}>
-        <div style={{ fontSize:'8px', color:'rgba(0,212,255,0.4)', letterSpacing:'0.35em', marginBottom:'5px' }}>STARK INDUSTRIES</div>
-        <div className="hud-glow" style={{ fontSize:'26px', fontWeight:'700', color:'#00d4ff', letterSpacing:'0.12em', fontFamily:'sans-serif' }}>JARVIS</div>
-        <div style={{ fontSize:'8px', color:'rgba(255,255,255,0.2)', letterSpacing:'0.2em' }}>v3 // AUTONOMOUS AI</div>
-      </div>
-
-      <div style={{ padding:'10px 20px', borderBottom:'1px solid rgba(0,212,255,0.07)', fontSize:'9px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'3px' }}>
-          <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:dotColor, boxShadow:`0 0 6px ${dotColor}`, flexShrink:0 }}/>
-          <span style={{ color:dotColor, letterSpacing:'0.1em', fontSize:'8px' }}>
-            {online===null?'CONNECTING':online?'BACKEND ONLINE':'OFFLINE'}
-          </span>
+    <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 18 }}>
+      <div>
+        <div style={sectionLabel}>Routing health</div>
+        <div style={{ ...card, padding: 16, display: "flex", gap: 26 }}>
+          {[["requests", data?.traces?.recent ?? "—"],
+            ["completed", data?.traces?.completed ?? "—"],
+            ["failed", data?.traces?.failed ?? "—"],
+            ["worst", data?.traces?.worst_component || "none"]].map(([k, v]) => (
+            <div key={k}>
+              <div style={{ fontSize: 9, color: T.dim, letterSpacing: "0.14em",
+                            textTransform: "uppercase" }}>{k}</div>
+              <div style={{ fontSize: 16, fontWeight: 700,
+                            color: k === "failed" && v > 0 ? T.red : T.text }}>{String(v)}</div>
+            </div>
+          ))}
         </div>
-        {running && (
-          <div style={{ display:'flex', alignItems:'center', gap:'5px', marginBottom:'3px' }}>
-            <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#00ff88', animation:'pulseglow 1s ease-in-out infinite' }}/>
-            <span style={{ color:'#00ff88', fontSize:'8px', letterSpacing:'0.1em' }}>PIPELINE RUNNING</span>
-          </div>
-        )}
-        {pending > 0 && (
-          <div style={{ color:'#ff9500', fontSize:'8px', letterSpacing:'0.1em' }}>● {pending} AWAITING APPROVAL</div>
-        )}
-        <div style={{ color:'rgba(255,255,255,0.18)', marginTop:'2px' }}>{clock.toLocaleTimeString('en-GB')}</div>
       </div>
 
-      <nav style={{ flex:1, padding:'8px', display:'flex', flexDirection:'column', gap:'2px', overflowY:'auto' }}>
-        {NAV.map(n => {
-          const active = tab===n.id
-          const c = n.highlight ? '#00ff88' : '#00d4ff'
-          return (
-            <button key={n.id} onClick={()=>setTab(n.id)} style={{
-              width:'100%', padding:'9px 12px', textAlign:'left', cursor:'pointer',
-              fontSize:'10px', letterSpacing:'0.12em', fontFamily:'Courier New,monospace',
-              transition:'all 0.15s',
-              background: active?`${c}18`:'transparent',
-              border: `1px solid ${active?c:'transparent'}`,
-              color: active?c:n.highlight?'rgba(0,255,136,0.5)':'rgba(255,255,255,0.33)',
-              borderRadius:'3px',
-            }}>
-              {n.icon} {active?'▶ ':''}{n.label}
-              {n.id==='workspace' && running && <span style={{ float:'right', color:'#00ff88', fontSize:'8px' }}>●</span>}
-              {n.id==='workspace' && pending>0 && !running && <span style={{ float:'right', color:'#ff9500', fontSize:'8px' }}>●{pending}</span>}
-            </button>
-          )
-        })}
-      </nav>
-
-      <div style={{ padding:'10px 20px', fontSize:'8px', color:'rgba(255,255,255,0.1)', letterSpacing:'0.1em', borderTop:'1px solid rgba(0,212,255,0.07)' }}>
-        DEEPSEEK-R1 · QWEN · OLLAMA
+      <div>
+        <div style={sectionLabel}>Execution paths (most recent first)</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(data?.recent || []).map((t) => (
+            <div key={t.id} style={{ ...card, padding: 13 }}>
+              <div onClick={() => setOpen(open === t.id ? null : t.id)}
+                   style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%",
+                               background: t.ok === false ? T.red : t.ok ? T.green : T.dim }} />
+                <span style={{ fontSize: 13, flex: 1 }}>{t.label}</span>
+                <span style={{ fontSize: 11, color: T.dim }}>{t.steps?.length || 0} hops</span>
+                <span style={{ fontSize: 11, color: T.dim }}>{t.duration_ms ?? "—"}ms</span>
+              </div>
+              {open === t.id && (
+                <div style={{ marginTop: 10, paddingLeft: 16, borderLeft: `1px solid ${T.line}` }}>
+                  {(t.steps || []).map((s, i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, fontSize: 12, padding: "4px 0" }}>
+                      <span style={{ color: s.ok === false ? T.red : s.ok ? T.green : T.dim, width: 12 }}>
+                        {s.ok === false ? "✕" : s.ok ? "✓" : "·"}
+                      </span>
+                      <span style={{ color: T.cyan, minWidth: 190 }}>{s.component}</span>
+                      <span style={{ color: T.dim, flex: 1 }}>{s.detail}</span>
+                      <span style={{ color: T.dim }}>{s.at_ms}ms</span>
+                    </div>
+                  ))}
+                  <div style={{ fontSize: 12, color: t.ok ? T.green : T.red, marginTop: 8 }}>
+                    → {t.result}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {(!data?.recent || data.recent.length === 0) && (
+            <div style={{ color: T.dim, fontSize: 13 }}>
+              No requests traced yet. Run a command and its exact path appears here.
+            </div>
+          )}
+        </div>
       </div>
-    </aside>
-  )
+
+      <div>
+        <div style={sectionLabel}>Capabilities</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(210px,1fr))", gap: 8 }}>
+          {(data?.capabilities || []).map((c) => (
+            <div key={c.name} style={{ ...card, padding: "10px 12px", display: "flex",
+                                       alignItems: "center", gap: 8 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%",
+                             background: c.available ? T.green : T.amber }} />
+              <span style={{ fontSize: 12, flex: 1 }}>{c.name}</span>
+              {!c.available && <span style={{ fontSize: 10, color: T.amber }}>
+                needs {c.missing.join(", ")}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
+
+function Metric({ label, value, unit, danger }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+      <span style={{ fontSize: 9, color: T.dim, letterSpacing: "0.14em" }}>{label}</span>
+      <span className="smooth" style={{ fontSize: 13, fontWeight: 600,
+                                        color: danger ? T.red : T.text }}>
+        {value != null ? `${value}${unit}` : "—"}
+      </span>
+    </div>
+  );
+}
+
+const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 119/151: frontend/src/components/UI.jsx
+# FILE 120/151: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -17806,7 +17414,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 120/151: frontend/src/config.js
+# FILE 121/151: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -17831,7 +17439,7 @@ export const apiPatch = (url, body) => apiFetch(url, {
 ```
 
 ################################################################################
-# FILE 121/151: frontend/src/index.css
+# FILE 122/151: frontend/src/index.css
 ################################################################################
 ```css
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -17895,7 +17503,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !i
 ```
 
 ################################################################################
-# FILE 122/151: frontend/src/main.jsx
+# FILE 123/151: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from 'react'
@@ -17908,7 +17516,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 ################################################################################
-# FILE 123/151: frontend/src/pages/Agents.jsx
+# FILE 124/151: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -18615,7 +18223,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 124/151: frontend/src/pages/Analytics.jsx
+# FILE 125/151: frontend/src/pages/Analytics.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -18722,7 +18330,7 @@ export default function Analytics() {
 ```
 
 ################################################################################
-# FILE 125/151: frontend/src/pages/AutoMode.jsx
+# FILE 126/151: frontend/src/pages/AutoMode.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -19368,7 +18976,7 @@ export default function AutoMode() {
 ```
 
 ################################################################################
-# FILE 126/151: frontend/src/pages/Chat.jsx
+# FILE 127/151: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useState, useRef, useEffect } from 'react'
@@ -19494,120 +19102,6 @@ export default function Chat() {
         <button onClick={() => send(input)} disabled={loading} style={{ width: '80px', background: loading ? 'rgba(0,212,255,0.04)' : 'rgba(0,212,255,0.12)', border: '1px solid rgba(0,212,255,0.35)', color: '#00d4ff', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '10px', letterSpacing: '0.15em', borderRadius: '3px' }}>
           {loading ? '...' : 'SEND'}
         </button>
-      </div>
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 127/151: frontend/src/pages/Dashboard.jsx
-################################################################################
-```jsx
-import { useEffect, useState } from 'react'
-import { StatCard, PageHeader, Btn, Badge } from '../components/UI'
-
-import { API } from '../config.js'
-
-const SvcRow = ({ label, ok }) => (
-  <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.04)', fontSize:'11px' }}>
-    <span style={{ width:'6px', height:'6px', borderRadius:'50%', flexShrink:0, background: ok?'#00ff88':'#ff4444', boxShadow:`0 0 6px ${ok?'#00ff88':'#ff4444'}` }}/>
-    <span style={{ color:'rgba(255,255,255,0.4)', flex:1, letterSpacing:'0.1em' }}>{label}</span>
-    <span style={{ fontSize:'9px', color: ok?'#00ff88':'#ff4444', letterSpacing:'0.15em' }}>{ok?'ONLINE':'OFFLINE'}</span>
-  </div>
-)
-
-export default function Dashboard() {
-  const [sys, setSys]     = useState({ cpu:0, ram:0, disk:0 })
-  const [today, setToday] = useState(null)
-  const [auto, setAuto]   = useState(null)
-  const [online, setOnline] = useState(false)
-
-  useEffect(() => {
-    const load = async () => {
-      try { const r = await fetch(`${API}/stats`); if(r.ok) setSys(await r.json()) } catch{}
-      try { const r = await fetch(`${API}/health`); setOnline(r.ok) } catch{ setOnline(false) }
-      try { const r = await fetch(`${API}/automation/today-stats`); if(r.ok) setToday(await r.json()) } catch{}
-      try { const r = await fetch(`${API}/automation/status`); if(r.ok) setAuto(await r.json()) } catch{}
-    }
-    load()
-    const t = setInterval(load, 6000)
-    return () => clearInterval(t)
-  }, [])
-
-  return (
-    <div style={{ padding:'28px', overflowY:'auto', height:'100%' }}>
-      <PageHeader breadcrumb="COMMAND CENTER" title="⬡ LIVE AGENT STATUS" />
-
-      {/* System */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'10px', marginBottom:'12px' }}>
-        <StatCard label="CPU" value={`${sys.cpu}%`} color="#00d4ff"/>
-        <StatCard label="RAM" value={`${sys.ram}%`} color="#00ff88"/>
-        <StatCard label="DISK" value={`${sys.disk}%`} color="#ff9500"/>
-      </div>
-
-      {/* Today stats */}
-      {today && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px', marginBottom:'12px' }}>
-          <StatCard label="JOBS TODAY"    value={today.jobs_today}      color="#00d4ff"/>
-          <StatCard label="APPS QUEUED"   value={today.apps_generated}  color="#00ff88"/>
-          <StatCard label="REPLIES TODAY" value={today.replies_today}   color="#ff9500"/>
-          <StatCard label="PROJECTS WON"  value={today.projects_won}    color="#ff9500"/>
-        </div>
-      )}
-      {today && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'10px', marginBottom:'12px' }}>
-          <StatCard label="CW TASKS AVAIL" value={today.cw_tasks_avail} color="#00d4ff" sub="Clickworker"/>
-          <StatCard label="ZD TASKS AVAIL" value={today.zd_tasks_avail} color="#00ff88" sub="Zuodao"/>
-          <StatCard label="PROPOSALS SENT" value={today.proposals_sent} color="#ff9500" sub="All time"/>
-        </div>
-      )}
-
-      {/* Active platforms */}
-      {today?.active_platforms?.length > 0 && (
-        <div style={{ border:'1px solid rgba(0,212,255,0.1)', borderRadius:'4px', padding:'14px 18px', background:'rgba(0,10,20,0.7)', marginBottom:'12px' }}>
-          <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'10px' }}>ACTIVE PLATFORMS</div>
-          <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
-            {today.active_platforms.map(p => <Badge key={p} label={p} color="#00ff88"/>)}
-          </div>
-        </div>
-      )}
-
-      {/* Auto mode status */}
-      {auto && (
-        <div style={{ border:`1px solid ${auto.running?'rgba(0,255,136,0.3)':'rgba(0,212,255,0.1)'}`, borderRadius:'4px', padding:'14px 18px', background:'rgba(0,10,20,0.7)', marginBottom:'12px' }}>
-          <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'8px', display:'flex', justifyContent:'space-between' }}>
-            <span>AUTO MODE</span>
-            <span style={{ color: auto.running?'#00ff88':'rgba(255,255,255,0.3)' }}>{auto.running?'● RUNNING':'○ IDLE'}</span>
-          </div>
-          <div style={{ fontSize:'10px', color:'rgba(255,255,255,0.4)', marginBottom:'6px' }}>{auto.stage}</div>
-          <div style={{ height:'3px', background:'rgba(255,255,255,0.05)', borderRadius:'2px' }}>
-            <div style={{ height:'100%', width:`${auto.progress}%`, background:'linear-gradient(90deg,#00d4ff,#00ff88)', borderRadius:'2px', transition:'width 0.5s' }}/>
-          </div>
-          {auto.log?.length > 0 && (
-            <div style={{ marginTop:'8px', fontSize:'9px', color:'rgba(0,212,255,0.4)', fontFamily:'monospace' }}>
-              {auto.log.slice(-3).map((l,i) => <div key={i}>{l}</div>)}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Service status */}
-      <div style={{ border:'1px solid rgba(0,212,255,0.1)', borderRadius:'4px', padding:'14px 18px', background:'rgba(0,10,20,0.7)', marginBottom:'12px' }}>
-        <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'10px' }}>SERVICES</div>
-        <SvcRow label="FastAPI Backend :8000" ok={online}/>
-        <SvcRow label="Ollama / DeepSeek-R1"  ok={online}/>
-        <SvcRow label="Job Scanner"           ok={online}/>
-        <SvcRow label="Automation Engine"     ok={online}/>
-      </div>
-
-      {/* Startup */}
-      <div style={{ border:'1px solid rgba(255,255,255,0.05)', borderRadius:'4px', padding:'14px 18px', background:'rgba(0,8,16,0.6)', fontSize:'10px', color:'rgba(255,255,255,0.25)', lineHeight:'2', letterSpacing:'0.08em' }}>
-        <div style={{ color:'rgba(0,212,255,0.4)', marginBottom:'6px', letterSpacing:'0.2em', fontSize:'9px' }}>STARTUP</div>
-        <div>1. <span style={{color:'#00ff88'}}>ollama serve</span></div>
-        <div>2. <span style={{color:'#00ff88'}}>cd backend && uvicorn main:app --reload --port 8000</span></div>
-        <div>3. <span style={{color:'#00ff88'}}>cd frontend && npm run dev</span></div>
-        <div>4. <span style={{color:'#00ff88'}}>http://localhost:5173</span></div>
       </div>
     </div>
   )

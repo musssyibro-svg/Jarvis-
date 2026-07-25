@@ -44,8 +44,13 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     if not message or not message.strip():
         return {"response": "Say something and I'll get to work.", "intent": "chat"}
 
+    # Trace this request end-to-end so the exact path is visible (diagnostics).
+    from services import trace
+    trace.start("chat", message)
+
     from agents.commander import detect_intent  # pure intent detection only
     intent = detect_intent(message)
+    trace.step("commander.detect_intent", f"intent={intent}", ok=True)
     _emit("commander", f"Message received -> intent: {intent}")
 
     # ── Confirm / cancel: delegate to ExecutorAgent's approval lifecycle ────────
@@ -116,7 +121,11 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         except Exception:
             tool_steps = None
         if tool_steps:
+            trace.step("tool_registry.resolve_steps",
+                       f"{len(tool_steps)} steps: " +
+                       ",".join(s.get("action", "") for s in tool_steps), ok=True)
             return _run_tool_chain(message, tool_steps)
+        trace.step("tool_registry.resolve_steps", "no deterministic match", ok=None)
 
     # ── Long-term project planner (V10): "plan project X to ..." / "new project X"
     #    Checked BEFORE keyword-based desktop routing: the explicit "plan
@@ -510,13 +519,20 @@ def _run_tool_chain(message: str, steps: list) -> dict:
     answer becomes the reply — so "check my qq messages" comes back with the
     actual summary, not just "done".
     """
+    from services import trace
     _emit("commander", f"Recognised a direct command — running it (no planning needed)", "info")
     labels = " → ".join(s.get("action", "").replace("_", " ") for s in steps)
     _emit("executor", labels, "info")
     try:
         from agents.desktop_agent import execute_chain
         result = execute_chain(steps)
+        for st in result.get("steps", []):
+            trace.step(f"desktop.{st.get('action','?')}",
+                       st.get("verify_reason") or st.get("error", ""),
+                       ok=st.get("verified", st.get("success")))
     except Exception as e:
+        trace.step("desktop.execute_chain", str(e), ok=False)
+        trace.finish(f"exception: {e}", ok=False)
         return {"response": f"Couldn't run that: {e}", "intent": "executor",
                 "data": {"error": str(e)}}
 
@@ -527,12 +543,15 @@ def _run_tool_chain(message: str, steps: list) -> dict:
             answer = s.get("answer") or s.get("ai_answer")
     if not result.get("success"):
         fa = result.get("failed_at")
+        trace.finish(result.get("error", "chain failed"), ok=False)
         return {"response": f"Ran {fa-1 if fa else 0}/{len(steps)} steps, then hit: "
                             f"{result.get('error','')}. {answer or ''}".strip(),
                 "intent": "executor", "data": result}
     if answer:
         _emit("vision", "Screen read complete", "success")
+        trace.finish("screen analysed", ok=True)
         return {"response": answer, "intent": "vision", "data": result}
+    trace.finish(f"done: {labels}", ok=True)
     return {"response": f"Done ✓ ({labels})", "intent": "executor", "data": result}
 
 
@@ -584,10 +603,17 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
     chain = [{"action": a.action_type, "params": a.params or {}} for a in steps]
     labels = " → ".join(_step_label(a) for a in steps)
     _emit("executor", labels, "info")
+    from services import trace
     try:
         from agents.desktop_agent import execute_chain
         result = execute_chain(chain)
+        for st in result.get("steps", []):
+            trace.step(f"desktop.{st.get('action','?')}",
+                       st.get("verify_reason") or st.get("error", ""),
+                       ok=st.get("verified", st.get("success")))
     except Exception as e:
+        trace.step("desktop.execute_chain", str(e), ok=False)
+        trace.finish(f"exception: {e}", ok=False)
         return {"response": f"Couldn't run that: {e}", "intent": intent,
                 "data": {"error": str(e)}}
 
@@ -595,9 +621,11 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
         fa = result.get("failed_at", 0)
         done_n = max(0, fa - 1)
         _emit("executor", result.get("error", "step failed"), "error")
+        trace.finish(result.get("error", "step failed"), ok=False)
         return {"response": f"I got {done_n}/{len(steps)} steps done, then couldn't "
                             f"verify: {result.get('error','')}. I didn't mark it done "
                             f"because it didn't actually complete.",
                 "intent": intent, "data": result}
     _emit("executor", f"Verified done: {labels}", "success")
+    trace.finish(f"verified: {labels}", ok=True)
     return {"response": f"Done ✓ (verified: {labels})", "intent": intent, "data": result}
