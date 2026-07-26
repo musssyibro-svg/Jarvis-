@@ -105,6 +105,11 @@ def _startup():
     except Exception as e:
         logger.warning(f"Platform health init: {e}")
     try:
+        from services.maintenance import start as start_maintenance
+        start_maintenance()    # 24/7 hygiene: checkpoint, prune, vacuum, unload
+    except Exception as e:
+        logger.warning(f"Maintenance init: {e}")
+    try:
         from services import model_router
         st = model_router.status()
         logger.info(f"Model router: {st['picks']['chat'].get('model')} for chat "

@@ -322,17 +322,17 @@ class ExecutorAgent(BaseAgent):
         p = action.params or {}
         try:
             if t == "browse":
-                # Real navigation is wired in Phase 5 (browser-use). Until then,
-                # do NOT report success for work that didn't happen.
-                try:
-                    from agents.browser_agent import navigate
-                    ok = navigate(p.get("url"))
-                    self._emit(f"[Browser] Navigated to {p.get('url','page')}", "success")
-                    return {"success": bool(ok), "action": "browse"}
-                except Exception as e:
-                    self._emit(f"[Browser] navigation not available: {e}", "warning")
-                    return {"success": False, "action": "browse",
-                            "error": "browser navigation not implemented (Phase 5)"}
+                # navigate() now exists (it didn't before — every browse failed).
+                from agents.browser_agent import navigate
+                r = navigate(p.get("url", ""), domain=p.get("domain", "research"),
+                             headless=p.get("headless", False))
+                if r.get("success"):
+                    self._emit(f"[Browser] Opened {r.get('title') or p.get('url','page')}",
+                               "success")
+                else:
+                    self._emit(f"[Browser] Couldn't open {p.get('url','')}: "
+                               f"{r.get('error','')}", "error")
+                return {"success": bool(r.get("success")), "action": "browse", **r}
             if t == "submit_application":
                 return self._submit_application(p)
 

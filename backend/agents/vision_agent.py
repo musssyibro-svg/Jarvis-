@@ -120,11 +120,13 @@ def screenshot_region(x: int, y: int, w: int, h: int) -> dict:
 # verify 'eng' is loadable, and if not, download eng.traineddata (~4MB) into a
 # local tessdata dir Jarvis controls and point TESSDATA_PREFIX at it.
 _TESSDATA_OK = False
+# China-first ordering: raw.githubusercontent.com is routinely unreachable there,
+# and trying it first means a long timeout before every fallback. Mirrors lead.
 _TESSDATA_URLS = [
-    "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
-    # mirrors for networks where raw.githubusercontent.com is unreachable
     "https://mirror.ghproxy.com/https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
     "https://ghproxy.net/https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
+    "https://gitee.com/mirrors_tesseract-ocr/tessdata_fast/raw/main/eng.traineddata",
+    "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
 ]
 
 

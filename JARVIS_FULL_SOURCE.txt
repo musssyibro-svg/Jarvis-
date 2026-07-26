@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 156 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 148 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -110,64 +110,56 @@ TABLE OF CONTENTS
 101. backend/services/freelancer_api.py
 102. backend/services/hubstaff_service.py
 103. backend/services/income_engine.py
-104. backend/services/model_router.py
-105. backend/services/ollama_manager.py
-106. backend/services/os_state.py
-107. backend/services/planner_service.py
-108. backend/services/platform_health.py
-109. backend/services/platform_meta.py
-110. backend/services/profile_service.py
-111. backend/services/pulse_service.py
-112. backend/services/reflection.py
-113. backend/services/session_manager.py
-114. backend/services/tool_registry.py
-115. backend/services/trace.py
-116. backend/services/vault.py
-117. backend/services/workflow_service.py
-118. backend/services/world_model.py
-119. backend/services/zuodao_service.py
-120. frontend/index.html
-121. frontend/package.json
-122. frontend/src/App.jsx
-123. frontend/src/JarvisOS.jsx
-124. frontend/src/components/UI.jsx
-125. frontend/src/config.js
-126. frontend/src/index.css
-127. frontend/src/main.jsx
-128. frontend/src/pages/Agents.jsx
-129. frontend/src/pages/Analytics.jsx
-130. frontend/src/pages/AutoMode.jsx
-131. frontend/src/pages/Chat.jsx
-132. frontend/src/pages/Earn.jsx
-133. frontend/src/pages/Jobs.jsx
-134. frontend/src/pages/Messages.jsx
-135. frontend/src/pages/Notes.jsx
-136. frontend/src/pages/Proposals.jsx
-137. frontend/src/pages/Settings.jsx
-138. frontend/src/pages/Tasks.jsx
-139. frontend/src/pages/Workspace.jsx
-140. frontend/src/pages/WorkspaceHub.jsx
-141. frontend/vite.config.js
-142. .gitignore
-143. FINAL_PROJECT_TREE_backend.txt
-144. FINAL_PROJECT_TREE_frontend.txt
-145. LEGACY_GREP_ARTIFACT.txt
-146. PROJECT_TREE.txt
-147. REQUIREMENTS_SNAPSHOT.txt
-148. RUNTIME_VALIDATION.py
-149. RUN_VALIDATION.bat
-150. START_JARVIS.bat
-151. legacy_dependency_report.json
-152. requirements.txt
-153. start.bat
-154. start.sh
-155. start_frontend.bat
-156. tools/dump_source.py
+104. backend/services/maintenance.py
+105. backend/services/model_router.py
+106. backend/services/ollama_manager.py
+107. backend/services/os_state.py
+108. backend/services/planner_service.py
+109. backend/services/platform_health.py
+110. backend/services/platform_meta.py
+111. backend/services/profile_service.py
+112. backend/services/pulse_service.py
+113. backend/services/reflection.py
+114. backend/services/session_manager.py
+115. backend/services/tool_registry.py
+116. backend/services/trace.py
+117. backend/services/vault.py
+118. backend/services/workflow_service.py
+119. backend/services/world_model.py
+120. backend/services/zuodao_service.py
+121. frontend/index.html
+122. frontend/package.json
+123. frontend/src/App.jsx
+124. frontend/src/JarvisOS.jsx
+125. frontend/src/components/UI.jsx
+126. frontend/src/config.js
+127. frontend/src/index.css
+128. frontend/src/main.jsx
+129. frontend/src/pages/Agents.jsx
+130. frontend/src/pages/Chat.jsx
+131. frontend/src/pages/Earn.jsx
+132. frontend/src/pages/Settings.jsx
+133. frontend/vite.config.js
+134. .gitignore
+135. FINAL_PROJECT_TREE_backend.txt
+136. FINAL_PROJECT_TREE_frontend.txt
+137. LEGACY_GREP_ARTIFACT.txt
+138. PROJECT_TREE.txt
+139. REQUIREMENTS_SNAPSHOT.txt
+140. RUNTIME_VALIDATION.py
+141. RUN_VALIDATION.bat
+142. START_JARVIS.bat
+143. legacy_dependency_report.json
+144. requirements.txt
+145. start.bat
+146. start.sh
+147. start_frontend.bat
+148. tools/dump_source.py
 
 
 
 ################################################################################
-# FILE 1/156: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 1/148: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -233,7 +225,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 2/156: ARCHITECTURE.md
+# FILE 2/148: ARCHITECTURE.md
 ################################################################################
 ```md
 # Jarvis architecture (foundational layer)
@@ -300,7 +292,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 3/156: BRAIN_GUIDE.md
+# FILE 3/148: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -356,7 +348,7 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/156: CONTROL_FLOW_REPORT.md
+# FILE 4/148: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -411,7 +403,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 5/156: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 5/148: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -490,7 +482,7 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 6/156: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 6/148: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -609,7 +601,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 7/156: HIDDEN_RUNTIME_AUDIT.md
+# FILE 7/148: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -762,7 +754,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 8/156: MIGRATION_CHANGELOG.md
+# FILE 8/148: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -809,7 +801,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 9/156: PLANNER_AND_DOCTOR.md
+# FILE 9/148: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -866,7 +858,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 10/156: PRE_RELEASE_AUDIT.md
+# FILE 10/148: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1051,7 +1043,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 11/156: QA_VERIFICATION_REPORT.md
+# FILE 11/148: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -1145,7 +1137,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 12/156: README.md
+# FILE 12/148: README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -1281,7 +1273,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 13/156: README_START_HERE.md
+# FILE 13/148: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -1336,7 +1328,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 14/156: REAL_MACHINE_FIXES.md
+# FILE 14/148: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -1437,7 +1429,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 15/156: RESEARCH_UPGRADE_2026-07.md
+# FILE 15/148: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -1526,7 +1518,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 16/156: RUNTIME_VALIDATION_README.md
+# FILE 16/148: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -1564,7 +1556,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 17/156: STAGE2_CHANGELOG.md
+# FILE 17/148: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -1601,7 +1593,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 18/156: START_HERE.md
+# FILE 18/148: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -1752,7 +1744,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 19/156: V8_PHASE1_REPORT.md
+# FILE 19/148: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -1808,7 +1800,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 20/156: V9_FINAL_README.md
+# FILE 20/148: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -1870,7 +1862,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 21/156: V9_STAGE1_MIGRATION.md
+# FILE 21/148: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -1934,7 +1926,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 22/156: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 22/148: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -2006,7 +1998,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 23/156: WINDOWS_DEPLOYMENT.md
+# FILE 23/148: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -2044,7 +2036,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 24/156: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 24/148: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -2134,7 +2126,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 25/156: backend/README.md
+# FILE 25/148: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -2270,14 +2262,14 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 26/156: backend/adapters/__init__.py
+# FILE 26/148: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 27/156: backend/adapters/commander_adapter.py
+# FILE 27/148: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -2914,14 +2906,14 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 ```
 
 ################################################################################
-# FILE 28/156: backend/agents/__init__.py
+# FILE 28/148: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 29/156: backend/agents/base_agent.py
+# FILE 29/148: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -2944,25 +2936,58 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 30/156: backend/agents/browser_agent.py
+# FILE 30/148: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
-agents/browser_agent.py
-BrowserAgent — persistent browser session, login-once, session reuse.
-Handles submission workflows via Playwright.
+agents/browser_agent.py — persistent browser sessions, login-once, reuse forever.
+
+Two things were wrong and are fixed here:
+
+1. `navigate()` DID NOT EXIST. executor_agent imported it, the import failed, and
+   every browse action returned "browser navigation not implemented (Phase 5)".
+   Browsing simply did not work. It does now.
+
+2. The single global context leaked: pages were opened and never counted or
+   closed, so a 24/7 run bloated Chromium until submissions failed.
+
+On the leak, we deliberately DO NOT do what one audit suggested (destroy the
+whole context every 30 minutes). That profile holds your Freelancer/QQ/Doubao
+logins and browser fingerprint — throwing it away every half hour means constant
+re-logins and more bot challenges. Instead:
+
+    * pages are tracked and closed (the actual leak),
+    * idle pages are reaped above a cap,
+    * the persistent PROFILE is never destroyed on a timer.
+
+Profiles are also split per domain (freelance / research / desktop), so a crash
+or a Cloudflare block on one doesn't take the others down with it.
 """
 import asyncio
 import os
 import sys
+import threading
+import time
 from pathlib import Path
+
 from agents.base_agent import BaseAgent
 
-BASE_DIR        = Path(__file__).resolve().parent.parent
-PROFILE_DIR     = str(BASE_DIR / "browser-profile")
-os.makedirs(PROFILE_DIR, exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-_ctx = None  # persistent browser context (reused across calls)
+# One profile per domain: an incident in one is contained.
+PROFILES = {
+    "freelance": str(BASE_DIR / "browser-profile"),      # keep the existing path
+    "research":  str(BASE_DIR / "browser-profile-research"),
+    "desktop":   str(BASE_DIR / "browser-profile-desktop"),
+}
+PROFILE_DIR = PROFILES["freelance"]     # back-compat for existing imports
+
+for _p in PROFILES.values():
+    os.makedirs(_p, exist_ok=True)
+
+MAX_OPEN_PAGES = 6          # reap idle pages beyond this — the real leak
+_ctx: dict = {}             # domain -> context
+_ctx_lock = threading.Lock()
 
 
 def _new_loop():
@@ -2971,27 +2996,126 @@ def _new_loop():
     return asyncio.new_event_loop()
 
 
-async def _get_context(headless: bool = True):
-    global _ctx
-    if _ctx:
+async def _get_context(headless: bool = True, domain: str = "freelance"):
+    """
+    Get (or create) the persistent context for a domain. Reaps surplus pages so
+    memory stays bounded WITHOUT discarding the logged-in profile.
+    """
+    ctx = _ctx.get(domain)
+    if ctx:
         try:
-            await _ctx.new_page()  # test if still alive
-            return _ctx
+            pages = list(ctx.pages)
+            # Close the oldest idle pages if we're above the cap. This is the
+            # actual source of the leak; the profile itself is fine to keep.
+            if len(pages) > MAX_OPEN_PAGES:
+                for p in pages[:-MAX_OPEN_PAGES]:
+                    try:
+                        await p.close()
+                    except Exception:
+                        pass
+            return ctx
         except Exception:
-            _ctx = None
+            # context died (browser closed/crashed) — drop it and relaunch
+            _ctx.pop(domain, None)
 
     from playwright.async_api import async_playwright
     p = await async_playwright().start()
-    _ctx = await p.chromium.launch_persistent_context(
-        user_data_dir=PROFILE_DIR,
+    ctx = await p.chromium.launch_persistent_context(
+        user_data_dir=PROFILES.get(domain, PROFILE_DIR),
         headless=headless,
-        args=[
-            "--disable-blink-features=AutomationControlled",
-            "--no-sandbox",
-            "--disable-dev-shm-usage",
-        ],
+        args=["--disable-blink-features=AutomationControlled",
+              "--no-sandbox", "--disable-dev-shm-usage"],
     )
-    return _ctx
+    _ctx[domain] = ctx
+    return ctx
+
+
+def _run(coro, timeout: float = 90):
+    """Run an async browser coroutine from sync code (Windows-safe)."""
+    import concurrent.futures
+    loop = _new_loop()
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            return ex.submit(loop.run_until_complete, coro).result(timeout=timeout)
+    finally:
+        try:
+            loop.close()
+        except Exception:
+            pass
+
+
+# ── The function that was missing ─────────────────────────────────────────────
+
+def navigate(url: str, domain: str = "research", headless: bool = False,
+             wait: str = "domcontentloaded") -> dict:
+    """
+    Open a URL in the managed browser and report what actually loaded.
+    Returns {success, url, title, error}. Never raises.
+    """
+    if not url:
+        return {"success": False, "error": "no URL given"}
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    async def _go():
+        ctx = await _get_context(headless=headless, domain=domain)
+        page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+        await page.goto(url, wait_until=wait, timeout=45_000)
+        await asyncio.sleep(1.0)
+        return {"success": True, "url": page.url, "title": (await page.title())[:120]}
+
+    try:
+        res = _run(_go())
+        try:
+            from services import event_bus
+            event_bus.publish("browser.navigated",
+                              {"url": res.get("url", url)[:100],
+                               "title": res.get("title", "")[:60]})
+        except Exception:
+            pass
+        return res
+    except Exception as e:
+        return {"success": False, "url": url, "error": str(e)[:200]}
+
+
+def current_page_text(domain: str = "research", limit: int = 4000) -> dict:
+    """Readable text of the current page — lets Jarvis actually use the web."""
+    async def _read():
+        ctx = await _get_context(headless=False, domain=domain)
+        if not ctx.pages:
+            return {"success": False, "error": "no page open"}
+        page = ctx.pages[0]
+        txt = await page.evaluate("() => document.body ? document.body.innerText : ''")
+        return {"success": True, "url": page.url,
+                "title": (await page.title())[:120], "text": (txt or "")[:limit]}
+    try:
+        return _run(_read())
+    except Exception as e:
+        return {"success": False, "error": str(e)[:200]}
+
+
+def close_domain(domain: str = "freelance") -> dict:
+    """Close one domain's browser (used on shutdown / recovery), keeping others."""
+    ctx = _ctx.pop(domain, None)
+    if not ctx:
+        return {"ok": True, "note": "not open"}
+    try:
+        _run(ctx.close(), timeout=20)
+    except Exception:
+        pass
+    return {"ok": True, "closed": domain}
+
+
+def status() -> dict:
+    out = {}
+    for domain, ctx in list(_ctx.items()):
+        try:
+            out[domain] = {"open": True, "pages": len(ctx.pages)}
+        except Exception:
+            out[domain] = {"open": False, "pages": 0}
+    for d in PROFILES:
+        out.setdefault(d, {"open": False, "pages": 0})
+    return {"contexts": out, "max_pages_per_context": MAX_OPEN_PAGES}
 
 
 class BrowserAgent(BaseAgent):
@@ -3000,46 +3124,30 @@ class BrowserAgent(BaseAgent):
     def run(self, context: dict) -> dict:
         action   = context.get("action", "check_login")
         headless = context.get("headless", True)
+        domain   = context.get("domain", "freelance")
         feed     = []
 
-        if action == "check_login":
-            result = self._check_login(context.get("url", "https://www.google.com"), headless)
-            feed.append(self.log(f"Login check: {result}"))
-            return {"result": result, "feed": feed}
+        if action == "navigate" or action == "open_url":
+            r = navigate(context.get("url", ""), domain=domain, headless=headless)
+            feed.append(self.log(f"Navigate: {r.get('title') or r.get('error')}"))
+            return {"result": r, "feed": feed}
 
-        if action == "open_url":
-            url = context.get("url", "")
-            self._open_url(url, headless)
-            feed.append(self.log(f"Opened: {url}"))
-            return {"result": "opened", "feed": feed}
+        if action == "read_page":
+            r = current_page_text(domain=domain)
+            return {"result": r, "feed": feed}
+
+        if action == "check_login":
+            r = navigate(context.get("url", "https://www.google.com"),
+                         domain=domain, headless=headless)
+            status_str = f"ok:{r.get('title','')[:40]}" if r.get("success") else f"error:{r.get('error')}"
+            feed.append(self.log(f"Login check: {status_str}"))
+            return {"result": status_str, "feed": feed}
 
         return {"result": "unknown action", "feed": feed}
-
-    def _check_login(self, url: str, headless: bool) -> str:
-        import concurrent.futures
-        async def _do():
-            ctx = await _get_context(headless)
-            page = await ctx.new_page()
-            try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=30_000)
-                title = await page.title()
-                return f"ok:{title[:40]}"
-            finally:
-                await page.close()
-        try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-                loop = _new_loop()
-                return ex.submit(loop.run_until_complete, _do()).result(timeout=45)
-        except Exception as e:
-            return f"error:{e}"
-
-    def _open_url(self, url: str, headless: bool):
-        import webbrowser
-        webbrowser.open(url)
 ```
 
 ################################################################################
-# FILE 31/156: backend/agents/commander.py
+# FILE 31/148: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -3176,14 +3284,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 32/156: backend/agents/custom/__init__.py
+# FILE 32/148: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 33/156: backend/agents/desktop_agent.py
+# FILE 33/148: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -4164,7 +4272,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 34/156: backend/agents/executor_agent.py
+# FILE 34/148: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -4491,17 +4599,17 @@ class ExecutorAgent(BaseAgent):
         p = action.params or {}
         try:
             if t == "browse":
-                # Real navigation is wired in Phase 5 (browser-use). Until then,
-                # do NOT report success for work that didn't happen.
-                try:
-                    from agents.browser_agent import navigate
-                    ok = navigate(p.get("url"))
-                    self._emit(f"[Browser] Navigated to {p.get('url','page')}", "success")
-                    return {"success": bool(ok), "action": "browse"}
-                except Exception as e:
-                    self._emit(f"[Browser] navigation not available: {e}", "warning")
-                    return {"success": False, "action": "browse",
-                            "error": "browser navigation not implemented (Phase 5)"}
+                # navigate() now exists (it didn't before — every browse failed).
+                from agents.browser_agent import navigate
+                r = navigate(p.get("url", ""), domain=p.get("domain", "research"),
+                             headless=p.get("headless", False))
+                if r.get("success"):
+                    self._emit(f"[Browser] Opened {r.get('title') or p.get('url','page')}",
+                               "success")
+                else:
+                    self._emit(f"[Browser] Couldn't open {p.get('url','')}: "
+                               f"{r.get('error','')}", "error")
+                return {"success": bool(r.get("success")), "action": "browse", **r}
             if t == "submit_application":
                 return self._submit_application(p)
 
@@ -4635,7 +4743,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 35/156: backend/agents/memory_agent.py
+# FILE 35/148: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -4793,7 +4901,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 36/156: backend/agents/orchestrator.py
+# FILE 36/148: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -4906,7 +5014,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 37/156: backend/agents/orchestrator_core.py
+# FILE 37/148: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -5238,7 +5346,7 @@ core = OrchestratorCore()
 ```
 
 ################################################################################
-# FILE 38/156: backend/agents/perception_agent.py
+# FILE 38/148: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -5448,7 +5556,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 39/156: backend/agents/proposal_agent.py
+# FILE 39/148: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -5606,7 +5714,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 40/156: backend/agents/registry.py
+# FILE 40/148: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -5926,7 +6034,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 41/156: backend/agents/scheduler.py
+# FILE 41/148: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -6030,7 +6138,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 42/156: backend/agents/score_agent.py
+# FILE 42/148: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -6231,7 +6339,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 43/156: backend/agents/scout_agent.py
+# FILE 43/148: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -6351,7 +6459,7 @@ class ScoutAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 44/156: backend/agents/v9_models.py
+# FILE 44/148: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -6409,7 +6517,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 45/156: backend/agents/vision_agent.py
+# FILE 45/148: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -6534,11 +6642,13 @@ def screenshot_region(x: int, y: int, w: int, h: int) -> dict:
 # verify 'eng' is loadable, and if not, download eng.traineddata (~4MB) into a
 # local tessdata dir Jarvis controls and point TESSDATA_PREFIX at it.
 _TESSDATA_OK = False
+# China-first ordering: raw.githubusercontent.com is routinely unreachable there,
+# and trying it first means a long timeout before every fallback. Mirrors lead.
 _TESSDATA_URLS = [
-    "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
-    # mirrors for networks where raw.githubusercontent.com is unreachable
     "https://mirror.ghproxy.com/https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
     "https://ghproxy.net/https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
+    "https://gitee.com/mirrors_tesseract-ocr/tessdata_fast/raw/main/eng.traineddata",
+    "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata",
 ]
 
 
@@ -7017,79 +7127,157 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 46/156: backend/core/__init__.py
+# FILE 46/148: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 47/156: backend/core/browser_lock.py
+# FILE 47/148: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
-core/browser_lock.py — single-owner browser lock (V9 Constraint 4).
-Non-blocking: if a workflow already owns the browser, a second acquirer gets a
-'browser busy' result IMMEDIATELY (no waiting, no deadlock during 24h runs).
+core/browser_lock.py — single-owner browser access, via a HEARTBEAT LEASE.
 
-Any code that drives Playwright (ExecutorAgent, bid_executor) must acquire()
-before use and release() after. This makes OrchestratorCore-driven work and
-queue execution mutually exclusive instead of silently racing the same context.
+The old version was a plain threading.Lock: if the owner thread died mid-bid, the
+browser stayed locked forever and the income engine logged "browser busy" until a
+restart. That's a real bug.
+
+One audit proposed fixing it by force-releasing the lock after 5 minutes. We
+deliberately do NOT do that: a slow-but-alive bid submission would have the
+browser yanked out from under it, and two agents would then drive the same
+Chrome instance — far worse than a stuck lock.
+
+Instead the owner holds a LEASE it must renew (`heartbeat()`), which the executor
+does naturally as it works. Ownership is only reclaimed when the heartbeat has
+genuinely stopped — i.e. the owner is dead, not merely slow. Takeovers are
+recorded so they show up in diagnostics instead of happening invisibly.
 """
 import threading
+import time
 from datetime import datetime, timezone
 
-_lock  = threading.Lock()
-_owner = {"name": None, "since": None}
+# How long an owner may go silent before we consider it dead.
+LEASE_SECONDS = 120
+# Renew at least this often while working (executor calls heartbeat()).
+HEARTBEAT_EVERY = 20
+
+_state_lock = threading.Lock()
+_owner = {"name": None, "since": None, "last_beat": 0.0, "thread_id": None}
+_takeovers: list = []
 
 
-def acquire(owner: str) -> dict:
-    """Try to take browser ownership. Returns {ok, owner, busy_with?}."""
-    got = _lock.acquire(blocking=False)
-    if not got:
-        return {"ok": False, "busy_with": _owner["name"],
-                "since": _owner["since"],
-                "message": f"Browser busy (owned by {_owner['name']})"}
-    _owner["name"]  = owner
-    _owner["since"] = datetime.now(timezone.utc).isoformat()
-    return {"ok": True, "owner": owner}
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _lease_expired() -> bool:
+    if not _owner["name"]:
+        return False
+    return (time.time() - (_owner["last_beat"] or 0)) > LEASE_SECONDS
+
+
+def acquire(owner: str, timeout: float = 0) -> dict:
+    """
+    Take browser ownership. Non-blocking by default; pass timeout to wait.
+    Reclaims the lease only if the current owner has stopped heart-beating.
+    """
+    deadline = time.time() + max(0.0, timeout)
+    while True:
+        with _state_lock:
+            current = _owner["name"]
+
+            if current is None:
+                _owner.update(name=owner, since=_now_iso(),
+                              last_beat=time.time(),
+                              thread_id=threading.current_thread().ident)
+                return {"ok": True, "owner": owner}
+
+            if current == owner:          # re-entrant for the same owner
+                _owner["last_beat"] = time.time()
+                return {"ok": True, "owner": owner, "reentrant": True}
+
+            if _lease_expired():
+                dead = current
+                _takeovers.append({"from": dead, "to": owner, "at": _now_iso(),
+                                   "silent_for_s": round(time.time() - _owner["last_beat"])})
+                del _takeovers[:-20]
+                _owner.update(name=owner, since=_now_iso(),
+                              last_beat=time.time(),
+                              thread_id=threading.current_thread().ident)
+                return {"ok": True, "owner": owner, "took_over_from": dead,
+                        "note": f"'{dead}' stopped responding for over "
+                                f"{LEASE_SECONDS}s and its lease expired"}
+
+            busy = {"ok": False, "busy_with": current, "since": _owner["since"],
+                    "message": f"Browser busy (owned by {current})"}
+
+        if time.time() >= deadline:
+            return busy
+        time.sleep(0.5)
+
+
+def heartbeat(owner: str) -> bool:
+    """Renew the lease. Long operations MUST call this to avoid being reclaimed."""
+    with _state_lock:
+        if _owner["name"] != owner:
+            return False
+        _owner["last_beat"] = time.time()
+        return True
 
 
 def release(owner: str) -> dict:
-    """Release ownership if held by `owner`. Idempotent/safe."""
-    if _owner["name"] != owner:
-        return {"ok": False, "message": f"{owner} does not hold the lock"}
-    _owner["name"]  = None
-    _owner["since"] = None
-    try:
-        _lock.release()
-    except RuntimeError:
-        pass
+    with _state_lock:
+        if _owner["name"] != owner:
+            return {"ok": False, "message": f"{owner} does not hold the lock"}
+        _owner.update(name=None, since=None, last_beat=0.0, thread_id=None)
     return {"ok": True}
 
 
 def current_owner() -> dict:
-    return dict(_owner)
+    with _state_lock:
+        return {"name": _owner["name"], "since": _owner["since"],
+                "silent_for_s": (round(time.time() - _owner["last_beat"])
+                                 if _owner["name"] else None),
+                "lease_seconds": LEASE_SECONDS,
+                "expired": _lease_expired(),
+                "recent_takeovers": list(_takeovers[-5:])}
 
 
 class browser_session:
-    """Context manager: `with browser_session('executor') as s: if s.ok: ...`."""
-    def __init__(self, owner: str):
+    """
+    `with browser_session('executor') as s:` — auto-renews the lease in the
+    background so a slow-but-healthy job is never mistaken for a dead one.
+    """
+    def __init__(self, owner: str, timeout: float = 0):
         self.owner = owner
-        self.ok    = False
-        self.info  = {}
+        self.timeout = timeout
+        self.ok = False
+        self.info = {}
+        self._stop = threading.Event()
+
+    def _beat(self):
+        while not self._stop.wait(HEARTBEAT_EVERY):
+            heartbeat(self.owner)
+
     def __enter__(self):
-        self.info = acquire(self.owner)
-        self.ok   = self.info.get("ok", False)
+        self.info = acquire(self.owner, self.timeout)
+        self.ok = self.info.get("ok", False)
+        if self.ok:
+            threading.Thread(target=self._beat, daemon=True,
+                             name=f"lease-{self.owner}").start()
         return self
+
     def __exit__(self, *exc):
+        self._stop.set()
         if self.ok:
             release(self.owner)
         return False
 ```
 
 ################################################################################
-# FILE 48/156: backend/main.py
+# FILE 48/148: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -7198,6 +7386,11 @@ def _startup():
         init_health()          # per-site reliability, backoff + auto-pause
     except Exception as e:
         logger.warning(f"Platform health init: {e}")
+    try:
+        from services.maintenance import start as start_maintenance
+        start_maintenance()    # 24/7 hygiene: checkpoint, prune, vacuum, unload
+    except Exception as e:
+        logger.warning(f"Maintenance init: {e}")
     try:
         from services import model_router
         st = model_router.status()
@@ -7481,14 +7674,14 @@ except Exception as _e:
 ```
 
 ################################################################################
-# FILE 49/156: backend/models/__init__.py
+# FILE 49/148: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import conn, init_db, DB_PATH
 ```
 
 ################################################################################
-# FILE 50/156: backend/models/clickworker.py
+# FILE 50/148: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -7514,7 +7707,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 51/156: backend/models/db.py
+# FILE 51/148: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -7733,7 +7926,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 52/156: backend/models/fiverr.py
+# FILE 52/148: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -7780,7 +7973,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 53/156: backend/models/hubstaff.py
+# FILE 53/148: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -7824,7 +8017,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 54/156: backend/models/zuodao.py
+# FILE 54/148: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -7850,14 +8043,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 55/156: backend/platforms/__init__.py
+# FILE 55/148: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 56/156: backend/platforms/base.py
+# FILE 56/148: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -7902,7 +8095,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 57/156: backend/platforms/contra.py
+# FILE 57/148: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -7987,7 +8180,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 58/156: backend/platforms/hubstaff.py
+# FILE 58/148: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -8187,7 +8380,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 59/156: backend/platforms/peopleperhour.py
+# FILE 59/148: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -8272,7 +8465,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 60/156: backend/platforms/remoteco.py
+# FILE 60/148: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -8371,7 +8564,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 61/156: backend/platforms/remoteok.py
+# FILE 61/148: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -8413,7 +8606,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 62/156: backend/platforms/wellfound.py
+# FILE 62/148: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -8531,7 +8724,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 63/156: backend/platforms/weworkremotely.py
+# FILE 63/148: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -8575,7 +8768,7 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 64/156: backend/requirements.txt
+# FILE 64/148: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -8612,7 +8805,7 @@ cryptography>=42.0.0
 ```
 
 ################################################################################
-# FILE 65/156: backend/routes/__init__.py
+# FILE 65/148: backend/routes/__init__.py
 ################################################################################
 ```py
 from .proposals   import router as proposals_router
@@ -8628,7 +8821,7 @@ from .orchestrator import router as orchestrator_router
 ```
 
 ################################################################################
-# FILE 66/156: backend/routes/agents.py
+# FILE 66/148: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -9121,7 +9314,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 67/156: backend/routes/analytics.py
+# FILE 67/148: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -9140,7 +9333,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 68/156: backend/routes/automation.py
+# FILE 68/148: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -9371,7 +9564,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 69/156: backend/routes/brain.py
+# FILE 69/148: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -9468,7 +9661,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 70/156: backend/routes/clickworker.py
+# FILE 70/148: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -9566,7 +9759,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 71/156: backend/routes/fiverr.py
+# FILE 71/148: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -9744,7 +9937,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 72/156: backend/routes/hubstaff.py
+# FILE 72/148: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -9925,7 +10118,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 73/156: backend/routes/messages.py
+# FILE 73/148: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -10020,7 +10213,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 74/156: backend/routes/mind.py
+# FILE 74/148: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -10121,7 +10314,7 @@ def freelance_resume(platform: str):
 ```
 
 ################################################################################
-# FILE 75/156: backend/routes/orchestrator.py
+# FILE 75/148: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -10263,7 +10456,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 76/156: backend/routes/orchestrator_feed.py
+# FILE 76/148: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -10319,7 +10512,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 77/156: backend/routes/os_console.py
+# FILE 77/148: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -10393,7 +10586,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 78/156: backend/routes/planner.py
+# FILE 78/148: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -10518,7 +10711,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 79/156: backend/routes/proposals.py
+# FILE 79/148: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -10724,7 +10917,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 80/156: backend/routes/pulse.py
+# FILE 80/148: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -10758,7 +10951,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 81/156: backend/routes/scraper.py
+# FILE 81/148: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -10902,7 +11095,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 82/156: backend/routes/sessions.py
+# FILE 82/148: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -11017,7 +11210,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 83/156: backend/routes/system.py
+# FILE 83/148: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -11216,7 +11409,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 84/156: backend/routes/workflows.py
+# FILE 84/148: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -11282,7 +11475,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 85/156: backend/routes/zuodao.py
+# FILE 85/148: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -11377,7 +11570,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 86/156: backend/services/__init__.py
+# FILE 86/148: backend/services/__init__.py
 ################################################################################
 ```py
 from .deepseek_service import call_model, generate_proposal, generate_reply_draft, auto_work_job
@@ -11385,7 +11578,7 @@ from .analytics_service import get_analytics
 ```
 
 ################################################################################
-# FILE 87/156: backend/services/analytics_service.py
+# FILE 87/148: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -11487,7 +11680,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 88/156: backend/services/app_resolver.py
+# FILE 88/148: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -11686,7 +11879,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 89/156: backend/services/bid_executor.py
+# FILE 89/148: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -12031,7 +12224,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 90/156: backend/services/brain_core.py
+# FILE 90/148: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -12138,7 +12331,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 91/156: backend/services/brain_decision.py
+# FILE 91/148: backend/services/brain_decision.py
 ################################################################################
 ```py
 """
@@ -12396,7 +12589,7 @@ def explain(goal_type: str = "background", objective: str = "") -> dict:
 ```
 
 ################################################################################
-# FILE 92/156: backend/services/brain_service.py
+# FILE 92/148: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -12834,7 +13027,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 93/156: backend/services/browser_monitor.py
+# FILE 93/148: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -12988,7 +13181,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 94/156: backend/services/capability_registry.py
+# FILE 94/148: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -13177,7 +13370,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 95/156: backend/services/clickworker_service.py
+# FILE 95/148: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -13325,7 +13518,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 96/156: backend/services/custom_platforms.py
+# FILE 96/148: backend/services/custom_platforms.py
 ################################################################################
 ```py
 """
@@ -13522,7 +13715,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 97/156: backend/services/deepseek_service.py
+# FILE 97/148: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -13740,7 +13933,7 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 98/156: backend/services/diagnostics.py
+# FILE 98/148: backend/services/diagnostics.py
 ################################################################################
 ```py
 """
@@ -14069,7 +14262,7 @@ def build_report() -> str:
 ```
 
 ################################################################################
-# FILE 99/156: backend/services/event_bus.py
+# FILE 99/148: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -14162,7 +14355,7 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 100/156: backend/services/fiverr_service.py
+# FILE 100/148: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -14344,7 +14537,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 101/156: backend/services/freelancer_api.py
+# FILE 101/148: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -14559,7 +14752,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 102/156: backend/services/hubstaff_service.py
+# FILE 102/148: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -14759,7 +14952,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 103/156: backend/services/income_engine.py
+# FILE 103/148: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -15030,7 +15223,262 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 104/156: backend/services/model_router.py
+# FILE 104/148: backend/services/maintenance.py
+################################################################################
+```py
+"""
+services/maintenance.py — keeps a 24/7 Jarvis from eating a 16GB machine alive.
+
+Left alone, three things grow without bound and eventually kill the box:
+the automation queue, chat/event history, and the screenshots folder (one PNG per
+screen analysis adds up fast).
+
+Cadence matters as much as the cleanup. One audit suggested VACUUM after every
+queue cleanup — that would freeze SQLite for seconds at a time, repeatedly, on
+the exact machine we're trying to protect. So:
+
+    every hour   WAL checkpoint  (cheap, keeps the -wal file from ballooning)
+    every day    prune old rows + old screenshots
+    every week   VACUUM          (expensive, so exactly once, when idle)
+
+Everything is best-effort and never interrupts real work: if the browser or a
+workflow is busy, maintenance defers to the next tick.
+"""
+import logging
+import os
+import threading
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from models.db import conn
+
+logger = logging.getLogger("jarvis.maintenance")
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+SCREENSHOT_DIR = BASE_DIR / "screenshots"
+
+KEEP_QUEUE_DAYS      = 14      # done/failed/rejected queue rows
+KEEP_CHAT_MESSAGES   = 2000    # per session cap
+KEEP_SCREENSHOT_DAYS = 3
+KEEP_PULSE_DAYS      = 30
+MAX_SCREENSHOT_MB    = 500
+
+_started = False
+_last = {"checkpoint": 0.0, "daily": 0.0, "weekly": 0.0}
+_stats = {"runs": 0, "rows_pruned": 0, "files_deleted": 0, "mb_freed": 0.0,
+          "last_run": None, "last_error": None}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _busy() -> bool:
+    """Don't do housekeeping while real work is in flight."""
+    try:
+        from core.browser_lock import current_owner
+        if current_owner().get("name"):
+            return True
+    except Exception:
+        pass
+    try:
+        from agents.orchestrator import STATE
+        if STATE.get().get("running"):
+            return True
+    except Exception:
+        pass
+    return False
+
+
+# ── Individual jobs ───────────────────────────────────────────────────────────
+
+def wal_checkpoint() -> dict:
+    """Fold the write-ahead log back into the db. Cheap; safe to run hourly."""
+    try:
+        with conn() as db:
+            db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:120]}
+
+
+def prune_rows() -> dict:
+    """Delete rows that are old and finished. Never touches pending work."""
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=KEEP_QUEUE_DAYS)).isoformat()
+    pulse_cutoff = (datetime.now(timezone.utc) - timedelta(days=KEEP_PULSE_DAYS)).isoformat()
+    removed = 0
+    try:
+        with conn() as db:
+            # finished queue items only — pending/approved are live work
+            cur = db.execute(
+                "DELETE FROM automation_queue WHERE status IN "
+                "('done','failed','rejected','ready') AND created_at < ?", (cutoff,))
+            removed += cur.rowcount or 0
+            try:
+                cur = db.execute("DELETE FROM pulse_events WHERE created_at < ?",
+                                 (pulse_cutoff,))
+                removed += cur.rowcount or 0
+            except Exception:
+                pass
+            # cap chat history per session (keep the newest N)
+            try:
+                sessions = [r["session_id"] for r in db.execute(
+                    "SELECT DISTINCT session_id FROM chat_messages").fetchall()]
+                for s in sessions:
+                    cur = db.execute(
+                        "DELETE FROM chat_messages WHERE session_id=? AND id NOT IN "
+                        "(SELECT id FROM chat_messages WHERE session_id=? "
+                        " ORDER BY id DESC LIMIT ?)", (s, s, KEEP_CHAT_MESSAGES))
+                    removed += cur.rowcount or 0
+            except Exception:
+                pass
+        _stats["rows_pruned"] += removed
+        return {"ok": True, "rows": removed}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:120]}
+
+
+def prune_screenshots() -> dict:
+    """Delete old screenshots, and trim by size if the folder is still large."""
+    if not SCREENSHOT_DIR.exists():
+        return {"ok": True, "deleted": 0}
+    deleted, freed = 0, 0.0
+    cutoff = time.time() - KEEP_SCREENSHOT_DAYS * 86400
+    try:
+        files = []
+        for f in SCREENSHOT_DIR.glob("*.png"):
+            try:
+                st = f.stat()
+                files.append((f, st.st_mtime, st.st_size))
+            except OSError:
+                continue
+        # 1) age-based
+        for f, mtime, size in files:
+            if mtime < cutoff:
+                try:
+                    f.unlink(); deleted += 1; freed += size
+                except OSError:
+                    pass
+        # 2) size-based: if still over budget, drop oldest first
+        remaining = [(f, m, s) for f, m, s in files if f.exists()]
+        total_mb = sum(s for _, _, s in remaining) / 1e6
+        if total_mb > MAX_SCREENSHOT_MB:
+            remaining.sort(key=lambda x: x[1])          # oldest first
+            for f, _, size in remaining:
+                if total_mb <= MAX_SCREENSHOT_MB:
+                    break
+                try:
+                    f.unlink(); deleted += 1; freed += size; total_mb -= size / 1e6
+                except OSError:
+                    pass
+        _stats["files_deleted"] += deleted
+        _stats["mb_freed"] += freed / 1e6
+        return {"ok": True, "deleted": deleted, "mb_freed": round(freed / 1e6, 1)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:120]}
+
+
+def vacuum() -> dict:
+    """Reclaim disk. EXPENSIVE — weekly only, and never while busy."""
+    try:
+        with conn() as db:
+            db.execute("VACUUM")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:120]}
+
+
+def unload_idle_models() -> dict:
+    """Free a heavy model from RAM when nothing is running (16GB machines)."""
+    try:
+        from services import model_router
+        vision = model_router.pick("vision").get("model")
+        if vision:
+            return model_router.unload(vision)
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:120]}
+    return {"ok": True, "note": "nothing to unload"}
+
+
+# ── Scheduler ─────────────────────────────────────────────────────────────────
+
+def run_due(force: bool = False) -> dict:
+    """Run whatever is due. Called by the loop; safe to call manually."""
+    now = time.time()
+    did = {}
+    if _busy() and not force:
+        return {"skipped": "busy"}
+
+    if force or now - _last["checkpoint"] > 3600:            # hourly
+        did["wal_checkpoint"] = wal_checkpoint()
+        _last["checkpoint"] = now
+
+    if force or now - _last["daily"] > 86400:                # daily
+        did["prune_rows"] = prune_rows()
+        did["prune_screenshots"] = prune_screenshots()
+        did["unload_models"] = unload_idle_models()
+        _last["daily"] = now
+
+    if force or now - _last["weekly"] > 7 * 86400:           # weekly
+        did["vacuum"] = vacuum()
+        _last["weekly"] = now
+
+    if did:
+        _stats["runs"] += 1
+        _stats["last_run"] = _now()
+        logger.info(f"maintenance: {', '.join(did.keys())}")
+        try:
+            from services import event_bus
+            event_bus.publish("system.maintenance", {"jobs": list(did.keys())})
+        except Exception:
+            pass
+    return did or {"skipped": "nothing due"}
+
+
+def stats() -> dict:
+    size_mb = None
+    try:
+        db_path = BASE_DIR / "jarvis.db"
+        if db_path.exists():
+            size_mb = round(db_path.stat().st_size / 1e6, 1)
+    except Exception:
+        pass
+    shots = 0
+    try:
+        shots = len(list(SCREENSHOT_DIR.glob("*.png"))) if SCREENSHOT_DIR.exists() else 0
+    except Exception:
+        pass
+    return {**_stats, "db_mb": size_mb, "screenshots": shots,
+            "next": {"checkpoint_in_s": max(0, int(3600 - (time.time() - _last["checkpoint"]))),
+                     "daily_in_s": max(0, int(86400 - (time.time() - _last["daily"])))}}
+
+
+def _loop():
+    time.sleep(120)                 # let startup settle
+    # Stagger the first daily/weekly so a fresh install doesn't VACUUM at boot.
+    _last["daily"] = time.time() - 80000
+    _last["weekly"] = time.time()
+    while True:
+        try:
+            run_due()
+        except Exception as e:
+            _stats["last_error"] = str(e)[:200]
+            logger.warning(f"maintenance tick failed: {e}")
+        time.sleep(600)             # check every 10 minutes
+
+
+def start():
+    global _started
+    if _started:
+        return
+    _started = True
+    threading.Thread(target=_loop, daemon=True, name="jarvis-maintenance").start()
+    logger.info("Maintenance started (hourly checkpoint · daily prune · weekly vacuum).")
+```
+
+################################################################################
+# FILE 105/148: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -15235,7 +15683,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 105/156: backend/services/ollama_manager.py
+# FILE 106/148: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -15519,7 +15967,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 106/156: backend/services/os_state.py
+# FILE 107/148: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -15710,7 +16158,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 107/156: backend/services/planner_service.py
+# FILE 108/148: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -16290,7 +16738,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 108/156: backend/services/platform_health.py
+# FILE 109/148: backend/services/platform_health.py
 ################################################################################
 ```py
 """
@@ -16449,7 +16897,7 @@ def _announce_pause(platform: str, error: str) -> None:
 ```
 
 ################################################################################
-# FILE 109/156: backend/services/platform_meta.py
+# FILE 110/148: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -16531,7 +16979,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 110/156: backend/services/profile_service.py
+# FILE 111/148: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -16606,7 +17054,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 111/156: backend/services/pulse_service.py
+# FILE 112/148: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -16883,7 +17331,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 112/156: backend/services/reflection.py
+# FILE 113/148: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -16984,7 +17432,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 113/156: backend/services/session_manager.py
+# FILE 114/148: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -17355,7 +17803,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 114/156: backend/services/tool_registry.py
+# FILE 115/148: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -17512,7 +17960,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 115/156: backend/services/trace.py
+# FILE 116/148: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -17645,7 +18093,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 116/156: backend/services/vault.py
+# FILE 117/148: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -17778,7 +18226,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 117/156: backend/services/workflow_service.py
+# FILE 118/148: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -18016,7 +18464,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 118/156: backend/services/world_model.py
+# FILE 119/148: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -18205,7 +18653,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 119/156: backend/services/zuodao_service.py
+# FILE 120/148: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -18322,7 +18770,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 120/156: frontend/index.html
+# FILE 121/148: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -18340,7 +18788,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 121/156: frontend/package.json
+# FILE 122/148: frontend/package.json
 ################################################################################
 ```json
 {
@@ -18364,7 +18812,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 122/156: frontend/src/App.jsx
+# FILE 123/148: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -18382,7 +18830,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 123/156: frontend/src/JarvisOS.jsx
+# FILE 124/148: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -18941,7 +19389,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 124/156: frontend/src/components/UI.jsx
+# FILE 125/148: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -19060,7 +19508,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 125/156: frontend/src/config.js
+# FILE 126/148: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -19085,7 +19533,7 @@ export const apiPatch = (url, body) => apiFetch(url, {
 ```
 
 ################################################################################
-# FILE 126/156: frontend/src/index.css
+# FILE 127/148: frontend/src/index.css
 ################################################################################
 ```css
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19149,7 +19597,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !i
 ```
 
 ################################################################################
-# FILE 127/156: frontend/src/main.jsx
+# FILE 128/148: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from 'react'
@@ -19162,7 +19610,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 ################################################################################
-# FILE 128/156: frontend/src/pages/Agents.jsx
+# FILE 129/148: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -19875,760 +20323,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 129/156: frontend/src/pages/Analytics.jsx
-################################################################################
-```jsx
-import { useState, useEffect } from 'react'
-import { StatCard, Badge, PageHeader } from '../components/UI'
-
-import { API } from '../config.js'
-
-const Bar = ({ label, value, color='#00d4ff' }) => (
-  <div style={{ marginBottom:'14px' }}>
-    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'4px', fontSize:'10px', letterSpacing:'0.12em' }}>
-      <span style={{ color:'rgba(255,255,255,0.4)' }}>{label}</span>
-      <span style={{ color, fontWeight:'700' }}>{value}%</span>
-    </div>
-    <div style={{ height:'4px', background:'rgba(255,255,255,0.05)', borderRadius:'2px', overflow:'hidden' }}>
-      <div style={{ height:'100%', width:`${Math.min(value,100)}%`, background:`linear-gradient(90deg,${color}77,${color})`, borderRadius:'2px', transition:'width 0.6s ease' }}/>
-    </div>
-  </div>
-)
-
-export default function Analytics() {
-  const [data, setData] = useState(null)
-  const [period, setPeriod] = useState('all_time')
-
-  useEffect(() => {
-    const load = async () => {
-      try { const r = await fetch(`${API}/analytics/`); if(r.ok) setData(await r.json()) } catch{}
-    }
-    load(); const t = setInterval(load, 15000); return () => clearInterval(t)
-  }, [])
-
-  if(!data) return <div style={{ padding:'28px' }}><PageHeader breadcrumb="ANALYTICS" title="▲ ANALYTICS"/><div style={{ color:'rgba(255,255,255,0.2)', fontSize:'11px' }}>Loading…</div></div>
-
-  const a = data[period] || data.all_time
-  const recs = data.recommendations || []
-
-  return (
-    <div style={{ padding:'28px', overflowY:'auto', height:'100%' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'20px', flexWrap:'wrap', gap:'10px' }}>
-        <PageHeader breadcrumb="ANALYTICS" title="▲ PERFORMANCE ANALYTICS" />
-        <div style={{ display:'flex', gap:'6px' }}>
-          {[['all_time','ALL TIME'],['last_30_days','30 DAYS'],['last_7_days','7 DAYS']].map(([k,l]) => (
-            <button key={k} onClick={()=>setPeriod(k)} style={{ padding:'5px 10px', fontSize:'9px', cursor:'pointer', background:period===k?'rgba(0,212,255,0.13)':'transparent', border:`1px solid ${period===k?'#00d4ff':'rgba(255,255,255,0.1)'}`, color:period===k?'#00d4ff':'rgba(255,255,255,0.35)', borderRadius:'2px', letterSpacing:'0.13em', fontFamily:'monospace' }}>{l}</button>
-          ))}
-        </div>
-      </div>
-
-      {/* Freelance proposals */}
-      <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'8px' }}>FREELANCE PROPOSALS</div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px', marginBottom:'14px' }}>
-        <StatCard label="SENT"      value={a.proposals_sent}   color="#00d4ff"/>
-        <StatCard label="REPLIES"   value={a.replies_received} color="#00ff88"/>
-        <StatCard label="WON"       value={a.projects_won}     color="#ff9500"/>
-        <StatCard label="WIN RATE"  value={`${a.win_rate}%`}   color="#ff9500"/>
-      </div>
-
-      {/* Hubstaff */}
-      <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'8px' }}>HUBSTAFF APPLICATIONS</div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px', marginBottom:'14px' }}>
-        <StatCard label="SENT"       value={a.hs_sent||0}      color="#00d4ff"/>
-        <StatCard label="REPLIED"    value={a.hs_replied||0}   color="#00ff88"/>
-        <StatCard label="HIRED"      value={a.hs_hired||0}     color="#ff9500"/>
-        <StatCard label="TOTAL APPS" value={a.hs_applications||0} color="#888"/>
-      </div>
-
-      {/* Microtasks */}
-      <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'8px' }}>MICROTASKS</div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'10px', marginBottom:'14px' }}>
-        <StatCard label="CW TASKS DONE" value={a.cw_tasks_done||0}    color="#00d4ff"/>
-        <StatCard label="CW EARNED"     value={`$${a.cw_earned||0}`}  color="#00ff88"/>
-        <StatCard label="ZD SUBMITTED"  value={a.zd_submissions||0}   color="#ff9500"/>
-      </div>
-
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'14px' }}>
-        <div style={{ border:'1px solid rgba(0,212,255,0.1)', borderRadius:'4px', padding:'16px 20px', background:'rgba(0,10,20,0.7)' }}>
-          <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'14px' }}>OVERALL RATES</div>
-          <Bar label="RESPONSE RATE"      value={a.response_rate||0}         color="#00d4ff"/>
-          <Bar label="WIN RATE"           value={a.win_rate||0}              color="#00ff88"/>
-          <Bar label="REPLY → WIN"        value={a.reply_to_win_rate||0}     color="#ff9500"/>
-          <Bar label="OVERALL RESP. RATE" value={a.overall_response_rate||0} color="#00d4ff"/>
-        </div>
-        <div style={{ border:'1px solid rgba(0,212,255,0.1)', borderRadius:'4px', padding:'16px 20px', background:'rgba(0,10,20,0.7)' }}>
-          <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'14px' }}>STATUS BREAKDOWN</div>
-          <div style={{ display:'flex', gap:'5px', flexWrap:'wrap' }}>
-            {Object.entries(a.status_breakdown||{}).map(([s,c]) => (
-              <div key={s} style={{ fontSize:'10px', padding:'4px 8px', borderRadius:'3px', background:'rgba(0,212,255,0.07)', border:'1px solid rgba(0,212,255,0.12)', color:'#a8d8ea' }}>
-                {s}: <strong style={{ color:'#00d4ff' }}>{c}</strong>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop:'14px', fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'8px' }}>ALL APPLICATIONS</div>
-          <div style={{ fontSize:'28px', fontWeight:'700', color:'#00d4ff', fontFamily:'sans-serif' }}>{a.all_applications||0}</div>
-        </div>
-      </div>
-
-      <div style={{ border:'1px solid rgba(0,255,136,0.15)', borderRadius:'4px', padding:'16px 20px', background:'rgba(0,20,10,0.5)' }}>
-        <div style={{ fontSize:'9px', color:'rgba(0,255,136,0.5)', letterSpacing:'0.2em', marginBottom:'12px' }}>◉ AI RECOMMENDATIONS</div>
-        {recs.map((r,i) => (
-          <div key={i} style={{ fontSize:'11px', color:'rgba(255,255,255,0.55)', lineHeight:1.7, padding:'6px 0', borderBottom: i<recs.length-1?'1px solid rgba(255,255,255,0.04)':'none' }}>→ {r}</div>
-        ))}
-      </div>
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 130/156: frontend/src/pages/AutoMode.jsx
-################################################################################
-```jsx
-import { useState, useEffect, useRef } from 'react'
-import { Btn, Badge, StatCard } from '../components/UI'
-
-import { API } from '../config.js'
-
-const PLATFORMS = [
-  { id:'hubstaff',       label:'Hubstaff Talent',   color:'#ff9500' },
-  { id:'remoteok',       label:'RemoteOK',           color:'#00ff88' },
-  { id:'weworkremotely', label:'We Work Remotely',   color:'#00d4ff' },
-  { id:'remoteco',       label:'Remote.co',          color:'#00d4ff' },
-  { id:'wellfound',      label:'Wellfound',          color:'#ff9500' },
-  { id:'peopleperhour',  label:'PeoplePerHour',      color:'#00ff88' },
-  { id:'contra',         label:'Contra',             color:'#00d4ff' },
-]
-
-const LEVEL_COLOR = { info:'#00d4ff', success:'#00ff88', warning:'#ff9500', error:'#ff4444' }
-
-const S = {
-  page:    { padding:'24px', overflowY:'auto', height:'100%', boxSizing:'border-box' },
-  card:    { border:'1px solid rgba(0,212,255,0.15)', borderRadius:'4px', padding:'13px', background:'rgba(0,10,20,0.75)', marginBottom:'9px' },
-  label:   { fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'9px' },
-  inp:     { width:'100%', background:'rgba(0,10,20,0.8)', border:'1px solid rgba(0,212,255,0.2)', outline:'none', color:'#c8e8f0', padding:'7px 10px', fontSize:'11px', fontFamily:'monospace', borderRadius:'3px', boxSizing:'border-box' },
-  tabBtn:  (active) => ({ padding:'5px 14px', borderRadius:'3px', border:`1px solid ${active?'#00d4ff':'rgba(255,255,255,0.1)'}`, background:active?'rgba(0,212,255,0.1)':'transparent', color:active?'#00d4ff':'rgba(255,255,255,0.35)', cursor:'pointer', fontFamily:'monospace', fontSize:'9px', letterSpacing:'0.1em' }),
-}
-
-export default function AutoMode() {
-  const [tab,         setTab]        = useState('control')
-  const [status,      setStatus]     = useState(null)
-  const [execStatus,  setExecStatus] = useState(null)
-  const [queue,       setQueue]      = useState([])
-  const [feed,        setFeed]       = useState([])
-  const [selected,    setSelected]   = useState(['hubstaff','remoteok','weworkremotely','peopleperhour'])
-  const [yourName,    setYourName]   = useState('Ibrahim')
-  const [yourSkills,  setYourSkills] = useState('Python, automation, web scraping, AI integration, FastAPI')
-  const [hourlyRate,  setHourlyRate] = useState('15')
-  const [portfolio,   setPortfolio]  = useState('')
-  const [autoSubmit,  setAutoSubmit] = useState(false)
-  const [profileSaved,setProfileSaved]= useState(false)
-  const [sessions,    setSessions]   = useState([])
-  const [sessBusy,    setSessBusy]   = useState(false)
-  const [vaultForm,   setVaultForm]  = useState({ platform:'freelancer', username:'', password:'' })
-  const [vaultMsg,    setVaultMsg]   = useState('')
-  const [income,      setIncome]     = useState(null)
-  const [intervalMin, setIntervalMin]= useState(20)
-  const [expanded,    setExpanded]   = useState({})
-  const feedRef  = useRef(null)
-  const sseRef   = useRef(null)
-
-  // ── SSE live feed ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    const connect = () => {
-      const es = new EventSource(`${API}/orchestrator/feed`)
-      es.onmessage = (e) => {
-        try {
-          const d = JSON.parse(e.data)
-          if (d.ping) return
-          setFeed(f => [...f.slice(-199), d])
-        } catch {}
-      }
-      es.onerror = () => { es.close(); setTimeout(connect, 3000) }
-      sseRef.current = es
-    }
-    connect()
-    return () => sseRef.current?.close()
-  }, [])
-
-  useEffect(() => {
-    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight
-  }, [feed])
-
-  // ── Polling ────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const poll = () => { loadStatus(); loadQueue(); loadExecStatus(); loadIncome() }
-    poll()
-    const t = setInterval(poll, 6000)
-    return () => clearInterval(t)
-  }, [])
-
-  // Load the persistent profile + platform login status once on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch(`${API}/automation/profile`)
-        if (r.ok) {
-          const p = await r.json()
-          if (p.name)        setYourName(p.name)
-          if (p.skills)      setYourSkills(p.skills)
-          if (p.hourly_rate) setHourlyRate(String(p.hourly_rate))
-          if (p.portfolio)   setPortfolio(p.portfolio)
-          setAutoSubmit(!!p.auto_submit)
-        }
-      } catch {}
-      loadSessions(false)
-    })()
-  }, [])
-
-  const loadSessions = async (refresh) => {
-    setSessBusy(true)
-    try {
-      const r = await fetch(`${API}/sessions/status${refresh?'?refresh=1':''}`)
-      if (r.ok) setSessions((await r.json()).platforms || [])
-    } catch {} finally { setSessBusy(false) }
-  }
-
-  const openLogin = async (pid) => {
-    try {
-      const r = await fetch(`${API}/sessions/open-login/${pid}`, {method:'POST'})
-      const d = await r.json()
-      setVaultMsg(d.message || d.error || '')
-    } catch(e) { setVaultMsg(String(e)) }
-  }
-
-  const saveVault = async () => {
-    if (!vaultForm.username || !vaultForm.password) { setVaultMsg('Enter username and password'); return }
-    try {
-      const r = await fetch(`${API}/sessions/vault`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(vaultForm)
-      })
-      const d = await r.json()
-      setVaultMsg(r.ok ? `Saved ✓ (encrypted locally as ${d.username})` : (d.detail||'failed'))
-      if (r.ok) setVaultForm(f => ({...f, password:''}))
-    } catch(e) { setVaultMsg(String(e)) }
-  }
-
-  const saveProfile = async () => {
-    try {
-      await fetch(`${API}/automation/profile`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ name:yourName, skills:yourSkills, hourly_rate:hourlyRate,
-                               portfolio, auto_submit:autoSubmit })
-      })
-      setProfileSaved(true); setTimeout(()=>setProfileSaved(false), 2000)
-    } catch {}
-  }
-
-  const loadStatus     = async () => { try { const r = await fetch(`${API}/orchestrator/status`); if (r.ok) setStatus(await r.json()) } catch {} }
-  const loadIncome     = async () => { try { const r = await fetch(`${API}/automation/income/status`); if (r.ok) { const d = await r.json(); setIncome(d); if (d.interval_min) setIntervalMin(d.interval_min) } } catch {} }
-  const toggleIncome   = async () => {
-    if (income?.enabled) { await fetch(`${API}/automation/income/stop`, {method:'POST'}) }
-    else { await fetch(`${API}/automation/income/start`, {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ interval_min: Number(intervalMin)||20, platforms: selected }) }) }
-    loadIncome()
-  }
-  const incomeRunNow   = async () => { await fetch(`${API}/automation/income/run-now`, {method:'POST'}); loadIncome() }
-  const loadExecStatus = async () => { try { const r = await fetch(`${API}/automation/executor/status`); if (r.ok) setExecStatus(await r.json()) } catch {} }
-  const loadQueue      = async () => {
-    try {
-      const r = await fetch(`${API}/automation/queue?limit=100`)
-      if (r.ok) setQueue((await r.json()).queue || [])
-    } catch {}
-  }
-
-  // ── Actions ────────────────────────────────────────────────────────────────
-  const startPipeline = async () => {
-    await saveProfile()   // scan always uses the freshest profile
-    await fetch(`${API}/orchestrator/start`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ platforms:selected, your_name:yourName, your_skills:yourSkills, max_per_platform:15, min_score:30, max_generate:10 })
-    })
-    loadStatus()
-  }
-  const stopPipeline = async () => { await fetch(`${API}/orchestrator/stop`, {method:'POST'}); loadStatus() }
-
-  const approveItem = async (qid) => {
-    await fetch(`${API}/automation/queue/${qid}/status?status=approved`, {method:'PATCH'})
-    loadQueue()
-  }
-  const rejectItem = async (qid) => {
-    await fetch(`${API}/automation/queue/${qid}/status?status=rejected`, {method:'PATCH'})
-    loadQueue()
-  }
-
-  // Approve + immediately submit via Playwright
-  const approveAndSubmit = async (qid) => {
-    await fetch(`${API}/automation/queue/${qid}/status?status=approved`, {method:'PATCH'})
-    await fetch(`${API}/automation/queue/${qid}/execute`, {method:'POST'})
-    loadQueue(); loadExecStatus()
-  }
-
-  // Approve all pending then execute them all
-  const approveAllAndSubmit = async () => {
-    const pending = queue.filter(q => q.status === 'pending')
-    for (const q of pending) {
-      await fetch(`${API}/automation/queue/${q.id}/status?status=approved`, {method:'PATCH'})
-    }
-    await fetch(`${API}/automation/execute-approved`, {method:'POST'})
-    setTimeout(() => { loadQueue(); loadExecStatus() }, 1000)
-  }
-
-  // Execute all already-approved items
-  const executeApproved = async () => {
-    await fetch(`${API}/automation/execute-approved`, {method:'POST'})
-    loadExecStatus()
-  }
-
-  const stopExecutor = async () => { await fetch(`${API}/automation/executor/stop`, {method:'POST'}); loadExecStatus() }
-  const clearDone    = async () => { await fetch(`${API}/automation/queue`, {method:'DELETE'}); loadQueue() }
-  const clearFeed    = () => setFeed([])
-
-  const toggle = (id) => setSelected(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id])
-
-  const running      = status?.running
-  const execRunning  = execStatus?.running
-  const pct          = status?.progress || 0
-  const pendingQ     = queue.filter(q => q.status === 'pending').length
-  const approvedQ    = queue.filter(q => q.status === 'approved').length
-  const doneQ        = queue.filter(q => q.status === 'done').length
-  const readyQ       = queue.filter(q => q.status === 'ready').length
-  const needsLoginQ  = queue.filter(q => q.status === 'needs_login').length
-
-  return (
-    <div style={S.page}>
-      {/* ── Header ── */}
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px', flexWrap:'wrap', gap:'10px' }}>
-        <div>
-          <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.4)', letterSpacing:'0.2em', marginBottom:'4px' }}>AUTONOMOUS FREELANCE</div>
-          <div style={{ fontSize:'18px', fontWeight:'700', color:'#00d4ff', letterSpacing:'0.05em' }}>⟳ AUTONOMOUS MODE</div>
-        </div>
-        <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
-          {/* Live status dot */}
-          <div style={{ width:8, height:8, borderRadius:'50%', background: running||execRunning ? '#00ff88' : 'rgba(255,255,255,0.15)', boxShadow: running||execRunning ? '0 0 8px #00ff88' : 'none', animation: running||execRunning ? 'pulse 1.5s infinite' : 'none' }} />
-          <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.35)', fontFamily:'monospace' }}>{running ? 'SCANNING' : execRunning ? 'SUBMITTING' : 'IDLE'}</span>
-          {['control','queue','feed'].map(t => (
-            <button key={t} style={S.tabBtn(tab===t)} onClick={()=>setTab(t)}>
-              {t==='queue' ? `QUEUE${pendingQ>0?` (${pendingQ})`:''}` : t.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── CONTROL TAB ── */}
-      {tab==='control' && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px' }}>
-
-          {/* Left column */}
-          <div>
-            {/* Platform login sessions */}
-            <div style={{...S.card, borderColor:'rgba(167,139,250,0.3)'}}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                <div style={{...S.label, color:'rgba(167,139,250,0.6)'}}>STEP 0 — PLATFORM LOGINS</div>
-                <button onClick={()=>loadSessions(true)} disabled={sessBusy}
-                  style={{ fontSize:'8px', color:'#a78bfa', background:'none', border:'1px solid rgba(167,139,250,0.3)', padding:'3px 10px', borderRadius:'3px', cursor:'pointer', fontFamily:'monospace' }}>
-                  {sessBusy ? '⟳ CHECKING…' : '↺ RE-CHECK'}
-                </button>
-              </div>
-              <p style={{ fontSize:'10px', color:'rgba(255,255,255,0.35)', lineHeight:1.6, margin:'8px 0 10px' }}>
-                Log in <strong style={{color:'#a78bfa'}}>once</strong> per platform — Jarvis keeps the session in its own
-                browser profile and reuses it for form-filling and bid submission. Credentials you save
-                below are <strong style={{color:'#a78bfa'}}>encrypted on this PC</strong> and only used to pre-fill login forms.
-              </p>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:'6px', marginBottom:'10px' }}>
-                {sessions.length===0 && <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.25)', fontFamily:'monospace' }}>{sessBusy?'Checking sessions…':'No status yet — press RE-CHECK'}</span>}
-                {sessions.map(s => {
-                  const c = s.logged_in===true ? '#00ff88' : s.logged_in===false ? '#ff4444' : '#ff9500'
-                  return (
-                    <div key={s.platform} style={{ display:'flex', alignItems:'center', gap:'6px', border:`1px solid ${c}44`, background:`${c}0d`, borderRadius:'3px', padding:'5px 8px' }}>
-                      <span style={{ width:6, height:6, borderRadius:'50%', background:c, boxShadow:`0 0 5px ${c}` }} />
-                      <span style={{ fontSize:'9px', color:'#c8e8f0', fontFamily:'monospace' }}>{s.label}</span>
-                      <span style={{ fontSize:'8px', color:c, fontFamily:'monospace' }}>
-                        {s.logged_in===true ? 'LOGGED IN' : s.logged_in===false ? 'LOGGED OUT' : '?'}
-                      </span>
-                      {s.logged_in!==true && (
-                        <button onClick={()=>openLogin(s.platform)}
-                          style={{ fontSize:'8px', color:'#a78bfa', background:'none', border:'1px solid rgba(167,139,250,0.4)', borderRadius:'2px', padding:'2px 6px', cursor:'pointer', fontFamily:'monospace' }}>
-                          LOGIN
-                        </button>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-              <div style={{ borderTop:'1px solid rgba(167,139,250,0.15)', paddingTop:'10px' }}>
-                <div style={{ fontSize:'8px', color:'rgba(167,139,250,0.5)', letterSpacing:'0.15em', marginBottom:'6px' }}>CREDENTIAL VAULT (LOCAL, ENCRYPTED)</div>
-                <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
-                  <select value={vaultForm.platform} onChange={e=>setVaultForm(f=>({...f,platform:e.target.value}))}
-                    style={{...S.inp, width:'130px', cursor:'pointer'}}>
-                    {['freelancer','upwork','fiverr','peopleperhour','hubstaff','contra','wellfound'].map(p=><option key={p} value={p}>{p}</option>)}
-                  </select>
-                  <input value={vaultForm.username} onChange={e=>setVaultForm(f=>({...f,username:e.target.value}))}
-                    placeholder="email / username" style={{...S.inp, flex:1, minWidth:'120px'}} />
-                  <input type="password" value={vaultForm.password} onChange={e=>setVaultForm(f=>({...f,password:e.target.value}))}
-                    placeholder="password" style={{...S.inp, flex:1, minWidth:'100px'}} />
-                  <button onClick={saveVault}
-                    style={{ padding:'6px 12px', borderRadius:'3px', border:'1px solid #a78bfa', background:'rgba(167,139,250,0.12)', color:'#a78bfa', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
-                    🔐 SAVE
-                  </button>
-                </div>
-                {vaultMsg && <div style={{ fontSize:'9px', color:'#a78bfa', marginTop:'6px', fontFamily:'monospace' }}>{vaultMsg}</div>}
-              </div>
-            </div>
-
-            {/* Platform selector */}
-            <div style={S.card}>
-              <div style={S.label}>STEP 1 — SELECT PLATFORMS</div>
-              <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
-                {PLATFORMS.map(p => (
-                  <label key={p.id} style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer', fontSize:'11px', color: selected.includes(p.id)?p.color:'rgba(255,255,255,0.25)' }}>
-                    <input type="checkbox" checked={selected.includes(p.id)} onChange={()=>toggle(p.id)} style={{ accentColor:p.color }} />
-                    {p.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Profile — persisted; feeds every proposal the LLM writes */}
-            <div style={S.card}>
-              <div style={S.label}>STEP 2 — YOUR PROFILE (SAVED &amp; USED IN EVERY PROPOSAL)</div>
-              <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:'8px', marginBottom:'10px' }}>
-                <div>
-                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>YOUR NAME</div>
-                  <input value={yourName} onChange={e=>setYourName(e.target.value)} style={S.inp} />
-                </div>
-                <div>
-                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>RATE ($/HR)</div>
-                  <input value={hourlyRate} onChange={e=>setHourlyRate(e.target.value)} style={S.inp} />
-                </div>
-              </div>
-              <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>YOUR SKILLS</div>
-              <textarea value={yourSkills} onChange={e=>setYourSkills(e.target.value)} rows={2} style={{...S.inp, resize:'vertical', marginBottom:'10px'}} />
-              <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'5px' }}>PORTFOLIO / PAST WORK HIGHLIGHTS</div>
-              <textarea value={portfolio} onChange={e=>setPortfolio(e.target.value)} rows={2} style={{...S.inp, resize:'vertical', marginBottom:'10px'}}
-                placeholder="e.g. Built a price-monitoring scraper handling 50k pages/day; automated invoice pipeline for a retail store…" />
-              <div style={{ display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap' }}>
-                <button onClick={saveProfile}
-                  style={{ padding:'7px 16px', borderRadius:'3px', border:'1px solid #00d4ff', background:'rgba(0,212,255,0.1)', color: profileSaved?'#00ff88':'#00d4ff', fontFamily:'monospace', fontSize:'9px', cursor:'pointer', letterSpacing:'0.08em' }}>
-                  {profileSaved ? '✓ SAVED' : '💾 SAVE PROFILE'}
-                </button>
-                <label style={{ display:'flex', alignItems:'center', gap:'6px', fontSize:'10px', color: autoSubmit?'#ff9500':'rgba(255,255,255,0.4)', cursor:'pointer' }}>
-                  <input type="checkbox" checked={autoSubmit} onChange={e=>setAutoSubmit(e.target.checked)} style={{ accentColor:'#ff9500' }} />
-                  Full auto-submit (skip the approve click — Jarvis bids on its own)
-                </label>
-              </div>
-            </div>
-
-            {/* Start/Stop pipeline */}
-            <div style={S.card}>
-              <div style={S.label}>STEP 3 — SCAN & GENERATE</div>
-              <p style={{ fontSize:'11px', color:'rgba(255,255,255,0.4)', lineHeight:1.6, marginBottom:'12px' }}>
-                Full pipeline: <strong style={{color:'#00d4ff'}}>scan</strong> → <strong style={{color:'#ff9500'}}>score &amp; drop bad fits</strong> → <strong style={{color:'#00ff88'}}>write a proposal for every good job</strong> → queue.
-                Drafts appear in the <strong style={{color:'#ff9500'}}>QUEUE</strong> tab — one click submits them through your logged-in browser.
-                {autoSubmit ? ' Auto-submit is ON: Jarvis will bid without asking.' : ' Nothing is submitted until you say yes.'}
-              </p>
-              <div style={{ display:'flex', gap:'8px' }}>
-                <button onClick={startPipeline} disabled={running||selected.length===0}
-                  style={{ padding:'9px 20px', borderRadius:'3px', border:'1px solid #00ff88', background: running||selected.length===0 ? 'rgba(0,255,136,0.05)' : 'rgba(0,255,136,0.1)', color: running ? '#888' : '#00ff88', fontFamily:'monospace', fontSize:'10px', cursor: running||selected.length===0 ? 'not-allowed':'pointer', letterSpacing:'0.1em' }}>
-                  {running ? '⟳ SCANNING…' : '▶ START SCAN'}
-                </button>
-                {running && (
-                  <button onClick={stopPipeline}
-                    style={{ padding:'9px 16px', borderRadius:'3px', border:'1px solid #ff4444', background:'rgba(255,68,68,0.1)', color:'#ff4444', fontFamily:'monospace', fontSize:'10px', cursor:'pointer' }}>
-                    ■ STOP
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Income Engine — the always-on loop */}
-            <div style={{...S.card, borderColor: income?.enabled ? 'rgba(0,255,136,0.5)' : 'rgba(255,149,0,0.3)',
-                         boxShadow: income?.enabled ? '0 0 20px rgba(0,255,136,0.12)' : 'none' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                <div style={{...S.label, color: income?.enabled ? '#00ff88' : '#ff9500'}}>
-                  ⚙ INCOME ENGINE {income?.enabled ? '— RUNNING 24/7' : '— OFF'}
-                </div>
-                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                  <span style={{ width:8, height:8, borderRadius:'50%',
-                    background: income?.enabled ? '#00ff88' : 'rgba(255,255,255,0.2)',
-                    boxShadow: income?.enabled ? '0 0 8px #00ff88' : 'none',
-                    animation: income?.enabled ? 'pulse 1.6s infinite' : 'none' }} />
-                </div>
-              </div>
-              <p style={{ fontSize:'11px', color:'rgba(255,255,255,0.4)', lineHeight:1.6, margin:'6px 0 12px' }}>
-                No button-pressing. Jarvis loops <strong style={{color:'#00d4ff'}}>scan → score → draft → queue</strong> every
-                few minutes on the platforms you're logged into, ranks jobs by fit &amp; pay, and drops bad matches.
-                {autoSubmit ? ' Auto-submit is ON — it also bids for you.' : ' Approve from the Queue when you\'re ready.'}
-              </p>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'12px' }}>
-                {[['CYCLES', income?.cycles ?? 0, '#00ff88'],
-                  ['EVERY', `${income?.interval_min ?? intervalMin}m`, '#00d4ff'],
-                  ['STATUS', income?.enabled ? 'LIVE' : 'idle', income?.enabled ? '#00ff88' : '#888']].map(([l,v,c]) => (
-                  <div key={l} style={{ background:'rgba(0,10,20,0.6)', border:`1px solid ${c}22`, borderRadius:'3px', padding:'9px', textAlign:'center' }}>
-                    <div style={{ fontSize:'8px', color:`${c}99`, letterSpacing:'0.15em', marginBottom:'3px' }}>{l}</div>
-                    <div style={{ fontSize:'17px', fontWeight:'700', color:c }}>{v}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
-                <button onClick={toggleIncome}
-                  style={{ padding:'9px 18px', borderRadius:'3px',
-                    border:`1px solid ${income?.enabled ? '#ff4444' : '#00ff88'}`,
-                    background: income?.enabled ? 'rgba(255,68,68,0.1)' : 'rgba(0,255,136,0.12)',
-                    color: income?.enabled ? '#ff4444' : '#00ff88',
-                    fontFamily:'monospace', fontSize:'10px', cursor:'pointer', letterSpacing:'0.1em' }}>
-                  {income?.enabled ? '■ STOP ENGINE' : '▶ START EARNING (24/7)'}
-                </button>
-                {income?.enabled && (
-                  <button onClick={incomeRunNow}
-                    style={{ padding:'9px 14px', borderRadius:'3px', border:'1px solid #00d4ff', background:'rgba(0,212,255,0.1)', color:'#00d4ff', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
-                    ⚡ RUN CYCLE NOW
-                  </button>
-                )}
-                <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:'10px', color:'rgba(255,255,255,0.4)' }}>
-                  every
-                  <input type="number" min="2" value={intervalMin} onChange={e=>setIntervalMin(e.target.value)}
-                    style={{...S.inp, width:'54px', padding:'5px'}} />
-                  min
-                </label>
-              </div>
-            </div>
-
-            {/* Executor controls */}
-            <div style={{...S.card, borderColor:'rgba(0,255,136,0.2)'}}>
-              <div style={{...S.label, color:'rgba(0,255,136,0.5)'}}>STEP 4 — SUBMIT APPROVED BIDS</div>
-              <p style={{ fontSize:'11px', color:'rgba(255,255,255,0.4)', lineHeight:1.6, marginBottom:'12px' }}>
-                After approving items in the Queue, Jarvis uses Playwright to open each job page,
-                fill the bid form with your proposal, and click <strong style={{color:'#00ff88'}}>Place Bid</strong>.
-                You stay in control — nothing submits without your approval.
-              </p>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'12px' }}>
-                <div style={{ background:'rgba(0,10,20,0.6)', border:'1px solid rgba(0,255,136,0.15)', borderRadius:'3px', padding:'10px', textAlign:'center' }}>
-                  <div style={{ fontSize:'8px', color:'rgba(0,255,136,0.5)', marginBottom:'4px' }}>PENDING</div>
-                  <div style={{ fontSize:'22px', fontWeight:'700', color:'#ff9500' }}>{pendingQ}</div>
-                </div>
-                <div style={{ background:'rgba(0,10,20,0.6)', border:'1px solid rgba(0,255,136,0.15)', borderRadius:'3px', padding:'10px', textAlign:'center' }}>
-                  <div style={{ fontSize:'8px', color:'rgba(0,255,136,0.5)', marginBottom:'4px' }}>APPROVED</div>
-                  <div style={{ fontSize:'22px', fontWeight:'700', color:'#00ff88' }}>{approvedQ}</div>
-                </div>
-                <div style={{ background:'rgba(0,10,20,0.6)', border:'1px solid rgba(0,255,136,0.15)', borderRadius:'3px', padding:'10px', textAlign:'center' }}>
-                  <div style={{ fontSize:'8px', color:'rgba(0,255,136,0.5)', marginBottom:'4px' }}>SUBMITTED</div>
-                  <div style={{ fontSize:'22px', fontWeight:'700', color:'#00d4ff' }}>{doneQ}</div>
-                </div>
-                <div style={{ background:'rgba(0,10,20,0.6)', border:'1px solid rgba(0,255,136,0.15)', borderRadius:'3px', padding:'10px', textAlign:'center' }}>
-                  <div style={{ fontSize:'8px', color:'rgba(0,255,136,0.5)', marginBottom:'4px' }}>EXECUTOR</div>
-                  <div style={{ fontSize:'11px', fontWeight:'700', color: execRunning?'#00ff88':'rgba(255,255,255,0.25)' }}>{execRunning?'● RUNNING':'○ IDLE'}</div>
-                </div>
-              </div>
-              <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
-                <button onClick={approveAllAndSubmit} disabled={pendingQ===0||execRunning}
-                  style={{ padding:'9px 16px', borderRadius:'3px', border:'1px solid #00ff88', background: pendingQ===0||execRunning ? 'rgba(0,255,136,0.03)' : 'rgba(0,255,136,0.12)', color: pendingQ===0||execRunning ? '#555':'#00ff88', fontFamily:'monospace', fontSize:'9px', cursor: pendingQ===0||execRunning ? 'not-allowed':'pointer', letterSpacing:'0.08em' }}>
-                  ⚡ APPROVE ALL + SUBMIT
-                </button>
-                <button onClick={executeApproved} disabled={approvedQ===0||execRunning}
-                  style={{ padding:'9px 16px', borderRadius:'3px', border:'1px solid #a78bfa', background:'rgba(167,139,250,0.1)', color: approvedQ===0||execRunning ? '#555':'#a78bfa', fontFamily:'monospace', fontSize:'9px', cursor: approvedQ===0||execRunning ? 'not-allowed':'pointer', letterSpacing:'0.08em' }}>
-                  ▶ SUBMIT APPROVED ({approvedQ})
-                </button>
-                {execRunning && (
-                  <button onClick={stopExecutor}
-                    style={{ padding:'9px 14px', borderRadius:'3px', border:'1px solid #ff4444', background:'rgba(255,68,68,0.1)', color:'#ff4444', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
-                    ■ STOP
-                  </button>
-                )}
-              </div>
-              {(readyQ>0 || needsLoginQ>0) && (
-                <div style={{ marginTop:'10px', fontSize:'10px', lineHeight:1.6, color:'rgba(255,255,255,0.5)' }}>
-                  {readyQ>0 && <div style={{ color:'#00d4ff' }}>↗ {readyQ} proposal(s) are <strong>ready to apply externally</strong> — those platforms (RemoteOK, WWR, Remote.co) are job boards with no on-site bidding. Open each from the Queue and apply via its link. They didn't fail; there's just nothing to auto-submit there.</div>}
-                  {needsLoginQ>0 && <div style={{ color:'#ff9500' }}>🔐 {needsLoginQ} need you logged in to that platform first (STEP 0 above), then re-submit.</div>}
-                  <div style={{ color:'rgba(255,255,255,0.4)', marginTop:4 }}>To actually auto-submit bids, scan a <strong>bid platform</strong> (Freelancer / PeoplePerHour / Upwork) you're logged into.</div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right column — status */}
-          <div>
-            {status && (
-              <div style={S.card}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
-                  <div style={S.label}>PIPELINE STATUS</div>
-                  <span style={{ fontSize:'9px', color: running?'#00ff88':'rgba(255,255,255,0.2)', fontFamily:'monospace' }}>{running?'● RUNNING':'○ IDLE'}</span>
-                </div>
-                <div style={{ fontSize:'10px', color:'rgba(255,255,255,0.35)', marginBottom:'8px', letterSpacing:'0.1em' }}>{(status.stage||'idle').toUpperCase()}</div>
-                <div style={{ height:'4px', background:'rgba(255,255,255,0.06)', borderRadius:'2px', marginBottom:'16px' }}>
-                  <div style={{ height:'100%', width:`${pct}%`, background:'linear-gradient(90deg,#00d4ff,#00ff88)', borderRadius:'2px', transition:'width 0.5s' }} />
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'14px' }}>
-                  {[
-                    ['Jobs Found',   status.stats?.jobs_found||0,    '#00d4ff'],
-                    ['Qualified',    status.stats?.jobs_qualified||0,'#ff9500'],
-                    ['Proposals',    status.stats?.proposals_gen||0, '#00ff88'],
-                    ['Cycles',       status.stats?.cycles||0,        '#a78bfa'],
-                  ].map(([l,v,c]) => (
-                    <div key={l} style={{ background:'rgba(0,10,20,0.6)', border:`1px solid ${c}22`, borderRadius:'3px', padding:'10px' }}>
-                      <div style={{ fontSize:'8px', color:`${c}88`, letterSpacing:'0.15em', marginBottom:'4px' }}>{l}</div>
-                      <div style={{ fontSize:'20px', fontWeight:'700', color:c, fontFamily:'sans-serif' }}>{v}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Mini live feed on control tab */}
-            <div style={S.card}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
-                <div style={S.label}>LIVE FEED</div>
-                <button onClick={clearFeed} style={{ fontSize:'8px', color:'rgba(255,255,255,0.25)', background:'none', border:'none', cursor:'pointer', fontFamily:'monospace' }}>CLEAR</button>
-              </div>
-              <div ref={feedRef} style={{ background:'rgba(0,4,8,0.9)', borderRadius:'3px', padding:'10px', height:'260px', overflowY:'auto', fontFamily:'monospace', fontSize:'9px' }}>
-                {feed.length === 0 && <div style={{ color:'rgba(255,255,255,0.15)' }}>Waiting for activity…</div>}
-                {feed.map((e, i) => (
-                  <div key={i} style={{ lineHeight:'1.9', color: LEVEL_COLOR[e.level]||'rgba(0,212,255,0.5)' }}>
-                    <span style={{ color:'rgba(255,255,255,0.2)', marginRight:'6px' }}>{e.ts}</span>
-                    <span style={{ color:'rgba(255,255,255,0.35)', marginRight:'6px' }}>[{e.agent}]</span>
-                    {e.msg}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── QUEUE TAB ── */}
-      {tab==='queue' && (
-        <div>
-          <div style={{ display:'flex', gap:'8px', marginBottom:'16px', alignItems:'center', flexWrap:'wrap' }}>
-            <button onClick={loadQueue} style={S.tabBtn(false)}>↺ REFRESH</button>
-            {approvedQ > 0 && !execRunning && (
-              <button onClick={executeApproved}
-                style={{ padding:'5px 14px', borderRadius:'3px', border:'1px solid #00ff88', background:'rgba(0,255,136,0.1)', color:'#00ff88', cursor:'pointer', fontFamily:'monospace', fontSize:'9px', letterSpacing:'0.1em' }}>
-                ▶ SUBMIT ALL APPROVED ({approvedQ})
-              </button>
-            )}
-            {execRunning && (
-              <button onClick={stopExecutor} style={{ padding:'5px 14px', borderRadius:'3px', border:'1px solid #ff4444', background:'rgba(255,68,68,0.1)', color:'#ff4444', cursor:'pointer', fontFamily:'monospace', fontSize:'9px' }}>■ STOP EXECUTOR</button>
-            )}
-            <button onClick={clearDone} style={{ padding:'5px 14px', borderRadius:'3px', border:'1px solid rgba(255,68,68,0.3)', background:'rgba(255,68,68,0.06)', color:'rgba(255,68,68,0.6)', cursor:'pointer', fontFamily:'monospace', fontSize:'9px' }}>CLEAR DONE</button>
-            <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.25)', fontFamily:'monospace', marginLeft:'auto' }}>
-              {pendingQ} pending · {approvedQ} approved · {doneQ} done · {queue.filter(q=>q.status==='failed').length} failed
-            </span>
-          </div>
-
-          {queue.length === 0 && (
-            <div style={{ textAlign:'center', padding:'60px 20px', color:'rgba(255,255,255,0.2)', fontSize:'12px', fontFamily:'monospace' }}>
-              Queue is empty.<br/>Run Auto Mode to generate proposals for review.
-            </div>
-          )}
-
-          <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-            {queue.map(q => {
-              const payload  = q.payload || {}
-              const app      = payload.application || ''
-              const job      = payload.job || {}
-              const isOpen   = expanded[q.id]
-              const SC = { pending:'#ff9500', approved:'#00ff88', done:'#888', rejected:'#ff4444', failed:'#ff4444', executing:'#a78bfa', ready:'#00d4ff', needs_login:'#ff9500' }
-              const sc = SC[q.status] || '#888'
-
-              return (
-                <div key={q.id} style={{ borderRadius:'4px', background:'rgba(0,8,18,0.8)', border:`1px solid ${sc}22`, overflow:'hidden' }}>
-                  {/* Header */}
-                  <div style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap', cursor:'pointer' }} onClick={() => setExpanded(e=>({...e,[q.id]:!e[q.id]}))}>
-                    <Badge label={q.status} color={sc} />
-                    <Badge label={q.platform} color="#00d4ff" />
-                    {job.job_type && job.job_type !== 'other' && <Badge label={job.job_type} color="#a78bfa" />}
-                    {job.est_pay > 0 && <Badge label={`~$${job.est_pay}`} color="#00ff88" />}
-                    <span style={{ fontSize:'12px', fontWeight:'600', color:'#c4e4ef', flex:1 }}>{q.job_title}</span>
-                    {q.status === 'executing' && <span style={{ fontSize:'9px', color:'#a78bfa', fontFamily:'monospace', animation:'pulse 1s infinite' }}>● SUBMITTING…</span>}
-                    <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.25)', fontFamily:'monospace' }}>{isOpen?'▲':'▼'}</span>
-                  </div>
-
-                  {/* Expanded proposal */}
-                  {isOpen && (
-                    <div style={{ padding:'0 16px 14px', borderTop:'1px solid rgba(255,255,255,0.05)' }}>
-                      {app && (
-                        <div style={{ background:'rgba(0,4,8,0.8)', padding:'12px', borderRadius:'3px', marginTop:'12px', marginBottom:'12px', fontSize:'11px', color:'rgba(255,255,255,0.55)', lineHeight:1.7, whiteSpace:'pre-wrap', maxHeight:'200px', overflowY:'auto' }}>
-                          {app}
-                        </div>
-                      )}
-                      <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
-                        {q.status === 'pending' && <>
-                          {/* Approve + Playwright submit in one click */}
-                          <button onClick={() => approveAndSubmit(q.id)}
-                            style={{ padding:'7px 16px', borderRadius:'3px', border:'1px solid #00ff88', background:'rgba(0,255,136,0.12)', color:'#00ff88', fontFamily:'monospace', fontSize:'9px', cursor:'pointer', letterSpacing:'0.1em' }}>
-                            ✓ APPROVE + SUBMIT
-                          </button>
-                          {/* Approve only (queue for batch submit later) */}
-                          <button onClick={() => approveItem(q.id)}
-                            style={{ padding:'7px 14px', borderRadius:'3px', border:'1px solid rgba(0,255,136,0.4)', background:'rgba(0,255,136,0.06)', color:'rgba(0,255,136,0.7)', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
-                            ✓ APPROVE ONLY
-                          </button>
-                          <button onClick={() => rejectItem(q.id)}
-                            style={{ padding:'7px 14px', borderRadius:'3px', border:'1px solid rgba(255,68,68,0.4)', background:'rgba(255,68,68,0.07)', color:'rgba(255,68,68,0.7)', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
-                            ✗ REJECT
-                          </button>
-                        </>}
-                        {q.status === 'approved' && !execRunning && (
-                          <button onClick={() => { fetch(`${API}/automation/queue/${q.id}/execute`,{method:'POST'}); loadExecStatus() }}
-                            style={{ padding:'7px 16px', borderRadius:'3px', border:'1px solid #a78bfa', background:'rgba(167,139,250,0.1)', color:'#a78bfa', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
-                            ▶ SUBMIT THIS ONE
-                          </button>
-                        )}
-                        {app && (
-                          <button onClick={() => navigator.clipboard?.writeText(app)}
-                            style={{ padding:'7px 12px', borderRadius:'3px', border:'1px solid rgba(255,255,255,0.15)', background:'transparent', color:'rgba(255,255,255,0.35)', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
-                            ⎘ COPY PROPOSAL
-                          </button>
-                        )}
-                        {job.link && (
-                          <button onClick={() => window.open(job.link,'_blank')}
-                            style={{ padding:'7px 12px', borderRadius:'3px', border:'1px solid rgba(0,212,255,0.25)', background:'transparent', color:'rgba(0,212,255,0.5)', fontFamily:'monospace', fontSize:'9px', cursor:'pointer' }}>
-                            ↗ OPEN JOB
-                          </button>
-                        )}
-                        {q.status === 'done' && <span style={{ fontSize:'10px', color:'#00ff88', fontFamily:'monospace', alignSelf:'center' }}>✓ BID SUBMITTED</span>}
-                        {q.status === 'ready' && <span style={{ fontSize:'10px', color:'#00d4ff', fontFamily:'monospace', alignSelf:'center' }}>↗ APPLY VIA JOB LINK (job board — no on-site bidding)</span>}
-                        {q.status === 'needs_login' && <span style={{ fontSize:'10px', color:'#ff9500', fontFamily:'monospace', alignSelf:'center' }}>🔐 LOG IN TO {String(q.platform).toUpperCase()} THEN RE-SUBMIT</span>}
-                        {q.status === 'failed' && <span style={{ fontSize:'10px', color:'#ff4444', fontFamily:'monospace', alignSelf:'center' }}>✗ FAILED — check feed for details</span>}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── FEED TAB ── */}
-      {tab==='feed' && (
-        <div style={S.card}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
-            <div style={S.label}>LIVE AGENT FEED — REAL TIME</div>
-            <button onClick={clearFeed} style={{ fontSize:'8px', color:'rgba(255,255,255,0.3)', background:'none', border:'1px solid rgba(255,255,255,0.1)', padding:'3px 10px', borderRadius:'3px', cursor:'pointer', fontFamily:'monospace' }}>CLEAR</button>
-          </div>
-          <div style={{ background:'rgba(0,4,8,0.95)', borderRadius:'3px', padding:'14px', height:'calc(100vh - 220px)', overflowY:'auto', fontFamily:'monospace', fontSize:'10px' }}>
-            {feed.length === 0 && <div style={{ color:'rgba(255,255,255,0.15)' }}>No events yet. Start Auto Mode or submit a bid to see live activity.</div>}
-            {feed.map((e, i) => (
-              <div key={i} style={{ lineHeight:'2', borderBottom:'1px solid rgba(255,255,255,0.03)', paddingBottom:'1px' }}>
-                <span style={{ color:'rgba(255,255,255,0.18)', marginRight:'8px', fontSize:'9px' }}>{e.ts}</span>
-                <span style={{ marginRight:'8px', padding:'1px 6px', borderRadius:'2px', fontSize:'8px', background:`${LEVEL_COLOR[e.level]||'#00d4ff'}18`, color:LEVEL_COLOR[e.level]||'#00d4ff', border:`1px solid ${LEVEL_COLOR[e.level]||'#00d4ff'}33` }}>{e.agent}</span>
-                <span style={{ color: LEVEL_COLOR[e.level]||'rgba(200,230,240,0.7)' }}>{e.msg}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 131/156: frontend/src/pages/Chat.jsx
+# FILE 130/148: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useState, useRef, useEffect } from 'react'
@@ -20761,7 +20456,7 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 132/156: frontend/src/pages/Earn.jsx
+# FILE 131/148: frontend/src/pages/Earn.jsx
 ################################################################################
 ```jsx
 /**
@@ -21019,597 +20714,7 @@ export default function Earn() {
 ```
 
 ################################################################################
-# FILE 133/156: frontend/src/pages/Jobs.jsx
-################################################################################
-```jsx
-import { useState, useEffect } from 'react'
-import { Badge, Ring, Btn, PageHeader, Modal } from '../components/UI'
-
-import { API } from '../config.js'
-
-export default function Jobs() {
-  const [jobs, setJobs] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [status, setStatus] = useState('Idle')
-  const [selected, setSelected] = useState(null)
-  const [generating, setGenerating] = useState(false)
-  const [generatedProposal, setGeneratedProposal] = useState(null)
-  const [showModal, setShowModal] = useState(false)
-
-  useEffect(() => { loadJobs() }, [])
-
-  const loadJobs = async () => {
-    try {
-      const r = await fetch(`${API}/scraper/jobs`)
-      if (r.ok) {
-        const d = await r.json()
-        setJobs(d.jobs || [])
-      }
-    } catch {}
-  }
-
-  const startScrape = async () => {
-    setLoading(true)
-    setStatus('Scanning…')
-    try {
-      await fetch(`${API}/scraper/scrape`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ max_jobs: 20 }),
-      })
-      // Poll status
-      const poll = setInterval(async () => {
-        try {
-          const r = await fetch(`${API}/scraper/status`)
-          const s = await r.json()
-          setStatus(s.message || '')
-          if (!s.running) {
-            clearInterval(poll)
-            setLoading(false)
-            loadJobs()
-          }
-        } catch { clearInterval(poll); setLoading(false) }
-      }, 1500)
-    } catch { setLoading(false) }
-  }
-
-  const generateProposal = async (job) => {
-    setGenerating(true)
-    setGeneratedProposal(null)
-    try {
-      const r = await fetch(`${API}/proposals/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          job_id: job.id,
-          job_title: job.title,
-          job_description: job.description,
-          budget: job.budget,
-          platform: job.platform,
-          skills: job.skills || [],
-          job_link: job.link || '',
-        }),
-      })
-      if (r.ok) {
-        const d = await r.json()
-        setGeneratedProposal(d)
-        setShowModal(true)
-      }
-    } catch {}
-    setGenerating(false)
-  }
-
-  return (
-    <div style={{ padding: '28px', overflowY: 'auto', height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-        <PageHeader breadcrumb="JOB SCANNER" title="◎ OPPORTUNITY SCANNER" />
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>{status}</span>
-          <Btn onClick={startScrape} disabled={loading}>{loading ? '⟳ SCANNING…' : '⟳ SCAN NOW'}</Btn>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(380px,1fr))', gap: '10px' }}>
-        {jobs.length === 0 && !loading && (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.18)', fontSize: '11px', lineHeight: 2 }}>
-            NO JOBS LOADED<br />
-            <span style={{ fontSize: '9px' }}>Click SCAN NOW to fetch live jobs from Freelancer.com</span>
-          </div>
-        )}
-        {jobs.map(job => (
-          <div key={job.id} onClick={() => setSelected(job === selected ? null : job)} style={{
-            padding: '14px', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.15s',
-            background: selected?.id === job.id ? 'rgba(0,212,255,0.07)' : 'rgba(255,255,255,0.02)',
-            border: `1px solid ${selected?.id === job.id ? '#00d4ff' : 'rgba(255,255,255,0.07)'}`,
-          }}>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-              <Ring score={job.score || 75} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '5px', flexWrap: 'wrap' }}>
-                  <Badge label={job.platform} color="#00d4ff" />
-                  {job.budget && <Badge label={job.budget} color="#00ff88" />}
-                </div>
-                <div style={{ fontSize: '13px', fontWeight: '600', color: '#c4e4ef', marginBottom: '4px', lineHeight: 1.3 }}>
-                  {job.title}
-                </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                  {job.description}
-                </div>
-                {job.skills?.length > 0 && (
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
-                    {job.skills.map(s => <Badge key={s} label={s} color="rgba(255,255,255,0.3)" />)}
-                  </div>
-                )}
-              </div>
-            </div>
-            {selected?.id === job.id && (
-              <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <Btn onClick={() => generateProposal(job)} disabled={generating} variant="primary">
-                  {generating ? '⟳ GENERATING…' : '✦ GENERATE PROPOSAL'}
-                </Btn>
-                {job.link && (
-                  <Btn onClick={() => window.open(job.link, '_blank')} variant="ghost" small>OPEN JOB ↗</Btn>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {showModal && generatedProposal && (
-        <Modal title={`PROPOSAL — ${generatedProposal.job_title}`} onClose={() => setShowModal(false)}>
-          <div style={{ marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <Badge label={`Confidence: ${generatedProposal.confidence}%`} color="#00ff88" />
-            <Badge label={generatedProposal.work_type || 'other'} color="#00d4ff" />
-            {generatedProposal.can_auto_work && <Badge label="AUTO-WORKABLE" color="#ff9500" />}
-          </div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginBottom: '8px', letterSpacing: '0.1em' }}>
-            {generatedProposal.work_reason}
-          </div>
-          <textarea readOnly value={generatedProposal.proposal_text || ''} style={{
-            width: '100%', minHeight: '200px', background: 'rgba(0,10,20,0.8)',
-            border: '1px solid rgba(0,212,255,0.2)', outline: 'none', color: '#c8e8f0',
-            padding: '12px', fontSize: '12px', fontFamily: 'sans-serif',
-            lineHeight: 1.75, resize: 'vertical', borderRadius: '3px',
-          }} />
-          <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-            <Btn onClick={() => { navigator.clipboard?.writeText(generatedProposal.proposal_text); setShowModal(false) }} variant="success">
-              COPY &amp; CLOSE
-            </Btn>
-            <Btn onClick={() => setShowModal(false)} variant="ghost">CLOSE</Btn>
-          </div>
-        </Modal>
-      )}
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 134/156: frontend/src/pages/Messages.jsx
-################################################################################
-```jsx
-import { useState, useEffect } from 'react'
-import { Badge, Btn, PageHeader, Modal } from '../components/UI'
-
-import { API } from '../config.js'
-
-export default function Messages() {
-  const [messages, setMessages] = useState([])
-  const [syncing, setSyncing] = useState(false)
-  const [selected, setSelected] = useState(null)
-  const [regenerating, setRegenerating] = useState(null)
-  const [unreadOnly, setUnreadOnly] = useState(false)
-
-  useEffect(() => { load() }, [unreadOnly])
-
-  const load = async () => {
-    try {
-      const r = await fetch(`${API}/messages/?unread_only=${unreadOnly}&limit=50`)
-      if (r.ok) {
-        const d = await r.json()
-        setMessages(d.messages || [])
-      }
-    } catch {}
-  }
-
-  const syncInbox = async () => {
-    setSyncing(true)
-    try {
-      await fetch(`${API}/messages/sync`, { method: 'POST' })
-      setTimeout(() => { load(); setSyncing(false) }, 4000)
-    } catch { setSyncing(false) }
-  }
-
-  const markRead = async (mid) => {
-    await fetch(`${API}/messages/${mid}/mark-read`, { method: 'POST' })
-    load()
-  }
-
-  const regenerateReply = async (mid) => {
-    setRegenerating(mid)
-    try {
-      const r = await fetch(`${API}/messages/${mid}/regenerate-reply`, { method: 'POST' })
-      if (r.ok) load()
-    } catch {}
-    setRegenerating(null)
-  }
-
-  const deleteMsg = async (mid) => {
-    await fetch(`${API}/messages/${mid}`, { method: 'DELETE' })
-    setSelected(null)
-    load()
-  }
-
-  const unread = messages.filter(m => !m.is_read).length
-
-  return (
-    <div style={{ padding: '28px', overflowY: 'auto', height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-        <PageHeader breadcrumb="MESSAGES" title="✉ INBOX MONITOR" />
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {unread > 0 && <Badge label={`${unread} UNREAD`} color="#ff9500" />}
-          <Btn onClick={() => setUnreadOnly(!unreadOnly)} variant={unreadOnly ? 'primary' : 'ghost'} small>
-            {unreadOnly ? 'SHOW ALL' : 'UNREAD ONLY'}
-          </Btn>
-          <Btn onClick={syncInbox} disabled={syncing}>
-            {syncing ? '⟳ SYNCING…' : '⟳ SYNC INBOX'}
-          </Btn>
-        </div>
-      </div>
-
-      {messages.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.18)', fontSize: '11px', lineHeight: 2 }}>
-          NO MESSAGES<br />
-          <span style={{ fontSize: '9px' }}>Click SYNC INBOX to fetch messages from Freelancer (requires login in browser-profile)</span>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {messages.map(m => {
-          const isSelected = selected?.id === m.id
-          return (
-            <div key={m.id} style={{
-              padding: '14px 16px', borderRadius: '4px', cursor: 'pointer',
-              background: isSelected ? 'rgba(0,212,255,0.06)' : m.is_read ? 'rgba(255,255,255,0.02)' : 'rgba(0,212,255,0.04)',
-              border: `1px solid ${isSelected ? '#00d4ff' : m.is_read ? 'rgba(255,255,255,0.07)' : 'rgba(0,212,255,0.2)'}`,
-              transition: 'all 0.15s',
-            }} onClick={() => setSelected(isSelected ? null : m)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', gap: '6px', marginBottom: '5px', alignItems: 'center' }}>
-                    {!m.is_read && <Badge label="UNREAD" color="#ff9500" />}
-                    <span style={{ fontSize: '11px', fontWeight: '600', color: '#c4e4ef' }}>{m.sender}</span>
-                    <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>
-                      {m.received_at?.slice(0, 16)}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: isSelected ? 999 : 2, WebkitBoxOrient: 'vertical' }}>
-                    {m.message_preview}
-                  </div>
-                </div>
-              </div>
-
-              {isSelected && (
-                <div style={{ marginTop: '14px' }}>
-                  {m.reply_draft && (
-                    <div style={{ marginBottom: '12px' }}>
-                      <div style={{ fontSize: '9px', color: 'rgba(0,212,255,0.5)', letterSpacing: '0.15em', marginBottom: '6px' }}>AI REPLY DRAFT</div>
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.75, whiteSpace: 'pre-wrap', background: 'rgba(0,10,20,0.6)', padding: '10px', borderRadius: '3px', border: '1px solid rgba(0,212,255,0.15)' }}>
-                        {m.reply_draft}
-                      </div>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {m.reply_draft && (
-                      <Btn onClick={() => navigator.clipboard?.writeText(m.reply_draft)} variant="success" small>COPY REPLY</Btn>
-                    )}
-                    {m.thread_url && (
-                      <Btn onClick={() => window.open(m.thread_url, '_blank')} variant="primary" small>OPEN THREAD ↗</Btn>
-                    )}
-                    {!m.is_read && (
-                      <Btn onClick={() => markRead(m.id)} variant="ghost" small>MARK READ</Btn>
-                    )}
-                    <Btn onClick={() => regenerateReply(m.id)} disabled={regenerating === m.id} variant="ghost" small>
-                      {regenerating === m.id ? '⟳ REGENERATING…' : '↺ REGEN REPLY'}
-                    </Btn>
-                    <Btn onClick={() => deleteMsg(m.id)} variant="danger" small>DELETE</Btn>
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 135/156: frontend/src/pages/Notes.jsx
-################################################################################
-```jsx
-import { useState, useEffect } from 'react'
-import { PageHeader, Btn } from '../components/UI'
-
-import { API } from '../config.js'
-
-export default function Notes() {
-  const [notes, setNotes] = useState([])
-  const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
-  const [expanded, setExpanded] = useState(null)
-
-  useEffect(() => { load() }, [])
-
-  const load = async () => {
-    try {
-      const r = await fetch(`${API}/notes`)
-      if (r.ok) setNotes((await r.json()).notes || [])
-    } catch {}
-  }
-
-  const add = async () => {
-    if (!title.trim()) return
-    await fetch(`${API}/notes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, body }) })
-    setTitle(''); setBody(''); load()
-  }
-
-  const del = async (id) => { await fetch(`${API}/notes/${id}`, { method: 'DELETE' }); load() }
-
-  return (
-    <div style={{ padding: '28px', overflowY: 'auto', height: '100%' }}>
-      <PageHeader breadcrumb="NOTES" title="✎ NOTES" />
-
-      <div style={{ border: '1px solid rgba(0,212,255,0.15)', borderRadius: '4px', padding: '16px', background: 'rgba(0,10,20,0.7)', marginBottom: '20px' }}>
-        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title…"
-          style={{ width: '100%', background: 'transparent', border: '1px solid rgba(0,212,255,0.2)', outline: 'none', color: '#c8e8f0', padding: '8px 10px', fontSize: '12px', fontFamily: 'Courier New,monospace', borderRadius: '3px', marginBottom: '8px' }} />
-        <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Content… (optional)" rows={3}
-          style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', outline: 'none', color: 'rgba(255,255,255,0.6)', padding: '8px 10px', fontSize: '11px', fontFamily: 'Courier New,monospace', resize: 'vertical', borderRadius: '3px', marginBottom: '8px' }} />
-        <Btn onClick={add} variant="primary">+ ADD NOTE</Btn>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: '10px' }}>
-        {notes.map(n => (
-          <div key={n.id} style={{ padding: '14px', borderRadius: '4px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer' }} onClick={() => setExpanded(expanded === n.id ? null : n.id)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: '#c4e4ef', flex: 1 }}>{n.title}</div>
-              <Btn onClick={e => { e.stopPropagation(); del(n.id) }} variant="danger" small>✕</Btn>
-            </div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', marginTop: '4px', letterSpacing: '0.1em' }}>{n.created_at?.slice(0, 10)}</div>
-            {expanded === n.id && n.body && (
-              <div style={{ marginTop: '10px', fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, whiteSpace: 'pre-wrap', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
-                {n.body}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 136/156: frontend/src/pages/Proposals.jsx
-################################################################################
-```jsx
-import { useState, useEffect } from 'react'
-import { Badge, Ring, Btn, PageHeader, Modal } from '../components/UI'
-
-import { API } from '../config.js'
-
-const STATUS_COLORS = {
-  draft: '#888',
-  sent: '#00d4ff',
-  verifying: '#ff9500',
-  accepted: '#00ff88',
-  working: '#ff9500',
-  done: '#00ff88',
-  submitted: '#00ff88',
-  rejected: '#ff4444',
-  manual_required: '#ff9500',
-  not_awarded_yet: '#888',
-  not_logged_in: '#ff4444',
-}
-
-const ALL_STATUSES = ['draft','sent','verifying','accepted','working','done','submitted','rejected','manual_required','not_awarded_yet','not_logged_in']
-
-export default function Proposals() {
-  const [proposals, setProposals] = useState([])
-  const [filter, setFilter] = useState('all')
-  const [selected, setSelected] = useState(null)
-  const [working, setWorking] = useState(null)
-  const [workResult, setWorkResult] = useState(null)
-  const [showWork, setShowWork] = useState(false)
-
-  useEffect(() => { load() }, [])
-
-  const load = async () => {
-    try {
-      const r = await fetch(`${API}/proposals/`)
-      if (r.ok) {
-        const d = await r.json()
-        setProposals(d.proposals || [])
-      }
-    } catch {}
-  }
-
-  const updateStatus = async (pid, status, extra = {}) => {
-    try {
-      await fetch(`${API}/proposals/${pid}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, ...extra }),
-      })
-      load()
-    } catch {}
-  }
-
-  const autoWork = async (pid) => {
-    setWorking(pid)
-    try {
-      const r = await fetch(`${API}/proposals/${pid}/work`, { method: 'POST' })
-      if (r.ok) {
-        const d = await r.json()
-        setWorkResult(d)
-        setShowWork(true)
-        load()
-      }
-    } catch {}
-    setWorking(null)
-  }
-
-  const deleteProposal = async (pid) => {
-    await fetch(`${API}/proposals/${pid}`, { method: 'DELETE' })
-    setSelected(null)
-    load()
-  }
-
-  const filtered = filter === 'all' ? proposals : proposals.filter(p => p.status === filter)
-
-  return (
-    <div style={{ padding: '28px', overflowY: 'auto', height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-        <PageHeader breadcrumb="PROPOSALS" title="◈ PROPOSAL TRACKER" />
-        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-          {['all', 'draft', 'sent', 'accepted', 'done', 'rejected'].map(s => (
-            <Btn key={s} onClick={() => setFilter(s)} variant={filter === s ? 'primary' : 'ghost'} small>
-              {s.toUpperCase()}
-            </Btn>
-          ))}
-        </div>
-      </div>
-
-      {filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.18)', fontSize: '11px', lineHeight: 2 }}>
-          NO PROPOSALS YET<br />
-          <span style={{ fontSize: '9px' }}>Go to Job Scanner → select a job → Generate Proposal</span>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {filtered.map(p => {
-          const col = STATUS_COLORS[p.status] || '#888'
-          const isSelected = selected?.id === p.id
-          return (
-            <div key={p.id} style={{
-              padding: '14px 16px', borderRadius: '4px', cursor: 'pointer',
-              background: isSelected ? 'rgba(0,212,255,0.06)' : 'rgba(255,255,255,0.02)',
-              border: `1px solid ${isSelected ? '#00d4ff' : 'rgba(255,255,255,0.07)'}`,
-              transition: 'all 0.15s',
-            }} onClick={() => setSelected(isSelected ? null : p)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', gap: '6px', marginBottom: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Badge label={p.status} color={col} />
-                    <Badge label={p.platform} color="#00d4ff" />
-                    {p.budget && <Badge label={p.budget} color="#00ff88" />}
-                    {p.confidence > 0 && <Badge label={`${p.confidence}% conf`} color="#ff9500" />}
-                    {p.can_auto_work ? <Badge label="AUTO-WORKABLE" color="#ff9500" /> : null}
-                  </div>
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#c4e4ef', marginBottom: '3px' }}>
-                    {p.job_title}
-                  </div>
-                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>
-                    {p.created_at?.slice(0, 10)} · {p.work_type || 'unknown type'}
-                    {p.got_reply ? ' · ✓ REPLIED' : ''}
-                    {p.won ? ' · 🏆 WON' : ''}
-                  </div>
-                </div>
-                <Ring score={p.confidence || 0} size={36} />
-              </div>
-
-              {isSelected && (
-                <div style={{ marginTop: '14px' }}>
-                  {p.proposal_text && (
-                    <div style={{ marginBottom: '12px' }}>
-                      <div style={{ fontSize: '9px', color: 'rgba(0,212,255,0.5)', letterSpacing: '0.15em', marginBottom: '6px' }}>PROPOSAL TEXT</div>
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.75, whiteSpace: 'pre-wrap', background: 'rgba(0,10,20,0.6)', padding: '10px', borderRadius: '3px', border: '1px solid rgba(0,212,255,0.1)' }}>
-                        {p.proposal_text}
-                      </div>
-                    </div>
-                  )}
-
-                  {p.work_output && (
-                    <div style={{ marginBottom: '12px' }}>
-                      <div style={{ fontSize: '9px', color: 'rgba(0,212,255,0.5)', letterSpacing: '0.15em', marginBottom: '6px' }}>WORK OUTPUT</div>
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.75, whiteSpace: 'pre-wrap', background: 'rgba(0,10,20,0.6)', padding: '10px', borderRadius: '3px', border: '1px solid rgba(0,255,136,0.1)', maxHeight: '160px', overflowY: 'auto' }}>
-                        {p.work_output}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {p.status === 'draft' && (
-                      <Btn onClick={() => updateStatus(p.id, 'sent')} variant="primary" small>MARK SENT</Btn>
-                    )}
-                    {p.status === 'sent' && (
-                      <>
-                        <Btn onClick={() => updateStatus(p.id, 'accepted', { got_reply: true })} variant="success" small>✓ ACCEPTED</Btn>
-                        <Btn onClick={() => updateStatus(p.id, 'rejected', { got_reply: true })} variant="danger" small>✗ REJECTED</Btn>
-                        <Btn onClick={() => updateStatus(p.id, 'not_awarded_yet', { got_reply: true })} variant="ghost" small>NOT AWARDED YET</Btn>
-                      </>
-                    )}
-                    {p.status === 'accepted' && (
-                      <Btn onClick={() => autoWork(p.id)} disabled={working === p.id} variant="success" small>
-                        {working === p.id ? '⟳ WORKING…' : '▶ AUTO-WORK'}
-                      </Btn>
-                    )}
-                    {(p.status === 'done' || p.status === 'manual_required') && (
-                      <Btn onClick={() => fetch(`${API}/proposals/${p.id}/submit`, { method: 'POST' }).then(load)} variant="success" small>✓ MARK SUBMITTED</Btn>
-                    )}
-                    {p.status === 'submitted' && (
-                      <>
-                        <Btn onClick={() => updateStatus(p.id, 'submitted', { won: true })} variant="success" small>🏆 WON</Btn>
-                      </>
-                    )}
-                    {p.proposal_text && (
-                      <Btn onClick={() => navigator.clipboard?.writeText(p.proposal_text)} variant="ghost" small>COPY TEXT</Btn>
-                    )}
-                    {p.job_link && (
-                      <Btn onClick={() => window.open(p.job_link, '_blank')} variant="ghost" small>OPEN JOB ↗</Btn>
-                    )}
-                    <Btn onClick={() => deleteProposal(p.id)} variant="danger" small>DELETE</Btn>
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {showWork && workResult && (
-        <Modal title="AUTO-WORK RESULT" onClose={() => setShowWork(false)}>
-          <div style={{ marginBottom: '10px' }}>
-            <Badge label={workResult.workable ? 'COMPLETED BY AI' : 'MANUAL REQUIRED'} color={workResult.workable ? '#00ff88' : '#ff9500'} />
-          </div>
-          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '12px' }}>{workResult.message}</p>
-          {workResult.proposal?.work_output && (
-            <textarea readOnly value={workResult.proposal.work_output} style={{
-              width: '100%', minHeight: '200px', background: 'rgba(0,10,20,0.8)',
-              border: '1px solid rgba(0,212,255,0.2)', outline: 'none', color: '#c8e8f0',
-              padding: '12px', fontSize: '12px', lineHeight: 1.75, resize: 'vertical',
-              borderRadius: '3px', fontFamily: 'sans-serif',
-            }} />
-          )}
-          <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-            {workResult.proposal?.work_output && (
-              <Btn onClick={() => { navigator.clipboard?.writeText(workResult.proposal.work_output); setShowWork(false) }} variant="success">COPY WORK</Btn>
-            )}
-            <Btn onClick={() => setShowWork(false)} variant="ghost">CLOSE</Btn>
-          </div>
-        </Modal>
-      )}
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 137/156: frontend/src/pages/Settings.jsx
+# FILE 132/148: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -21693,538 +20798,7 @@ export default function Settings() {
 ```
 
 ################################################################################
-# FILE 138/156: frontend/src/pages/Tasks.jsx
-################################################################################
-```jsx
-import { useState, useEffect } from 'react'
-import { PageHeader, Btn } from '../components/UI'
-
-import { API } from '../config.js'
-
-export default function Tasks() {
-  const [tasks, setTasks] = useState([])
-  const [title, setTitle] = useState('')
-  const [note, setNote] = useState('')
-
-  useEffect(() => { load() }, [])
-
-  const load = async () => {
-    try {
-      const r = await fetch(`${API}/tasks`)
-      if (r.ok) setTasks((await r.json()).tasks || [])
-    } catch {}
-  }
-
-  const add = async () => {
-    if (!title.trim()) return
-    await fetch(`${API}/tasks`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, note }) })
-    setTitle(''); setNote(''); load()
-  }
-
-  const complete = async (id) => { await fetch(`${API}/tasks/${id}/done`, { method: 'PUT' }); load() }
-  const del = async (id) => { await fetch(`${API}/tasks/${id}`, { method: 'DELETE' }); load() }
-
-  const pending = tasks.filter(t => !t.done)
-  const done    = tasks.filter(t => t.done)
-
-  return (
-    <div style={{ padding: '28px', overflowY: 'auto', height: '100%' }}>
-      <PageHeader breadcrumb="TASKS" title="☑ TASK LIST" />
-
-      <div style={{ border: '1px solid rgba(0,212,255,0.15)', borderRadius: '4px', padding: '16px', background: 'rgba(0,10,20,0.7)', marginBottom: '20px' }}>
-        <input value={title} onChange={e => setTitle(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && add()}
-          placeholder="Task title…"
-          style={{ width: '100%', background: 'transparent', border: '1px solid rgba(0,212,255,0.2)', outline: 'none', color: '#c8e8f0', padding: '8px 10px', fontSize: '12px', fontFamily: 'Courier New,monospace', borderRadius: '3px', marginBottom: '8px' }} />
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input value={note} onChange={e => setNote(e.target.value)} placeholder="Note (optional)…"
-            style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', outline: 'none', color: 'rgba(255,255,255,0.5)', padding: '7px 10px', fontSize: '11px', fontFamily: 'Courier New,monospace', borderRadius: '3px' }} />
-          <Btn onClick={add} variant="primary">+ ADD</Btn>
-        </div>
-      </div>
-
-      {pending.length === 0 && <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px', marginBottom: '16px' }}>No pending tasks.</div>}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px' }}>
-        {pending.map(t => (
-          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', borderRadius: '3px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <button onClick={() => complete(t.id)} style={{ width: '16px', height: '16px', borderRadius: '3px', border: '1px solid rgba(0,212,255,0.4)', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', color: '#c4e4ef' }}>{t.title}</div>
-              {t.note && <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>{t.note}</div>}
-            </div>
-            <Btn onClick={() => del(t.id)} variant="danger" small>✕</Btn>
-          </div>
-        ))}
-      </div>
-
-      {done.length > 0 && (
-        <>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em', marginBottom: '8px' }}>COMPLETED</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {done.map(t => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px', borderRadius: '3px', background: 'rgba(0,255,136,0.03)', border: '1px solid rgba(0,255,136,0.07)', opacity: 0.6 }}>
-                <span style={{ color: '#00ff88', fontSize: '12px' }}>✓</span>
-                <span style={{ flex: 1, fontSize: '11px', color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>{t.title}</span>
-                <Btn onClick={() => del(t.id)} variant="danger" small>✕</Btn>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 139/156: frontend/src/pages/Workspace.jsx
-################################################################################
-```jsx
-import { useState, useEffect, useRef } from 'react'
-import { Badge, Btn, StatCard, Modal } from '../components/UI'
-
-import { API } from '../config.js'
-
-const AGENT_COLORS = {
-  scout:        '#00d4ff',
-  score:        '#ff9500',
-  proposal:     '#00ff88',
-  browser:      '#ff4444',
-  memory:       '#a855f7',
-  orchestrator: '#ffffff',
-}
-const AGENT_ICONS = {
-  scout:'◎', score:'▲', proposal:'◈', browser:'⬡', memory:'◉', orchestrator:'⟳'
-}
-
-const PLATFORMS = [
-  { id:'remoteok',       label:'RemoteOK'         },
-  { id:'weworkremotely', label:'We Work Remotely'  },
-  { id:'hubstaff',       label:'Hubstaff Talent'   },
-  { id:'wellfound',      label:'Wellfound'          },
-  { id:'peopleperhour',  label:'PeoplePerHour'     },
-  { id:'contra',         label:'Contra'            },
-  { id:'clickworker',    label:'Clickworker'       },
-  { id:'zuodao',         label:'Zuodao'            },
-]
-
-export default function Workspace() {
-  const [tab, setTab]             = useState('control')
-  const [status, setStatus]       = useState(null)
-  const [feed, setFeed]           = useState([])
-  const [queue, setQueue]         = useState([])
-  const [jobs, setJobs]           = useState([])
-  const [proposals, setProposals] = useState([])
-  const [memory, setMemory]       = useState(null)
-  const [selJob, setSelJob]       = useState(null)
-  const [selQ, setSelQ]           = useState(null)
-  const [config, setConfig]       = useState({
-    platforms:        ['remoteok','weworkremotely','hubstaff'],
-    your_name:        'Ibrahim',
-    your_skills:      'Python, automation, web scraping, AI integration, FastAPI',
-    max_per_platform: 10,
-    min_score:        30,
-    max_generate:     5,
-  })
-  const feedRef    = useRef(null)
-  const sseRef     = useRef(null)
-
-  // ── SSE live feed ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    connectSSE()
-    loadAll()
-    const t = setInterval(loadAll, 8000)
-    return () => { clearInterval(t); sseRef.current?.close() }
-  }, [])
-
-  useEffect(() => {
-    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight
-  }, [feed])
-
-  const connectSSE = () => {
-    if (sseRef.current) sseRef.current.close()
-    const es = new EventSource(`${API}/orchestrator/feed`)
-    es.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data)
-        if (data.ping) return
-        setFeed(prev => [...prev.slice(-150), data])
-      } catch {}
-    }
-    es.onerror = () => { es.close(); setTimeout(connectSSE, 3000) }
-    sseRef.current = es
-  }
-
-  const loadAll = async () => {
-    try { const r = await fetch(`${API}/orchestrator/status`);      if(r.ok) setStatus(await r.json()) } catch{}
-    try { const r = await fetch(`${API}/automation/queue`);  if(r.ok) setQueue((await r.json()).queue||[]) } catch{}
-    try { const r = await fetch(`${API}/automation/platform-jobs?limit=50`); if(r.ok) setJobs((await r.json()).jobs||[]) } catch{}
-    try { const r = await fetch(`${API}/proposals/`);        if(r.ok) setProposals((await r.json()).proposals||[]) } catch{}
-    try { const r = await fetch(`${API}/orchestrator/memory`);      if(r.ok) setMemory(await r.json()) } catch{}
-  }
-
-  const startPipeline = async () => {
-    await fetch(`${API}/orchestrator/start`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(config)
-    })
-    setTimeout(loadAll, 1000)
-  }
-
-  const stopPipeline = async () => {
-    await fetch(`${API}/orchestrator/stop`, { method:'POST' })
-    loadAll()
-  }
-
-  const approveQ = async (qid, action) => {
-    await fetch(`${API}/automation/queue/${qid}/status?status=${action}`, { method:'PATCH' })
-    loadAll()
-  }
-
-  const togglePlatform = (id) => setConfig(c => ({
-    ...c,
-    platforms: c.platforms.includes(id) ? c.platforms.filter(p=>p!==id) : [...c.platforms, id]
-  }))
-
-  const running  = status?.running
-  const pct      = status?.progress || 0
-  const pending  = queue.filter(q=>q.status==='pending').length
-  const qualified = jobs.filter(j=>j.score>=config.min_score).length
-
-  const tabs = [
-    { id:'control',   label:'CONTROL' },
-    { id:'feed',      label:`LIVE FEED ${feed.length>0?`(${feed.length})`:''}` },
-    { id:'pipeline',  label:`OPPORTUNITIES (${jobs.length})` },
-    { id:'approvals', label:`APPROVALS${pending>0?` ● ${pending}`:''}` },
-    { id:'memory',    label:'MEMORY' },
-  ]
-
-  const inS = { width:'100%', background:'rgba(0,10,20,0.8)', border:'1px solid rgba(0,212,255,0.2)', outline:'none', color:'#c8e8f0', padding:'7px 10px', fontSize:'11px', fontFamily:'monospace', borderRadius:'3px' }
-
-  return (
-    <div style={{ padding:'28px', overflowY:'auto', height:'100%' }}>
-
-      {/* Header */}
-      <div style={{ marginBottom:'20px' }}>
-        <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.3em', marginBottom:'4px' }}>
-          JARVIS // AGENT WORKSPACE
-        </div>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'10px' }}>
-          <h1 style={{ fontSize:'20px', color:'#00d4ff', letterSpacing:'0.1em', textShadow:'0 0 20px rgba(0,212,255,0.4)', fontFamily:'sans-serif', margin:0 }}>
-            ⟳ AUTONOMOUS PIPELINE
-          </h1>
-          <div style={{ display:'flex', gap:'8px' }}>
-            {!running
-              ? <Btn onClick={startPipeline} variant="success">▶ START PIPELINE</Btn>
-              : <Btn onClick={stopPipeline} variant="danger">■ STOP</Btn>
-            }
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div style={{ marginTop:'12px', height:'3px', background:'rgba(255,255,255,0.06)', borderRadius:'2px' }}>
-          <div style={{ height:'100%', width:`${pct}%`, background:`linear-gradient(90deg,#00d4ff,#00ff88)`, borderRadius:'2px', transition:'width 0.4s ease', boxShadow:'0 0 8px rgba(0,212,255,0.5)' }}/>
-        </div>
-        <div style={{ display:'flex', justifyContent:'space-between', marginTop:'4px', fontSize:'9px', color:'rgba(255,255,255,0.25)', letterSpacing:'0.1em' }}>
-          <span>{status?.stage?.toUpperCase().replace('_',' ')||'IDLE'}</span>
-          <span>{pct}%</span>
-        </div>
-      </div>
-
-      {/* Stats row */}
-      {status && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px', marginBottom:'16px' }}>
-          <StatCard label="JOBS FOUND"    value={status.stats?.jobs_found||0}     color="#00d4ff" />
-          <StatCard label="QUALIFIED"     value={status.stats?.jobs_qualified||0} color="#ff9500" />
-          <StatCard label="PROPOSALS GEN" value={status.stats?.proposals_gen||0}  color="#00ff88" />
-          <StatCard label="APPROVALS"     value={pending}                          color="#ff4444" />
-        </div>
-      )}
-
-      {/* Sub-tabs */}
-      <div style={{ display:'flex', gap:'4px', marginBottom:'16px', flexWrap:'wrap' }}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{
-            padding:'6px 12px', fontSize:'9px', cursor:'pointer', letterSpacing:'0.13em',
-            fontFamily:'monospace', borderRadius:'3px', transition:'all 0.15s',
-            background: tab===t.id?'rgba(0,212,255,0.13)':'transparent',
-            border: `1px solid ${tab===t.id?'#00d4ff':'rgba(255,255,255,0.1)'}`,
-            color: tab===t.id?'#00d4ff':'rgba(255,255,255,0.35)',
-          }}>{t.label}</button>
-        ))}
-      </div>
-
-      {/* ── CONTROL TAB ── */}
-      {tab==='control' && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px' }}>
-          <div style={{ border:'1px solid rgba(0,212,255,0.15)', borderRadius:'4px', padding:'18px', background:'rgba(0,10,20,0.7)' }}>
-            <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'14px' }}>PLATFORM SELECTION</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:'6px', marginBottom:'14px' }}>
-              {PLATFORMS.map(p => (
-                <label key={p.id} style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer', fontSize:'11px', color: config.platforms.includes(p.id)?'#00d4ff':'rgba(255,255,255,0.3)' }}>
-                  <input type="checkbox" checked={config.platforms.includes(p.id)} onChange={()=>togglePlatform(p.id)} style={{ accentColor:'#00d4ff' }}/>
-                  {p.label}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-            <div style={{ border:'1px solid rgba(0,212,255,0.15)', borderRadius:'4px', padding:'18px', background:'rgba(0,10,20,0.7)' }}>
-              <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'12px' }}>PROFILE</div>
-              {[
-                ['NAME',   'your_name',   'text'],
-                ['SKILLS', 'your_skills', 'text'],
-              ].map(([label, key]) => (
-                <div key={key} style={{ marginBottom:'10px' }}>
-                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'4px' }}>{label}</div>
-                  <input value={config[key]} onChange={e=>setConfig(c=>({...c,[key]:e.target.value}))} style={inS}/>
-                </div>
-              ))}
-            </div>
-            <div style={{ border:'1px solid rgba(0,212,255,0.15)', borderRadius:'4px', padding:'18px', background:'rgba(0,10,20,0.7)' }}>
-              <div style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em', marginBottom:'12px' }}>PIPELINE SETTINGS</div>
-              {[
-                ['JOBS PER PLATFORM', 'max_per_platform', 1, 30],
-                ['MIN SCORE THRESHOLD','min_score',       0, 100],
-                ['MAX PROPOSALS/RUN',  'max_generate',    1, 20],
-              ].map(([label,key,min,max]) => (
-                <div key={key} style={{ marginBottom:'10px' }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:'9px', color:'rgba(255,255,255,0.3)', marginBottom:'4px' }}>
-                    <span>{label}</span><span style={{color:'#00d4ff'}}>{config[key]}</span>
-                  </div>
-                  <input type="range" min={min} max={max} value={config[key]}
-                    onChange={e=>setConfig(c=>({...c,[key]:parseInt(e.target.value)}))}
-                    style={{ width:'100%', accentColor:'#00d4ff' }}/>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── LIVE FEED TAB ── */}
-      {tab==='feed' && (
-        <div style={{ border:'1px solid rgba(0,212,255,0.1)', borderRadius:'4px', background:'rgba(0,4,8,0.95)' }}>
-          <div style={{ padding:'10px 14px', borderBottom:'1px solid rgba(0,212,255,0.08)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <span style={{ fontSize:'9px', color:'rgba(0,212,255,0.5)', letterSpacing:'0.2em' }}>AGENT ACTIVITY LOG</span>
-            <Btn onClick={()=>setFeed([])} variant="ghost" small>CLEAR</Btn>
-          </div>
-          <div ref={feedRef} style={{ height:'500px', overflowY:'auto', padding:'12px', display:'flex', flexDirection:'column', gap:'3px' }}>
-            {feed.length===0 && (
-              <div style={{ color:'rgba(255,255,255,0.15)', fontSize:'11px', textAlign:'center', paddingTop:'40px' }}>
-                Waiting for agent activity...<br/>
-                <span style={{fontSize:'9px'}}>Start the pipeline to see live feed</span>
-              </div>
-            )}
-            {feed.map((entry, i) => {
-              const c = AGENT_COLORS[entry.agent] || '#888'
-              const icon = AGENT_ICONS[entry.agent] || '·'
-              return (
-                <div key={i} style={{ display:'flex', gap:'10px', alignItems:'flex-start', fontSize:'10px', lineHeight:'1.6', padding:'2px 0', borderBottom:'1px solid rgba(255,255,255,0.03)', animation:'fadeIn 0.2s ease' }}>
-                  <span style={{ color:'rgba(255,255,255,0.2)', flexShrink:0, fontFamily:'monospace', fontSize:'9px', paddingTop:'1px' }}>{entry.ts}</span>
-                  <span style={{ color:c, flexShrink:0, fontSize:'9px', letterSpacing:'0.15em', minWidth:'80px' }}>{icon} {(entry.agent||'').toUpperCase()}</span>
-                  <span style={{ color: entry.level==='error'?'#ff4444':'rgba(255,255,255,0.6)' }}>{entry.msg}</span>
-                </div>
-              )
-            })}
-            <div style={{ display:'inline-block', width:'7px', height:'12px', background:'#00d4ff', animation:'blink 1s step-end infinite', marginLeft:'2px', marginTop:'4px' }}/>
-          </div>
-        </div>
-      )}
-
-      {/* ── PIPELINE / OPPORTUNITIES TAB ── */}
-      {tab==='pipeline' && (
-        <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-          <div style={{ display:'flex', gap:'8px', marginBottom:'8px', alignItems:'center' }}>
-            <Btn onClick={loadAll} variant="ghost" small>↺ REFRESH</Btn>
-            <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)' }}>{jobs.length} opportunities | {qualified} qualified</span>
-          </div>
-          {jobs.slice(0,40).map(j => {
-            const isSel = selJob?.id===j.id
-            const scoreColor = j.score>=70?'#00ff88':j.score>=40?'#ff9500':'#ff4444'
-            let skills = []; try { skills=JSON.parse(j.skills||'[]') } catch{}
-            return (
-              <div key={j.id} onClick={()=>setSelJob(isSel?null:j)} style={{
-                padding:'12px 14px', borderRadius:'4px', cursor:'pointer',
-                background: isSel?'rgba(0,212,255,0.06)':'rgba(255,255,255,0.02)',
-                border: `1px solid ${isSel?'#00d4ff':'rgba(255,255,255,0.06)'}`,
-                transition:'all 0.15s',
-              }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                  <div style={{ flex:1 }}>
-                    <div style={{ display:'flex', gap:'6px', marginBottom:'4px', flexWrap:'wrap', alignItems:'center' }}>
-                      <span style={{ fontSize:'9px', fontFamily:'monospace', padding:'2px 6px', borderRadius:'2px', border:`1px solid ${AGENT_COLORS.scout}`, color:AGENT_COLORS.scout }}>{j.platform}</span>
-                      {j.company && <span style={{ fontSize:'10px', color:'rgba(255,149,0,0.8)' }}>{j.company}</span>}
-                    </div>
-                    <div style={{ fontSize:'13px', fontWeight:'600', color:'#c4e4ef', marginBottom:'3px' }}>{j.title}</div>
-                    {isSel && <div style={{ fontSize:'11px', color:'rgba(255,255,255,0.4)', lineHeight:1.6, marginBottom:'8px' }}>{j.description}</div>}
-                    {skills.length>0 && isSel && (
-                      <div style={{ display:'flex', gap:'4px', flexWrap:'wrap', marginBottom:'8px' }}>
-                        {skills.map(s=><span key={s} style={{ fontSize:'9px', padding:'1px 6px', borderRadius:'2px', background:'rgba(0,212,255,0.08)', border:'1px solid rgba(0,212,255,0.15)', color:'rgba(0,212,255,0.7)' }}>{s}</span>)}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ textAlign:'right', flexShrink:0, marginLeft:'12px' }}>
-                    <div style={{ fontSize:'20px', fontWeight:'700', color:scoreColor, fontFamily:'monospace' }}>{j.score||0}</div>
-                    <div style={{ fontSize:'8px', color:'rgba(255,255,255,0.2)' }}>SCORE</div>
-                  </div>
-                </div>
-                {isSel && (
-                  <div style={{ display:'flex', gap:'6px', marginTop:'8px' }}>
-                    {j.link && <Btn onClick={e=>{e.stopPropagation();window.open(j.link,'_blank')}} variant="ghost" small>OPEN ↗</Btn>}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* ── APPROVALS TAB ── */}
-      {tab==='approvals' && (
-        <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
-          <div style={{ display:'flex', gap:'8px', marginBottom:'8px' }}>
-            <Btn onClick={loadAll} variant="ghost" small>↺ REFRESH</Btn>
-            <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.3)', alignSelf:'center' }}>{pending} pending approval</span>
-          </div>
-          {queue.length===0 && <div style={{ textAlign:'center', padding:'50px', color:'rgba(255,255,255,0.15)', fontSize:'11px', lineHeight:2 }}>No items in queue.<br/><span style={{fontSize:'9px'}}>Run the pipeline to generate proposals for review.</span></div>}
-          {queue.map(q => {
-            const app = q.payload?.application||''
-            const job = q.payload?.job||{}
-            const isSel = selQ?.id===q.id
-            const statusColors = { pending:'#ff9500', approved:'#00ff88', done:'#888', rejected:'#ff4444' }
-            return (
-              <div key={q.id} onClick={()=>setSelQ(isSel?null:q)} style={{
-                padding:'14px 16px', borderRadius:'4px', cursor:'pointer',
-                background: isSel?'rgba(0,212,255,0.05)':'rgba(255,255,255,0.02)',
-                border: `1px solid ${statusColors[q.status]||'rgba(255,255,255,0.07)'}44`,
-                transition:'all 0.15s',
-              }}>
-                <div style={{ display:'flex', gap:'8px', alignItems:'center', marginBottom:'5px', flexWrap:'wrap' }}>
-                  <span style={{ fontSize:'9px', padding:'2px 7px', borderRadius:'2px', border:`1px solid ${statusColors[q.status]||'#888'}`, color:statusColors[q.status]||'#888' }}>{q.status?.toUpperCase()}</span>
-                  <span style={{ fontSize:'9px', padding:'2px 7px', borderRadius:'2px', border:'1px solid rgba(0,212,255,0.3)', color:'#00d4ff' }}>{q.platform}</span>
-                  <span style={{ fontSize:'12px', fontWeight:'600', color:'#c4e4ef' }}>{q.job_title}</span>
-                </div>
-                {isSel && app && (
-                  <div style={{ fontSize:'11px', color:'rgba(255,255,255,0.55)', lineHeight:1.75, whiteSpace:'pre-wrap', background:'rgba(0,10,20,0.6)', padding:'12px', borderRadius:'3px', border:'1px solid rgba(0,212,255,0.12)', marginBottom:'10px', marginTop:'8px' }}>
-                    {app}
-                  </div>
-                )}
-                {isSel && (
-                  <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'8px' }} onClick={e=>e.stopPropagation()}>
-                    {q.status==='pending' && <>
-                      <Btn onClick={()=>approveQ(q.id,'approved')} variant="success" small>✓ APPROVE</Btn>
-                      <Btn onClick={()=>approveQ(q.id,'rejected')} variant="danger" small>✗ REJECT</Btn>
-                    </>}
-                    {q.status==='approved' && <Btn onClick={()=>approveQ(q.id,'done')} variant="ghost" small>MARK SENT</Btn>}
-                    {app && <Btn onClick={()=>navigator.clipboard?.writeText(app)} variant="ghost" small>COPY APPLICATION</Btn>}
-                    {job.link && <Btn onClick={()=>window.open(job.link,'_blank')} variant="ghost" small>OPEN JOB ↗</Btn>}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* ── MEMORY TAB ── */}
-      {tab==='memory' && (
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px' }}>
-          <div style={{ border:'1px solid rgba(168,85,247,0.2)', borderRadius:'4px', padding:'18px', background:'rgba(0,10,20,0.7)' }}>
-            <div style={{ fontSize:'9px', color:'rgba(168,85,247,0.7)', letterSpacing:'0.2em', marginBottom:'14px' }}>◉ MEMORY INSIGHTS</div>
-            {memory ? (
-              <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-                {[
-                  ['Top Win Pattern',  memory.top_pattern   || '—'],
-                  ['Best Platform',    memory.best_platform  || '—'],
-                  ['Worst Platform',   memory.worst_platform || '—'],
-                  ['Total Wins',       memory.total_wins     || 0 ],
-                ].map(([label, val]) => (
-                  <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.05)', fontSize:'11px' }}>
-                    <span style={{ color:'rgba(255,255,255,0.35)', letterSpacing:'0.1em' }}>{label}</span>
-                    <span style={{ color:'#a855f7', fontWeight:'700', fontFamily:'monospace' }}>{val}</span>
-                  </div>
-                ))}
-              </div>
-            ) : <div style={{ color:'rgba(255,255,255,0.2)', fontSize:'11px' }}>No memory data yet. Run a pipeline cycle first.</div>}
-          </div>
-          <div style={{ border:'1px solid rgba(168,85,247,0.2)', borderRadius:'4px', padding:'18px', background:'rgba(0,10,20,0.7)' }}>
-            <div style={{ fontSize:'9px', color:'rgba(168,85,247,0.7)', letterSpacing:'0.2em', marginBottom:'14px' }}>TOP WIN KEYWORDS</div>
-            {memory?.top_patterns?.length > 0 ? (
-              <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-                {memory.top_patterns.map((p,i) => (
-                  <div key={i} style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                    <span style={{ fontSize:'10px', color:'rgba(168,85,247,0.8)', fontFamily:'monospace', minWidth:'80px' }}>{p.pattern}</span>
-                    <div style={{ flex:1, height:'3px', background:'rgba(255,255,255,0.05)', borderRadius:'2px' }}>
-                      <div style={{ height:'100%', width:`${p.win_rate}%`, background:'linear-gradient(90deg,rgba(168,85,247,0.5),#a855f7)', borderRadius:'2px' }}/>
-                    </div>
-                    <span style={{ fontSize:'9px', color:'#a855f7', fontFamily:'monospace', minWidth:'35px', textAlign:'right' }}>{p.win_rate}%</span>
-                    <span style={{ fontSize:'9px', color:'rgba(255,255,255,0.2)' }}>({p.total})</span>
-                  </div>
-                ))}
-              </div>
-            ) : <div style={{ color:'rgba(255,255,255,0.2)', fontSize:'11px' }}>Win patterns build up as you track proposal outcomes.</div>}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 140/156: frontend/src/pages/WorkspaceHub.jsx
-################################################################################
-```jsx
-import { useState } from 'react'
-import Workspace from './Workspace'
-import Jobs      from './Jobs'
-import Proposals from './Proposals'
-import Messages  from './Messages'
-import Analytics from './Analytics'
-import Tasks     from './Tasks'
-import Notes     from './Notes'
-import AutoMode  from './AutoMode'
-
-// V8.5: groups every freelance/job tool under the Workspace tab as subtabs.
-// Existing page components are reused unchanged.
-const SUBTABS = [
-  { id: 'overview',  label: 'Overview',  Comp: Workspace },
-  { id: 'jobs',      label: 'Jobs',      Comp: Jobs },
-  { id: 'proposals', label: 'Proposals', Comp: Proposals },
-  { id: 'messages',  label: 'Messages',  Comp: Messages },
-  { id: 'automode',  label: 'Auto Mode', Comp: AutoMode },
-  { id: 'analytics', label: 'Analytics', Comp: Analytics },
-  { id: 'tasks',     label: 'Tasks',     Comp: Tasks },
-  { id: 'notes',     label: 'Notes',     Comp: Notes },
-]
-
-export default function WorkspaceHub() {
-  const [sub, setSub] = useState('overview')
-  const Active = (SUBTABS.find(s => s.id === sub) || SUBTABS[0]).Comp
-
-  return (
-    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
-      <div style={{ display:'flex', gap:'2px', padding:'10px 16px', flexWrap:'wrap',
-        borderBottom:'1px solid rgba(0,212,255,0.1)', background:'rgba(4,10,16,0.6)' }}>
-        {SUBTABS.map(s => (
-          <button key={s.id} onClick={() => setSub(s.id)} style={{
-            padding:'6px 14px', border:'none', borderRadius:'3px', cursor:'pointer',
-            fontFamily:'monospace', fontSize:'10px', letterSpacing:'0.1em',
-            background: sub===s.id ? 'rgba(0,212,255,0.12)' : 'transparent',
-            color: sub===s.id ? '#00d4ff' : 'rgba(255,255,255,0.4)',
-          }}>{s.label}</button>
-        ))}
-      </div>
-      <div style={{ flex:1, overflow:'auto' }}><Active /></div>
-    </div>
-  )
-}
-```
-
-################################################################################
-# FILE 141/156: frontend/vite.config.js
+# FILE 133/148: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -22236,7 +20810,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 142/156: .gitignore
+# FILE 134/148: .gitignore
 ################################################################################
 ```
 # Python
@@ -22276,7 +20850,7 @@ scratchpad/
 ```
 
 ################################################################################
-# FILE 143/156: FINAL_PROJECT_TREE_backend.txt
+# FILE 135/148: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -22359,7 +20933,7 @@ scratchpad/
 ```
 
 ################################################################################
-# FILE 144/156: FINAL_PROJECT_TREE_frontend.txt
+# FILE 136/148: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -22383,7 +20957,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 145/156: LEGACY_GREP_ARTIFACT.txt
+# FILE 137/148: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -22405,7 +20979,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 146/156: PROJECT_TREE.txt
+# FILE 138/148: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -22523,7 +21097,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 147/156: REQUIREMENTS_SNAPSHOT.txt
+# FILE 139/148: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -22553,7 +21127,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 148/156: RUNTIME_VALIDATION.py
+# FILE 140/148: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -22654,7 +21228,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 149/156: RUN_VALIDATION.bat
+# FILE 141/148: RUN_VALIDATION.bat
 ################################################################################
 ```bat
 @echo off
@@ -22673,7 +21247,7 @@ pause
 ```
 
 ################################################################################
-# FILE 150/156: START_JARVIS.bat
+# FILE 142/148: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
@@ -22789,7 +21363,7 @@ timeout /t 10
 ```
 
 ################################################################################
-# FILE 151/156: legacy_dependency_report.json
+# FILE 143/148: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -22954,7 +21528,7 @@ timeout /t 10
 ```
 
 ################################################################################
-# FILE 152/156: requirements.txt
+# FILE 144/148: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -22987,7 +21561,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 153/156: start.bat
+# FILE 145/148: start.bat
 ################################################################################
 ```bat
 @echo off
@@ -23030,7 +21604,7 @@ pause
 ```
 
 ################################################################################
-# FILE 154/156: start.sh
+# FILE 146/148: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -23067,7 +21641,7 @@ wait
 ```
 
 ################################################################################
-# FILE 155/156: start_frontend.bat
+# FILE 147/148: start_frontend.bat
 ################################################################################
 ```bat
 @echo off
@@ -23082,7 +21656,7 @@ pause
 ```
 
 ################################################################################
-# FILE 156/156: tools/dump_source.py
+# FILE 148/148: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
