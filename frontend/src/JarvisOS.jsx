@@ -46,6 +46,29 @@ const SURFACES = [
 
 const LEVEL_COLOR = { info: T.cyan, success: T.green, warning: T.amber, error: T.red };
 
+/**
+ * When did this feed event actually happen? (epoch ms, or null if unknowable)
+ *
+ * Order matters: `_t` is set once when we receive/create the event, `at` is the
+ * backend's own epoch stamp, and `ts` ("HH:MM:SS", UTC) is the last resort for
+ * events replayed from the state snapshot. Never fall back to "now" — that is
+ * precisely the bug that made the activity graph static.
+ */
+export function eventTime(f) {
+  if (!f) return null;
+  if (typeof f._t === "number") return f._t;
+  if (typeof f.at === "number") return f.at;
+  const m = typeof f.ts === "string" && f.ts.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+  if (m) {
+    const d = new Date();
+    const guess = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
+                           +m[1], +m[2], +m[3]);
+    // A stamp "in the future" means it belongs to yesterday (UTC rollover).
+    return guess > Date.now() + 60_000 ? guess - 86_400_000 : guess;
+  }
+  return null;
+}
+
 /* Subsystem accent colours — consistent everywhere they appear. */
 const SUB_COLOR = {
   brain: T.violet, desktop: T.cyan, vision: T.amber, browser: T.green,
@@ -82,6 +105,12 @@ export default function JarvisOS() {
           // keep a rolling window of real samples for the vitals graph
           setHistory((h) => [...h, { cpu: d.system?.cpu ?? 0, ram: d.system?.ram ?? 0,
                                      t: Date.now() }].slice(-30));
+          // Seed the timeline from what already happened. Without this the
+          // console opens blank until the next live event, which reads as
+          // "nothing is running" even when Jarvis has been working for hours.
+          setFeed((f) => (f.length ? f : (d.timeline || []).map((e) => ({
+            ...e, _t: eventTime(e), _k: `seed_${e.at || e.ts}_${Math.random()}`,
+          }))));
         }
       } catch { /* backend down — the strip shows it */ }
     };
@@ -98,7 +127,10 @@ export default function JarvisOS() {
         try {
           const d = JSON.parse(e.data);
           if (d.ping) return;
-          setFeed((f) => [{ ...d, _k: Math.random() }, ...f].slice(0, 120));
+          // Stamp with the event's OWN time (backend `at`, epoch ms), falling
+          // back to arrival time. Never render time — see activityMarks.
+          setFeed((f) => [{ ...d, _t: d.at || Date.now(), _k: Math.random() },
+                          ...f].slice(0, 120));
         } catch { /* ignore malformed frame */ }
       };
       es.onerror = () => { es.close(); setTimeout(connect, 4000); };
@@ -112,7 +144,8 @@ export default function JarvisOS() {
     const msg = (text ?? input).trim();
     if (!msg) return;
     setInput(""); setBusy(true); setReply(null);
-    setFeed((f) => [{ ts: hhmm(), agent: "you", msg, level: "info", _k: Math.random() }, ...f]);
+    setFeed((f) => [{ ts: hhmm(), agent: "you", msg, level: "info",
+                      _t: Date.now(), _k: Math.random() }, ...f]);
     try {
       const r = await fetch(`${API}/chat`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -120,20 +153,29 @@ export default function JarvisOS() {
       });
       const d = await r.json();
       setReply({ text: d.response || "", intent: d.intent });
-      setFeed((f) => [{ ts: hhmm(), agent: "jarvis", msg: d.response || "", level: d.intent === "error" ? "error" : "success", _k: Math.random() }, ...f]);
+      setFeed((f) => [{ ts: hhmm(), agent: "jarvis", msg: d.response || "",
+                        level: d.intent === "error" ? "error" : "success",
+                        _t: Date.now(), _k: Math.random() }, ...f]);
     } catch (e) {
       setReply({ text: `Backend unreachable: ${e.message}`, intent: "error" });
     } finally { setBusy(false); }
   }, [input, sessionId]);
 
   // Activity ticks for the vitals graph: real events from the last 3 minutes,
-  // positioned by when they happened. Each tick = Jarvis genuinely did something.
+  // positioned by when they ACTUALLY happened.
+  //
+  // The previous version stamped every event with the render-time `now` the
+  // first time it was drawn. That made the graph a fiction: a backlog replayed
+  // on reconnect all landed on the right-hand edge together, and events that
+  // arrived seconds apart were indistinguishable. Now each event carries its
+  // own time — `at` from the backend, or arrival time for locally-created ones.
   const activityMarks = (() => {
     const now = Date.now(), WINDOW = 180_000;
     return feed.slice(0, 60).map((f) => {
-      const t = f._t || (f._t = now);   // stamp on first render
+      const t = eventTime(f);
+      if (t == null) return null;
       const age = now - t;
-      if (age > WINDOW) return null;
+      if (age < 0 || age > WINDOW) return null;
       return { x: 1 - age / WINDOW, color: LEVEL_COLOR[f.level] || T.dim };
     }).filter(Boolean);
   })();

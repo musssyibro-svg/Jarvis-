@@ -60,6 +60,65 @@ def _require(name):
     return None
 
 
+# ── Clipboard etiquette ──────────────────────────────────────────────────────
+# Jarvis uses the clipboard as a tool (paste-typing, reading a focused field to
+# verify what it typed). The user is also using that clipboard. Clobbering it —
+# silently losing whatever they had copied — is unacceptable for something that
+# runs all day, so every clipboard use goes through a guard that puts the old
+# contents back.
+#
+# pyperclip only understands text. If the clipboard is holding something else
+# (a copied image, a file from Explorer), we cannot snapshot it, and restoring
+# text would destroy it. In that case the guard refuses to run at all and the
+# caller falls back to a non-clipboard path. Losing a verification is fine;
+# losing the user's data is not.
+
+def _clipboard_snapshot():
+    """
+    Return (ok, saved_text). ok=False means: do not touch the clipboard.
+    """
+    try:
+        import pyperclip
+    except ImportError:
+        return False, None
+
+    # On Windows, check whether a non-text format is present; if so, bail out
+    # rather than replace the user's copied image/files with text.
+    try:
+        import win32clipboard as wc  # type: ignore
+        CF_TEXT, CF_UNICODETEXT, CF_OEMTEXT, CF_LOCALE = 1, 13, 7, 16
+        text_only = {CF_TEXT, CF_UNICODETEXT, CF_OEMTEXT, CF_LOCALE}
+        wc.OpenClipboard()
+        try:
+            fmts, f = [], 0
+            while True:
+                f = wc.EnumClipboardFormats(f)
+                if not f:
+                    break
+                fmts.append(f)
+        finally:
+            wc.CloseClipboard()
+        if any(f not in text_only for f in fmts):
+            return False, None
+    except Exception:
+        pass    # pywin32 absent or clipboard locked — fall through to text-only
+
+    try:
+        return True, pyperclip.paste()
+    except Exception:
+        return False, None
+
+
+def _clipboard_restore(saved) -> None:
+    if saved is None:
+        return
+    try:
+        import pyperclip
+        pyperclip.copy(saved)
+    except Exception:
+        pass
+
+
 # ── Mouse ─────────────────────────────────────────────────────────────────────
 
 def move(x: int, y: int, duration: float = 0.3) -> dict:
@@ -118,17 +177,30 @@ def type_text(text: str, interval: float = 0.03) -> dict:
 
 
 def type_text_raw(text: str) -> dict:
-    """Type text with special chars using pyperclip paste trick."""
+    """
+    Type text with special chars using the paste trick — and hand the user's
+    clipboard back exactly as we found it.
+    """
     err = _require("pyautogui")
     if err: return err
     try:
         import pyperclip
+    except ImportError:
+        return type_text(text)
+
+    ok, saved = _clipboard_snapshot()
+    if not ok:
+        # Clipboard holds something we can't restore (an image, copied files).
+        # Type it character by character instead of destroying it.
+        return type_text(text)
+    try:
         with _lock:
             pyperclip.copy(text)
             pyautogui.hotkey("ctrl", "v")
+            time.sleep(0.1)     # let the target consume the paste before we swap back
         return {"success": True, "action": "type_raw", "length": len(text)}
-    except ImportError:
-        return type_text(text)
+    finally:
+        _clipboard_restore(saved)
 
 
 def hotkey(*keys) -> dict:
@@ -417,12 +489,23 @@ def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
 
 
 def _read_focused_text() -> str | None:
-    """Ctrl+A, Ctrl+C the focused control and return its text (None if we can't)."""
+    """
+    Ctrl+A, Ctrl+C the focused control and return its text (None if we can't).
+
+    The user's clipboard is saved before and put back after — verifying what we
+    typed must not cost them whatever they had copied. If the clipboard holds
+    something unsaveable (an image, files copied in Explorer) we decline to read
+    at all and the caller reports "couldn't verify" instead.
+    """
     if not HAS_PYAUTOGUI or _emergency_stop.is_set():
         return None
     try:
         import pyperclip
     except ImportError:
+        return None
+
+    ok, saved = _clipboard_snapshot()
+    if not ok:
         return None
     try:
         with _lock:
@@ -430,9 +513,16 @@ def _read_focused_text() -> str | None:
             time.sleep(0.1)
             pyautogui.hotkey("ctrl", "c")
             time.sleep(0.15)
-        return pyperclip.paste()
+        got = pyperclip.paste()
+        # An unchanged clipboard means the copy never landed (no focus, or the
+        # control isn't copyable) — not "the field contains the old clipboard".
+        if saved and got == saved:
+            return None
+        return got
     except Exception:
         return None
+    finally:
+        _clipboard_restore(saved)
 
 
 # Actions that must NOT be blindly re-run on a failed verify (retyping would
@@ -924,16 +1014,56 @@ def delete_file(path: str, confirm: bool = False) -> dict:
 
 def run_command(command: str, timeout: int = 30) -> dict:
     """
-    Run a shell command and return output.
-    ONLY whitelisted safe commands are allowed.
+    Run a whitelisted command and return its output.
+
+    No shell. The whitelist alone was never enough protection: with shell=True,
+    `python -c ...; rm -rf x` or `dir & whoami` passes the prefix check and then
+    the shell happily runs the second half. We parse the string into an argv list
+    and hand that straight to the OS, so metacharacters are just characters.
+
+    `dir` is a cmd.exe builtin with no executable, so it's translated rather than
+    given a shell.
     """
-    WHITELIST = ["dir", "ls", "echo", "type", "cat", "python", "pip", "ollama", "node", "npm", "git status", "git log"]
-    cmd_lower = command.lower().strip()
-    if not any(cmd_lower.startswith(w) for w in WHITELIST):
-        return {"success": False, "error": f"Command not in whitelist: {command}"}
+    import shlex
+
+    WHITELIST = {"dir", "ls", "echo", "type", "cat", "python", "python3",
+                 "pip", "pip3", "ollama", "node", "npm"}
+    GIT_SUBS  = {"status", "log", "diff", "branch"}
+
+    try:
+        argv = shlex.split(command.strip(), posix=(os.name != "nt"))
+    except ValueError as e:
+        return {"success": False, "error": f"Could not parse command: {e}"}
+    if not argv:
+        return {"success": False, "error": "Empty command"}
+
+    # Match on the parsed program name, not a string prefix: "python" must not
+    # let "pythonsomethingelse.exe" through.
+    head = argv[0].lower().removesuffix(".exe")
+    if head == "git":
+        if len(argv) < 2 or argv[1].lower() not in GIT_SUBS:
+            return {"success": False,
+                    "error": f"Only read-only git commands are allowed "
+                             f"({', '.join(sorted(GIT_SUBS))})"}
+    elif head not in WHITELIST:
+        return {"success": False, "error": f"Command not in whitelist: {argv[0]}"}
+
+    # Reject anything that smells like chaining or redirection. Without a shell
+    # these are inert for normal programs, but the cmd-builtin path below does
+    # re-enter cmd.exe, so a token like `x&whoami` must never reach it.
+    BAD = ("&", "|", ";", ">", "<", "^", "`", "$(")
+    for tok in argv[1:]:
+        if any(b in tok for b in BAD):
+            return {"success": False,
+                    "error": "Command chaining and redirection are not allowed"}
+
+    # `dir`/`type`/`echo` are cmd.exe builtins with no executable behind them.
+    if os.name == "nt" and argv[0].lower() in ("dir", "type", "echo"):
+        argv = ["cmd", "/c"] + argv
+
     try:
         result = subprocess.run(
-            command, shell=True, capture_output=True, text=True, timeout=timeout
+            argv, shell=False, capture_output=True, text=True, timeout=timeout
         )
         return {
             "success":    result.returncode == 0,
@@ -942,7 +1072,11 @@ def run_command(command: str, timeout: int = 30) -> dict:
             "returncode": result.returncode,
         }
     except subprocess.TimeoutExpired:
-        return {"success": False, "error": "Command timed out"}
+        return {"success": False, "error": f"Command timed out after {timeout}s"}
+    except FileNotFoundError:
+        # shell=False surfaces this instead of a 'not recognized' exit code.
+        return {"success": False,
+                "error": f"'{argv[0]}' is not installed or not on PATH"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 

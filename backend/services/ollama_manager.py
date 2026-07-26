@@ -185,6 +185,15 @@ def _chat_with_retry(model: str, messages: list, retries: int = 2,
     if not o:
         return {"ok": False, "text": "", "error": "ollama package not installed"}
 
+    # Don't leave the model pinned in RAM by Ollama's 5-minute default. Vision
+    # models are 5GB+; on a 16GB box that alone is why everything else crawls
+    # after a single screen analysis. keep_alive scales with size/free memory.
+    try:
+        from services import model_router
+        ka = model_router.keep_alive_for(model)
+    except Exception:
+        ka = "60s"
+
     last_err = None
     for attempt in range(retries + 1):
         try:
@@ -192,9 +201,9 @@ def _chat_with_retry(model: str, messages: list, retries: int = 2,
             if images:
                 msgs = list(messages)
                 msgs[-1] = {**msgs[-1], "images": images}
-                resp = o.chat(model=model, messages=msgs)
+                resp = o.chat(model=model, messages=msgs, keep_alive=ka)
             else:
-                resp = o.chat(model=model, messages=messages)
+                resp = o.chat(model=model, messages=messages, keep_alive=ka)
             text = resp["message"]["content"]
             text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
             return {"ok": True, "text": text, "error": None}
@@ -211,9 +220,11 @@ def _unload(model: str):
     if not o:
         return
     try:
-        # A zero-token call with keep_alive=0 evicts the model from memory.
-        o.chat(model=model, messages=[{"role": "user", "content": "ok"}],
-               keep_alive=0)
+        # keep_alive=0 evicts immediately. num_predict=0 means it doesn't
+        # generate a single token on the way out — the old version asked the
+        # model to answer "ok" first, paying for inference just to free memory.
+        o.generate(model=model, prompt="", keep_alive=0,
+                   options={"num_predict": 0})
     except Exception:
         pass
 

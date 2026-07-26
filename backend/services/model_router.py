@@ -175,6 +175,33 @@ def pick_model(task: str = "chat") -> str | None:
     return pick(task).get("model")
 
 
+def keep_alive_for(model: str | None) -> str:
+    """
+    How long Ollama should keep this model resident after a call.
+
+    A single flat value is wrong in both directions on a 16GB machine. Pinning a
+    5GB vision model for five minutes starves Chrome/Playwright and is what makes
+    the whole box feel like treacle; but evicting a 1.5GB chat model after every
+    reply means paying the load cost on every single message.
+
+    So: scale with the model's footprint and with how much RAM is actually free
+    right now. Big model or tight memory → let it go quickly. Small model on a
+    roomy machine → keep it warm.
+    """
+    if not model:
+        return "60s"
+    gb, _ = _profile(model)
+    free = free_ram_gb()
+
+    if free < 2.5:
+        return "0"          # memory emergency: release as soon as the call ends
+    if gb >= 4.0:
+        return "30s" if free < 6.0 else "90s"
+    if gb >= 2.0:
+        return "60s" if free < 5.0 else "3m"
+    return "2m" if free < 4.0 else "5m"
+
+
 def unload(model: str) -> dict:
     """Free a model from Ollama's RAM (keep_alive=0). Best-effort."""
     if not model:

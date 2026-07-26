@@ -53,8 +53,14 @@ class _State:
                     self._data["stats"][k] = v
 
     def emit(self, agent: str, msg: str, level: str = "info", state: str = None):
-        ts    = datetime.now(timezone.utc).strftime("%H:%M:%S")
-        entry = {"ts": ts, "agent": agent, "msg": msg, "level": level}
+        now   = datetime.now(timezone.utc)
+        ts    = now.strftime("%H:%M:%S")
+        # `at` is when this actually happened, in epoch ms. The UI needs it to
+        # place events on the activity graph: without it the console had to
+        # stamp everything at render time, so a burst from ten minutes ago and
+        # one from a second ago landed on the same spot and the graph was a lie.
+        entry = {"ts": ts, "at": int(now.timestamp() * 1000),
+                 "agent": agent, "msg": msg, "level": level}
         if state:
             entry["state"] = state
         # Hold the lock only to mutate _feed and snapshot listeners.

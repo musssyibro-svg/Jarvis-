@@ -90,8 +90,15 @@ def call_model(prompt: str, history: list | None = None, fast: bool = False,
             # Bound the work. Without num_predict a small model can ramble for
             # thousands of tokens; on a RAM-pressured machine that turned single
             # requests into multi-minute stalls. num_ctx keeps the prompt window
-            # sane, and keep_alive frees the model instead of pinning RAM.
-            resp = _ollama.chat(model=model, messages=msgs, keep_alive="5m",
+            # sane. keep_alive is no longer a flat "5m" — it scales with the
+            # model's size and the RAM actually free, so a 5GB model doesn't sit
+            # pinned while Chrome needs the memory.
+            try:
+                from services import model_router
+                ka = model_router.keep_alive_for(model)
+            except Exception:
+                ka = "60s"
+            resp = _ollama.chat(model=model, messages=msgs, keep_alive=ka,
                                 options={"num_predict": 400, "num_ctx": 4096,
                                          "temperature": 0.7})
             text = resp["message"]["content"]

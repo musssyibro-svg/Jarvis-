@@ -1,17 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { API, apiFetch, apiPost } from '../config'
+import { tint, edge, btn } from '../colors'
 
 const C = { accent:'#00d4ff', green:'#00ff88', orange:'#ff9500', red:'#ff4444', purple:'#a78bfa' }
 const card  = { border:'1px solid rgba(0,212,255,0.15)', borderRadius:4, padding:18, background:'rgba(0,8,16,0.8)', marginBottom:12 }
 const label = { fontSize:9, color:'rgba(0,212,255,0.45)', letterSpacing:'0.2em', marginBottom:10, textTransform:'uppercase' }
 const inp   = { width:'100%', background:'rgba(0,10,20,0.9)', border:'1px solid rgba(0,212,255,0.2)', outline:'none', color:'#c8e8f0', padding:'8px 11px', fontSize:11, fontFamily:'monospace', borderRadius:3, boxSizing:'border-box' }
-// `${c}18` only makes a valid colour when c is a 6-digit hex. Callers were also
-// passing rgba(...) — producing "rgba(255,255,255,0.15)18", which the browser
-// throws away, leaving a DEFAULT WHITE BUTTON with near-invisible text. That was
-// the "white blank buttons" bug. Tint safely for any colour format.
-const tint  = (c, a=0.09) => (String(c).startsWith('#') && (c.length === 7 || c.length === 4))
-  ? `${c}18` : `color-mix(in srgb, ${c} 12%, transparent)`
-const btn   = (c='#00d4ff') => ({ padding:'7px 16px', borderRadius:3, border:`1px solid ${c}`, background:tint(c), color:c, fontFamily:'monospace', fontSize:9, cursor:'pointer', letterSpacing:'0.1em' })
+// tint/edge/btn live in ../colors — they emit plain rgba() rather than doing
+// colour maths in CSS, because both earlier attempts here (hex concatenation,
+// then color-mix) produced invalid values on some inputs/browsers and the
+// buttons rendered as white blanks.
 const Dot   = ({on}) => <span style={{ width:7,height:7,borderRadius:'50%',background:on?C.green:'rgba(255,255,255,0.15)',boxShadow:on?`0 0 6px ${C.green}`:'none',display:'inline-block',marginRight:6 }} />
 
 const LEVEL_COLOR = { info:C.accent, success:C.green, warning:C.orange, error:C.red }
@@ -145,7 +143,9 @@ export default function Agents() {
       {/* Tabs */}
       <div style={{ display:'flex',gap:6,marginBottom:18,flexWrap:'wrap' }}>
         {TABS.map(t => (
-          <button key={t} onClick={()=>setTab(t)} style={{ ...btn(tab===t?C.accent:'#8aa0b4'), background:tab===t?'rgba(0,212,255,0.12)':'transparent' }}>
+          <button key={t} onClick={()=>setTab(t)}
+            style={{ ...btn(tab===t?C.accent:'#8aa0b4', {active: tab===t}),
+                     background: tab===t ? tint(C.accent, 0.14) : 'transparent' }}>
             {t.toUpperCase()}
           </button>
         ))}

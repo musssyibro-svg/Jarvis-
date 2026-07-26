@@ -1,25 +1,29 @@
 // components/UI.jsx — shared micro-components
+//
+// Colours go through ../colors so a caller passing rgba() or a css var can't
+// silently produce an invalid declaration (which renders as a white blank).
+import { tint } from '../colors'
 
 export const Badge = ({ label, color = '#00d4ff' }) => (
   <span style={{
     fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.12em',
     padding: '2px 7px', borderRadius: '2px', textTransform: 'uppercase',
     border: `1px solid ${color}`, color,
-    background: `${color}12`,
+    background: tint(color, 0.07),
   }}>{label}</span>
 )
 
 export const StatCard = ({ label, value, sub, color = '#00d4ff' }) => (
   <div style={{
-    border: `1px solid ${color}28`, background: 'rgba(0,10,22,0.75)',
+    border: `1px solid ${tint(color, 0.16)}`, background: 'rgba(0,10,22,0.75)',
     padding: '20px', borderRadius: '4px', position: 'relative', overflow: 'hidden',
   }}>
-    <div style={{ fontSize: '9px', color: `${color}88`, letterSpacing: '0.2em', marginBottom: '8px' }}>
+    <div style={{ fontSize: '9px', color: tint(color, 0.55), letterSpacing: '0.2em', marginBottom: '8px' }}>
       {label}
     </div>
     <div style={{
       fontSize: '30px', fontWeight: '700', color, fontFamily: 'sans-serif',
-      textShadow: `0 0 18px ${color}55`,
+      textShadow: `0 0 18px ${tint(color, 0.33)}`,
     }}>{value}</div>
     {sub && <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.25)', marginTop: '5px' }}>{sub}</div>}
     <div style={{

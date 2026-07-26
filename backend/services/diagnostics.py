@@ -45,6 +45,13 @@ PY_PACKAGES = [
 
 WINDOWS_ONLY = {"pygetwindow"}
 
+# Playwright's browser download goes to a Google-hosted CDN, which is not
+# reachable from mainland China. Quoting the bare command sends people into a
+# ten-minute hang; the mirror line is the difference between working and not.
+_PW_FIX = ("set PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright "
+           "&& python -m playwright install chromium   "
+           "(drop the first part outside China)")
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -100,12 +107,12 @@ def _check_binaries() -> list[dict]:
         checks.append({"group": "Binary", "name": "Playwright browsers", "ok": has,
                        "detail": root if has else "browser binaries not installed",
                        "why": "logging in + submitting on freelance sites",
-                       "fix": None if has else "python -m playwright install chromium"})
+                       "fix": None if has else _PW_FIX})
     except Exception:
         checks.append({"group": "Binary", "name": "Playwright browsers", "ok": False,
                        "detail": "playwright package missing",
                        "why": "logging in + submitting on freelance sites",
-                       "fix": "pip install playwright && python -m playwright install chromium"})
+                       "fix": "pip install playwright  then  " + _PW_FIX})
     return checks
 
 

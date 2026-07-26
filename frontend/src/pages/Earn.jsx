@@ -11,7 +11,7 @@
  * what it did, plus the two things it genuinely needs from you: platform logins
  * and any site you want to add.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { API } from "../config.js";
 
 const T = {
@@ -31,6 +31,21 @@ export default function Earn() {
   const [msg, setMsg] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ label: "", jobs_url: "", login_url: "", kind: "board", username: "", password: "" });
+  const [switching, setSwitching] = useState(false);
+
+  /**
+   * Pending intent. The switch used to flip back and forth: you pressed Start,
+   * the POST went out, and the 7-second poll — which had left before the backend
+   * finished starting the engine — landed with `enabled:false` and moved the
+   * switch back. It looked broken because the UI and the backend genuinely
+   * disagreed for a few seconds.
+   *
+   * So: when you press the switch we show what you asked for immediately, and
+   * we keep showing it until either the server agrees or the request fails.
+   * Stale poll responses can't override an intent that hasn't resolved.
+   */
+  const wantOn = useRef(null);   // { want: bool, at: number }
+  const PENDING_TTL = 20_000;     // give the engine this long to come up
 
   const load = async () => {
     try {
@@ -41,6 +56,16 @@ export default function Earn() {
         fetch(`${API}/sessions/custom`).then(r => r.json()).catch(() => ({ platforms: [] })),
         fetch(`${API}/automation/profile`).then(r => r.json()).catch(() => null),
       ]);
+      // Resolve the pending intent once the server reports what we asked for
+      // (or once we've waited long enough that it clearly isn't going to).
+      if (wantOn.current) {
+        const { want, at } = wantOn.current;
+        if (i && !!i.enabled === want) wantOn.current = null;
+        else if (Date.now() - at > PENDING_TTL) {
+          wantOn.current = null;
+          setMsg(`The engine didn't ${want ? "start" : "stop"}. Check Diagnostics for why.`);
+        }
+      }
       setIncome(i); setQueue(q.queue || []); setSessions(s.platforms || []);
       setCustom(c.platforms || []); setProfile(p);
     } catch { /* backend down */ }
@@ -48,17 +73,43 @@ export default function Earn() {
   useEffect(() => { load(); const t = setInterval(load, 7000); return () => clearInterval(t); }, []);
 
   const toggle = async () => {
-    await fetch(`${API}/automation/income/${income?.enabled ? "stop" : "start"}`,
-      { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-    load();
+    if (switching) return;                       // no double-fire
+    const want = !on;
+    setSwitching(true);
+    wantOn.current = { want, at: Date.now() };
+    setMsg("");
+    try {
+      const r = await fetch(`${API}/automation/income/${want ? "start" : "stop"}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      if (!r.ok) {
+        wantOn.current = null;                   // put the switch back honestly
+        const d = await r.json().catch(() => ({}));
+        setMsg(d.detail || d.error || `Couldn't ${want ? "start" : "stop"} the engine.`);
+      }
+    } catch (e) {
+      wantOn.current = null;
+      setMsg(`Backend unreachable: ${e.message}`);
+    } finally {
+      setSwitching(false);
+      load();
+    }
   };
   const runNow = async () => { await fetch(`${API}/automation/income/run-now`, { method: "POST" }); setMsg("Running a cycle now…"); load(); };
 
-  const setAutoSubmit = async (on) => {
-    await fetch(`${API}/automation/profile`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...(profile || {}), auto_submit: on }),
-    });
+  const setAutoSubmit = async (want) => {
+    const before = profile;
+    setProfile((p) => ({ ...(p || {}), auto_submit: want }));   // instant feedback
+    try {
+      const r = await fetch(`${API}/automation/profile`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...(profile || {}), auto_submit: want }),
+      });
+      if (!r.ok) throw new Error("save failed");
+    } catch {
+      setProfile(before);                                        // revert, don't lie
+      setMsg("Couldn't save that setting.");
+      return;
+    }
     load();
   };
 
@@ -79,7 +130,9 @@ export default function Earn() {
     const d = await r.json(); setMsg(d.message || d.error || "");
   };
 
-  const on = !!income?.enabled;
+  // What you asked for wins until the server confirms it — see `pending`.
+  const on = wantOn.current ? wantOn.current.want : !!income?.enabled;
+  const confirming = !!wantOn.current;
   const count = (s) => queue.filter(q => q.status === s).length;
   const submitted = count("done"), ready = count("ready"), pending = count("pending"), needLogin = count("needs_login");
 
@@ -91,7 +144,8 @@ export default function Earn() {
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 240 }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: on ? T.green : T.text }}>
-              {on ? "Jarvis is earning for you" : "Autonomous earning is off"}
+              {confirming ? (on ? "Starting…" : "Stopping…")
+                          : on ? "Jarvis is earning for you" : "Autonomous earning is off"}
             </div>
             <div style={{ fontSize: 12.5, color: T.dim, marginTop: 4, lineHeight: 1.6 }}>
               {on
@@ -99,10 +153,11 @@ export default function Earn() {
                 : "Turn this on and Jarvis works continuously in the background — finding jobs, filtering bad fits, and drafting proposals."}
             </div>
           </div>
-          <button onClick={toggle}
+          <button onClick={toggle} disabled={switching}
             style={{ padding: "12px 26px", borderRadius: 12, border: "none", fontSize: 14, fontWeight: 700,
+                     cursor: switching ? "wait" : "pointer", opacity: switching ? 0.6 : 1,
                      background: on ? "rgba(255,95,109,0.15)" : T.green, color: on ? T.red : "#052018" }}>
-            {on ? "Stop" : "Start earning"}
+            {switching ? "…" : on ? "Stop" : "Start earning"}
           </button>
           {on && <button onClick={runNow} style={{ padding: "12px 16px", borderRadius: 12, fontSize: 13,
                      background: "transparent", border: `1px solid ${T.line}`, color: T.cyan }}>Run now</button>}

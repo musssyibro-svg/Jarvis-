@@ -14,6 +14,21 @@ echo    JARVIS - starting
 echo  ===============================================
 echo.
 
+REM ---------- 0. China mirrors ----------
+REM Playwright downloads its browser from a Google-hosted CDN and pip/npm from
+REM hosts that are slow or unreachable behind the GFW. Without these, install
+REM doesn't fail fast - it hangs for minutes and then gives up, which looks
+REM exactly like "the launcher is broken".
+REM Set JARVIS_CN=0 in your environment to use the upstream sources instead.
+if not defined JARVIS_CN set "JARVIS_CN=1"
+if "%JARVIS_CN%"=="1" (
+  set "PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright"
+  set "PIP_INDEX_URL=https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+  set "PIP_TRUSTED_HOST=mirrors.tuna.tsinghua.edu.cn"
+  set "NPM_CONFIG_REGISTRY=https://registry.npmmirror.com"
+  echo  [ok] China mirrors enabled ^(set JARVIS_CN=0 to disable^)
+)
+
 REM ---------- 1. Python ----------
 set "PY="
 where py >nul 2>nul && set "PY=py -3"
@@ -54,10 +69,28 @@ echo  [..] Backend dependencies
 pushd "%ROOT%backend"
 %PY% -m pip install -q -r requirements.txt 2>nul
 if errorlevel 1 (
-  echo       retrying via mirror
-  %PY% -m pip install -q -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple -r requirements.txt 2>nul
+  echo       mirror failed - retrying against PyPI directly
+  %PY% -m pip install -q --index-url https://pypi.org/simple -r requirements.txt 2>nul
 )
 popd
+
+REM ---------- 4b. Playwright browser ----------
+REM Every freelance login, job scan and bid submission drives this browser.
+REM It is NOT installed by `pip install playwright` - it is a separate download,
+REM and without it those features fail at runtime with no obvious cause.
+%PY% -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); p.chromium.executable_path; p.stop()" >nul 2>nul
+if errorlevel 1 (
+  echo  [..] Downloading the automation browser ^(first run only^)
+  %PY% -m playwright install chromium
+  if errorlevel 1 (
+    echo  [!] Browser download failed. Freelance automation will not work until it
+    echo      succeeds. Retry manually with:
+    echo          set PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright
+    echo          %PY% -m playwright install chromium
+  )
+) else (
+  echo  [ok] Automation browser present
+)
 
 REM ---------- 5. Backend ----------
 echo  [..] Starting backend on http://127.0.0.1:8000
@@ -69,8 +102,8 @@ if not exist "%ROOT%frontend\node_modules" (
   pushd "%ROOT%frontend"
   call %NPM% install
   if errorlevel 1 (
-    echo       retrying via China mirror
-    call %NPM% install --registry=https://registry.npmmirror.com
+    echo       mirror failed - retrying against the npm registry directly
+    call %NPM% install --registry=https://registry.npmjs.org
   )
   popd
 )
