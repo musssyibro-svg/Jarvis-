@@ -6577,8 +6577,29 @@ def _ensure_tessdata() -> str | None:
             "set TESSDATA_PREFIX to that folder.")
 
 
+OCR_MAX_WIDTH = 1600      # downscale before OCR — the single biggest speed win
+OCR_TIMEOUT_S = 20        # never let a single OCR pass hang the whole request
+
+
+def _prep_for_ocr(img):
+    """
+    Downscale + greyscale before OCR. Tesseract's cost scales with pixel count,
+    so running it on a native 2560/4K screenshot is brutally slow (this is what
+    made one screen analysis take ~10 minutes). At <=1600px wide, UI text is
+    still perfectly legible to Tesseract but the pass is many times faster.
+    """
+    try:
+        w, h = img.size
+        if w > OCR_MAX_WIDTH:
+            ratio = OCR_MAX_WIDTH / float(w)
+            img = img.resize((OCR_MAX_WIDTH, int(h * ratio)))
+        return img.convert("L")      # greyscale: less work, better contrast
+    except Exception:
+        return img
+
+
 def ocr_screen(region: dict = None) -> dict:
-    """Capture screen and extract all text via Tesseract OCR."""
+    """Capture screen and extract all text via Tesseract OCR (downscaled + timed out)."""
     if not HAS_OCR:
         return {"success": False, "error": "pytesseract not installed. Run: pip install pytesseract. Also install Tesseract: https://github.com/UB-Mannheim/tesseract/wiki"}
     lang_err = _ensure_tessdata()
@@ -6591,8 +6612,15 @@ def ocr_screen(region: dict = None) -> dict:
 
     try:
         img_data = base64.b64decode(shot["b64"])
-        img = Image.open(io.BytesIO(img_data))
-        text = pytesseract.image_to_string(img)
+        img = _prep_for_ocr(Image.open(io.BytesIO(img_data)))
+        # --psm 6 = assume a uniform block of text: much faster than full page
+        # segmentation and better suited to app windows.
+        try:
+            text = pytesseract.image_to_string(img, config="--psm 6",
+                                               timeout=OCR_TIMEOUT_S)
+        except RuntimeError:          # pytesseract raises RuntimeError on timeout
+            return {"success": False,
+                    "error": f"OCR took longer than {OCR_TIMEOUT_S}s and was stopped"}
         return {
             "success": True,
             "text":    text.strip(),
@@ -6653,6 +6681,22 @@ def _screen_signature(b64: str) -> str:
     # sample the middle of the payload — full hashing a multi-MB PNG is wasteful
     chunk = b64[len(b64) // 3: len(b64) // 3 + 60000]
     return hashlib.md5(chunk.encode()).hexdigest()
+
+
+def _downscale_b64(b64: str, max_w: int = 1280) -> str | None:
+    """Re-encode a base64 PNG at a smaller width (for the vision model)."""
+    if not (b64 and HAS_PIL):
+        return None
+    try:
+        img = Image.open(io.BytesIO(base64.b64decode(b64)))
+        w, h = img.size
+        if w > max_w:
+            img = img.resize((max_w, int(h * max_w / float(w))))
+        buf = io.BytesIO()
+        img.convert("RGB").save(buf, format="JPEG", quality=70)
+        return base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        return None
 
 
 def _window_context() -> str:
@@ -6721,7 +6765,10 @@ def analyze_screen(question: str = "") -> dict:
     try:
         from services.ollama_manager import vision as llava_vision, validate_model, VISION_MODEL
         if b64 and validate_model(VISION_MODEL).get("valid"):
-            r = llava_vision(q, b64)
+            # Send a DOWNSCALED image: llava doesn't need 4K, and full-res
+            # payloads are the difference between seconds and minutes.
+            small = _downscale_b64(b64, 1280)
+            r = llava_vision(q, small or b64)
             if r.get("ok"):
                 answer = r["text"]
                 vision_used = True
@@ -13228,7 +13275,13 @@ def call_model(prompt: str, history: list | None = None, fast: bool = False) -> 
             msgs += [{"role": m["role"], "content": m["content"]} for m in history[-10:]]
             msgs.append({"role": "user", "content": prompt})
             print(f"[deepseek_service] using model: {model}")
-            resp = _ollama.chat(model=model, messages=msgs)
+            # Bound the work. Without num_predict a small model can ramble for
+            # thousands of tokens; on a RAM-pressured machine that turned single
+            # requests into multi-minute stalls. num_ctx keeps the prompt window
+            # sane, and keep_alive frees the model instead of pinning RAM.
+            resp = _ollama.chat(model=model, messages=msgs, keep_alive="5m",
+                                options={"num_predict": 400, "num_ctx": 4096,
+                                         "temperature": 0.7})
             text = resp["message"]["content"]
             text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
             return text
@@ -13484,12 +13537,39 @@ def _check_ollama_models() -> list[dict]:
                         "detail": want if ok else f"{want} not installed",
                         "why": "quality + speed of that feature",
                         "fix": None if ok else f"ollama pull {pull}"})
+
+        # Is the model actually in use big enough to be useful? A 0.5B model
+        # cannot reliably follow multi-constraint prompts — it's the single
+        # biggest reason Jarvis "feels dumb" even when the plumbing is correct.
+        try:
+            from services.ollama_manager import resolve_models
+            active = (resolve_models().get("resolved") or {}).get("fast") or ""
+        except Exception:
+            active = ""
+        size = _param_size(active)
+        too_small = size is not None and size < 1.0
+        out.append({
+            "group": "Ollama", "name": "Model size (in use)", "ok": not too_small,
+            "detail": (f"{active} — about {size}B parameters. Too small to follow "
+                       f"detailed instructions reliably." if too_small
+                       else (active or "unknown")),
+            "why": "how smart Jarvis's answers and proposals are",
+            "fix": None if not too_small else
+                   "ollama pull qwen2.5:3b   (then set OLLAMA_FAST_MODEL=qwen2.5:3b)",
+        })
     except Exception as e:
         out.append({"group": "Ollama", "name": "Ollama server", "ok": False,
                     "detail": f"not reachable ({type(e).__name__})",
                     "why": "all local AI",
                     "fix": "Start it: ollama serve   (install from ollama.com)"})
     return out
+
+
+def _param_size(model: str) -> float | None:
+    """Parameter count in billions parsed from an Ollama tag ('qwen2.5:0.5b' -> 0.5)."""
+    import re
+    m = re.search(r"[:\-](\d+(?:\.\d+)?)\s*b\b", (model or "").lower())
+    return float(m.group(1)) if m else None
 
 
 def _check_runtime() -> list[dict]:
@@ -15059,9 +15139,7 @@ def snapshot(timeline_limit: int = 40) -> dict:
         "memory":    {"state": "learning" if memory["reflections"] else "ready",
                       "detail": f"{memory['documents']} docs · {memory['reflections']} reflections",
                       "ok": True},
-        "models":    {"state": "online" if ollama.get("online") else "offline",
-                      "detail": (ollama.get("fast") or "no model") ,
-                      "ok": bool(ollama.get("online"))},
+        "models":    _model_subsystem(ollama),
     }
 
     return {
@@ -15081,6 +15159,27 @@ def snapshot(timeline_limit: int = 40) -> dict:
         "timeline": (feed_state.get("feed", []) or [])[-timeline_limit:][::-1],
         "traces": _safe(lambda: __import__("services.trace", fromlist=["summary"]).summary(), {}),
     }
+
+
+def _model_subsystem(ollama: dict) -> dict:
+    """
+    Report the model honestly — including when it's too small to be any good.
+    A 0.5B model is the usual reason Jarvis "feels dumb" even when every other
+    part is working, so say so right on the console instead of hiding it.
+    """
+    if not ollama.get("online"):
+        return {"state": "offline", "detail": "Ollama isn't running", "ok": False}
+    name = ollama.get("fast") or "unknown"
+    try:
+        from services.diagnostics import _param_size
+        size = _param_size(name)
+    except Exception:
+        size = None
+    if size is not None and size < 1.0:
+        return {"state": "too small", "ok": False,
+                "detail": f"{name} — only ~{size}B parameters. Run "
+                          f"'ollama pull qwen2.5:3b' for noticeably smarter replies."}
+    return {"state": "online", "detail": name, "ok": True}
 
 
 _STAGE_LABELS = {

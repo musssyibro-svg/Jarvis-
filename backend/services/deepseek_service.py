@@ -78,7 +78,13 @@ def call_model(prompt: str, history: list | None = None, fast: bool = False) -> 
             msgs += [{"role": m["role"], "content": m["content"]} for m in history[-10:]]
             msgs.append({"role": "user", "content": prompt})
             print(f"[deepseek_service] using model: {model}")
-            resp = _ollama.chat(model=model, messages=msgs)
+            # Bound the work. Without num_predict a small model can ramble for
+            # thousands of tokens; on a RAM-pressured machine that turned single
+            # requests into multi-minute stalls. num_ctx keeps the prompt window
+            # sane, and keep_alive frees the model instead of pinning RAM.
+            resp = _ollama.chat(model=model, messages=msgs, keep_alive="5m",
+                                options={"num_predict": 400, "num_ctx": 4096,
+                                         "temperature": 0.7})
             text = resp["message"]["content"]
             text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
             return text

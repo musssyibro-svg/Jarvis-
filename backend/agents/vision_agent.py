@@ -187,8 +187,29 @@ def _ensure_tessdata() -> str | None:
             "set TESSDATA_PREFIX to that folder.")
 
 
+OCR_MAX_WIDTH = 1600      # downscale before OCR — the single biggest speed win
+OCR_TIMEOUT_S = 20        # never let a single OCR pass hang the whole request
+
+
+def _prep_for_ocr(img):
+    """
+    Downscale + greyscale before OCR. Tesseract's cost scales with pixel count,
+    so running it on a native 2560/4K screenshot is brutally slow (this is what
+    made one screen analysis take ~10 minutes). At <=1600px wide, UI text is
+    still perfectly legible to Tesseract but the pass is many times faster.
+    """
+    try:
+        w, h = img.size
+        if w > OCR_MAX_WIDTH:
+            ratio = OCR_MAX_WIDTH / float(w)
+            img = img.resize((OCR_MAX_WIDTH, int(h * ratio)))
+        return img.convert("L")      # greyscale: less work, better contrast
+    except Exception:
+        return img
+
+
 def ocr_screen(region: dict = None) -> dict:
-    """Capture screen and extract all text via Tesseract OCR."""
+    """Capture screen and extract all text via Tesseract OCR (downscaled + timed out)."""
     if not HAS_OCR:
         return {"success": False, "error": "pytesseract not installed. Run: pip install pytesseract. Also install Tesseract: https://github.com/UB-Mannheim/tesseract/wiki"}
     lang_err = _ensure_tessdata()
@@ -201,8 +222,15 @@ def ocr_screen(region: dict = None) -> dict:
 
     try:
         img_data = base64.b64decode(shot["b64"])
-        img = Image.open(io.BytesIO(img_data))
-        text = pytesseract.image_to_string(img)
+        img = _prep_for_ocr(Image.open(io.BytesIO(img_data)))
+        # --psm 6 = assume a uniform block of text: much faster than full page
+        # segmentation and better suited to app windows.
+        try:
+            text = pytesseract.image_to_string(img, config="--psm 6",
+                                               timeout=OCR_TIMEOUT_S)
+        except RuntimeError:          # pytesseract raises RuntimeError on timeout
+            return {"success": False,
+                    "error": f"OCR took longer than {OCR_TIMEOUT_S}s and was stopped"}
         return {
             "success": True,
             "text":    text.strip(),
@@ -263,6 +291,22 @@ def _screen_signature(b64: str) -> str:
     # sample the middle of the payload — full hashing a multi-MB PNG is wasteful
     chunk = b64[len(b64) // 3: len(b64) // 3 + 60000]
     return hashlib.md5(chunk.encode()).hexdigest()
+
+
+def _downscale_b64(b64: str, max_w: int = 1280) -> str | None:
+    """Re-encode a base64 PNG at a smaller width (for the vision model)."""
+    if not (b64 and HAS_PIL):
+        return None
+    try:
+        img = Image.open(io.BytesIO(base64.b64decode(b64)))
+        w, h = img.size
+        if w > max_w:
+            img = img.resize((max_w, int(h * max_w / float(w))))
+        buf = io.BytesIO()
+        img.convert("RGB").save(buf, format="JPEG", quality=70)
+        return base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        return None
 
 
 def _window_context() -> str:
@@ -331,7 +375,10 @@ def analyze_screen(question: str = "") -> dict:
     try:
         from services.ollama_manager import vision as llava_vision, validate_model, VISION_MODEL
         if b64 and validate_model(VISION_MODEL).get("valid"):
-            r = llava_vision(q, b64)
+            # Send a DOWNSCALED image: llava doesn't need 4K, and full-res
+            # payloads are the difference between seconds and minutes.
+            small = _downscale_b64(b64, 1280)
+            r = llava_vision(q, small or b64)
             if r.get("ok"):
                 answer = r["text"]
                 vision_used = True

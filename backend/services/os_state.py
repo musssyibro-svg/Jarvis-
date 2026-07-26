@@ -128,9 +128,7 @@ def snapshot(timeline_limit: int = 40) -> dict:
         "memory":    {"state": "learning" if memory["reflections"] else "ready",
                       "detail": f"{memory['documents']} docs · {memory['reflections']} reflections",
                       "ok": True},
-        "models":    {"state": "online" if ollama.get("online") else "offline",
-                      "detail": (ollama.get("fast") or "no model") ,
-                      "ok": bool(ollama.get("online"))},
+        "models":    _model_subsystem(ollama),
     }
 
     return {
@@ -150,6 +148,27 @@ def snapshot(timeline_limit: int = 40) -> dict:
         "timeline": (feed_state.get("feed", []) or [])[-timeline_limit:][::-1],
         "traces": _safe(lambda: __import__("services.trace", fromlist=["summary"]).summary(), {}),
     }
+
+
+def _model_subsystem(ollama: dict) -> dict:
+    """
+    Report the model honestly — including when it's too small to be any good.
+    A 0.5B model is the usual reason Jarvis "feels dumb" even when every other
+    part is working, so say so right on the console instead of hiding it.
+    """
+    if not ollama.get("online"):
+        return {"state": "offline", "detail": "Ollama isn't running", "ok": False}
+    name = ollama.get("fast") or "unknown"
+    try:
+        from services.diagnostics import _param_size
+        size = _param_size(name)
+    except Exception:
+        size = None
+    if size is not None and size < 1.0:
+        return {"state": "too small", "ok": False,
+                "detail": f"{name} — only ~{size}B parameters. Run "
+                          f"'ollama pull qwen2.5:3b' for noticeably smarter replies."}
+    return {"state": "online", "detail": name, "ok": True}
 
 
 _STAGE_LABELS = {

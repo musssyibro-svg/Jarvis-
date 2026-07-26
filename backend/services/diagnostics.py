@@ -131,12 +131,39 @@ def _check_ollama_models() -> list[dict]:
                         "detail": want if ok else f"{want} not installed",
                         "why": "quality + speed of that feature",
                         "fix": None if ok else f"ollama pull {pull}"})
+
+        # Is the model actually in use big enough to be useful? A 0.5B model
+        # cannot reliably follow multi-constraint prompts — it's the single
+        # biggest reason Jarvis "feels dumb" even when the plumbing is correct.
+        try:
+            from services.ollama_manager import resolve_models
+            active = (resolve_models().get("resolved") or {}).get("fast") or ""
+        except Exception:
+            active = ""
+        size = _param_size(active)
+        too_small = size is not None and size < 1.0
+        out.append({
+            "group": "Ollama", "name": "Model size (in use)", "ok": not too_small,
+            "detail": (f"{active} — about {size}B parameters. Too small to follow "
+                       f"detailed instructions reliably." if too_small
+                       else (active or "unknown")),
+            "why": "how smart Jarvis's answers and proposals are",
+            "fix": None if not too_small else
+                   "ollama pull qwen2.5:3b   (then set OLLAMA_FAST_MODEL=qwen2.5:3b)",
+        })
     except Exception as e:
         out.append({"group": "Ollama", "name": "Ollama server", "ok": False,
                     "detail": f"not reachable ({type(e).__name__})",
                     "why": "all local AI",
                     "fix": "Start it: ollama serve   (install from ollama.com)"})
     return out
+
+
+def _param_size(model: str) -> float | None:
+    """Parameter count in billions parsed from an Ollama tag ('qwen2.5:0.5b' -> 0.5)."""
+    import re
+    m = re.search(r"[:\-](\d+(?:\.\d+)?)\s*b\b", (model or "").lower())
+    return float(m.group(1)) if m else None
 
 
 def _check_runtime() -> list[dict]:
