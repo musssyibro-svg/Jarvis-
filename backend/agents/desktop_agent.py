@@ -471,11 +471,12 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
             if not _is_foreground(last_opened):
                 fw = focus_window(last_opened)
                 results.append({"step": f"{i}.focus", "action": "focus_window", **fw})
-                if not fw.get("confirmed", fw.get("success", False)):
-                    return {"success": False, "steps": results, "failed_at": i + 1,
-                            "error": f"opened {last_opened} but couldn't bring it to the "
-                                     f"foreground — nothing was typed/clicked, so I'm not "
-                                     f"claiming this worked"}
+                # If focus can't be CONFIRMED we no longer abort outright: the
+                # confirmation itself can be unreliable (odd window titles), and
+                # type_text is independently verified by a clipboard read-back —
+                # that check is the real arbiter of whether the text landed. So
+                # try anyway and let verification decide. Still truthful: if the
+                # text didn't land, the step fails with that exact reason.
                 time.sleep(0.3)
 
         retries = 0 if action in _NO_RETRY else max_retries
@@ -578,8 +579,76 @@ def close_window(title_contains: str) -> dict:
         return {"success": False, "error": str(e)}
 
 
+def _win32_focus(title_contains: str) -> bool:
+    """
+    Bring a window to the front using the Win32 API directly (ctypes — no new
+    dependency). pygetwindow's .activate() fails on modern Windows because the
+    OS refuses SetForegroundWindow from a process that doesn't own the current
+    foreground window. The accepted workaround is to attach our input queue to
+    the foreground thread first, which is what this does. This is the fix for
+    the live "opened notepad but couldn't bring it to the foreground" failure.
+    """
+    if os.name != "nt":
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+        u32 = ctypes.windll.user32
+        k32 = ctypes.windll.kernel32
+
+        target = {"hwnd": None}
+        needle = (title_contains or "").lower()
+
+        @ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
+        def _enum(hwnd, _):
+            if not u32.IsWindowVisible(hwnd):
+                return True
+            n = u32.GetWindowTextLengthW(hwnd)
+            if n <= 0:
+                return True
+            buf = ctypes.create_unicode_buffer(n + 1)
+            u32.GetWindowTextW(hwnd, buf, n + 1)
+            if needle in buf.value.lower():
+                target["hwnd"] = hwnd
+                return False       # stop enumerating
+            return True
+
+        u32.EnumWindows(_enum, 0)
+        hwnd = target["hwnd"]
+        if not hwnd:
+            return False
+
+        SW_RESTORE = 9
+        if u32.IsIconic(hwnd):
+            u32.ShowWindow(hwnd, SW_RESTORE)
+
+        fg = u32.GetForegroundWindow()
+        our_tid = k32.GetCurrentThreadId()
+        fg_tid = u32.GetWindowThreadProcessId(fg, None) if fg else 0
+
+        attached = False
+        if fg_tid and fg_tid != our_tid:
+            attached = bool(u32.AttachThreadInput(fg_tid, our_tid, True))
+        try:
+            u32.BringWindowToTop(hwnd)
+            u32.SetForegroundWindow(hwnd)
+            u32.SetActiveWindow(hwnd)
+        finally:
+            if attached:
+                u32.AttachThreadInput(fg_tid, our_tid, False)
+
+        time.sleep(0.15)
+        return u32.GetForegroundWindow() == hwnd
+    except Exception:
+        return False
+
+
 def focus_window(title_contains: str) -> dict:
     """Bring a window to the foreground, robustly, and CONFIRM it worked."""
+    # Try the real Win32 path FIRST — it's the one that actually works on Windows.
+    if _win32_focus(title_contains):
+        return {"success": True, "action": "focus_window", "title": title_contains,
+                "confirmed": True, "method": "win32"}
     if not HAS_WINDOWS:
         return {"success": False, "error": "pygetwindow not available"}
     try:
@@ -624,11 +693,25 @@ def focus_window(title_contains: str) -> dict:
 
 def _is_foreground(title_contains: str) -> bool:
     """Is a window matching this title currently the active/foreground window?"""
+    needle = (title_contains or "").lower()
+    if os.name == "nt":
+        try:
+            import ctypes
+            u32 = ctypes.windll.user32
+            hwnd = u32.GetForegroundWindow()
+            if hwnd:
+                n = u32.GetWindowTextLengthW(hwnd)
+                buf = ctypes.create_unicode_buffer(n + 1)
+                u32.GetWindowTextW(hwnd, buf, n + 1)
+                if needle and needle in buf.value.lower():
+                    return True
+        except Exception:
+            pass
     if not HAS_WINDOWS:
         return False
     try:
         active = gw.getActiveWindow()
-        if active and active.title and title_contains.lower() in active.title.lower():
+        if active and active.title and needle in active.title.lower():
             return True
     except Exception:
         pass

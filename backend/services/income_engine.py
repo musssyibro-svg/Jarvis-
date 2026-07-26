@@ -189,18 +189,26 @@ def _run_cycle(cfg: dict):
     core.set_goal(goal)
     snap = core.run_full_workflow()
 
-    # Count the cycle + surface it on the "Cycles" tile.
+    # A collision with another workflow is NOT a failed cycle — don't count it
+    # and don't cry wolf in the feed. (This produced the misleading
+    # "Cycle #3 done (FAILED)" lines.)
+    if snap.get("skipped"):
+        _emit("Another scan was already running — this tick was skipped.", "info")
+        return
+
     cfg = get_config()
     cfg["cycles"] = int(cfg.get("cycles", 0)) + 1
     cfg["last_run"] = _now()
+    ok = snap.get("state") == "COMPLETE"
     cfg["last_result"] = {"state": snap.get("state"), "error": snap.get("error")}
     _save_config(cfg)
     try:
         STATE.update_stats(cycles=cfg["cycles"])
     except Exception:
         pass
-    _emit(f"Cycle #{cfg['cycles']} done ({snap.get('state')}). "
-          f"Next in {cfg['interval_min']} min.", "success")
+    _emit(f"Cycle #{cfg['cycles']} " + ("complete" if ok else
+          f"finished with a problem: {snap.get('error') or snap.get('state')}") +
+          f". Next in {cfg['interval_min']} min.", "success" if ok else "warning")
 
 
 def _loop():

@@ -16,7 +16,7 @@ import { API } from "./config.js";
 
 import Chat from "./pages/Chat";
 import Agents from "./pages/Agents";
-import WorkspaceHub from "./pages/WorkspaceHub";
+import Earn from "./pages/Earn";
 import Settings from "./pages/Settings";
 
 /* ── One visual language ─────────────────────────────────────────────────── */
@@ -59,6 +59,7 @@ export default function JarvisOS() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [reply, setReply] = useState(null);
+  const [history, setHistory] = useState([]);   // rolling CPU/RAM samples
   const sseRef = useRef(null);
 
   const [sessionId] = useState(() => {
@@ -75,7 +76,13 @@ export default function JarvisOS() {
     const load = async () => {
       try {
         const r = await fetch(`${API}/os/state?timeline=40`);
-        if (r.ok && alive) setOs(await r.json());
+        if (r.ok && alive) {
+          const d = await r.json();
+          setOs(d);
+          // keep a rolling window of real samples for the vitals graph
+          setHistory((h) => [...h, { cpu: d.system?.cpu ?? 0, ram: d.system?.ram ?? 0,
+                                     t: Date.now() }].slice(-30));
+        }
       } catch { /* backend down — the strip shows it */ }
     };
     load();
@@ -118,6 +125,18 @@ export default function JarvisOS() {
       setReply({ text: `Backend unreachable: ${e.message}`, intent: "error" });
     } finally { setBusy(false); }
   }, [input, sessionId]);
+
+  // Activity ticks for the vitals graph: real events from the last 3 minutes,
+  // positioned by when they happened. Each tick = Jarvis genuinely did something.
+  const activityMarks = (() => {
+    const now = Date.now(), WINDOW = 180_000;
+    return feed.slice(0, 60).map((f) => {
+      const t = f._t || (f._t = now);   // stamp on first render
+      const age = now - t;
+      if (age > WINDOW) return null;
+      return { x: 1 - age / WINDOW, color: LEVEL_COLOR[f.level] || T.dim };
+    }).filter(Boolean);
+  })();
 
   const online = !!os;
   const working = !!os?.status?.running || busy;
@@ -174,10 +193,11 @@ export default function JarvisOS() {
         </nav>
 
         <main style={{ flex: 1, minWidth: 0, overflow: "auto" }}>
-          {surface === "console"   && <Console os={os} onRun={run} reply={reply} busy={busy} />}
+          {surface === "console"   && <Console os={os} onRun={run} reply={reply} busy={busy}
+                                              history={history} activity={activityMarks} />}
           {surface === "chat"      && <Chat />}
           {surface === "computer"  && <Agents />}
-          {surface === "freelance" && <WorkspaceHub />}
+          {surface === "freelance" && <Earn />}
           {surface === "diag"      && <Diagnostics />}
           {surface === "settings"  && <Settings />}
         </main>
@@ -233,8 +253,58 @@ export default function JarvisOS() {
   );
 }
 
+/* ── Vitals graph: a real rolling chart of CPU/RAM + activity spikes ──────
+   Visual, but every pixel is data: the line is actual CPU, the fill is RAM,
+   and the ticks along the bottom mark moments Jarvis actually did something. */
+function VitalsGraph({ history, events, busy }) {
+  const W = 520, H = 84, pad = 4;
+  const pts = history.length ? history : [{ cpu: 0, ram: 0 }];
+  const step = pts.length > 1 ? (W - pad * 2) / (pts.length - 1) : 0;
+  const y = (v) => H - pad - (Math.max(0, Math.min(100, v)) / 100) * (H - pad * 2);
+  const line = (key) => pts.map((p, i) => `${i === 0 ? "M" : "L"} ${pad + i * step} ${y(p[key])}`).join(" ");
+  const area = `${line("ram")} L ${pad + (pts.length - 1) * step} ${H - pad} L ${pad} ${H - pad} Z`;
+  const last = pts[pts.length - 1] || { cpu: 0, ram: 0 };
+
+  return (
+    <div style={{ ...card, padding: 14, position: "relative", overflow: "hidden" }}>
+      {busy && <div className="busy-sweep" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 6 }}>
+        <span style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
+                       color: T.dim, fontWeight: 600 }}>Live vitals</span>
+        <span style={{ fontSize: 11, color: T.cyan }}>CPU {Math.round(last.cpu)}%</span>
+        <span style={{ fontSize: 11, color: T.violet }}>RAM {Math.round(last.ram)}%</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: 10, color: T.dim }}>{events.length} events · last 3 min</span>
+      </div>
+      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+           style={{ display: "block" }}>
+        <defs>
+          <linearGradient id="ramFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={T.violet} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={T.violet} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[25, 50, 75].map((g) => (
+          <line key={g} x1={pad} x2={W - pad} y1={y(g)} y2={y(g)}
+                stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        ))}
+        <path d={area} fill="url(#ramFill)" />
+        <path d={line("ram")} fill="none" stroke={T.violet} strokeWidth="1.2" opacity="0.65" />
+        <path d={line("cpu")} fill="none" stroke={T.cyan} strokeWidth="1.8"
+              strokeLinejoin="round" strokeLinecap="round" />
+        {/* activity ticks — when Jarvis actually did work */}
+        {events.map((e, i) => (
+          <line key={i} x1={pad + e.x * (W - pad * 2)} x2={pad + e.x * (W - pad * 2)}
+                y1={H - pad} y2={H - pad - 10}
+                stroke={e.color} strokeWidth="2" opacity="0.85" />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 /* ── Console surface: goal + subsystems + what it just said ─────────────── */
-function Console({ os, onRun, reply, busy }) {
+function Console({ os, onRun, reply, busy, history, activity }) {
   const subs = os?.subsystems || {};
   return (
     <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -264,6 +334,10 @@ function Console({ os, onRun, reply, busy }) {
           )}
         </div>
       </div>
+
+      {/* Live vitals graph — visual, and every mark on it is real data */}
+      <VitalsGraph history={history || []} events={activity || []}
+                   busy={busy || !!os?.status?.running} />
 
       {/* Last response */}
       {(reply || busy) && (
@@ -325,13 +399,69 @@ function Console({ os, onRun, reply, busy }) {
 /* ── Diagnostics: the exact execution path of every request ─────────────── */
 function Diagnostics() {
   const [data, setData] = useState(null);
+  const [health, setHealth] = useState(null);
   const [open, setOpen] = useState(null);
-  const load = () => fetch(`${API}/os/diagnostics`).then((r) => r.json())
-    .then(setData).catch(() => setData(null));
-  useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, []);
+  const load = () => {
+    fetch(`${API}/os/diagnostics`).then((r) => r.json()).then(setData).catch(() => setData(null));
+    fetch(`${API}/os/health-check`).then((r) => r.json()).then(setHealth).catch(() => setHealth(null));
+  };
+  useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
+
+  const grouped = {};
+  (health?.checks || []).forEach((c) => { (grouped[c.group] ||= []).push(c); });
 
   return (
     <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 18 }}>
+
+      {/* System diagnosis — what's installed, what's missing, how to fix */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ ...sectionLabel, flex: 1 }}>System diagnosis</div>
+          <a href={`${API}/os/report`} download
+             style={{ padding: "7px 14px", borderRadius: 9, fontSize: 12, textDecoration: "none",
+                      background: "rgba(84,214,255,0.1)", border: `1px solid rgba(84,214,255,0.35)`,
+                      color: T.cyan }}>
+            ⤓ Download full report
+          </a>
+        </div>
+        <div style={{ ...card, padding: 16, marginBottom: 10,
+                      borderColor: health?.ok ? "rgba(62,230,168,0.35)" : "rgba(245,181,68,0.35)" }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: health?.ok ? T.green : T.amber }}>
+            {health?.summary || "Checking…"}
+          </div>
+          <div style={{ fontSize: 11.5, color: T.dim, marginTop: 6 }}>
+            The report includes this diagnosis, live state, recent activity, execution traces and
+            log tail — send it when something misbehaves.
+          </div>
+          {(health?.fixes || []).length > 0 && (
+            <div style={{ marginTop: 12, background: "rgba(0,0,0,0.3)", borderRadius: 9, padding: 12 }}>
+              <div style={{ fontSize: 10, color: T.dim, letterSpacing: "0.12em",
+                            textTransform: "uppercase", marginBottom: 7 }}>Run these to fix</div>
+              {health.fixes.map((f, i) => (
+                <div key={i} style={{ fontFamily: "monospace", fontSize: 12, color: T.amber,
+                                      padding: "2px 0" }}>{f}</div>
+              ))}
+            </div>
+          )}
+        </div>
+        {Object.entries(grouped).map(([g, items]) => (
+          <div key={g} style={{ ...card, padding: 14, marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: T.dim, letterSpacing: "0.14em",
+                          textTransform: "uppercase", marginBottom: 9 }}>{g}</div>
+            {items.map((c) => (
+              <div key={c.name} style={{ display: "flex", gap: 10, alignItems: "baseline",
+                                         padding: "4px 0", fontSize: 12.5 }}>
+                <span style={{ color: c.ok ? T.green : T.amber, width: 14 }}>{c.ok ? "✓" : "!"}</span>
+                <span style={{ minWidth: 180 }}>{c.name}</span>
+                <span style={{ color: T.dim, flex: 1 }}>{c.detail}</span>
+                {!c.ok && c.fix && <span style={{ color: T.amber, fontFamily: "monospace",
+                                                  fontSize: 11 }}>{c.fix}</span>}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
       <div>
         <div style={sectionLabel}>Routing health</div>
         <div style={{ ...card, padding: 16, display: "flex", gap: 26 }}>

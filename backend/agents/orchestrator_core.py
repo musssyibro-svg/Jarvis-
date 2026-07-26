@@ -59,6 +59,7 @@ class OrchestratorCore:
         self.retries     = 0
         self.error       = None
         self._transitions = 0
+        self._skipped = False   # True when a run was skipped due to collision
 
     # ── SSE structured event ────────────────────────────────────────────────────
     _UI_STATE = {
@@ -95,10 +96,17 @@ class OrchestratorCore:
             self.state = AgentState.FAILED
             return self.snapshot()
 
-        if not _RUN_LOCK.acquire(blocking=False):
+        # Wait briefly for an in-flight workflow instead of instantly failing.
+        # Instant-fail is why the income engine logged "Cycle #N done (FAILED)"
+        # whenever a manual scan overlapped a scheduled one — nothing was
+        # actually wrong, the two just collided.
+        if not _RUN_LOCK.acquire(timeout=90):
             self.error = "another workflow is already running"
             self.state = AgentState.FAILED
-            self._emit("orchestrator", "Workflow already running — skipped duplicate start", "warning")
+            self._skipped = True      # a collision, NOT a real failure
+            self._emit("orchestrator",
+                       "Another workflow is already running — skipping this start "
+                       "(not an error)", "info")
             return self.snapshot()
         try:
             return self._run_locked()
@@ -305,6 +313,7 @@ class OrchestratorCore:
     # ── Snapshot ─────────────────────────────────────────────────────────────────
     def snapshot(self) -> dict:
         return {
+            "skipped":     getattr(self, "_skipped", False),
             "state":       self.state.name,
             "goal":        self.goal.to_dict() if self.goal else None,
             "progress":    self.progress,

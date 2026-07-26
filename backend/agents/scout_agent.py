@@ -90,6 +90,10 @@ class ScoutAgent(BaseAgent):
                     t["link"]    = t.get("link", "https://www.zuodao.com")
                     t["company"] = "Zuodao"
                 return tasks
+            # User-added sites (services/custom_platforms) scan generically.
+            from services.custom_platforms import list_platforms, scan as scan_custom
+            if any(p["slug"] == platform for p in list_platforms()):
+                return scan_custom(platform, max_jobs)
         except Exception as e:
             self.log(f"_scan({platform}) error: {e}", "error")
         return []

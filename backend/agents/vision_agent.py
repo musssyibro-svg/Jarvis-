@@ -251,6 +251,48 @@ def find_text_on_screen(search_text: str, region: dict = None) -> dict:
     }
 
 
+_ANALYSIS_CACHE = {"sig": None, "answer": None, "at": 0.0, "question": None}
+_CACHE_TTL = 25.0          # seconds a screen analysis stays fresh
+
+
+def _screen_signature(b64: str) -> str:
+    """Cheap fingerprint of the screen so we can skip re-analysing an idle screen."""
+    import hashlib
+    if not b64:
+        return ""
+    # sample the middle of the payload — full hashing a multi-MB PNG is wasteful
+    chunk = b64[len(b64) // 3: len(b64) // 3 + 60000]
+    return hashlib.md5(chunk.encode()).hexdigest()
+
+
+def _window_context() -> str:
+    """
+    What is actually in front? This single line of context is the difference
+    between 'there is text on the screen' and 'you're looking at Notepad'.
+    """
+    try:
+        from agents.desktop_agent import list_windows, _is_foreground
+        import ctypes, os
+        active = ""
+        if os.name == "nt":
+            u32 = ctypes.windll.user32
+            h = u32.GetForegroundWindow()
+            if h:
+                n = u32.GetWindowTextLengthW(h)
+                buf = ctypes.create_unicode_buffer(n + 1)
+                u32.GetWindowTextW(h, buf, n + 1)
+                active = buf.value
+        wins = (list_windows().get("windows") or [])[:8]
+        parts = []
+        if active:
+            parts.append(f"Active window: {active}")
+        if wins:
+            parts.append("Other open windows: " + "; ".join(w for w in wins if w != active)[:300])
+        return "\n".join(parts)
+    except Exception:
+        return ""
+
+
 def analyze_screen(question: str = "") -> dict:
     """
     Take a screenshot and understand it.
@@ -264,6 +306,24 @@ def analyze_screen(question: str = "") -> dict:
 
     b64 = shot.get("b64")
     q = question or "Describe what is on this screen: windows, buttons, text, and layout."
+
+    # ── Tier 0: cache. An unchanged screen with the same question doesn't need
+    #    a second LLM pass — this is the single biggest speed win, because the
+    #    screen is usually identical between rapid asks. ─────────────────────
+    import time as _t
+    sig = _screen_signature(b64)
+    if (sig and _ANALYSIS_CACHE["sig"] == sig
+            and _ANALYSIS_CACHE["question"] == q
+            and _t.time() - _ANALYSIS_CACHE["at"] < _CACHE_TTL):
+        return {"success": True, "screenshot": shot.get("path"),
+                "dimensions": f"{shot.get('width')}x{shot.get('height')}",
+                "method": "cache", "vision_used": False, "cached": True,
+                "screen_text": "", "question": q,
+                "answer": _ANALYSIS_CACHE["answer"],
+                "ai_answer": _ANALYSIS_CACHE["answer"]}
+
+    # Window context makes the answer specific instead of generic.
+    win_ctx = _window_context()
 
     # ── Try real vision first (llava) ─────────────────────────────────────────
     vision_used = False
@@ -292,13 +352,17 @@ def analyze_screen(question: str = "") -> dict:
         else:
             ocr_error = ocr_result.get("error", "OCR failed")
         answer = None
-        if screen_text.strip():
-            prompt = (f"You are Jarvis looking at the user's screen through OCR. "
-                      f"The extracted screen text is:\n---\n{screen_text[:2500]}\n---\n\n"
-                      f"Question: {q}\n"
-                      f"Answer concretely from the text above. Then, on a new line "
-                      f"starting with 'Suggested next action:', suggest ONE next "
-                      f"desktop action if any is obviously useful (or 'none').")
+        if screen_text.strip() or win_ctx:
+            prompt = (f"You are Jarvis, looking at the user's Windows screen.\n"
+                      f"{win_ctx}\n\n"
+                      f"Text read from the screen (OCR, may be noisy):\n"
+                      f"---\n{screen_text[:2200]}\n---\n\n"
+                      f"Question: {q}\n\n"
+                      f"Answer in 2-4 short sentences. Say WHICH APPLICATION is in "
+                      f"front and what the user is doing. Ignore OCR noise and "
+                      f"background windows. If a dialog or button matters, name it. "
+                      f"Then on a new line starting with 'Next:' suggest one useful "
+                      f"action, or 'Next: none'.")
             try:
                 from services.ollama_manager import reason
                 answer = reason(prompt)
@@ -316,12 +380,18 @@ def analyze_screen(question: str = "") -> dict:
                       + ". Install/fix Tesseract OCR, or pull the llava vision "
                         "model in Ollama for true image understanding.")
 
+    # Remember it so an immediate repeat ask is instant.
+    if sig and answer:
+        _ANALYSIS_CACHE.update(sig=sig, answer=answer, at=_t.time(), question=q)
+
     return {
         "success":     True,
         "screenshot":  shot.get("path"),
         "dimensions":  f"{shot.get('width')}x{shot.get('height')}",
-        "method":      "llava-vision" if vision_used else "ocr-fallback",
+        "method":      "llava-vision" if vision_used else "ocr+context",
         "vision_used": vision_used,
+        "cached":      False,
+        "window_context": win_ctx,
         "screen_text": screen_text[:2000],
         "question":    q,
         "answer":      answer,

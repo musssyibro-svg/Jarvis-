@@ -5,7 +5,13 @@ const C = { accent:'#00d4ff', green:'#00ff88', orange:'#ff9500', red:'#ff4444', 
 const card  = { border:'1px solid rgba(0,212,255,0.15)', borderRadius:4, padding:18, background:'rgba(0,8,16,0.8)', marginBottom:12 }
 const label = { fontSize:9, color:'rgba(0,212,255,0.45)', letterSpacing:'0.2em', marginBottom:10, textTransform:'uppercase' }
 const inp   = { width:'100%', background:'rgba(0,10,20,0.9)', border:'1px solid rgba(0,212,255,0.2)', outline:'none', color:'#c8e8f0', padding:'8px 11px', fontSize:11, fontFamily:'monospace', borderRadius:3, boxSizing:'border-box' }
-const btn   = (c='#00d4ff') => ({ padding:'7px 16px', borderRadius:3, border:`1px solid ${c}`, background:`${c}18`, color:c, fontFamily:'monospace', fontSize:9, cursor:'pointer', letterSpacing:'0.1em' })
+// `${c}18` only makes a valid colour when c is a 6-digit hex. Callers were also
+// passing rgba(...) — producing "rgba(255,255,255,0.15)18", which the browser
+// throws away, leaving a DEFAULT WHITE BUTTON with near-invisible text. That was
+// the "white blank buttons" bug. Tint safely for any colour format.
+const tint  = (c, a=0.09) => (String(c).startsWith('#') && (c.length === 7 || c.length === 4))
+  ? `${c}18` : `color-mix(in srgb, ${c} 12%, transparent)`
+const btn   = (c='#00d4ff') => ({ padding:'7px 16px', borderRadius:3, border:`1px solid ${c}`, background:tint(c), color:c, fontFamily:'monospace', fontSize:9, cursor:'pointer', letterSpacing:'0.1em' })
 const Dot   = ({on}) => <span style={{ width:7,height:7,borderRadius:'50%',background:on?C.green:'rgba(255,255,255,0.15)',boxShadow:on?`0 0 6px ${C.green}`:'none',display:'inline-block',marginRight:6 }} />
 
 const LEVEL_COLOR = { info:C.accent, success:C.green, warning:C.orange, error:C.red }
@@ -139,7 +145,7 @@ export default function Agents() {
       {/* Tabs */}
       <div style={{ display:'flex',gap:6,marginBottom:18,flexWrap:'wrap' }}>
         {TABS.map(t => (
-          <button key={t} onClick={()=>setTab(t)} style={{ ...btn(tab===t?C.accent:'rgba(255,255,255,0.2)'), background:tab===t?'rgba(0,212,255,0.12)':'transparent' }}>
+          <button key={t} onClick={()=>setTab(t)} style={{ ...btn(tab===t?C.accent:'#8aa0b4'), background:tab===t?'rgba(0,212,255,0.12)':'transparent' }}>
             {t.toUpperCase()}
           </button>
         ))}
@@ -185,7 +191,7 @@ export default function Agents() {
                 </button>
               </div>
               {['Take a screenshot', 'Open notepad', "What's on my screen?", 'Plan: apply for 3 jobs today'].map(q => (
-                <button key={q} onClick={()=>{setCmdInput(q);}} style={{ ...btn('rgba(255,255,255,0.2)'),marginTop:5,marginRight:5,fontSize:8 }}>{q}</button>
+                <button key={q} onClick={()=>{setCmdInput(q);}} style={{ ...btn('#8aa0b4'),marginTop:5,marginRight:5,fontSize:8 }}>{q}</button>
               ))}
             </div>
           </div>
@@ -264,7 +270,7 @@ export default function Agents() {
               </div>
               <div style={{ display:'flex',gap:5,flexWrap:'wrap' }}>
                 {['chrome','edge','vscode','discord','telegram','steam','explorer','notepad','calculator','spotify','cmd'].map(a=>(
-                  <button key={a} onClick={()=>{setAppName(a);}} style={{ ...btn('rgba(255,255,255,0.2)'),fontSize:8 }}>{a}</button>
+                  <button key={a} onClick={()=>{setAppName(a);}} style={{ ...btn('#8aa0b4'),fontSize:8 }}>{a}</button>
                 ))}
               </div>
             </div>
@@ -426,7 +432,7 @@ export default function Agents() {
               </div>
               <div style={{ display:'flex',gap:5,flexWrap:'wrap',marginTop:8 }}>
                 {['Apply for 3 Python jobs today','Check Freelancer inbox and draft replies','Screenshot and analyze my screen'].map(g=>(
-                  <button key={g} onClick={()=>setPlanGoal(g)} style={{ ...btn('rgba(255,255,255,0.15)'),fontSize:8 }}>{g}</button>
+                  <button key={g} onClick={()=>setPlanGoal(g)} style={{ ...btn('#8aa0b4'),fontSize:8 }}>{g}</button>
                 ))}
               </div>
             </div>
@@ -459,7 +465,7 @@ export default function Agents() {
             <div style={card}>
               <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10 }}>
                 <div style={label}>SAVED PLANS</div>
-                <button onClick={loadPlans} style={{ ...btn('rgba(255,255,255,0.2)'),padding:'3px 8px',fontSize:8 }}>↺</button>
+                <button onClick={loadPlans} style={{ ...btn('#8aa0b4'),padding:'3px 8px',fontSize:8 }}>↺</button>
               </div>
               {plans.length===0 && <div style={{ color:'rgba(255,255,255,0.2)',fontSize:11 }}>No plans yet</div>}
               {plans.map(p=>(
@@ -538,7 +544,7 @@ export default function Agents() {
         <div style={card}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12 }}>
             <div style={label}>LIVE AGENT FEED</div>
-            <button onClick={()=>setFeed([])} style={{ ...btn('rgba(255,255,255,0.2)'),padding:'3px 10px',fontSize:8 }}>CLEAR</button>
+            <button onClick={()=>setFeed([])} style={{ ...btn('#8aa0b4'),padding:'3px 10px',fontSize:8 }}>CLEAR</button>
           </div>
           <div style={{ background:'rgba(0,4,8,0.95)',borderRadius:3,padding:14,height:'calc(100vh - 220px)',overflowY:'auto',fontFamily:'monospace',fontSize:10 }}>
             {feed.length===0&&<div style={{color:'rgba(255,255,255,0.15)'}}>No events yet. Interact with any agent to see live activity.</div>}
@@ -613,7 +619,7 @@ function RegistryPanel() {
             placeholder={template || 'class MyAgent:\n    def run(self, context):\n        return {"ok": True}'} />
           <div style={{ display:'flex', gap:8 }}>
             <button onClick={install} style={btn(C.green)}>⬢ INSTALL AGENT</button>
-            <button onClick={()=>setCode(template)} style={btn('rgba(255,255,255,0.25)')}>USE TEMPLATE</button>
+            <button onClick={()=>setCode(template)} style={btn('#8aa0b4')}>USE TEMPLATE</button>
           </div>
           {msg?.ok  && <div style={{ marginTop:8, fontSize:10, color:C.green,  fontFamily:'monospace' }}>{msg.ok}</div>}
           {msg?.err && <div style={{ marginTop:8, fontSize:10, color:C.red,    fontFamily:'monospace' }}>{msg.err}</div>}
@@ -631,7 +637,7 @@ function RegistryPanel() {
         <div style={card}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
             <div style={label}>REGISTERED AGENTS ({agents.length})</div>
-            <button onClick={load} style={{ ...btn('rgba(255,255,255,0.2)'), padding:'3px 8px', fontSize:8 }}>↺</button>
+            <button onClick={load} style={{ ...btn('#8aa0b4'), padding:'3px 8px', fontSize:8 }}>↺</button>
           </div>
           {agents.map(a => (
             <div key={a.name} style={{ padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>

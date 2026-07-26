@@ -1,82 +1,110 @@
 @echo off
 REM ============================================================
-REM  JARVIS — one-click start for Windows
-REM  Double-click this file, or run it from the Node.js prompt.
+REM  JARVIS — true one-click start (backend + UI + browser)
+REM  Double-click this file. Nothing else needs to be run.
 REM ============================================================
-setlocal
+title Jarvis Launcher
+setlocal EnableDelayedExpansion
 cd /d "%~dp0"
+set "ROOT=%~dp0"
 
 echo.
-echo ===========================================
-echo   JARVIS - Starting up
-echo ===========================================
+echo  ===============================================
+echo    JARVIS - starting
+echo  ===============================================
 echo.
 
-REM --- 1. Check Python ---
-where python >nul 2>nul
-if errorlevel 1 (
-  echo [ERROR] Python not found. Install Python 3.11 and re-run.
-  pause
-  exit /b 1
+REM ---------- 1. Python ----------
+set "PY="
+where py >nul 2>nul && set "PY=py -3"
+if not defined PY ( where python >nul 2>nul && set "PY=python" )
+if not defined PY (
+  echo  [X] Python not found on PATH.
+  echo      Install Python 3.11+ from python.org and TICK "Add Python to PATH".
+  echo.
+  pause & exit /b 1
 )
+echo  [ok] Python: %PY%
 
-REM --- 2. Check Ollama is running ---
-echo [1/5] Checking Ollama...
+REM ---------- 2. Node / npm ----------
+REM npm is npm.cmd — `where npm` can miss it in some shells, so check both.
+set "NPM="
+where npm >nul 2>nul && set "NPM=npm"
+if not defined NPM ( where npm.cmd >nul 2>nul && set "NPM=npm.cmd" )
+if not defined NPM (
+  echo  [X] Node.js / npm not found on PATH.  ^<-- this is why the UI never opened
+  echo      Install Node.js LTS from nodejs.org, then re-run this file.
+  echo.
+  pause & exit /b 1
+)
+echo  [ok] npm found
+
+REM ---------- 3. Ollama ----------
 curl -s http://127.0.0.1:11434/api/tags >nul 2>nul
 if errorlevel 1 (
-  echo       Ollama not responding. Starting it in a new window...
-  start "Ollama" cmd /c "ollama serve"
+  echo  [..] Ollama not responding - starting it
+  start "Ollama" /min cmd /c "ollama serve"
   timeout /t 4 >nul
 ) else (
-  echo       Ollama is running.
+  echo  [ok] Ollama already running
 )
 
-REM --- 2b. Brain: make sure the tiny embedding model is available (274MB, once) ---
-REM Non-fatal: the Brain works in keyword mode without it.
-ollama list 2>nul | findstr /i "nomic-embed-text" >nul 2>nul
+REM ---------- 4. Backend deps ----------
+echo  [..] Backend dependencies
+pushd "%ROOT%backend"
+%PY% -m pip install -q -r requirements.txt 2>nul
 if errorlevel 1 (
-  echo       Pulling brain embedding model nomic-embed-text (274MB, first run only^)...
-  start "Ollama pull" /min cmd /c "ollama pull nomic-embed-text"
+  echo       retrying via mirror
+  %PY% -m pip install -q -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple -r requirements.txt 2>nul
 )
+popd
 
-REM --- 3. Install backend dependencies ---
-echo [2/5] Installing backend dependencies (first run only, may take a few minutes)...
-cd backend
-python -m pip install -q -r requirements.txt
-if errorlevel 1 (
-  echo       Retrying with China mirror...
-  python -m pip install -q -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple -r requirements.txt
-)
+REM ---------- 5. Backend ----------
+echo  [..] Starting backend on http://127.0.0.1:8000
+start "Jarvis Backend" cmd /k "cd /d ""%ROOT%backend"" && %PY% -m uvicorn main:app --port 8000"
 
-REM --- 4. Start backend ---
-echo [3/5] Starting backend on http://127.0.0.1:8000 ...
-start "Jarvis Backend" cmd /k "python -m uvicorn main:app --reload --port 8000"
-cd ..
-timeout /t 5 >nul
-
-REM --- 5. Start frontend ---
-echo [4/5] Installing + starting frontend...
-cd frontend
-if not exist node_modules (
-  echo       Installing frontend packages (first run only)...
-  call npm install
+REM ---------- 6. Frontend deps ----------
+if not exist "%ROOT%frontend\node_modules" (
+  echo  [..] Installing UI packages ^(first run only, few minutes^)
+  pushd "%ROOT%frontend"
+  call %NPM% install
   if errorlevel 1 (
-    echo       Retrying with China npm mirror...
-    call npm install --registry=https://registry.npmmirror.com
+    echo       retrying via China mirror
+    call %NPM% install --registry=https://registry.npmmirror.com
   )
+  popd
 )
-echo [5/5] Launching UI...
-start "Jarvis Frontend" cmd /k "npm run dev"
-cd ..
 
+REM ---------- 7. Frontend ----------
+echo  [..] Starting UI on http://localhost:5173
+start "Jarvis UI" cmd /k "cd /d ""%ROOT%frontend"" && %NPM% run dev"
+
+REM ---------- 8. Wait for the UI, then open the browser ----------
+echo  [..] Waiting for the UI to come up...
+set /a tries=0
+:waitloop
+timeout /t 2 >nul
+set /a tries+=1
+curl -s http://localhost:5173 >nul 2>nul
+if not errorlevel 1 goto ready
+if %tries% lss 30 goto waitloop
+echo  [!] UI didn't answer on :5173 after 60s. Check the "Jarvis UI" window for errors.
+goto done
+
+:ready
+echo  [ok] UI is up - opening browser
+start "" http://localhost:5173
+
+:done
 echo.
-echo ===========================================
-echo   Jarvis is starting.
-echo   Backend:  http://127.0.0.1:8000
-echo   SSE test: http://127.0.0.1:8000/orchestrator/sse
-echo   UI:       open the URL the frontend window prints
-echo             (usually http://localhost:5173)
-echo ===========================================
+echo  ===============================================
+echo    Jarvis is running.
+echo      UI       http://localhost:5173
+echo      Backend  http://127.0.0.1:8000
+echo      Docs     http://127.0.0.1:8000/api/docs
 echo.
-echo This window can be closed. The two new windows run Jarvis.
-pause
+echo    Two windows opened (Backend + UI). Closing
+echo    them stops Jarvis. This window can be closed.
+echo  ===============================================
+echo.
+timeout /t 10

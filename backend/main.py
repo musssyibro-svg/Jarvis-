@@ -93,6 +93,13 @@ def _startup():
     except Exception as e:
         logger.warning(f"App-path store init: {e}")
     try:
+        from services.custom_platforms import init_custom_platforms, _register_with_session_manager
+        init_custom_platforms()
+        _register_with_session_manager()   # user-added freelance sites become first-class
+        logger.info("Custom platforms ready.")
+    except Exception as e:
+        logger.warning(f"Custom platforms init: {e}")
+    try:
         from services.brain_core import start as start_brain
         start_brain()           # world model sensing + event-first proactive loop
         logger.info("Brain online (world model + event bus).")

@@ -67,6 +67,40 @@ def vault_delete(platform: str):
     return delete_credential(platform)
 
 
+# ── User-added freelance sites ────────────────────────────────────────────────
+
+class PlatformIn(BaseModel):
+    label: str
+    jobs_url: str
+    login_url: str = ""
+    kind: str = "board"          # bid | board | talent | micro
+    username: str = ""
+    password: str = ""
+
+
+@router.get("/custom")
+def list_custom():
+    from services.custom_platforms import list_platforms
+    return {"platforms": list_platforms()}
+
+
+@router.post("/custom")
+def add_custom(body: PlatformIn):
+    """Add any freelance site (+ optional login) — it joins the automation."""
+    from services.custom_platforms import add_platform
+    r = add_platform(body.label, body.jobs_url, body.login_url, body.kind,
+                     username=body.username, password=body.password)
+    if not r.get("ok"):
+        raise HTTPException(400, r.get("error", "failed"))
+    return r
+
+
+@router.delete("/custom/{slug}")
+def delete_custom(slug: str):
+    from services.custom_platforms import delete_platform
+    return delete_platform(slug)
+
+
 @router.post("/check-replies")
 def check_replies(background_tasks: BackgroundTasks):
     """Sync the Freelancer inbox in the background; results land in Messages."""

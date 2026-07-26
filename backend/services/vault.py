@@ -32,7 +32,12 @@ CREATE TABLE IF NOT EXISTS vault_credentials (
 try:
     from cryptography.fernet import Fernet
     HAS_CRYPTO = True
-except ImportError:
+except BaseException:
+    # BaseException, not ImportError: a broken/partial cryptography install
+    # (mismatched native wheel) raises pyo3 PanicException, which is NOT an
+    # Exception subclass. Letting that escape would take down every module that
+    # merely imports the vault. Degrade to "no vault" instead.
+    Fernet = None
     HAS_CRYPTO = False
 
 

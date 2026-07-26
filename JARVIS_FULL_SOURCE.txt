@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 151 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 154 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -101,68 +101,71 @@ TABLE OF CONTENTS
  92. backend/services/browser_monitor.py
  93. backend/services/capability_registry.py
  94. backend/services/clickworker_service.py
- 95. backend/services/deepseek_service.py
- 96. backend/services/event_bus.py
- 97. backend/services/fiverr_service.py
- 98. backend/services/freelancer_api.py
- 99. backend/services/hubstaff_service.py
-100. backend/services/income_engine.py
-101. backend/services/model_router.py
-102. backend/services/ollama_manager.py
-103. backend/services/os_state.py
-104. backend/services/planner_service.py
-105. backend/services/platform_meta.py
-106. backend/services/profile_service.py
-107. backend/services/pulse_service.py
-108. backend/services/reflection.py
-109. backend/services/session_manager.py
-110. backend/services/tool_registry.py
-111. backend/services/trace.py
-112. backend/services/vault.py
-113. backend/services/workflow_service.py
-114. backend/services/world_model.py
-115. backend/services/zuodao_service.py
-116. frontend/index.html
-117. frontend/package.json
-118. frontend/src/App.jsx
-119. frontend/src/JarvisOS.jsx
-120. frontend/src/components/UI.jsx
-121. frontend/src/config.js
-122. frontend/src/index.css
-123. frontend/src/main.jsx
-124. frontend/src/pages/Agents.jsx
-125. frontend/src/pages/Analytics.jsx
-126. frontend/src/pages/AutoMode.jsx
-127. frontend/src/pages/Chat.jsx
-128. frontend/src/pages/Jobs.jsx
-129. frontend/src/pages/Messages.jsx
-130. frontend/src/pages/Notes.jsx
-131. frontend/src/pages/Proposals.jsx
-132. frontend/src/pages/Settings.jsx
-133. frontend/src/pages/Tasks.jsx
-134. frontend/src/pages/Workspace.jsx
-135. frontend/src/pages/WorkspaceHub.jsx
-136. frontend/vite.config.js
-137. .gitignore
-138. FINAL_PROJECT_TREE_backend.txt
-139. FINAL_PROJECT_TREE_frontend.txt
-140. LEGACY_GREP_ARTIFACT.txt
-141. PROJECT_TREE.txt
-142. REQUIREMENTS_SNAPSHOT.txt
-143. RUNTIME_VALIDATION.py
-144. RUN_VALIDATION.bat
-145. START_JARVIS.bat
-146. legacy_dependency_report.json
-147. requirements.txt
-148. start.bat
-149. start.sh
-150. start_frontend.bat
-151. tools/dump_source.py
+ 95. backend/services/custom_platforms.py
+ 96. backend/services/deepseek_service.py
+ 97. backend/services/diagnostics.py
+ 98. backend/services/event_bus.py
+ 99. backend/services/fiverr_service.py
+100. backend/services/freelancer_api.py
+101. backend/services/hubstaff_service.py
+102. backend/services/income_engine.py
+103. backend/services/model_router.py
+104. backend/services/ollama_manager.py
+105. backend/services/os_state.py
+106. backend/services/planner_service.py
+107. backend/services/platform_meta.py
+108. backend/services/profile_service.py
+109. backend/services/pulse_service.py
+110. backend/services/reflection.py
+111. backend/services/session_manager.py
+112. backend/services/tool_registry.py
+113. backend/services/trace.py
+114. backend/services/vault.py
+115. backend/services/workflow_service.py
+116. backend/services/world_model.py
+117. backend/services/zuodao_service.py
+118. frontend/index.html
+119. frontend/package.json
+120. frontend/src/App.jsx
+121. frontend/src/JarvisOS.jsx
+122. frontend/src/components/UI.jsx
+123. frontend/src/config.js
+124. frontend/src/index.css
+125. frontend/src/main.jsx
+126. frontend/src/pages/Agents.jsx
+127. frontend/src/pages/Analytics.jsx
+128. frontend/src/pages/AutoMode.jsx
+129. frontend/src/pages/Chat.jsx
+130. frontend/src/pages/Earn.jsx
+131. frontend/src/pages/Jobs.jsx
+132. frontend/src/pages/Messages.jsx
+133. frontend/src/pages/Notes.jsx
+134. frontend/src/pages/Proposals.jsx
+135. frontend/src/pages/Settings.jsx
+136. frontend/src/pages/Tasks.jsx
+137. frontend/src/pages/Workspace.jsx
+138. frontend/src/pages/WorkspaceHub.jsx
+139. frontend/vite.config.js
+140. .gitignore
+141. FINAL_PROJECT_TREE_backend.txt
+142. FINAL_PROJECT_TREE_frontend.txt
+143. LEGACY_GREP_ARTIFACT.txt
+144. PROJECT_TREE.txt
+145. REQUIREMENTS_SNAPSHOT.txt
+146. RUNTIME_VALIDATION.py
+147. RUN_VALIDATION.bat
+148. START_JARVIS.bat
+149. legacy_dependency_report.json
+150. requirements.txt
+151. start.bat
+152. start.sh
+153. start_frontend.bat
+154. tools/dump_source.py
 
 
 
 ################################################################################
-# FILE 1/151: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 1/154: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -228,7 +231,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 2/151: ARCHITECTURE.md
+# FILE 2/154: ARCHITECTURE.md
 ################################################################################
 ```md
 # Jarvis architecture (foundational layer)
@@ -295,7 +298,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 3/151: BRAIN_GUIDE.md
+# FILE 3/154: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -351,7 +354,7 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/151: CONTROL_FLOW_REPORT.md
+# FILE 4/154: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -406,7 +409,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 5/151: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 5/154: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -485,7 +488,7 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 6/151: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 6/154: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -604,7 +607,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 7/151: HIDDEN_RUNTIME_AUDIT.md
+# FILE 7/154: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -757,7 +760,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 8/151: MIGRATION_CHANGELOG.md
+# FILE 8/154: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -804,7 +807,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 9/151: PLANNER_AND_DOCTOR.md
+# FILE 9/154: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -861,7 +864,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 10/151: PRE_RELEASE_AUDIT.md
+# FILE 10/154: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1046,7 +1049,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 11/151: QA_VERIFICATION_REPORT.md
+# FILE 11/154: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -1140,7 +1143,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 12/151: README.md
+# FILE 12/154: README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -1276,7 +1279,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 13/151: README_START_HERE.md
+# FILE 13/154: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -1331,7 +1334,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 14/151: REAL_MACHINE_FIXES.md
+# FILE 14/154: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -1432,7 +1435,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 15/151: RESEARCH_UPGRADE_2026-07.md
+# FILE 15/154: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -1521,7 +1524,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 16/151: RUNTIME_VALIDATION_README.md
+# FILE 16/154: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -1559,7 +1562,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 17/151: STAGE2_CHANGELOG.md
+# FILE 17/154: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -1596,7 +1599,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 18/151: START_HERE.md
+# FILE 18/154: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -1747,7 +1750,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 19/151: V8_PHASE1_REPORT.md
+# FILE 19/154: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -1803,7 +1806,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 20/151: V9_FINAL_README.md
+# FILE 20/154: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -1865,7 +1868,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 21/151: V9_STAGE1_MIGRATION.md
+# FILE 21/154: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -1929,7 +1932,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 22/151: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 22/154: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -2001,7 +2004,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 23/151: WINDOWS_DEPLOYMENT.md
+# FILE 23/154: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -2039,7 +2042,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 24/151: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 24/154: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -2129,7 +2132,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 25/151: backend/README.md
+# FILE 25/154: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -2265,14 +2268,14 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 26/151: backend/adapters/__init__.py
+# FILE 26/154: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 27/151: backend/adapters/commander_adapter.py
+# FILE 27/154: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -2909,14 +2912,14 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 ```
 
 ################################################################################
-# FILE 28/151: backend/agents/__init__.py
+# FILE 28/154: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 29/151: backend/agents/base_agent.py
+# FILE 29/154: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -2939,7 +2942,7 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 30/151: backend/agents/browser_agent.py
+# FILE 30/154: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
@@ -3034,7 +3037,7 @@ class BrowserAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 31/151: backend/agents/commander.py
+# FILE 31/154: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -3171,14 +3174,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 32/151: backend/agents/custom/__init__.py
+# FILE 32/154: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 33/151: backend/agents/desktop_agent.py
+# FILE 33/154: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -3654,11 +3657,12 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
             if not _is_foreground(last_opened):
                 fw = focus_window(last_opened)
                 results.append({"step": f"{i}.focus", "action": "focus_window", **fw})
-                if not fw.get("confirmed", fw.get("success", False)):
-                    return {"success": False, "steps": results, "failed_at": i + 1,
-                            "error": f"opened {last_opened} but couldn't bring it to the "
-                                     f"foreground — nothing was typed/clicked, so I'm not "
-                                     f"claiming this worked"}
+                # If focus can't be CONFIRMED we no longer abort outright: the
+                # confirmation itself can be unreliable (odd window titles), and
+                # type_text is independently verified by a clipboard read-back —
+                # that check is the real arbiter of whether the text landed. So
+                # try anyway and let verification decide. Still truthful: if the
+                # text didn't land, the step fails with that exact reason.
                 time.sleep(0.3)
 
         retries = 0 if action in _NO_RETRY else max_retries
@@ -3761,8 +3765,76 @@ def close_window(title_contains: str) -> dict:
         return {"success": False, "error": str(e)}
 
 
+def _win32_focus(title_contains: str) -> bool:
+    """
+    Bring a window to the front using the Win32 API directly (ctypes — no new
+    dependency). pygetwindow's .activate() fails on modern Windows because the
+    OS refuses SetForegroundWindow from a process that doesn't own the current
+    foreground window. The accepted workaround is to attach our input queue to
+    the foreground thread first, which is what this does. This is the fix for
+    the live "opened notepad but couldn't bring it to the foreground" failure.
+    """
+    if os.name != "nt":
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+        u32 = ctypes.windll.user32
+        k32 = ctypes.windll.kernel32
+
+        target = {"hwnd": None}
+        needle = (title_contains or "").lower()
+
+        @ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
+        def _enum(hwnd, _):
+            if not u32.IsWindowVisible(hwnd):
+                return True
+            n = u32.GetWindowTextLengthW(hwnd)
+            if n <= 0:
+                return True
+            buf = ctypes.create_unicode_buffer(n + 1)
+            u32.GetWindowTextW(hwnd, buf, n + 1)
+            if needle in buf.value.lower():
+                target["hwnd"] = hwnd
+                return False       # stop enumerating
+            return True
+
+        u32.EnumWindows(_enum, 0)
+        hwnd = target["hwnd"]
+        if not hwnd:
+            return False
+
+        SW_RESTORE = 9
+        if u32.IsIconic(hwnd):
+            u32.ShowWindow(hwnd, SW_RESTORE)
+
+        fg = u32.GetForegroundWindow()
+        our_tid = k32.GetCurrentThreadId()
+        fg_tid = u32.GetWindowThreadProcessId(fg, None) if fg else 0
+
+        attached = False
+        if fg_tid and fg_tid != our_tid:
+            attached = bool(u32.AttachThreadInput(fg_tid, our_tid, True))
+        try:
+            u32.BringWindowToTop(hwnd)
+            u32.SetForegroundWindow(hwnd)
+            u32.SetActiveWindow(hwnd)
+        finally:
+            if attached:
+                u32.AttachThreadInput(fg_tid, our_tid, False)
+
+        time.sleep(0.15)
+        return u32.GetForegroundWindow() == hwnd
+    except Exception:
+        return False
+
+
 def focus_window(title_contains: str) -> dict:
     """Bring a window to the foreground, robustly, and CONFIRM it worked."""
+    # Try the real Win32 path FIRST — it's the one that actually works on Windows.
+    if _win32_focus(title_contains):
+        return {"success": True, "action": "focus_window", "title": title_contains,
+                "confirmed": True, "method": "win32"}
     if not HAS_WINDOWS:
         return {"success": False, "error": "pygetwindow not available"}
     try:
@@ -3807,11 +3879,25 @@ def focus_window(title_contains: str) -> dict:
 
 def _is_foreground(title_contains: str) -> bool:
     """Is a window matching this title currently the active/foreground window?"""
+    needle = (title_contains or "").lower()
+    if os.name == "nt":
+        try:
+            import ctypes
+            u32 = ctypes.windll.user32
+            hwnd = u32.GetForegroundWindow()
+            if hwnd:
+                n = u32.GetWindowTextLengthW(hwnd)
+                buf = ctypes.create_unicode_buffer(n + 1)
+                u32.GetWindowTextW(hwnd, buf, n + 1)
+                if needle and needle in buf.value.lower():
+                    return True
+        except Exception:
+            pass
     if not HAS_WINDOWS:
         return False
     try:
         active = gw.getActiveWindow()
-        if active and active.title and title_contains.lower() in active.title.lower():
+        if active and active.title and needle in active.title.lower():
             return True
     except Exception:
         pass
@@ -4069,7 +4155,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 34/151: backend/agents/executor_agent.py
+# FILE 34/154: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -4540,7 +4626,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 35/151: backend/agents/memory_agent.py
+# FILE 35/154: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -4698,7 +4784,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 36/151: backend/agents/orchestrator.py
+# FILE 36/154: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -4811,7 +4897,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 37/151: backend/agents/orchestrator_core.py
+# FILE 37/154: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -4875,6 +4961,7 @@ class OrchestratorCore:
         self.retries     = 0
         self.error       = None
         self._transitions = 0
+        self._skipped = False   # True when a run was skipped due to collision
 
     # ── SSE structured event ────────────────────────────────────────────────────
     _UI_STATE = {
@@ -4911,10 +4998,17 @@ class OrchestratorCore:
             self.state = AgentState.FAILED
             return self.snapshot()
 
-        if not _RUN_LOCK.acquire(blocking=False):
+        # Wait briefly for an in-flight workflow instead of instantly failing.
+        # Instant-fail is why the income engine logged "Cycle #N done (FAILED)"
+        # whenever a manual scan overlapped a scheduled one — nothing was
+        # actually wrong, the two just collided.
+        if not _RUN_LOCK.acquire(timeout=90):
             self.error = "another workflow is already running"
             self.state = AgentState.FAILED
-            self._emit("orchestrator", "Workflow already running — skipped duplicate start", "warning")
+            self._skipped = True      # a collision, NOT a real failure
+            self._emit("orchestrator",
+                       "Another workflow is already running — skipping this start "
+                       "(not an error)", "info")
             return self.snapshot()
         try:
             return self._run_locked()
@@ -5121,6 +5215,7 @@ class OrchestratorCore:
     # ── Snapshot ─────────────────────────────────────────────────────────────────
     def snapshot(self) -> dict:
         return {
+            "skipped":     getattr(self, "_skipped", False),
             "state":       self.state.name,
             "goal":        self.goal.to_dict() if self.goal else None,
             "progress":    self.progress,
@@ -5134,7 +5229,7 @@ core = OrchestratorCore()
 ```
 
 ################################################################################
-# FILE 38/151: backend/agents/perception_agent.py
+# FILE 38/154: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -5344,7 +5439,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 39/151: backend/agents/proposal_agent.py
+# FILE 39/154: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -5502,7 +5597,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 40/151: backend/agents/registry.py
+# FILE 40/154: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -5822,7 +5917,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 41/151: backend/agents/scheduler.py
+# FILE 41/154: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -5926,7 +6021,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 42/151: backend/agents/score_agent.py
+# FILE 42/154: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -6127,7 +6222,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 43/151: backend/agents/scout_agent.py
+# FILE 43/154: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -6222,13 +6317,17 @@ class ScoutAgent(BaseAgent):
                     t["link"]    = t.get("link", "https://www.zuodao.com")
                     t["company"] = "Zuodao"
                 return tasks
+            # User-added sites (services/custom_platforms) scan generically.
+            from services.custom_platforms import list_platforms, scan as scan_custom
+            if any(p["slug"] == platform for p in list_platforms()):
+                return scan_custom(platform, max_jobs)
         except Exception as e:
             self.log(f"_scan({platform}) error: {e}", "error")
         return []
 ```
 
 ################################################################################
-# FILE 44/151: backend/agents/v9_models.py
+# FILE 44/154: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -6286,7 +6385,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 45/151: backend/agents/vision_agent.py
+# FILE 45/154: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -6542,6 +6641,48 @@ def find_text_on_screen(search_text: str, region: dict = None) -> dict:
     }
 
 
+_ANALYSIS_CACHE = {"sig": None, "answer": None, "at": 0.0, "question": None}
+_CACHE_TTL = 25.0          # seconds a screen analysis stays fresh
+
+
+def _screen_signature(b64: str) -> str:
+    """Cheap fingerprint of the screen so we can skip re-analysing an idle screen."""
+    import hashlib
+    if not b64:
+        return ""
+    # sample the middle of the payload — full hashing a multi-MB PNG is wasteful
+    chunk = b64[len(b64) // 3: len(b64) // 3 + 60000]
+    return hashlib.md5(chunk.encode()).hexdigest()
+
+
+def _window_context() -> str:
+    """
+    What is actually in front? This single line of context is the difference
+    between 'there is text on the screen' and 'you're looking at Notepad'.
+    """
+    try:
+        from agents.desktop_agent import list_windows, _is_foreground
+        import ctypes, os
+        active = ""
+        if os.name == "nt":
+            u32 = ctypes.windll.user32
+            h = u32.GetForegroundWindow()
+            if h:
+                n = u32.GetWindowTextLengthW(h)
+                buf = ctypes.create_unicode_buffer(n + 1)
+                u32.GetWindowTextW(h, buf, n + 1)
+                active = buf.value
+        wins = (list_windows().get("windows") or [])[:8]
+        parts = []
+        if active:
+            parts.append(f"Active window: {active}")
+        if wins:
+            parts.append("Other open windows: " + "; ".join(w for w in wins if w != active)[:300])
+        return "\n".join(parts)
+    except Exception:
+        return ""
+
+
 def analyze_screen(question: str = "") -> dict:
     """
     Take a screenshot and understand it.
@@ -6555,6 +6696,24 @@ def analyze_screen(question: str = "") -> dict:
 
     b64 = shot.get("b64")
     q = question or "Describe what is on this screen: windows, buttons, text, and layout."
+
+    # ── Tier 0: cache. An unchanged screen with the same question doesn't need
+    #    a second LLM pass — this is the single biggest speed win, because the
+    #    screen is usually identical between rapid asks. ─────────────────────
+    import time as _t
+    sig = _screen_signature(b64)
+    if (sig and _ANALYSIS_CACHE["sig"] == sig
+            and _ANALYSIS_CACHE["question"] == q
+            and _t.time() - _ANALYSIS_CACHE["at"] < _CACHE_TTL):
+        return {"success": True, "screenshot": shot.get("path"),
+                "dimensions": f"{shot.get('width')}x{shot.get('height')}",
+                "method": "cache", "vision_used": False, "cached": True,
+                "screen_text": "", "question": q,
+                "answer": _ANALYSIS_CACHE["answer"],
+                "ai_answer": _ANALYSIS_CACHE["answer"]}
+
+    # Window context makes the answer specific instead of generic.
+    win_ctx = _window_context()
 
     # ── Try real vision first (llava) ─────────────────────────────────────────
     vision_used = False
@@ -6583,13 +6742,17 @@ def analyze_screen(question: str = "") -> dict:
         else:
             ocr_error = ocr_result.get("error", "OCR failed")
         answer = None
-        if screen_text.strip():
-            prompt = (f"You are Jarvis looking at the user's screen through OCR. "
-                      f"The extracted screen text is:\n---\n{screen_text[:2500]}\n---\n\n"
-                      f"Question: {q}\n"
-                      f"Answer concretely from the text above. Then, on a new line "
-                      f"starting with 'Suggested next action:', suggest ONE next "
-                      f"desktop action if any is obviously useful (or 'none').")
+        if screen_text.strip() or win_ctx:
+            prompt = (f"You are Jarvis, looking at the user's Windows screen.\n"
+                      f"{win_ctx}\n\n"
+                      f"Text read from the screen (OCR, may be noisy):\n"
+                      f"---\n{screen_text[:2200]}\n---\n\n"
+                      f"Question: {q}\n\n"
+                      f"Answer in 2-4 short sentences. Say WHICH APPLICATION is in "
+                      f"front and what the user is doing. Ignore OCR noise and "
+                      f"background windows. If a dialog or button matters, name it. "
+                      f"Then on a new line starting with 'Next:' suggest one useful "
+                      f"action, or 'Next: none'.")
             try:
                 from services.ollama_manager import reason
                 answer = reason(prompt)
@@ -6607,12 +6770,18 @@ def analyze_screen(question: str = "") -> dict:
                       + ". Install/fix Tesseract OCR, or pull the llava vision "
                         "model in Ollama for true image understanding.")
 
+    # Remember it so an immediate repeat ask is instant.
+    if sig and answer:
+        _ANALYSIS_CACHE.update(sig=sig, answer=answer, at=_t.time(), question=q)
+
     return {
         "success":     True,
         "screenshot":  shot.get("path"),
         "dimensions":  f"{shot.get('width')}x{shot.get('height')}",
-        "method":      "llava-vision" if vision_used else "ocr-fallback",
+        "method":      "llava-vision" if vision_used else "ocr+context",
         "vision_used": vision_used,
+        "cached":      False,
+        "window_context": win_ctx,
         "screen_text": screen_text[:2000],
         "question":    q,
         "answer":      answer,
@@ -6769,14 +6938,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 46/151: backend/core/__init__.py
+# FILE 46/154: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 47/151: backend/core/browser_lock.py
+# FILE 47/154: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
@@ -6841,7 +7010,7 @@ class browser_session:
 ```
 
 ################################################################################
-# FILE 48/151: backend/main.py
+# FILE 48/154: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -6938,6 +7107,13 @@ def _startup():
         init_app_paths()        # remembered executable paths (qq/doubao/wechat)
     except Exception as e:
         logger.warning(f"App-path store init: {e}")
+    try:
+        from services.custom_platforms import init_custom_platforms, _register_with_session_manager
+        init_custom_platforms()
+        _register_with_session_manager()   # user-added freelance sites become first-class
+        logger.info("Custom platforms ready.")
+    except Exception as e:
+        logger.warning(f"Custom platforms init: {e}")
     try:
         from services.brain_core import start as start_brain
         start_brain()           # world model sensing + event-first proactive loop
@@ -7212,14 +7388,14 @@ except Exception as _e:
 ```
 
 ################################################################################
-# FILE 49/151: backend/models/__init__.py
+# FILE 49/154: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import conn, init_db, DB_PATH
 ```
 
 ################################################################################
-# FILE 50/151: backend/models/clickworker.py
+# FILE 50/154: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -7245,7 +7421,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 51/151: backend/models/db.py
+# FILE 51/154: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -7464,7 +7640,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 52/151: backend/models/fiverr.py
+# FILE 52/154: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -7511,7 +7687,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 53/151: backend/models/hubstaff.py
+# FILE 53/154: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -7555,7 +7731,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 54/151: backend/models/zuodao.py
+# FILE 54/154: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -7581,14 +7757,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 55/151: backend/platforms/__init__.py
+# FILE 55/154: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 56/151: backend/platforms/base.py
+# FILE 56/154: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -7633,7 +7809,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 57/151: backend/platforms/contra.py
+# FILE 57/154: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -7718,7 +7894,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 58/151: backend/platforms/hubstaff.py
+# FILE 58/154: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -7918,7 +8094,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 59/151: backend/platforms/peopleperhour.py
+# FILE 59/154: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -8003,7 +8179,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 60/151: backend/platforms/remoteco.py
+# FILE 60/154: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -8102,7 +8278,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 61/151: backend/platforms/remoteok.py
+# FILE 61/154: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -8144,7 +8320,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 62/151: backend/platforms/wellfound.py
+# FILE 62/154: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -8262,7 +8438,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 63/151: backend/platforms/weworkremotely.py
+# FILE 63/154: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -8306,7 +8482,7 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 64/151: backend/requirements.txt
+# FILE 64/154: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -8343,7 +8519,7 @@ cryptography>=42.0.0
 ```
 
 ################################################################################
-# FILE 65/151: backend/routes/__init__.py
+# FILE 65/154: backend/routes/__init__.py
 ################################################################################
 ```py
 from .proposals   import router as proposals_router
@@ -8359,7 +8535,7 @@ from .orchestrator import router as orchestrator_router
 ```
 
 ################################################################################
-# FILE 66/151: backend/routes/agents.py
+# FILE 66/154: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -8852,7 +9028,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 67/151: backend/routes/analytics.py
+# FILE 67/154: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -8871,7 +9047,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 68/151: backend/routes/automation.py
+# FILE 68/154: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -9102,7 +9278,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 69/151: backend/routes/brain.py
+# FILE 69/154: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -9199,7 +9375,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 70/151: backend/routes/clickworker.py
+# FILE 70/154: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -9297,7 +9473,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 71/151: backend/routes/fiverr.py
+# FILE 71/154: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -9475,7 +9651,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 72/151: backend/routes/hubstaff.py
+# FILE 72/154: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -9656,7 +9832,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 73/151: backend/routes/messages.py
+# FILE 73/154: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -9751,7 +9927,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 74/151: backend/routes/mind.py
+# FILE 74/154: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -9826,7 +10002,7 @@ def router_status():
 ```
 
 ################################################################################
-# FILE 75/151: backend/routes/orchestrator.py
+# FILE 75/154: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -9968,7 +10144,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 76/151: backend/routes/orchestrator_feed.py
+# FILE 76/154: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -10024,7 +10200,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 77/151: backend/routes/os_console.py
+# FILE 77/154: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -10036,8 +10212,31 @@ GET  /os/traces/{id}  one trace in full
 GET  /os/diagnostics  health of the routing itself: failures + worst component
 """
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import PlainTextResponse
 
 router = APIRouter()
+
+
+@router.get("/health-check")
+def deep_health():
+    """Full diagnosis: every dependency, model and binary, with the exact fix."""
+    from services.diagnostics import deep_check
+    return deep_check()
+
+
+@router.get("/report", response_class=PlainTextResponse)
+def runtime_report():
+    """
+    Downloadable runtime report — diagnosis + live state + activity + execution
+    traces + log tail in one file. This is the thing to send when something
+    misbehaves; it contains everything needed to debug it.
+    """
+    from services.diagnostics import build_report
+    from datetime import datetime
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    return PlainTextResponse(
+        build_report(),
+        headers={"Content-Disposition": f'attachment; filename="jarvis-report-{stamp}.txt"'})
 
 
 @router.get("/state")
@@ -10075,7 +10274,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 78/151: backend/routes/planner.py
+# FILE 78/154: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -10200,7 +10399,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 79/151: backend/routes/proposals.py
+# FILE 79/154: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -10406,7 +10605,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 80/151: backend/routes/pulse.py
+# FILE 80/154: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -10440,7 +10639,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 81/151: backend/routes/scraper.py
+# FILE 81/154: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -10584,7 +10783,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 82/151: backend/routes/sessions.py
+# FILE 82/154: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -10656,6 +10855,40 @@ def vault_delete(platform: str):
     return delete_credential(platform)
 
 
+# ── User-added freelance sites ────────────────────────────────────────────────
+
+class PlatformIn(BaseModel):
+    label: str
+    jobs_url: str
+    login_url: str = ""
+    kind: str = "board"          # bid | board | talent | micro
+    username: str = ""
+    password: str = ""
+
+
+@router.get("/custom")
+def list_custom():
+    from services.custom_platforms import list_platforms
+    return {"platforms": list_platforms()}
+
+
+@router.post("/custom")
+def add_custom(body: PlatformIn):
+    """Add any freelance site (+ optional login) — it joins the automation."""
+    from services.custom_platforms import add_platform
+    r = add_platform(body.label, body.jobs_url, body.login_url, body.kind,
+                     username=body.username, password=body.password)
+    if not r.get("ok"):
+        raise HTTPException(400, r.get("error", "failed"))
+    return r
+
+
+@router.delete("/custom/{slug}")
+def delete_custom(slug: str):
+    from services.custom_platforms import delete_platform
+    return delete_platform(slug)
+
+
 @router.post("/check-replies")
 def check_replies(background_tasks: BackgroundTasks):
     """Sync the Freelancer inbox in the background; results land in Messages."""
@@ -10665,7 +10898,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 83/151: backend/routes/system.py
+# FILE 83/154: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -10864,7 +11097,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 84/151: backend/routes/workflows.py
+# FILE 84/154: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -10930,7 +11163,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 85/151: backend/routes/zuodao.py
+# FILE 85/154: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -11025,7 +11258,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 86/151: backend/services/__init__.py
+# FILE 86/154: backend/services/__init__.py
 ################################################################################
 ```py
 from .deepseek_service import call_model, generate_proposal, generate_reply_draft, auto_work_job
@@ -11033,7 +11266,7 @@ from .analytics_service import get_analytics
 ```
 
 ################################################################################
-# FILE 87/151: backend/services/analytics_service.py
+# FILE 87/154: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -11135,7 +11368,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 88/151: backend/services/app_resolver.py
+# FILE 88/154: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -11334,7 +11567,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 89/151: backend/services/bid_executor.py
+# FILE 89/154: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -11679,7 +11912,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 90/151: backend/services/brain_core.py
+# FILE 90/154: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -11786,7 +12019,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 91/151: backend/services/brain_service.py
+# FILE 91/154: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -12224,7 +12457,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 92/151: backend/services/browser_monitor.py
+# FILE 92/154: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -12378,7 +12611,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 93/151: backend/services/capability_registry.py
+# FILE 93/154: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -12567,7 +12800,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 94/151: backend/services/clickworker_service.py
+# FILE 94/154: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -12715,7 +12948,204 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 95/151: backend/services/deepseek_service.py
+# FILE 95/154: backend/services/custom_platforms.py
+################################################################################
+```py
+"""
+services/custom_platforms.py — add ANY freelance site yourself.
+
+The ask: "make a place where I can add other new freelancer sites + login and it
+adds them to my freelance section for full automation."
+
+So a platform is now data, not code. You give it a name, its jobs URL and login
+URL, optionally CSS selectors, and (optionally) credentials — which go straight
+into the encrypted vault, never into this table. From then on it:
+
+  * appears in Platform Logins (so you can log in once and reuse the session),
+  * is scanned by the income engine like any built-in platform,
+  * is classified bid/board so submission behaves correctly.
+
+Scraping a user-added site uses generic selectors, so results vary by site. That
+is stated plainly in the UI rather than pretended away.
+"""
+import json
+from datetime import datetime, timezone
+
+from models.db import conn
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS custom_platforms (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug        TEXT UNIQUE NOT NULL,
+    label       TEXT NOT NULL,
+    jobs_url    TEXT NOT NULL,
+    login_url   TEXT,
+    check_url   TEXT,
+    kind        TEXT DEFAULT 'board',       -- bid | board | talent | micro
+    selectors   TEXT,                        -- optional JSON {card,title,link,desc}
+    enabled     INTEGER DEFAULT 1,
+    created_at  TEXT
+);
+"""
+
+DEFAULT_SELECTORS = {
+    # deliberately generic — most job boards match at least one of these
+    "card":  "article, li.job, div.job, div[class*='job'], div[class*='card']",
+    "title": "h1, h2, h3, a[class*='title'], span[class*='title']",
+    "link":  "a",
+    "desc":  "p, div[class*='desc'], div[class*='summary']",
+}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def init_custom_platforms() -> None:
+    with conn() as db:
+        db.executescript(SCHEMA)
+
+
+def _slugify(name: str) -> str:
+    import re
+    return re.sub(r"[^a-z0-9]+", "", (name or "").lower())[:32]
+
+
+def add_platform(label: str, jobs_url: str, login_url: str = "", kind: str = "board",
+                 check_url: str = "", selectors: dict | None = None,
+                 username: str = "", password: str = "") -> dict:
+    init_custom_platforms()
+    slug = _slugify(label)
+    if not slug or not jobs_url:
+        return {"ok": False, "error": "name and jobs URL are required"}
+    if kind not in ("bid", "board", "talent", "micro"):
+        kind = "board"
+    with conn() as db:
+        db.execute(
+            "INSERT INTO custom_platforms(slug,label,jobs_url,login_url,check_url,kind,"
+            "selectors,enabled,created_at) VALUES(?,?,?,?,?,?,?,1,?) "
+            "ON CONFLICT(slug) DO UPDATE SET label=excluded.label, jobs_url=excluded.jobs_url,"
+            " login_url=excluded.login_url, check_url=excluded.check_url, kind=excluded.kind,"
+            " selectors=excluded.selectors",
+            (slug, label.strip(), jobs_url.strip(), (login_url or "").strip(),
+             (check_url or login_url or jobs_url).strip(), kind,
+             json.dumps(selectors or DEFAULT_SELECTORS), _now()))
+
+    # Credentials never live here — straight into the encrypted vault.
+    stored = False
+    if username and password:
+        try:
+            from services.vault import store_credential
+            stored = store_credential(slug, username, password).get("ok", False)
+        except Exception:
+            stored = False
+
+    _register_with_session_manager()
+    return {"ok": True, "slug": slug, "label": label, "kind": kind,
+            "credentials_saved": stored}
+
+
+def list_platforms(enabled_only: bool = False) -> list[dict]:
+    init_custom_platforms()
+    q = "SELECT * FROM custom_platforms"
+    if enabled_only:
+        q += " WHERE enabled=1"
+    q += " ORDER BY label"
+    with conn() as db:
+        rows = db.execute(q).fetchall()
+    out = []
+    for r in rows:
+        d = dict(r)
+        try:
+            d["selectors"] = json.loads(d.get("selectors") or "{}")
+        except Exception:
+            d["selectors"] = {}
+        out.append(d)
+    return out
+
+
+def delete_platform(slug: str) -> dict:
+    init_custom_platforms()
+    with conn() as db:
+        cur = db.execute("DELETE FROM custom_platforms WHERE slug=?", (slug,))
+    try:
+        from services.vault import delete_credential
+        delete_credential(slug)
+    except Exception:
+        pass
+    _register_with_session_manager()
+    return {"ok": cur.rowcount > 0}
+
+
+def set_enabled(slug: str, on: bool) -> dict:
+    init_custom_platforms()
+    with conn() as db:
+        db.execute("UPDATE custom_platforms SET enabled=? WHERE slug=?", (1 if on else 0, slug))
+    return {"ok": True, "slug": slug, "enabled": on}
+
+
+def _register_with_session_manager() -> None:
+    """Make user-added sites first-class in login status + platform kind lookups."""
+    try:
+        from services import session_manager, platform_meta
+        for p in list_platforms():
+            session_manager.PLATFORMS[p["slug"]] = {
+                "label": p["label"],
+                "login_url": p["login_url"] or p["jobs_url"],
+                "check_url": p["check_url"] or p["jobs_url"],
+            }
+            platform_meta.PLATFORM_KIND[p["slug"]] = p["kind"]
+    except Exception:
+        pass
+
+
+# ── Generic scraping for user-added sites ─────────────────────────────────────
+
+def scan(slug: str, max_jobs: int = 15) -> list[dict]:
+    """
+    Best-effort scrape of a user-added site using its (or the default) selectors.
+    Returns the same job shape as the built-in platforms.
+    """
+    plat = next((p for p in list_platforms() if p["slug"] == slug), None)
+    if not plat:
+        return []
+    sel = {**DEFAULT_SELECTORS, **(plat.get("selectors") or {})}
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+        r = requests.get(plat["jobs_url"], timeout=20,
+                         headers={"User-Agent": "Mozilla/5.0 (compatible; JarvisBot/14)"})
+        soup = BeautifulSoup(r.text, "html.parser")
+        cards = soup.select(sel["card"])[:max_jobs]
+        jobs = []
+        for i, c in enumerate(cards):
+            t = c.select_one(sel["title"])
+            title = (t.get_text(strip=True) if t else "")[:160]
+            if not title:
+                continue
+            a = c.select_one(sel["link"])
+            href = a.get("href") if a else ""
+            if href and href.startswith("/"):
+                from urllib.parse import urljoin
+                href = urljoin(plat["jobs_url"], href)
+            d = c.select_one(sel["desc"])
+            jobs.append({
+                "job_id": f"{slug}_{abs(hash(title)) % 10**9}",
+                "title": title,
+                "description": (d.get_text(" ", strip=True) if d else "")[:600],
+                "skills": [], "company": plat["label"],
+                "link": href or plat["jobs_url"],
+                "date_posted": "", "platform": slug,
+            })
+        print(f"[{plat['label']}] {len(jobs)} jobs")
+        return jobs
+    except Exception as e:
+        print(f"[{plat.get('label', slug)}] scrape failed: {e}")
+        return []
+```
+
+################################################################################
+# FILE 96/154: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -12918,7 +13348,309 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 96/151: backend/services/event_bus.py
+# FILE 97/154: backend/services/diagnostics.py
+################################################################################
+```py
+"""
+services/diagnostics.py — full-system diagnosis + a downloadable runtime report.
+
+Two jobs:
+
+1. deep_check(): answer "what is missing on THIS machine, and what do I type to
+   fix it?" Every Python package, external binary, model and permission Jarvis
+   depends on, each with a concrete install command. This is what turns "it
+   silently doesn't work" into a checklist.
+
+2. build_report(): bundle everything a human (or another AI) needs to debug a
+   bad run into ONE text file: the diagnosis, live OS state, recent execution
+   traces, recent activity feed, the log tail, and environment info. Downloaded
+   from the Diagnostics screen so nothing has to be copied out of terminals.
+"""
+import io
+import json
+import os
+import platform
+import shutil
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+# name -> (import_name, why it matters, pip install target)
+PY_PACKAGES = [
+    ("fastapi",        "fastapi",      "web backend",                    "fastapi"),
+    ("uvicorn",        "uvicorn",      "runs the backend server",        "uvicorn[standard]"),
+    ("pyautogui",      "pyautogui",    "mouse + keyboard control",       "pyautogui"),
+    ("pygetwindow",    "pygetwindow",  "window focus / detection",       "pygetwindow"),
+    ("pyperclip",      "pyperclip",    "clipboard (verifies typing)",    "pyperclip"),
+    ("mss",            "mss",          "fast screenshots",               "mss"),
+    ("Pillow",         "PIL",          "image handling for vision",      "Pillow"),
+    ("pytesseract",    "pytesseract",  "OCR text extraction",            "pytesseract"),
+    ("opencv-python",  "cv2",          "image matching on screen",       "opencv-python"),
+    ("psutil",         "psutil",       "system + process info",          "psutil"),
+    ("playwright",     "playwright",   "browser automation (freelance)", "playwright"),
+    ("ollama",         "ollama",       "local LLM client",               "ollama"),
+    ("cryptography",   "cryptography", "encrypted credential vault",     "cryptography"),
+    ("requests",       "requests",     "http calls",                     "requests"),
+    ("beautifulsoup4", "bs4",          "job scraping",                   "beautifulsoup4"),
+    ("schedule",       "schedule",     "scheduled runs",                 "schedule"),
+    ("pypdf",          "pypdf",        "reading PDFs into the Brain",    "pypdf"),
+]
+
+WINDOWS_ONLY = {"pygetwindow"}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _check_packages() -> list[dict]:
+    out = []
+    for name, mod, why, pip_target in PY_PACKAGES:
+        if name in WINDOWS_ONLY and os.name != "nt":
+            continue
+        try:
+            __import__(mod)
+            ok, detail = True, "installed"
+        except BaseException as e:   # BaseException: broken native wheels can panic
+            ok, detail = False, f"missing/broken ({type(e).__name__})"
+        out.append({"group": "Python package", "name": name, "ok": ok,
+                    "detail": detail, "why": why,
+                    "fix": None if ok else f"pip install {pip_target}"})
+    return out
+
+
+def _check_binaries() -> list[dict]:
+    checks = []
+
+    # Tesseract: pip package can import while the BINARY is absent.
+    tpath = shutil.which("tesseract")
+    if not tpath and os.name == "nt":
+        for cand in (r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+                     r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+                     os.path.expandvars(r"%LOCALAPPDATA%\Programs\Tesseract-OCR\tesseract.exe")):
+            if os.path.exists(cand):
+                tpath = cand
+                break
+    checks.append({"group": "Binary", "name": "Tesseract OCR", "ok": bool(tpath),
+                   "detail": tpath or "not found",
+                   "why": "reads text off the screen",
+                   "fix": None if tpath else
+                          "Install from github.com/UB-Mannheim/tesseract/wiki (Windows installer)"})
+
+    # Node/npm — needed for the UI.
+    npm = shutil.which("npm") or shutil.which("npm.cmd")
+    checks.append({"group": "Binary", "name": "Node / npm", "ok": bool(npm),
+                   "detail": npm or "not found",
+                   "why": "runs the Jarvis UI",
+                   "fix": None if npm else "Install Node.js LTS from nodejs.org"})
+
+    # Playwright browser binaries (separate from the pip package).
+    try:
+        import playwright  # noqa: F401
+        root = os.environ.get("PLAYWRIGHT_BROWSERS_PATH") or os.path.expandvars(
+            r"%LOCALAPPDATA%\ms-playwright" if os.name == "nt" else "~/.cache/ms-playwright")
+        has = os.path.isdir(os.path.expanduser(root)) and bool(os.listdir(os.path.expanduser(root)))
+        checks.append({"group": "Binary", "name": "Playwright browsers", "ok": has,
+                       "detail": root if has else "browser binaries not installed",
+                       "why": "logging in + submitting on freelance sites",
+                       "fix": None if has else "python -m playwright install chromium"})
+    except Exception:
+        checks.append({"group": "Binary", "name": "Playwright browsers", "ok": False,
+                       "detail": "playwright package missing",
+                       "why": "logging in + submitting on freelance sites",
+                       "fix": "pip install playwright && python -m playwright install chromium"})
+    return checks
+
+
+def _check_ollama_models() -> list[dict]:
+    out = []
+    try:
+        import requests
+        url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+        r = requests.get(f"{url}/api/tags", timeout=3)
+        models = [m.get("name", "") for m in r.json().get("models", [])]
+        out.append({"group": "Ollama", "name": "Ollama server", "ok": True,
+                    "detail": f"running · {len(models)} model(s)",
+                    "why": "all local AI", "fix": None})
+        wanted = [
+            ("fast chat/proposals", os.getenv("OLLAMA_FAST_MODEL", "qwen2.5:1.5b"), "qwen2.5:1.5b"),
+            ("reasoning/planning",  os.getenv("OLLAMA_REASONING_MODEL", "deepseek-r1:1.5b"), "deepseek-r1:1.5b"),
+            ("vision (screen)",     os.getenv("OLLAMA_VISION_MODEL", "llava:7b"), "llava:7b"),
+        ]
+        for role, want, pull in wanted:
+            base = want.split(":")[0]
+            ok = any(m == want or m.split(":")[0] == base for m in models)
+            out.append({"group": "Ollama", "name": f"Model — {role}", "ok": ok,
+                        "detail": want if ok else f"{want} not installed",
+                        "why": "quality + speed of that feature",
+                        "fix": None if ok else f"ollama pull {pull}"})
+    except Exception as e:
+        out.append({"group": "Ollama", "name": "Ollama server", "ok": False,
+                    "detail": f"not reachable ({type(e).__name__})",
+                    "why": "all local AI",
+                    "fix": "Start it: ollama serve   (install from ollama.com)"})
+    return out
+
+
+def _check_runtime() -> list[dict]:
+    out = []
+    # Display / desktop control possible at all?
+    if os.name == "nt":
+        out.append({"group": "Runtime", "name": "Desktop control", "ok": True,
+                    "detail": "Windows — supported", "why": "opening apps, typing", "fix": None})
+    else:
+        out.append({"group": "Runtime", "name": "Desktop control", "ok": False,
+                    "detail": f"{platform.system()} — Jarvis desktop control targets Windows",
+                    "why": "opening apps, typing", "fix": "Run Jarvis on the Windows machine"})
+    # Disk
+    try:
+        import psutil
+        d = psutil.disk_usage("C:\\" if os.name == "nt" else "/")
+        ok = d.free > 2e9
+        out.append({"group": "Runtime", "name": "Free disk", "ok": ok,
+                    "detail": f"{d.free/1e9:.1f} GB free",
+                    "why": "models + screenshots + database",
+                    "fix": None if ok else "Free up at least 2GB"})
+        m = psutil.virtual_memory()
+        ok = m.total > 7e9
+        out.append({"group": "Runtime", "name": "RAM", "ok": ok,
+                    "detail": f"{m.total/1e9:.0f} GB total, {m.percent}% used",
+                    "why": "local models are memory-hungry",
+                    "fix": None if ok else "Use smaller models (qwen2.5:1.5b)"})
+    except Exception:
+        pass
+    # Vault key. NOTE: a broken/partial `cryptography` install can raise
+    # pyo3 PanicException, which is a BaseException — so catch BaseException
+    # here. A diagnostics page must never be the thing that crashes.
+    try:
+        from services.vault import HAS_CRYPTO
+        out.append({"group": "Runtime", "name": "Credential vault", "ok": HAS_CRYPTO,
+                    "detail": "encryption ready" if HAS_CRYPTO else "cryptography missing",
+                    "why": "storing freelance logins safely",
+                    "fix": None if HAS_CRYPTO else "pip install cryptography"})
+    except BaseException as e:
+        out.append({"group": "Runtime", "name": "Credential vault", "ok": False,
+                    "detail": f"cryptography broken ({type(e).__name__})",
+                    "why": "storing freelance logins safely",
+                    "fix": "pip install --force-reinstall cryptography"})
+    return out
+
+
+def deep_check() -> dict:
+    checks = (_check_packages() + _check_binaries()
+              + _check_ollama_models() + _check_runtime())
+    missing = [c for c in checks if not c["ok"]]
+    blocking = [c for c in missing if c["group"] in ("Binary", "Ollama")
+                or c["name"] in ("pyautogui", "mss", "psutil")]
+    return {
+        "ts": _now(),
+        "ok": not missing,
+        "summary": ("Everything Jarvis needs is installed."
+                    if not missing else
+                    f"{len(missing)} thing(s) missing — "
+                    f"{len(blocking)} of them affect features you're using."),
+        "missing_count": len(missing),
+        "checks": checks,
+        "fixes": [c["fix"] for c in missing if c.get("fix")],
+    }
+
+
+# ── Downloadable runtime report ───────────────────────────────────────────────
+
+def _log_tail(limit_bytes: int = 120_000) -> str:
+    """Tail of any jarvis log file we can find (best effort)."""
+    from pathlib import Path
+    base = Path(__file__).resolve().parent.parent
+    for name in ("jarvis.log", "backend.log", "logs/jarvis.log"):
+        p = base / name
+        if p.exists():
+            try:
+                data = p.read_bytes()
+                return data[-limit_bytes:].decode("utf-8", errors="replace")
+            except Exception:
+                pass
+    return "(no log file on disk — Jarvis logs to the console window by default)"
+
+
+def build_report() -> str:
+    """One text file with everything needed to debug this machine's run."""
+    buf = io.StringIO()
+    w = buf.write
+
+    w("=" * 78 + "\nJARVIS RUNTIME REPORT\n")
+    w(f"generated: {_now()}\n" + "=" * 78 + "\n\n")
+
+    # environment
+    w("## ENVIRONMENT\n")
+    w(f"platform : {platform.platform()}\n")
+    w(f"python   : {sys.version.split()[0]} ({sys.executable})\n")
+    try:
+        import psutil
+        w(f"cpu      : {psutil.cpu_percent(interval=None)}%  cores={psutil.cpu_count()}\n")
+        vm = psutil.virtual_memory()
+        w(f"memory   : {vm.percent}% used of {vm.total/1e9:.1f} GB\n")
+    except Exception:
+        pass
+    w("\n")
+
+    # diagnosis
+    diag = deep_check()
+    w("## DIAGNOSIS\n")
+    w(f"{diag['summary']}\n\n")
+    group = None
+    for c in diag["checks"]:
+        if c["group"] != group:
+            group = c["group"]
+            w(f"\n-- {group} --\n")
+        mark = "OK  " if c["ok"] else "MISS"
+        w(f"[{mark}] {c['name']:<26} {c['detail']}\n")
+        if not c["ok"] and c.get("fix"):
+            w(f"        fix: {c['fix']}\n")
+    w("\n")
+    if diag["fixes"]:
+        w("## COMMANDS TO RUN\n")
+        for f in diag["fixes"]:
+            w(f"  {f}\n")
+        w("\n")
+
+    # live state
+    w("## LIVE STATE\n")
+    try:
+        from services.os_state import snapshot
+        s = snapshot(timeline_limit=60)
+        w(json.dumps({k: v for k, v in s.items() if k != "timeline"},
+                     indent=2, default=str)[:20000] + "\n\n")
+        w("## RECENT ACTIVITY\n")
+        for e in s.get("timeline", []):
+            w(f"  {e.get('ts','')} [{e.get('agent','')}] {e.get('msg','')}\n")
+    except Exception as e:
+        w(f"(state unavailable: {e})\n")
+    w("\n")
+
+    # execution traces — the most useful part for debugging a bad command
+    w("## EXECUTION TRACES (exact path each request took)\n")
+    try:
+        from services import trace
+        for t in trace.recent(15):
+            status = "OK" if t.get("ok") else ("FAIL" if t.get("ok") is False else "…")
+            w(f"\n[{status}] {t['kind']}: {t['label']}  ({t.get('duration_ms','?')}ms)\n")
+            for st in t.get("steps", []):
+                m = "OK " if st.get("ok") else ("ERR" if st.get("ok") is False else "-  ")
+                w(f"    {m} {st['component']:<32} {st.get('detail','')}  [{st.get('at_ms')}ms]\n")
+            if t.get("result"):
+                w(f"    -> {t['result']}\n")
+    except Exception as e:
+        w(f"(traces unavailable: {e})\n")
+    w("\n")
+
+    w("## LOG TAIL\n")
+    w(_log_tail() + "\n")
+
+    return buf.getvalue()
+```
+
+################################################################################
+# FILE 98/154: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -13011,7 +13743,7 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 97/151: backend/services/fiverr_service.py
+# FILE 99/154: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -13193,7 +13925,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 98/151: backend/services/freelancer_api.py
+# FILE 100/154: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -13408,7 +14140,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 99/151: backend/services/hubstaff_service.py
+# FILE 101/154: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -13608,7 +14340,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 100/151: backend/services/income_engine.py
+# FILE 102/154: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -13802,18 +14534,26 @@ def _run_cycle(cfg: dict):
     core.set_goal(goal)
     snap = core.run_full_workflow()
 
-    # Count the cycle + surface it on the "Cycles" tile.
+    # A collision with another workflow is NOT a failed cycle — don't count it
+    # and don't cry wolf in the feed. (This produced the misleading
+    # "Cycle #3 done (FAILED)" lines.)
+    if snap.get("skipped"):
+        _emit("Another scan was already running — this tick was skipped.", "info")
+        return
+
     cfg = get_config()
     cfg["cycles"] = int(cfg.get("cycles", 0)) + 1
     cfg["last_run"] = _now()
+    ok = snap.get("state") == "COMPLETE"
     cfg["last_result"] = {"state": snap.get("state"), "error": snap.get("error")}
     _save_config(cfg)
     try:
         STATE.update_stats(cycles=cfg["cycles"])
     except Exception:
         pass
-    _emit(f"Cycle #{cfg['cycles']} done ({snap.get('state')}). "
-          f"Next in {cfg['interval_min']} min.", "success")
+    _emit(f"Cycle #{cfg['cycles']} " + ("complete" if ok else
+          f"finished with a problem: {snap.get('error') or snap.get('state')}") +
+          f". Next in {cfg['interval_min']} min.", "success" if ok else "warning")
 
 
 def _loop():
@@ -13843,7 +14583,7 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 101/151: backend/services/model_router.py
+# FILE 103/154: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -13902,7 +14642,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 102/151: backend/services/ollama_manager.py
+# FILE 104/154: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -14186,7 +14926,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 103/151: backend/services/os_state.py
+# FILE 105/154: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -14358,7 +15098,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 104/151: backend/services/planner_service.py
+# FILE 106/154: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -14938,7 +15678,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 105/151: backend/services/platform_meta.py
+# FILE 107/154: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -15020,7 +15760,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 106/151: backend/services/profile_service.py
+# FILE 108/154: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -15095,7 +15835,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 107/151: backend/services/pulse_service.py
+# FILE 109/154: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -15372,7 +16112,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 108/151: backend/services/reflection.py
+# FILE 110/154: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -15473,7 +16213,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 109/151: backend/services/session_manager.py
+# FILE 111/154: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -15844,7 +16584,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 110/151: backend/services/tool_registry.py
+# FILE 112/154: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -16001,7 +16741,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 111/151: backend/services/trace.py
+# FILE 113/154: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -16134,7 +16874,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 112/151: backend/services/vault.py
+# FILE 114/154: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -16171,7 +16911,12 @@ CREATE TABLE IF NOT EXISTS vault_credentials (
 try:
     from cryptography.fernet import Fernet
     HAS_CRYPTO = True
-except ImportError:
+except BaseException:
+    # BaseException, not ImportError: a broken/partial cryptography install
+    # (mismatched native wheel) raises pyo3 PanicException, which is NOT an
+    # Exception subclass. Letting that escape would take down every module that
+    # merely imports the vault. Degrade to "no vault" instead.
+    Fernet = None
     HAS_CRYPTO = False
 
 
@@ -16262,7 +17007,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 113/151: backend/services/workflow_service.py
+# FILE 115/154: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -16500,7 +17245,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 114/151: backend/services/world_model.py
+# FILE 116/154: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -16689,7 +17434,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 115/151: backend/services/zuodao_service.py
+# FILE 117/154: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -16806,7 +17551,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 116/151: frontend/index.html
+# FILE 118/154: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -16824,7 +17569,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 117/151: frontend/package.json
+# FILE 119/154: frontend/package.json
 ################################################################################
 ```json
 {
@@ -16848,7 +17593,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 118/151: frontend/src/App.jsx
+# FILE 120/154: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -16866,7 +17611,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 119/151: frontend/src/JarvisOS.jsx
+# FILE 121/154: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -16887,7 +17632,7 @@ import { API } from "./config.js";
 
 import Chat from "./pages/Chat";
 import Agents from "./pages/Agents";
-import WorkspaceHub from "./pages/WorkspaceHub";
+import Earn from "./pages/Earn";
 import Settings from "./pages/Settings";
 
 /* ── One visual language ─────────────────────────────────────────────────── */
@@ -16930,6 +17675,7 @@ export default function JarvisOS() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [reply, setReply] = useState(null);
+  const [history, setHistory] = useState([]);   // rolling CPU/RAM samples
   const sseRef = useRef(null);
 
   const [sessionId] = useState(() => {
@@ -16946,7 +17692,13 @@ export default function JarvisOS() {
     const load = async () => {
       try {
         const r = await fetch(`${API}/os/state?timeline=40`);
-        if (r.ok && alive) setOs(await r.json());
+        if (r.ok && alive) {
+          const d = await r.json();
+          setOs(d);
+          // keep a rolling window of real samples for the vitals graph
+          setHistory((h) => [...h, { cpu: d.system?.cpu ?? 0, ram: d.system?.ram ?? 0,
+                                     t: Date.now() }].slice(-30));
+        }
       } catch { /* backend down — the strip shows it */ }
     };
     load();
@@ -16989,6 +17741,18 @@ export default function JarvisOS() {
       setReply({ text: `Backend unreachable: ${e.message}`, intent: "error" });
     } finally { setBusy(false); }
   }, [input, sessionId]);
+
+  // Activity ticks for the vitals graph: real events from the last 3 minutes,
+  // positioned by when they happened. Each tick = Jarvis genuinely did something.
+  const activityMarks = (() => {
+    const now = Date.now(), WINDOW = 180_000;
+    return feed.slice(0, 60).map((f) => {
+      const t = f._t || (f._t = now);   // stamp on first render
+      const age = now - t;
+      if (age > WINDOW) return null;
+      return { x: 1 - age / WINDOW, color: LEVEL_COLOR[f.level] || T.dim };
+    }).filter(Boolean);
+  })();
 
   const online = !!os;
   const working = !!os?.status?.running || busy;
@@ -17045,10 +17809,11 @@ export default function JarvisOS() {
         </nav>
 
         <main style={{ flex: 1, minWidth: 0, overflow: "auto" }}>
-          {surface === "console"   && <Console os={os} onRun={run} reply={reply} busy={busy} />}
+          {surface === "console"   && <Console os={os} onRun={run} reply={reply} busy={busy}
+                                              history={history} activity={activityMarks} />}
           {surface === "chat"      && <Chat />}
           {surface === "computer"  && <Agents />}
-          {surface === "freelance" && <WorkspaceHub />}
+          {surface === "freelance" && <Earn />}
           {surface === "diag"      && <Diagnostics />}
           {surface === "settings"  && <Settings />}
         </main>
@@ -17104,8 +17869,58 @@ export default function JarvisOS() {
   );
 }
 
+/* ── Vitals graph: a real rolling chart of CPU/RAM + activity spikes ──────
+   Visual, but every pixel is data: the line is actual CPU, the fill is RAM,
+   and the ticks along the bottom mark moments Jarvis actually did something. */
+function VitalsGraph({ history, events, busy }) {
+  const W = 520, H = 84, pad = 4;
+  const pts = history.length ? history : [{ cpu: 0, ram: 0 }];
+  const step = pts.length > 1 ? (W - pad * 2) / (pts.length - 1) : 0;
+  const y = (v) => H - pad - (Math.max(0, Math.min(100, v)) / 100) * (H - pad * 2);
+  const line = (key) => pts.map((p, i) => `${i === 0 ? "M" : "L"} ${pad + i * step} ${y(p[key])}`).join(" ");
+  const area = `${line("ram")} L ${pad + (pts.length - 1) * step} ${H - pad} L ${pad} ${H - pad} Z`;
+  const last = pts[pts.length - 1] || { cpu: 0, ram: 0 };
+
+  return (
+    <div style={{ ...card, padding: 14, position: "relative", overflow: "hidden" }}>
+      {busy && <div className="busy-sweep" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 6 }}>
+        <span style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
+                       color: T.dim, fontWeight: 600 }}>Live vitals</span>
+        <span style={{ fontSize: 11, color: T.cyan }}>CPU {Math.round(last.cpu)}%</span>
+        <span style={{ fontSize: 11, color: T.violet }}>RAM {Math.round(last.ram)}%</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: 10, color: T.dim }}>{events.length} events · last 3 min</span>
+      </div>
+      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+           style={{ display: "block" }}>
+        <defs>
+          <linearGradient id="ramFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={T.violet} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={T.violet} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[25, 50, 75].map((g) => (
+          <line key={g} x1={pad} x2={W - pad} y1={y(g)} y2={y(g)}
+                stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        ))}
+        <path d={area} fill="url(#ramFill)" />
+        <path d={line("ram")} fill="none" stroke={T.violet} strokeWidth="1.2" opacity="0.65" />
+        <path d={line("cpu")} fill="none" stroke={T.cyan} strokeWidth="1.8"
+              strokeLinejoin="round" strokeLinecap="round" />
+        {/* activity ticks — when Jarvis actually did work */}
+        {events.map((e, i) => (
+          <line key={i} x1={pad + e.x * (W - pad * 2)} x2={pad + e.x * (W - pad * 2)}
+                y1={H - pad} y2={H - pad - 10}
+                stroke={e.color} strokeWidth="2" opacity="0.85" />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 /* ── Console surface: goal + subsystems + what it just said ─────────────── */
-function Console({ os, onRun, reply, busy }) {
+function Console({ os, onRun, reply, busy, history, activity }) {
   const subs = os?.subsystems || {};
   return (
     <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -17135,6 +17950,10 @@ function Console({ os, onRun, reply, busy }) {
           )}
         </div>
       </div>
+
+      {/* Live vitals graph — visual, and every mark on it is real data */}
+      <VitalsGraph history={history || []} events={activity || []}
+                   busy={busy || !!os?.status?.running} />
 
       {/* Last response */}
       {(reply || busy) && (
@@ -17196,13 +18015,69 @@ function Console({ os, onRun, reply, busy }) {
 /* ── Diagnostics: the exact execution path of every request ─────────────── */
 function Diagnostics() {
   const [data, setData] = useState(null);
+  const [health, setHealth] = useState(null);
   const [open, setOpen] = useState(null);
-  const load = () => fetch(`${API}/os/diagnostics`).then((r) => r.json())
-    .then(setData).catch(() => setData(null));
-  useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, []);
+  const load = () => {
+    fetch(`${API}/os/diagnostics`).then((r) => r.json()).then(setData).catch(() => setData(null));
+    fetch(`${API}/os/health-check`).then((r) => r.json()).then(setHealth).catch(() => setHealth(null));
+  };
+  useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
+
+  const grouped = {};
+  (health?.checks || []).forEach((c) => { (grouped[c.group] ||= []).push(c); });
 
   return (
     <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 18 }}>
+
+      {/* System diagnosis — what's installed, what's missing, how to fix */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ ...sectionLabel, flex: 1 }}>System diagnosis</div>
+          <a href={`${API}/os/report`} download
+             style={{ padding: "7px 14px", borderRadius: 9, fontSize: 12, textDecoration: "none",
+                      background: "rgba(84,214,255,0.1)", border: `1px solid rgba(84,214,255,0.35)`,
+                      color: T.cyan }}>
+            ⤓ Download full report
+          </a>
+        </div>
+        <div style={{ ...card, padding: 16, marginBottom: 10,
+                      borderColor: health?.ok ? "rgba(62,230,168,0.35)" : "rgba(245,181,68,0.35)" }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: health?.ok ? T.green : T.amber }}>
+            {health?.summary || "Checking…"}
+          </div>
+          <div style={{ fontSize: 11.5, color: T.dim, marginTop: 6 }}>
+            The report includes this diagnosis, live state, recent activity, execution traces and
+            log tail — send it when something misbehaves.
+          </div>
+          {(health?.fixes || []).length > 0 && (
+            <div style={{ marginTop: 12, background: "rgba(0,0,0,0.3)", borderRadius: 9, padding: 12 }}>
+              <div style={{ fontSize: 10, color: T.dim, letterSpacing: "0.12em",
+                            textTransform: "uppercase", marginBottom: 7 }}>Run these to fix</div>
+              {health.fixes.map((f, i) => (
+                <div key={i} style={{ fontFamily: "monospace", fontSize: 12, color: T.amber,
+                                      padding: "2px 0" }}>{f}</div>
+              ))}
+            </div>
+          )}
+        </div>
+        {Object.entries(grouped).map(([g, items]) => (
+          <div key={g} style={{ ...card, padding: 14, marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: T.dim, letterSpacing: "0.14em",
+                          textTransform: "uppercase", marginBottom: 9 }}>{g}</div>
+            {items.map((c) => (
+              <div key={c.name} style={{ display: "flex", gap: 10, alignItems: "baseline",
+                                         padding: "4px 0", fontSize: 12.5 }}>
+                <span style={{ color: c.ok ? T.green : T.amber, width: 14 }}>{c.ok ? "✓" : "!"}</span>
+                <span style={{ minWidth: 180 }}>{c.name}</span>
+                <span style={{ color: T.dim, flex: 1 }}>{c.detail}</span>
+                {!c.ok && c.fix && <span style={{ color: T.amber, fontFamily: "monospace",
+                                                  fontSize: 11 }}>{c.fix}</span>}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
       <div>
         <div style={sectionLabel}>Routing health</div>
         <div style={{ ...card, padding: 16, display: "flex", gap: 26 }}>
@@ -17295,7 +18170,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 120/151: frontend/src/components/UI.jsx
+# FILE 122/154: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -17414,7 +18289,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 121/151: frontend/src/config.js
+# FILE 123/154: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -17439,7 +18314,7 @@ export const apiPatch = (url, body) => apiFetch(url, {
 ```
 
 ################################################################################
-# FILE 122/151: frontend/src/index.css
+# FILE 124/154: frontend/src/index.css
 ################################################################################
 ```css
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -17503,7 +18378,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !i
 ```
 
 ################################################################################
-# FILE 123/151: frontend/src/main.jsx
+# FILE 125/154: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from 'react'
@@ -17516,7 +18391,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 ################################################################################
-# FILE 124/151: frontend/src/pages/Agents.jsx
+# FILE 126/154: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -17526,7 +18401,13 @@ const C = { accent:'#00d4ff', green:'#00ff88', orange:'#ff9500', red:'#ff4444', 
 const card  = { border:'1px solid rgba(0,212,255,0.15)', borderRadius:4, padding:18, background:'rgba(0,8,16,0.8)', marginBottom:12 }
 const label = { fontSize:9, color:'rgba(0,212,255,0.45)', letterSpacing:'0.2em', marginBottom:10, textTransform:'uppercase' }
 const inp   = { width:'100%', background:'rgba(0,10,20,0.9)', border:'1px solid rgba(0,212,255,0.2)', outline:'none', color:'#c8e8f0', padding:'8px 11px', fontSize:11, fontFamily:'monospace', borderRadius:3, boxSizing:'border-box' }
-const btn   = (c='#00d4ff') => ({ padding:'7px 16px', borderRadius:3, border:`1px solid ${c}`, background:`${c}18`, color:c, fontFamily:'monospace', fontSize:9, cursor:'pointer', letterSpacing:'0.1em' })
+// `${c}18` only makes a valid colour when c is a 6-digit hex. Callers were also
+// passing rgba(...) — producing "rgba(255,255,255,0.15)18", which the browser
+// throws away, leaving a DEFAULT WHITE BUTTON with near-invisible text. That was
+// the "white blank buttons" bug. Tint safely for any colour format.
+const tint  = (c, a=0.09) => (String(c).startsWith('#') && (c.length === 7 || c.length === 4))
+  ? `${c}18` : `color-mix(in srgb, ${c} 12%, transparent)`
+const btn   = (c='#00d4ff') => ({ padding:'7px 16px', borderRadius:3, border:`1px solid ${c}`, background:tint(c), color:c, fontFamily:'monospace', fontSize:9, cursor:'pointer', letterSpacing:'0.1em' })
 const Dot   = ({on}) => <span style={{ width:7,height:7,borderRadius:'50%',background:on?C.green:'rgba(255,255,255,0.15)',boxShadow:on?`0 0 6px ${C.green}`:'none',display:'inline-block',marginRight:6 }} />
 
 const LEVEL_COLOR = { info:C.accent, success:C.green, warning:C.orange, error:C.red }
@@ -17660,7 +18541,7 @@ export default function Agents() {
       {/* Tabs */}
       <div style={{ display:'flex',gap:6,marginBottom:18,flexWrap:'wrap' }}>
         {TABS.map(t => (
-          <button key={t} onClick={()=>setTab(t)} style={{ ...btn(tab===t?C.accent:'rgba(255,255,255,0.2)'), background:tab===t?'rgba(0,212,255,0.12)':'transparent' }}>
+          <button key={t} onClick={()=>setTab(t)} style={{ ...btn(tab===t?C.accent:'#8aa0b4'), background:tab===t?'rgba(0,212,255,0.12)':'transparent' }}>
             {t.toUpperCase()}
           </button>
         ))}
@@ -17706,7 +18587,7 @@ export default function Agents() {
                 </button>
               </div>
               {['Take a screenshot', 'Open notepad', "What's on my screen?", 'Plan: apply for 3 jobs today'].map(q => (
-                <button key={q} onClick={()=>{setCmdInput(q);}} style={{ ...btn('rgba(255,255,255,0.2)'),marginTop:5,marginRight:5,fontSize:8 }}>{q}</button>
+                <button key={q} onClick={()=>{setCmdInput(q);}} style={{ ...btn('#8aa0b4'),marginTop:5,marginRight:5,fontSize:8 }}>{q}</button>
               ))}
             </div>
           </div>
@@ -17785,7 +18666,7 @@ export default function Agents() {
               </div>
               <div style={{ display:'flex',gap:5,flexWrap:'wrap' }}>
                 {['chrome','edge','vscode','discord','telegram','steam','explorer','notepad','calculator','spotify','cmd'].map(a=>(
-                  <button key={a} onClick={()=>{setAppName(a);}} style={{ ...btn('rgba(255,255,255,0.2)'),fontSize:8 }}>{a}</button>
+                  <button key={a} onClick={()=>{setAppName(a);}} style={{ ...btn('#8aa0b4'),fontSize:8 }}>{a}</button>
                 ))}
               </div>
             </div>
@@ -17947,7 +18828,7 @@ export default function Agents() {
               </div>
               <div style={{ display:'flex',gap:5,flexWrap:'wrap',marginTop:8 }}>
                 {['Apply for 3 Python jobs today','Check Freelancer inbox and draft replies','Screenshot and analyze my screen'].map(g=>(
-                  <button key={g} onClick={()=>setPlanGoal(g)} style={{ ...btn('rgba(255,255,255,0.15)'),fontSize:8 }}>{g}</button>
+                  <button key={g} onClick={()=>setPlanGoal(g)} style={{ ...btn('#8aa0b4'),fontSize:8 }}>{g}</button>
                 ))}
               </div>
             </div>
@@ -17980,7 +18861,7 @@ export default function Agents() {
             <div style={card}>
               <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10 }}>
                 <div style={label}>SAVED PLANS</div>
-                <button onClick={loadPlans} style={{ ...btn('rgba(255,255,255,0.2)'),padding:'3px 8px',fontSize:8 }}>↺</button>
+                <button onClick={loadPlans} style={{ ...btn('#8aa0b4'),padding:'3px 8px',fontSize:8 }}>↺</button>
               </div>
               {plans.length===0 && <div style={{ color:'rgba(255,255,255,0.2)',fontSize:11 }}>No plans yet</div>}
               {plans.map(p=>(
@@ -18059,7 +18940,7 @@ export default function Agents() {
         <div style={card}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12 }}>
             <div style={label}>LIVE AGENT FEED</div>
-            <button onClick={()=>setFeed([])} style={{ ...btn('rgba(255,255,255,0.2)'),padding:'3px 10px',fontSize:8 }}>CLEAR</button>
+            <button onClick={()=>setFeed([])} style={{ ...btn('#8aa0b4'),padding:'3px 10px',fontSize:8 }}>CLEAR</button>
           </div>
           <div style={{ background:'rgba(0,4,8,0.95)',borderRadius:3,padding:14,height:'calc(100vh - 220px)',overflowY:'auto',fontFamily:'monospace',fontSize:10 }}>
             {feed.length===0&&<div style={{color:'rgba(255,255,255,0.15)'}}>No events yet. Interact with any agent to see live activity.</div>}
@@ -18134,7 +19015,7 @@ function RegistryPanel() {
             placeholder={template || 'class MyAgent:\n    def run(self, context):\n        return {"ok": True}'} />
           <div style={{ display:'flex', gap:8 }}>
             <button onClick={install} style={btn(C.green)}>⬢ INSTALL AGENT</button>
-            <button onClick={()=>setCode(template)} style={btn('rgba(255,255,255,0.25)')}>USE TEMPLATE</button>
+            <button onClick={()=>setCode(template)} style={btn('#8aa0b4')}>USE TEMPLATE</button>
           </div>
           {msg?.ok  && <div style={{ marginTop:8, fontSize:10, color:C.green,  fontFamily:'monospace' }}>{msg.ok}</div>}
           {msg?.err && <div style={{ marginTop:8, fontSize:10, color:C.red,    fontFamily:'monospace' }}>{msg.err}</div>}
@@ -18152,7 +19033,7 @@ function RegistryPanel() {
         <div style={card}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
             <div style={label}>REGISTERED AGENTS ({agents.length})</div>
-            <button onClick={load} style={{ ...btn('rgba(255,255,255,0.2)'), padding:'3px 8px', fontSize:8 }}>↺</button>
+            <button onClick={load} style={{ ...btn('#8aa0b4'), padding:'3px 8px', fontSize:8 }}>↺</button>
           </div>
           {agents.map(a => (
             <div key={a.name} style={{ padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
@@ -18223,7 +19104,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 125/151: frontend/src/pages/Analytics.jsx
+# FILE 127/154: frontend/src/pages/Analytics.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -18330,7 +19211,7 @@ export default function Analytics() {
 ```
 
 ################################################################################
-# FILE 126/151: frontend/src/pages/AutoMode.jsx
+# FILE 128/154: frontend/src/pages/AutoMode.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -18976,7 +19857,7 @@ export default function AutoMode() {
 ```
 
 ################################################################################
-# FILE 127/151: frontend/src/pages/Chat.jsx
+# FILE 129/154: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useState, useRef, useEffect } from 'react'
@@ -19109,7 +19990,265 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 128/151: frontend/src/pages/Jobs.jsx
+# FILE 130/154: frontend/src/pages/Earn.jsx
+################################################################################
+```jsx
+/**
+ * Earn.jsx — freelance, fully autonomous.
+ *
+ * The old screen made you run a pipeline: pick platforms, press SCAN, watch a
+ * queue, approve, press SUBMIT. That's a chore, and the "approve all" flow was
+ * confusing because board items legitimately become "ready to apply" rather than
+ * "submitted".
+ *
+ * This is one switch. Turn Jarvis ON and it scans, scores, drafts and (where it
+ * can) submits — continuously. Everything else on this page is just reporting
+ * what it did, plus the two things it genuinely needs from you: platform logins
+ * and any site you want to add.
+ */
+import { useEffect, useState } from "react";
+import { API } from "../config.js";
+
+const T = {
+  panel: "#0d1220", line: "rgba(255,255,255,0.075)", text: "#e6edf5", dim: "#7d8798",
+  cyan: "#54d6ff", green: "#3ee6a8", amber: "#f5b544", red: "#ff5f6d", violet: "#a98bff",
+};
+const card = { background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14, padding: 16 };
+const lbl = { fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: T.dim, marginBottom: 10, fontWeight: 600 };
+const field = { background: "rgba(0,0,0,0.3)", color: T.text, border: `1px solid ${T.line}`, borderRadius: 9, padding: "9px 11px", fontSize: 13, outline: "none" };
+
+export default function Earn() {
+  const [income, setIncome] = useState(null);
+  const [queue, setQueue] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [custom, setCustom] = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [msg, setMsg] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ label: "", jobs_url: "", login_url: "", kind: "board", username: "", password: "" });
+
+  const load = async () => {
+    try {
+      const [i, q, s, c, p] = await Promise.all([
+        fetch(`${API}/automation/income/status`).then(r => r.json()).catch(() => null),
+        fetch(`${API}/automation/queue?limit=100`).then(r => r.json()).catch(() => ({ queue: [] })),
+        fetch(`${API}/sessions/status`).then(r => r.json()).catch(() => ({ platforms: [] })),
+        fetch(`${API}/sessions/custom`).then(r => r.json()).catch(() => ({ platforms: [] })),
+        fetch(`${API}/automation/profile`).then(r => r.json()).catch(() => null),
+      ]);
+      setIncome(i); setQueue(q.queue || []); setSessions(s.platforms || []);
+      setCustom(c.platforms || []); setProfile(p);
+    } catch { /* backend down */ }
+  };
+  useEffect(() => { load(); const t = setInterval(load, 7000); return () => clearInterval(t); }, []);
+
+  const toggle = async () => {
+    await fetch(`${API}/automation/income/${income?.enabled ? "stop" : "start"}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    load();
+  };
+  const runNow = async () => { await fetch(`${API}/automation/income/run-now`, { method: "POST" }); setMsg("Running a cycle now…"); load(); };
+
+  const setAutoSubmit = async (on) => {
+    await fetch(`${API}/automation/profile`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...(profile || {}), auto_submit: on }),
+    });
+    load();
+  };
+
+  const addPlatform = async () => {
+    if (!form.label || !form.jobs_url) { setMsg("Name and jobs URL are required."); return; }
+    const r = await fetch(`${API}/sessions/custom`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const d = await r.json();
+    setMsg(r.ok ? `Added ${d.label}${d.credentials_saved ? " (login saved, encrypted)" : ""}. It'll be scanned from the next cycle.` : (d.detail || "Couldn't add that site."));
+    if (r.ok) { setForm({ label: "", jobs_url: "", login_url: "", kind: "board", username: "", password: "" }); setShowAdd(false); }
+    load();
+  };
+
+  const openLogin = async (slug) => {
+    const r = await fetch(`${API}/sessions/open-login/${slug}`, { method: "POST" });
+    const d = await r.json(); setMsg(d.message || d.error || "");
+  };
+
+  const on = !!income?.enabled;
+  const count = (s) => queue.filter(q => q.status === s).length;
+  const submitted = count("done"), ready = count("ready"), pending = count("pending"), needLogin = count("needs_login");
+
+  return (
+    <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 18 }}>
+
+      {/* THE switch */}
+      <div style={{ ...card, borderColor: on ? "rgba(62,230,168,0.4)" : T.line }} className={on ? "alive" : ""}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: on ? T.green : T.text }}>
+              {on ? "Jarvis is earning for you" : "Autonomous earning is off"}
+            </div>
+            <div style={{ fontSize: 12.5, color: T.dim, marginTop: 4, lineHeight: 1.6 }}>
+              {on
+                ? `Scanning, scoring and writing proposals on its own every ${income?.interval_min ?? 20} minutes. You don't need to press anything.`
+                : "Turn this on and Jarvis works continuously in the background — finding jobs, filtering bad fits, and drafting proposals."}
+            </div>
+          </div>
+          <button onClick={toggle}
+            style={{ padding: "12px 26px", borderRadius: 12, border: "none", fontSize: 14, fontWeight: 700,
+                     background: on ? "rgba(255,95,109,0.15)" : T.green, color: on ? T.red : "#052018" }}>
+            {on ? "Stop" : "Start earning"}
+          </button>
+          {on && <button onClick={runNow} style={{ padding: "12px 16px", borderRadius: 12, fontSize: 13,
+                     background: "transparent", border: `1px solid ${T.line}`, color: T.cyan }}>Run now</button>}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10, marginTop: 16 }}>
+          {[["Cycles", income?.cycles ?? 0, T.cyan],
+            ["Submitted", submitted, T.green],
+            ["Ready to apply", ready, T.amber],
+            ["Drafted", pending, T.violet]].map(([k, v, c]) => (
+            <div key={k} style={{ background: "rgba(0,0,0,0.25)", borderRadius: 10, padding: "10px 12px" }}>
+              <div style={{ fontSize: 9, color: T.dim, letterSpacing: "0.12em", textTransform: "uppercase" }}>{k}</div>
+              <div className="smooth" style={{ fontSize: 20, fontWeight: 700, color: c }}>{v}</div>
+            </div>
+          ))}
+        </div>
+
+        <label style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 14, fontSize: 12.5,
+                        color: profile?.auto_submit ? T.amber : T.dim, cursor: "pointer" }}>
+          <input type="checkbox" checked={!!profile?.auto_submit}
+                 onChange={(e) => setAutoSubmit(e.target.checked)} style={{ accentColor: T.amber }} />
+          Also submit bids automatically (no approval step). Only applies to bid sites you're logged into.
+        </label>
+      </div>
+
+      {msg && <div style={{ ...card, borderColor: "rgba(84,214,255,0.3)", fontSize: 12.5, color: T.cyan }}>{msg}</div>}
+
+      {/* What it needs from you */}
+      {(needLogin > 0 || sessions.some(s => s.logged_in === false)) && (
+        <div style={{ ...card, borderColor: "rgba(245,181,68,0.35)" }}>
+          <div style={{ ...lbl, color: T.amber }}>Needs you</div>
+          <div style={{ fontSize: 12.5, color: T.dim, marginBottom: 10 }}>
+            Jarvis can only submit on sites you're logged into. Log in once — the session is reused forever.
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {sessions.filter(s => s.logged_in !== true).map(s => (
+              <button key={s.platform} onClick={() => openLogin(s.platform)}
+                style={{ padding: "7px 13px", borderRadius: 9, fontSize: 12, background: "rgba(245,181,68,0.1)",
+                         border: `1px solid rgba(245,181,68,0.35)`, color: T.amber }}>
+                Log in to {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      <div>
+        <div style={lbl}>What Jarvis has done</div>
+        <div style={{ ...card, padding: 0, overflow: "hidden" }}>
+          {queue.length === 0 && (
+            <div style={{ padding: 16, color: T.dim, fontSize: 13 }}>
+              Nothing yet. {on ? "The first cycle will appear here shortly." : "Turn on autonomous earning above."}
+            </div>
+          )}
+          {queue.slice(0, 25).map(q => {
+            const c = { done: T.green, ready: T.cyan, pending: T.violet, needs_login: T.amber,
+                        failed: T.red, approved: T.green, executing: T.amber }[q.status] || T.dim;
+            const what = { done: "submitted", ready: "ready — apply via link", pending: "proposal drafted",
+                           needs_login: "needs login", failed: "failed", approved: "approved",
+                           executing: "submitting…" }[q.status] || q.status;
+            const link = q.payload?.job?.link;
+            return (
+              <div key={q.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                                       borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: c, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, flex: 1, minWidth: 0, overflow: "hidden",
+                               textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.job_title}</span>
+                <span style={{ fontSize: 11, color: T.dim }}>{q.platform}</span>
+                <span style={{ fontSize: 11, color: c, minWidth: 130, textAlign: "right" }}>{what}</span>
+                {link && <a href={link} target="_blank" rel="noreferrer"
+                            style={{ fontSize: 11, color: T.cyan, textDecoration: "none" }}>open ↗</a>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Your sites */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ ...lbl, flex: 1 }}>Your freelance sites</div>
+          <button onClick={() => setShowAdd(!showAdd)}
+            style={{ padding: "6px 12px", borderRadius: 9, fontSize: 12, background: "rgba(84,214,255,0.08)",
+                     border: `1px solid rgba(84,214,255,0.3)`, color: T.cyan }}>
+            {showAdd ? "Cancel" : "+ Add a site"}
+          </button>
+        </div>
+
+        {showAdd && (
+          <div style={{ ...card, marginBottom: 10 }}>
+            <div style={{ fontSize: 12.5, color: T.dim, marginBottom: 12, lineHeight: 1.6 }}>
+              Add any freelance site. Jarvis will scan it every cycle. If you add a login it's
+              encrypted on this PC and only used to fill that site's own login form.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <input style={field} placeholder="Site name (e.g. Toptal)" value={form.label}
+                     onChange={e => setForm({ ...form, label: e.target.value })} />
+              <select style={{ ...field, cursor: "pointer" }} value={form.kind}
+                      onChange={e => setForm({ ...form, kind: e.target.value })}>
+                <option value="board">Job board — apply via their link</option>
+                <option value="bid">Bid site — Jarvis can submit proposals</option>
+                <option value="talent">Talent profile — clients contact you</option>
+              </select>
+              <input style={{ ...field, gridColumn: "1 / -1" }} placeholder="Jobs page URL (where listings are)"
+                     value={form.jobs_url} onChange={e => setForm({ ...form, jobs_url: e.target.value })} />
+              <input style={{ ...field, gridColumn: "1 / -1" }} placeholder="Login page URL (optional)"
+                     value={form.login_url} onChange={e => setForm({ ...form, login_url: e.target.value })} />
+              <input style={field} placeholder="Username / email (optional)" value={form.username}
+                     onChange={e => setForm({ ...form, username: e.target.value })} />
+              <input style={field} type="password" placeholder="Password (optional, encrypted)"
+                     value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+            </div>
+            <button onClick={addPlatform}
+              style={{ marginTop: 12, padding: "10px 20px", borderRadius: 10, border: "none",
+                       background: T.cyan, color: "#04202b", fontWeight: 700, fontSize: 13 }}>
+              Add site
+            </button>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {sessions.map(s => (
+            <div key={s.platform} style={{ ...card, padding: "9px 13px", display: "flex",
+                                           alignItems: "center", gap: 8 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%",
+                             background: s.logged_in === true ? T.green : s.logged_in === false ? T.red : T.dim }} />
+              <span style={{ fontSize: 12.5 }}>{s.label}</span>
+              <span style={{ fontSize: 10, color: T.dim }}>
+                {s.logged_in === true ? "logged in" : s.logged_in === false ? "logged out" : "unknown"}
+              </span>
+            </div>
+          ))}
+          {custom.map(p => (
+            <div key={p.slug} style={{ ...card, padding: "9px 13px", display: "flex",
+                                       alignItems: "center", gap: 8, borderColor: "rgba(169,139,255,0.3)" }}>
+              <span style={{ fontSize: 12.5, color: T.violet }}>{p.label}</span>
+              <span style={{ fontSize: 10, color: T.dim }}>{p.kind} · yours</span>
+              <span onClick={() => fetch(`${API}/sessions/custom/${p.slug}`, { method: "DELETE" }).then(load)}
+                    style={{ cursor: "pointer", color: T.red, fontSize: 13 }}>✕</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+################################################################################
+# FILE 131/154: frontend/src/pages/Jobs.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -19276,7 +20415,7 @@ export default function Jobs() {
 ```
 
 ################################################################################
-# FILE 129/151: frontend/src/pages/Messages.jsx
+# FILE 132/154: frontend/src/pages/Messages.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -19417,7 +20556,7 @@ export default function Messages() {
 ```
 
 ################################################################################
-# FILE 130/151: frontend/src/pages/Notes.jsx
+# FILE 133/154: frontend/src/pages/Notes.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -19482,7 +20621,7 @@ export default function Notes() {
 ```
 
 ################################################################################
-# FILE 131/151: frontend/src/pages/Proposals.jsx
+# FILE 134/154: frontend/src/pages/Proposals.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -19699,7 +20838,7 @@ export default function Proposals() {
 ```
 
 ################################################################################
-# FILE 132/151: frontend/src/pages/Settings.jsx
+# FILE 135/154: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -19783,7 +20922,7 @@ export default function Settings() {
 ```
 
 ################################################################################
-# FILE 133/151: frontend/src/pages/Tasks.jsx
+# FILE 136/154: frontend/src/pages/Tasks.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -19868,7 +21007,7 @@ export default function Tasks() {
 ```
 
 ################################################################################
-# FILE 134/151: frontend/src/pages/Workspace.jsx
+# FILE 137/154: frontend/src/pages/Workspace.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -20264,7 +21403,7 @@ export default function Workspace() {
 ```
 
 ################################################################################
-# FILE 135/151: frontend/src/pages/WorkspaceHub.jsx
+# FILE 138/154: frontend/src/pages/WorkspaceHub.jsx
 ################################################################################
 ```jsx
 import { useState } from 'react'
@@ -20314,7 +21453,7 @@ export default function WorkspaceHub() {
 ```
 
 ################################################################################
-# FILE 136/151: frontend/vite.config.js
+# FILE 139/154: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -20326,7 +21465,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 137/151: .gitignore
+# FILE 140/154: .gitignore
 ################################################################################
 ```
 # Python
@@ -20366,7 +21505,7 @@ scratchpad/
 ```
 
 ################################################################################
-# FILE 138/151: FINAL_PROJECT_TREE_backend.txt
+# FILE 141/154: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -20449,7 +21588,7 @@ scratchpad/
 ```
 
 ################################################################################
-# FILE 139/151: FINAL_PROJECT_TREE_frontend.txt
+# FILE 142/154: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -20473,7 +21612,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 140/151: LEGACY_GREP_ARTIFACT.txt
+# FILE 143/154: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -20495,7 +21634,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 141/151: PROJECT_TREE.txt
+# FILE 144/154: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -20613,7 +21752,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 142/151: REQUIREMENTS_SNAPSHOT.txt
+# FILE 145/154: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -20643,7 +21782,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 143/151: RUNTIME_VALIDATION.py
+# FILE 146/154: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -20744,7 +21883,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 144/151: RUN_VALIDATION.bat
+# FILE 147/154: RUN_VALIDATION.bat
 ################################################################################
 ```bat
 @echo off
@@ -20763,95 +21902,123 @@ pause
 ```
 
 ################################################################################
-# FILE 145/151: START_JARVIS.bat
+# FILE 148/154: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
 REM ============================================================
-REM  JARVIS — one-click start for Windows
-REM  Double-click this file, or run it from the Node.js prompt.
+REM  JARVIS — true one-click start (backend + UI + browser)
+REM  Double-click this file. Nothing else needs to be run.
 REM ============================================================
-setlocal
+title Jarvis Launcher
+setlocal EnableDelayedExpansion
 cd /d "%~dp0"
+set "ROOT=%~dp0"
 
 echo.
-echo ===========================================
-echo   JARVIS - Starting up
-echo ===========================================
+echo  ===============================================
+echo    JARVIS - starting
+echo  ===============================================
 echo.
 
-REM --- 1. Check Python ---
-where python >nul 2>nul
-if errorlevel 1 (
-  echo [ERROR] Python not found. Install Python 3.11 and re-run.
-  pause
-  exit /b 1
+REM ---------- 1. Python ----------
+set "PY="
+where py >nul 2>nul && set "PY=py -3"
+if not defined PY ( where python >nul 2>nul && set "PY=python" )
+if not defined PY (
+  echo  [X] Python not found on PATH.
+  echo      Install Python 3.11+ from python.org and TICK "Add Python to PATH".
+  echo.
+  pause & exit /b 1
 )
+echo  [ok] Python: %PY%
 
-REM --- 2. Check Ollama is running ---
-echo [1/5] Checking Ollama...
+REM ---------- 2. Node / npm ----------
+REM npm is npm.cmd — `where npm` can miss it in some shells, so check both.
+set "NPM="
+where npm >nul 2>nul && set "NPM=npm"
+if not defined NPM ( where npm.cmd >nul 2>nul && set "NPM=npm.cmd" )
+if not defined NPM (
+  echo  [X] Node.js / npm not found on PATH.  ^<-- this is why the UI never opened
+  echo      Install Node.js LTS from nodejs.org, then re-run this file.
+  echo.
+  pause & exit /b 1
+)
+echo  [ok] npm found
+
+REM ---------- 3. Ollama ----------
 curl -s http://127.0.0.1:11434/api/tags >nul 2>nul
 if errorlevel 1 (
-  echo       Ollama not responding. Starting it in a new window...
-  start "Ollama" cmd /c "ollama serve"
+  echo  [..] Ollama not responding - starting it
+  start "Ollama" /min cmd /c "ollama serve"
   timeout /t 4 >nul
 ) else (
-  echo       Ollama is running.
+  echo  [ok] Ollama already running
 )
 
-REM --- 2b. Brain: make sure the tiny embedding model is available (274MB, once) ---
-REM Non-fatal: the Brain works in keyword mode without it.
-ollama list 2>nul | findstr /i "nomic-embed-text" >nul 2>nul
+REM ---------- 4. Backend deps ----------
+echo  [..] Backend dependencies
+pushd "%ROOT%backend"
+%PY% -m pip install -q -r requirements.txt 2>nul
 if errorlevel 1 (
-  echo       Pulling brain embedding model nomic-embed-text (274MB, first run only^)...
-  start "Ollama pull" /min cmd /c "ollama pull nomic-embed-text"
+  echo       retrying via mirror
+  %PY% -m pip install -q -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple -r requirements.txt 2>nul
 )
+popd
 
-REM --- 3. Install backend dependencies ---
-echo [2/5] Installing backend dependencies (first run only, may take a few minutes)...
-cd backend
-python -m pip install -q -r requirements.txt
-if errorlevel 1 (
-  echo       Retrying with China mirror...
-  python -m pip install -q -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple -r requirements.txt
-)
+REM ---------- 5. Backend ----------
+echo  [..] Starting backend on http://127.0.0.1:8000
+start "Jarvis Backend" cmd /k "cd /d ""%ROOT%backend"" && %PY% -m uvicorn main:app --port 8000"
 
-REM --- 4. Start backend ---
-echo [3/5] Starting backend on http://127.0.0.1:8000 ...
-start "Jarvis Backend" cmd /k "python -m uvicorn main:app --reload --port 8000"
-cd ..
-timeout /t 5 >nul
-
-REM --- 5. Start frontend ---
-echo [4/5] Installing + starting frontend...
-cd frontend
-if not exist node_modules (
-  echo       Installing frontend packages (first run only)...
-  call npm install
+REM ---------- 6. Frontend deps ----------
+if not exist "%ROOT%frontend\node_modules" (
+  echo  [..] Installing UI packages ^(first run only, few minutes^)
+  pushd "%ROOT%frontend"
+  call %NPM% install
   if errorlevel 1 (
-    echo       Retrying with China npm mirror...
-    call npm install --registry=https://registry.npmmirror.com
+    echo       retrying via China mirror
+    call %NPM% install --registry=https://registry.npmmirror.com
   )
+  popd
 )
-echo [5/5] Launching UI...
-start "Jarvis Frontend" cmd /k "npm run dev"
-cd ..
 
+REM ---------- 7. Frontend ----------
+echo  [..] Starting UI on http://localhost:5173
+start "Jarvis UI" cmd /k "cd /d ""%ROOT%frontend"" && %NPM% run dev"
+
+REM ---------- 8. Wait for the UI, then open the browser ----------
+echo  [..] Waiting for the UI to come up...
+set /a tries=0
+:waitloop
+timeout /t 2 >nul
+set /a tries+=1
+curl -s http://localhost:5173 >nul 2>nul
+if not errorlevel 1 goto ready
+if %tries% lss 30 goto waitloop
+echo  [!] UI didn't answer on :5173 after 60s. Check the "Jarvis UI" window for errors.
+goto done
+
+:ready
+echo  [ok] UI is up - opening browser
+start "" http://localhost:5173
+
+:done
 echo.
-echo ===========================================
-echo   Jarvis is starting.
-echo   Backend:  http://127.0.0.1:8000
-echo   SSE test: http://127.0.0.1:8000/orchestrator/sse
-echo   UI:       open the URL the frontend window prints
-echo             (usually http://localhost:5173)
-echo ===========================================
+echo  ===============================================
+echo    Jarvis is running.
+echo      UI       http://localhost:5173
+echo      Backend  http://127.0.0.1:8000
+echo      Docs     http://127.0.0.1:8000/api/docs
 echo.
-echo This window can be closed. The two new windows run Jarvis.
-pause
+echo    Two windows opened (Backend + UI). Closing
+echo    them stops Jarvis. This window can be closed.
+echo  ===============================================
+echo.
+timeout /t 10
 ```
 
 ################################################################################
-# FILE 146/151: legacy_dependency_report.json
+# FILE 149/154: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -21016,7 +22183,7 @@ pause
 ```
 
 ################################################################################
-# FILE 147/151: requirements.txt
+# FILE 150/154: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -21049,7 +22216,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 148/151: start.bat
+# FILE 151/154: start.bat
 ################################################################################
 ```bat
 @echo off
@@ -21092,7 +22259,7 @@ pause
 ```
 
 ################################################################################
-# FILE 149/151: start.sh
+# FILE 152/154: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -21129,7 +22296,7 @@ wait
 ```
 
 ################################################################################
-# FILE 150/151: start_frontend.bat
+# FILE 153/154: start_frontend.bat
 ################################################################################
 ```bat
 @echo off
@@ -21144,7 +22311,7 @@ pause
 ```
 
 ################################################################################
-# FILE 151/151: tools/dump_source.py
+# FILE 154/154: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3

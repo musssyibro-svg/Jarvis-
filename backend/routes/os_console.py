@@ -7,8 +7,31 @@ GET  /os/traces/{id}  one trace in full
 GET  /os/diagnostics  health of the routing itself: failures + worst component
 """
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import PlainTextResponse
 
 router = APIRouter()
+
+
+@router.get("/health-check")
+def deep_health():
+    """Full diagnosis: every dependency, model and binary, with the exact fix."""
+    from services.diagnostics import deep_check
+    return deep_check()
+
+
+@router.get("/report", response_class=PlainTextResponse)
+def runtime_report():
+    """
+    Downloadable runtime report — diagnosis + live state + activity + execution
+    traces + log tail in one file. This is the thing to send when something
+    misbehaves; it contains everything needed to debug it.
+    """
+    from services.diagnostics import build_report
+    from datetime import datetime
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    return PlainTextResponse(
+        build_report(),
+        headers={"Content-Disposition": f'attachment; filename="jarvis-report-{stamp}.txt"'})
 
 
 @router.get("/state")
