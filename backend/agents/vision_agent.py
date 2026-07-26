@@ -431,6 +431,14 @@ def analyze_screen(question: str = "") -> dict:
     if sig and answer:
         _ANALYSIS_CACHE.update(sig=sig, answer=answer, at=_t.time(), question=q)
 
+    try:   # real vision event for the console timeline
+        from services import event_bus
+        event_bus.publish("vision.analyzed",
+                          {"method": "llava" if vision_used else "ocr",
+                           "chars": len(screen_text or "")})
+    except Exception:
+        pass
+
     return {
         "success":     True,
         "screenshot":  shot.get("path"),

@@ -18,9 +18,24 @@ class ScoutAgent(BaseAgent):
         all_jobs  = []
         feed      = []
 
+        from services import platform_health, event_bus
         for platform in platforms:
+            # Skip sites that are backing off or paused — scraping a dead site
+            # every cycle is pure waste.
+            ok_to_scan, why = platform_health.should_scan(platform)
+            if not ok_to_scan:
+                feed.append(self.log(f"{platform}: skipped — {why}", "warning"))
+                continue
             self.log(f"Scanning {platform}...")
-            jobs = self._scan(platform, max_per)
+            try:
+                jobs = self._scan(platform, max_per)
+                err = ""
+            except Exception as e:
+                jobs, err = [], str(e)
+            # "no jobs at all" counts as a failure so a broken scraper backs off.
+            platform_health.record(platform, ok=bool(jobs), jobs=len(jobs), error=err)
+            event_bus.publish("freelance.scanned",
+                              {"platform": platform, "jobs": len(jobs)})
             feed.append(self.log(f"{platform}: {len(jobs)} opportunities found"))
             all_jobs.extend(jobs)
 

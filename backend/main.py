@@ -100,6 +100,20 @@ def _startup():
     except Exception as e:
         logger.warning(f"Custom platforms init: {e}")
     try:
+        from services.platform_health import init_health
+        init_health()          # per-site reliability, backoff + auto-pause
+    except Exception as e:
+        logger.warning(f"Platform health init: {e}")
+    try:
+        from services import model_router
+        st = model_router.status()
+        logger.info(f"Model router: {st['picks']['chat'].get('model')} for chat "
+                    f"({st['free_ram_gb']}GB free)")
+        for w in st.get("warnings", []):
+            logger.warning(f"Model router: {w}")
+    except Exception as e:
+        logger.warning(f"Model router init: {e}")
+    try:
         from services.brain_core import start as start_brain
         start_brain()           # world model sensing + event-first proactive loop
         logger.info("Brain online (world model + event bus).")

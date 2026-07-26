@@ -506,6 +506,13 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
             focus_window(last_opened)
             time.sleep(0.4)
 
+    try:   # tell the console what actually ran (real events, not decoration)
+        from services import event_bus
+        event_bus.publish("desktop.chain_complete",
+                          {"steps": len(steps),
+                           "actions": ",".join(s.get("action", "") for s in steps)[:80]})
+    except Exception:
+        pass
     return {"success": True, "steps": results, "count": len(results),
             "verified": True}
 

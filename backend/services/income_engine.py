@@ -171,6 +171,31 @@ def _run_cycle(cfg: dict):
 
     platforms = _active_platforms(cfg)
     profile = get_profile()
+
+    # Ask the brain whether this is a good moment. It ADVISES — we still own the
+    # decision, but we respect a hard WAIT (e.g. RAM critical, no model) instead
+    # of grinding a maxed-out machine.
+    try:
+        from services import brain_decision
+        d = brain_decision.decide(
+            goal_type="freelance_application",
+            objective=f"scan {', '.join(platforms)}",
+            history={"consecutive_failures": int(cfg.get("consecutive_failures", 0)),
+                     "last_error": (cfg.get("last_result") or {}).get("error", "")})
+        if d.action == brain_decision.Action.WAIT:
+            _emit(f"Holding this cycle — {d.reason}"
+                  + (f" ({'; '.join(d.blockers)})" if d.blockers else ""), "warning")
+            return
+        if d.action == brain_decision.Action.RECOVER:
+            _emit(f"Repeated failures — {d.reason}. Backing off to a longer interval.",
+                  "warning")
+            cfg["interval_min"] = min(120, int(cfg.get("interval_min", 20)) * 2)
+            cfg["consecutive_failures"] = 0
+            _save_config(cfg)
+            return
+    except Exception:
+        pass
+
     _emit(f"Cycle starting — {', '.join(platforms)}")
     goal = Goal(
         goal_type="freelance_application",
@@ -201,6 +226,9 @@ def _run_cycle(cfg: dict):
     cfg["last_run"] = _now()
     ok = snap.get("state") == "COMPLETE"
     cfg["last_result"] = {"state": snap.get("state"), "error": snap.get("error")}
+    # Track a failure streak so the brain can tell "one bad cycle" from "this is
+    # broken" and back off instead of hammering every 20 minutes.
+    cfg["consecutive_failures"] = 0 if ok else int(cfg.get("consecutive_failures", 0)) + 1
     _save_config(cfg)
     try:
         STATE.update_stats(cycles=cfg["cycles"])

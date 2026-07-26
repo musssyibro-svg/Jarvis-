@@ -40,21 +40,29 @@ except ImportError:
     _Anthropic = None
 
 
-def _resolve_chat_model(fast: bool) -> str:
+def _resolve_chat_model(fast: bool, task: str | None = None) -> str:
     """
-    Resolve to an actually-installed model. Uses ollama_manager auto-detection
-    so we never request a model that isn't pulled (root cause of
-    'model deepseek-r1:1.5b not found').
+    Ask the model router for the best INSTALLED model that fits in free RAM.
+
+    Previously this trusted the configured name, which is how a 0.5B model ended
+    up doing everything — it was "resolved" successfully and nothing complained.
+    The router ranks by real quality and memory headroom instead.
     """
+    try:
+        from services import model_router
+        chosen = model_router.pick_model(task or ("chat" if fast else "reasoning"))
+        if chosen:
+            return chosen
+    except Exception:
+        pass
+    # Fallbacks: role resolution, then whatever is configured.
     preferred = OLLAMA_FAST_MODEL if fast else OLLAMA_MODEL
     try:
         from services.ollama_manager import resolve_models
         info = resolve_models()
-        key = "fast" if fast else "reasoning"
-        resolved = info["resolved"].get(key)
+        resolved = info["resolved"].get("fast" if fast else "reasoning")
         if resolved:
             return resolved
-        # nothing matched by role — use any installed model
         if info["installed"]:
             return info["installed"][0]
     except Exception:
@@ -62,14 +70,15 @@ def _resolve_chat_model(fast: bool) -> str:
     return preferred
 
 
-def call_model(prompt: str, history: list | None = None, fast: bool = False) -> str:
+def call_model(prompt: str, history: list | None = None, fast: bool = False,
+               task: str | None = None) -> str:
     """
     Call the AI model. fast=True prefers the lighter model.
     Auto-detects installed Ollama models; never hardcodes an unpulled name.
     Returns string response. Never raises — returns error message on failure.
     """
     history = history or []
-    model   = _resolve_chat_model(fast)
+    model   = _resolve_chat_model(fast, task)
 
     # ── Ollama ────────────────────────────────────────────────────────────────
     if _ollama:

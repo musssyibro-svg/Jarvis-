@@ -65,5 +65,31 @@ def events_recent(limit: int = 50, prefix: str = None):
 
 @router.get("/router/status")
 def router_status():
+    """Which model is chosen for each task, why, and any quality/RAM warnings."""
     from services import model_router
     return model_router.status()
+
+
+@router.post("/brain/decide")
+def brain_decide(body: dict = None):
+    """
+    Ask the brain what it would do with a goal — advisory only.
+    {goal_type, objective} -> {decision, human}
+    """
+    from services import brain_decision
+    b = body or {}
+    return brain_decision.explain(b.get("goal_type", "background"),
+                                  b.get("objective", ""))
+
+
+@router.get("/freelance/health")
+def freelance_health():
+    """Per-platform reliability: success rate, backoff, paused sites."""
+    from services import platform_health
+    return platform_health.summary()
+
+
+@router.post("/freelance/health/{platform}/resume")
+def freelance_resume(platform: str):
+    from services import platform_health
+    return platform_health.resume(platform)
