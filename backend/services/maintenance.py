@@ -34,6 +34,8 @@ KEEP_QUEUE_DAYS      = 14      # done/failed/rejected queue rows
 KEEP_CHAT_MESSAGES   = 2000    # per session cap
 KEEP_SCREENSHOT_DAYS = 3
 KEEP_PULSE_DAYS      = 30
+KEEP_EXPERIENCE_DAYS = 90      # learned behaviour is worth keeping a long time
+KEEP_EXPERIENCE_ROWS = 5000    # …but not forever
 MAX_SCREENSHOT_MB    = 500
 
 _started = False
@@ -79,6 +81,7 @@ def prune_rows() -> dict:
     """Delete rows that are old and finished. Never touches pending work."""
     cutoff = (datetime.now(timezone.utc) - timedelta(days=KEEP_QUEUE_DAYS)).isoformat()
     pulse_cutoff = (datetime.now(timezone.utc) - timedelta(days=KEEP_PULSE_DAYS)).isoformat()
+    exp_cutoff = (datetime.now(timezone.utc) - timedelta(days=KEEP_EXPERIENCE_DAYS)).isoformat()
     removed = 0
     try:
         with conn() as db:
@@ -90,6 +93,18 @@ def prune_rows() -> dict:
             try:
                 cur = db.execute("DELETE FROM pulse_events WHERE created_at < ?",
                                  (pulse_cutoff,))
+                removed += cur.rowcount or 0
+            except Exception:
+                pass
+            # Learned-behaviour observations. Keep these longer than events —
+            # they're what makes Jarvis better at THIS machine — but cap them so
+            # a year of running doesn't leave a table nothing ever reads past
+            # the newest 40 rows per app.
+            try:
+                cur = db.execute(
+                    "DELETE FROM experience_events WHERE created_at < ? AND id NOT IN "
+                    "(SELECT id FROM experience_events ORDER BY id DESC LIMIT ?)",
+                    (exp_cutoff, KEEP_EXPERIENCE_ROWS))
                 removed += cur.rowcount or 0
             except Exception:
                 pass

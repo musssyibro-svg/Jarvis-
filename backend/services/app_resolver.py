@@ -81,6 +81,25 @@ def remember(name: str, path: str, source: str = "startmenu") -> None:
         pass
 
 
+def forget(name: str) -> bool:
+    """
+    Drop a cached path so the next launch re-resolves from scratch.
+
+    get_cached already discards a path whose file has vanished, but that doesn't
+    cover an app that was reinstalled elsewhere and left a stub or an outdated
+    launcher behind: the file still exists, so the stale entry survives and every
+    launch keeps failing the same way. When a launch fails with "can't find it",
+    we forget what we thought we knew rather than repeating it forever.
+    """
+    try:
+        init_app_paths()
+        with conn() as db:
+            cur = db.execute("DELETE FROM app_paths WHERE name=?", (_key(name),))
+        return bool(cur.rowcount)
+    except Exception:
+        return False
+
+
 def _ps(cmd: str, timeout: int = 8) -> str:
     """Run a PowerShell one-liner, return stdout (empty on any failure)."""
     try:

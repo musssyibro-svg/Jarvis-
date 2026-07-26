@@ -147,6 +147,10 @@ def snapshot(timeline_limit: int = 40) -> dict:
         "stats": stats,
         "timeline": (feed_state.get("feed", []) or [])[-timeline_limit:][::-1],
         "traces": _safe(lambda: __import__("services.trace", fromlist=["summary"]).summary(), {}),
+        # How reliable Jarvis has actually been lately, measured not claimed.
+        "reliability": _safe(
+            lambda: __import__("services.experience",
+                               fromlist=["reliability"]).reliability(), {}),
     }
 
 

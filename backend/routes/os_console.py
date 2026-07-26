@@ -5,11 +5,18 @@ GET  /os/state        one live snapshot of everything (replaces 6+ separate poll
 GET  /os/traces       recent request traces (exact execution path per request)
 GET  /os/traces/{id}  one trace in full
 GET  /os/diagnostics  health of the routing itself: failures + worst component
+GET  /os/experience   what Jarvis has learned about this machine's apps/failures
+POST /os/confidence   how likely a plan is to work, before running it
 """
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 
 router = APIRouter()
+
+
+class _Plan(BaseModel):
+    steps: list = []
 
 
 @router.get("/health-check")
@@ -53,6 +60,24 @@ def os_trace(trace_id: str):
     if not t:
         raise HTTPException(404, "trace not found")
     return t
+
+
+@router.get("/experience")
+def os_experience(limit: int = 8):
+    """
+    What Jarvis has learned by doing: per-app success rates, how long each app
+    really takes to open on THIS machine, and the actual causes of recent
+    failures (with the fix for each) instead of raw error strings.
+    """
+    from services import experience
+    return experience.summary(limit)
+
+
+@router.post("/confidence")
+def os_confidence(plan: _Plan):
+    """Score a plan against real history before spending time on it."""
+    from services import experience
+    return experience.confidence(plan.steps)
 
 
 @router.get("/diagnostics")

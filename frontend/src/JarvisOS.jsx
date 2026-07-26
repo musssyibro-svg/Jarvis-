@@ -442,10 +442,12 @@ function Console({ os, onRun, reply, busy, history, activity }) {
 function Diagnostics() {
   const [data, setData] = useState(null);
   const [health, setHealth] = useState(null);
+  const [exp, setExp] = useState(null);
   const [open, setOpen] = useState(null);
   const load = () => {
     fetch(`${API}/os/diagnostics`).then((r) => r.json()).then(setData).catch(() => setData(null));
     fetch(`${API}/os/health-check`).then((r) => r.json()).then(setHealth).catch(() => setHealth(null));
+    fetch(`${API}/os/experience`).then((r) => r.json()).then(setExp).catch(() => setExp(null));
   };
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
 
@@ -502,6 +504,69 @@ function Diagnostics() {
             ))}
           </div>
         ))}
+      </div>
+
+      {/* What Jarvis has learned by doing — measured on this machine, not claimed */}
+      <div>
+        <div style={sectionLabel}>What Jarvis has learned here</div>
+        <div style={{ ...card, padding: 16 }}>
+          {!exp?.overall?.samples ? (
+            <div style={{ fontSize: 12.5, color: T.dim }}>
+              Nothing observed yet. Once Jarvis has run a few tasks, this shows how
+              reliable each app really is on your PC and what actually goes wrong.
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 14, fontWeight: 600,
+                            color: exp.overall.rate >= 0.8 ? T.green
+                                 : exp.overall.rate >= 0.5 ? T.amber : T.red }}>
+                {Math.round((exp.overall.rate || 0) * 100)}% of the last {exp.overall.samples} actions
+                succeeded
+              </div>
+              {exp.overall.top_failure_cause && (
+                <div style={{ fontSize: 12, color: T.dim, marginTop: 5 }}>
+                  Most common problem: {exp.overall.top_failure_cause}
+                </div>
+              )}
+
+              {(exp.apps || []).length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  {exp.apps.map((a) => (
+                    <div key={a.app} style={{ display: "flex", gap: 12, alignItems: "baseline",
+                                              padding: "5px 0", fontSize: 12.5,
+                                              borderTop: `1px solid ${T.line}` }}>
+                      <span style={{ minWidth: 130 }}>{a.app}</span>
+                      <span style={{ color: a.success_rate >= 0.8 ? T.green : T.amber,
+                                     minWidth: 46 }}>
+                        {Math.round(a.success_rate * 100)}%
+                      </span>
+                      <span style={{ color: T.dim, minWidth: 70 }}>{a.runs} runs</span>
+                      <span style={{ color: T.cyan, flex: 1 }}>
+                        {a.learned_wait_s ? `waits ${a.learned_wait_s}s for it` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(exp.recent_failures || []).length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ ...sectionLabel, marginBottom: 8 }}>Recent problems, and the fix</div>
+                  {exp.recent_failures.slice(0, 5).map((f, i) => (
+                    <div key={i} style={{ background: "rgba(0,0,0,0.25)", borderRadius: 9,
+                                          padding: "9px 12px", marginBottom: 6 }}>
+                      <div style={{ fontSize: 12.5 }}>
+                        <span style={{ color: T.amber }}>{f.app || f.action}</span>
+                        <span style={{ color: T.dim }}> — {f.cause}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: T.cyan, marginTop: 4 }}>{f.remedy}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <div>

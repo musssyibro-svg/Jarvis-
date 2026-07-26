@@ -372,22 +372,39 @@ def _start_menu_launch(name: str) -> bool:
         return False
 
 
-def wait_for_window(title_contains: str, timeout: float = 8.0) -> dict:
+def wait_for_window(title_contains: str, timeout: float | None = None) -> dict:
     """
     Block until a window whose title contains the string appears (or the app's
     process shows up). This is the glue that makes chained commands reliable:
     'open notepad' → wait_for_window('notepad') → type — instead of typing
     into whatever window happened to have focus 1.5s later.
+
+    `timeout` is a FLOOR, not a ceiling: Jarvis waits at least that long, and
+    longer if this particular app has historically needed longer on THIS machine
+    (see services/experience.py). A flat 8s was wrong in both directions —
+    Notepad is ready in well under a second, while a cold QQ or Chrome start can
+    exceed 8s, and then the next keystroke went into whatever had focus instead.
     """
-    deadline = time.time() + timeout
+    learned = _learned_wait(title_contains)
+    timeout = learned if timeout is None else max(float(timeout), learned)
+    started = time.time()
+    deadline = started + timeout
     while time.time() < deadline:
         if _app_visible(title_contains):
+            waited = round(time.time() - started, 1)
+            # Record the real appearance time so the estimate keeps improving.
+            try:
+                from services import experience
+                experience.record(title_contains, experience.WINDOW_READY, True,
+                                  waited, detail="window appeared")
+            except Exception:
+                pass
             return {"success": True, "action": "wait_for_window",
-                    "title": title_contains,
-                    "waited": round(timeout - (deadline - time.time()), 1)}
+                    "title": title_contains, "waited": waited,
+                    "timeout_used": round(timeout, 1)}
         time.sleep(0.4)
     return {"success": False, "action": "wait_for_window",
-            "error": f"Window '{title_contains}' did not appear within {timeout}s"}
+            "error": f"Window '{title_contains}' did not appear within {timeout:.0f}s"}
 
 
 def _run_action(action: str, params: dict) -> dict:
@@ -403,8 +420,10 @@ def _run_action(action: str, params: dict) -> dict:
         "move":         lambda p: move(p.get("x", 0), p.get("y", 0)),
         "wait":         lambda p: ({"success": True, "action": "wait"},
                                    time.sleep(min(float(p.get("seconds", 1)), 15)))[0],
-        "wait_for_window": lambda p: wait_for_window(p.get("title", ""),
-                                                     float(p.get("timeout", 8))),
+        # timeout is a floor; experience can extend it for slow apps.
+        "wait_for_window": lambda p: wait_for_window(
+            p.get("title", ""),
+            float(p["timeout"]) if p.get("timeout") is not None else None),
         "focus_window": lambda p: focus_window(p.get("title", "")),
         "open_url":     lambda p: open_url(p.get("url", "")),
         "write_file":   lambda p: write_file(p.get("path", ""), p.get("content", "")),
@@ -530,6 +549,27 @@ def _read_focused_text() -> str | None:
 _NO_RETRY = {"type_text", "click", "click_text", "press", "hotkey"}
 
 
+def _classify(error: str, action: str, result: dict | None = None) -> dict:
+    """Structured failure info. Falls back to a usable shape if the service is
+    unavailable, so execution never breaks because diagnosis broke."""
+    try:
+        from services import experience
+        return experience.classify(error, action, result)
+    except Exception:
+        return {"kind": "unknown", "cause": error or "unknown failure",
+                "remedy": "See the runtime report on the Diagnostics screen.",
+                "retryable": True, "recovery": "retry", "raw": (error or "")[:300]}
+
+
+def _learned_wait(app: str) -> float:
+    """How long this app actually needs to show a window, on THIS machine."""
+    try:
+        from services import experience
+        return experience.launch_wait_for(app)["wait_s"]
+    except Exception:
+        return 8.0
+
+
 def execute_chain(steps: list, max_retries: int = 2) -> dict:
     """
     Run desktop steps with the full execution loop:
@@ -569,25 +609,80 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
                 # text didn't land, the step fails with that exact reason.
                 time.sleep(0.3)
 
+        target = params.get("name_or_path") or params.get("app") or last_opened or ""
         retries = 0 if action in _NO_RETRY else max_retries
+
+        # Apps that habitually fail their first attempt on this machine (cold
+        # starts of QQ and similar Electron apps do this) earn one extra try —
+        # learned from observation, not guessed. See services/experience.py.
+        try:
+            from services import experience
+            if action not in _NO_RETRY and experience.needs_extra_attempt(target, action)["extra"]:
+                retries += 1
+        except Exception:
+            pass
+
         verified, reason, r = False, "", {}
         attempts = 0
+        started = time.time()
         while attempts <= retries:
             attempts += 1
             r = _run_action(action, params)
             verified, reason = _verify_action(action, params, r)
             if verified:
                 break
+
+            # Classify BEFORE deciding to retry. Retrying a missing model or an
+            # unresolvable app path just burns seconds and reports the same
+            # thing; a lost-focus failure, on the other hand, is worth one more
+            # go — after actually re-focusing the window.
+            fail = _classify(reason or (r or {}).get("error", ""), action, r)
+            if not fail["retryable"]:
+                break
             if attempts <= retries:
+                if fail["recovery"] == "refocus" and last_opened:
+                    focus_window(last_opened)
+                    time.sleep(0.4)
+                elif fail["recovery"] == "wait_longer" and last_opened:
+                    wait_for_window(last_opened)      # learned per-app timing
                 time.sleep(min(1.0 * attempts, 3.0))   # brief backoff, then retry
 
+        elapsed = round(time.time() - started, 2)
         entry = {"step": i + 1, "action": action, "attempts": attempts,
-                 "verified": verified, "verify_reason": reason, **(r or {})}
+                 "verified": verified, "verify_reason": reason,
+                 "duration_s": elapsed, **(r or {})}
+
+        fail = None
+        if not verified:
+            fail = _classify(reason or (r or {}).get("error", ""), action, r)
+            entry["failure"] = fail
+            # Targeted recovery for the next run: if we couldn't find the app,
+            # the cached path is probably stale (reinstalled, moved, updated).
+            # Forget it so the next launch re-resolves instead of failing
+            # identically forever.
+            if fail["recovery"] == "resolve_path" and target:
+                try:
+                    from services import app_resolver
+                    if app_resolver.forget(target):
+                        entry["recovery_taken"] = f"forgot cached path for '{target}'"
+                except Exception:
+                    pass
         results.append(entry)
 
+        # Record what actually happened so the next run is better informed.
+        try:
+            from services import experience
+            experience.record(target, action, verified, elapsed,
+                              kind=(fail or {}).get("kind", ""), detail=reason)
+        except Exception:
+            pass
+
         if not verified:
+            # Report the CAUSE and the FIX, not just the symptom.
             return {"success": False, "steps": results, "failed_at": i + 1,
-                    "error": f"{action} could not be verified: {reason}"}
+                    "failure": fail,
+                    "error": f"{action} failed: {fail['cause']}",
+                    "what_to_do": fail["remedy"]}
 
         if action == "open_app":
             last_opened = params.get("name_or_path") or params.get("app", "")

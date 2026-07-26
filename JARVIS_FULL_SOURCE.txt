@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 149 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 150 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -106,61 +106,62 @@ TABLE OF CONTENTS
  97. backend/services/deepseek_service.py
  98. backend/services/diagnostics.py
  99. backend/services/event_bus.py
-100. backend/services/fiverr_service.py
-101. backend/services/freelancer_api.py
-102. backend/services/hubstaff_service.py
-103. backend/services/income_engine.py
-104. backend/services/maintenance.py
-105. backend/services/model_router.py
-106. backend/services/ollama_manager.py
-107. backend/services/os_state.py
-108. backend/services/planner_service.py
-109. backend/services/platform_health.py
-110. backend/services/platform_meta.py
-111. backend/services/profile_service.py
-112. backend/services/pulse_service.py
-113. backend/services/reflection.py
-114. backend/services/session_manager.py
-115. backend/services/tool_registry.py
-116. backend/services/trace.py
-117. backend/services/vault.py
-118. backend/services/workflow_service.py
-119. backend/services/world_model.py
-120. backend/services/zuodao_service.py
-121. frontend/index.html
-122. frontend/package.json
-123. frontend/src/App.jsx
-124. frontend/src/JarvisOS.jsx
-125. frontend/src/colors.js
-126. frontend/src/components/UI.jsx
-127. frontend/src/config.js
-128. frontend/src/index.css
-129. frontend/src/main.jsx
-130. frontend/src/pages/Agents.jsx
-131. frontend/src/pages/Chat.jsx
-132. frontend/src/pages/Earn.jsx
-133. frontend/src/pages/Settings.jsx
-134. frontend/vite.config.js
-135. .gitignore
-136. FINAL_PROJECT_TREE_backend.txt
-137. FINAL_PROJECT_TREE_frontend.txt
-138. LEGACY_GREP_ARTIFACT.txt
-139. PROJECT_TREE.txt
-140. REQUIREMENTS_SNAPSHOT.txt
-141. RUNTIME_VALIDATION.py
-142. RUN_VALIDATION.bat
-143. START_JARVIS.bat
-144. legacy_dependency_report.json
-145. requirements.txt
-146. start.bat
-147. start.sh
-148. start_frontend.bat
-149. tools/dump_source.py
+100. backend/services/experience.py
+101. backend/services/fiverr_service.py
+102. backend/services/freelancer_api.py
+103. backend/services/hubstaff_service.py
+104. backend/services/income_engine.py
+105. backend/services/maintenance.py
+106. backend/services/model_router.py
+107. backend/services/ollama_manager.py
+108. backend/services/os_state.py
+109. backend/services/planner_service.py
+110. backend/services/platform_health.py
+111. backend/services/platform_meta.py
+112. backend/services/profile_service.py
+113. backend/services/pulse_service.py
+114. backend/services/reflection.py
+115. backend/services/session_manager.py
+116. backend/services/tool_registry.py
+117. backend/services/trace.py
+118. backend/services/vault.py
+119. backend/services/workflow_service.py
+120. backend/services/world_model.py
+121. backend/services/zuodao_service.py
+122. frontend/index.html
+123. frontend/package.json
+124. frontend/src/App.jsx
+125. frontend/src/JarvisOS.jsx
+126. frontend/src/colors.js
+127. frontend/src/components/UI.jsx
+128. frontend/src/config.js
+129. frontend/src/index.css
+130. frontend/src/main.jsx
+131. frontend/src/pages/Agents.jsx
+132. frontend/src/pages/Chat.jsx
+133. frontend/src/pages/Earn.jsx
+134. frontend/src/pages/Settings.jsx
+135. frontend/vite.config.js
+136. .gitignore
+137. FINAL_PROJECT_TREE_backend.txt
+138. FINAL_PROJECT_TREE_frontend.txt
+139. LEGACY_GREP_ARTIFACT.txt
+140. PROJECT_TREE.txt
+141. REQUIREMENTS_SNAPSHOT.txt
+142. RUNTIME_VALIDATION.py
+143. RUN_VALIDATION.bat
+144. START_JARVIS.bat
+145. legacy_dependency_report.json
+146. requirements.txt
+147. start.bat
+148. start.sh
+149. start_frontend.bat
+150. tools/dump_source.py
 
 
 
 ################################################################################
-# FILE 1/149: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 1/150: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -226,7 +227,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 2/149: ARCHITECTURE.md
+# FILE 2/150: ARCHITECTURE.md
 ################################################################################
 ```md
 # Jarvis architecture (foundational layer)
@@ -293,7 +294,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 3/149: BRAIN_GUIDE.md
+# FILE 3/150: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -349,7 +350,7 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/149: CONTROL_FLOW_REPORT.md
+# FILE 4/150: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -404,7 +405,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 5/149: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 5/150: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -483,7 +484,7 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 6/149: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 6/150: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -602,7 +603,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 7/149: HIDDEN_RUNTIME_AUDIT.md
+# FILE 7/150: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -755,7 +756,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 8/149: MIGRATION_CHANGELOG.md
+# FILE 8/150: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -802,7 +803,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 9/149: PLANNER_AND_DOCTOR.md
+# FILE 9/150: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -859,7 +860,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 10/149: PRE_RELEASE_AUDIT.md
+# FILE 10/150: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1044,7 +1045,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 11/149: QA_VERIFICATION_REPORT.md
+# FILE 11/150: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -1138,7 +1139,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 12/149: README.md
+# FILE 12/150: README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -1274,7 +1275,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 13/149: README_START_HERE.md
+# FILE 13/150: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -1329,7 +1330,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 14/149: REAL_MACHINE_FIXES.md
+# FILE 14/150: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -1430,7 +1431,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 15/149: RESEARCH_UPGRADE_2026-07.md
+# FILE 15/150: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -1519,7 +1520,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 16/149: RUNTIME_VALIDATION_README.md
+# FILE 16/150: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -1557,7 +1558,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 17/149: STAGE2_CHANGELOG.md
+# FILE 17/150: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -1594,7 +1595,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 18/149: START_HERE.md
+# FILE 18/150: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -1745,7 +1746,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 19/149: V8_PHASE1_REPORT.md
+# FILE 19/150: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -1801,7 +1802,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 20/149: V9_FINAL_README.md
+# FILE 20/150: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -1863,7 +1864,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 21/149: V9_STAGE1_MIGRATION.md
+# FILE 21/150: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -1927,7 +1928,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 22/149: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 22/150: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -1999,7 +2000,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 23/149: WINDOWS_DEPLOYMENT.md
+# FILE 23/150: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -2037,7 +2038,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 24/149: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 24/150: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -2127,7 +2128,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 25/149: backend/README.md
+# FILE 25/150: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -2263,14 +2264,14 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 26/149: backend/adapters/__init__.py
+# FILE 26/150: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 27/149: backend/adapters/commander_adapter.py
+# FILE 27/150: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -2879,6 +2880,26 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
     labels = " → ".join(_step_label(a) for a in steps)
     _emit("executor", labels, "info")
     from services import trace
+
+    # Say up front whether this is likely to work. If something makes it
+    # impossible — emergency stop engaged, no model installed — say so NOW
+    # instead of spending two minutes discovering it one failed step at a time.
+    conf = {}
+    try:
+        from services import experience
+        conf = experience.confidence(chain)
+    except Exception:
+        conf = {}
+    if conf.get("blockers"):
+        blocked = "; ".join(conf["blockers"])
+        _emit("executor", f"Can't run this: {blocked}", "error")
+        trace.finish(f"blocked: {blocked}", ok=False)
+        return {"response": f"I can't do that right now — {blocked}",
+                "intent": intent, "data": {"blocked": conf["blockers"]}}
+    if conf.get("score", 1) < 0.5 and conf.get("factors"):
+        # Worth warning about, not worth refusing over.
+        _emit("executor", f"Heads up: {conf['factors'][0]}", "warning")
+
     try:
         from agents.desktop_agent import execute_chain
         result = execute_chain(chain)
@@ -2895,26 +2916,31 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
     if not result.get("success"):
         fa = result.get("failed_at", 0)
         done_n = max(0, fa - 1)
-        _emit("executor", result.get("error", "step failed"), "error")
-        trace.finish(result.get("error", "step failed"), ok=False)
-        return {"response": f"I got {done_n}/{len(steps)} steps done, then couldn't "
-                            f"verify: {result.get('error','')}. I didn't mark it done "
-                            f"because it didn't actually complete.",
-                "intent": intent, "data": result}
+        f = result.get("failure") or {}
+        # Tell the user WHY and WHAT TO DO, not just which step index broke.
+        cause = f.get("cause") or result.get("error", "step failed")
+        remedy = f.get("remedy") or result.get("what_to_do") or ""
+        _emit("executor", cause, "error")
+        trace.finish(cause, ok=False)
+        msg = (f"I got {done_n} of {len(steps)} steps done, then stopped. {cause}")
+        if remedy:
+            msg += f"\n\n{remedy}"
+        msg += "\n\nI haven't marked it done, because it didn't actually complete."
+        return {"response": msg, "intent": intent, "data": result}
     _emit("executor", f"Verified done: {labels}", "success")
     trace.finish(f"verified: {labels}", ok=True)
     return {"response": f"Done ✓ (verified: {labels})", "intent": intent, "data": result}
 ```
 
 ################################################################################
-# FILE 28/149: backend/agents/__init__.py
+# FILE 28/150: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 29/149: backend/agents/base_agent.py
+# FILE 29/150: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -2937,7 +2963,7 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 30/149: backend/agents/browser_agent.py
+# FILE 30/150: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
@@ -3148,7 +3174,7 @@ class BrowserAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 31/149: backend/agents/commander.py
+# FILE 31/150: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -3285,14 +3311,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 32/149: backend/agents/custom/__init__.py
+# FILE 32/150: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 33/149: backend/agents/desktop_agent.py
+# FILE 33/150: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -3669,22 +3695,39 @@ def _start_menu_launch(name: str) -> bool:
         return False
 
 
-def wait_for_window(title_contains: str, timeout: float = 8.0) -> dict:
+def wait_for_window(title_contains: str, timeout: float | None = None) -> dict:
     """
     Block until a window whose title contains the string appears (or the app's
     process shows up). This is the glue that makes chained commands reliable:
     'open notepad' → wait_for_window('notepad') → type — instead of typing
     into whatever window happened to have focus 1.5s later.
+
+    `timeout` is a FLOOR, not a ceiling: Jarvis waits at least that long, and
+    longer if this particular app has historically needed longer on THIS machine
+    (see services/experience.py). A flat 8s was wrong in both directions —
+    Notepad is ready in well under a second, while a cold QQ or Chrome start can
+    exceed 8s, and then the next keystroke went into whatever had focus instead.
     """
-    deadline = time.time() + timeout
+    learned = _learned_wait(title_contains)
+    timeout = learned if timeout is None else max(float(timeout), learned)
+    started = time.time()
+    deadline = started + timeout
     while time.time() < deadline:
         if _app_visible(title_contains):
+            waited = round(time.time() - started, 1)
+            # Record the real appearance time so the estimate keeps improving.
+            try:
+                from services import experience
+                experience.record(title_contains, experience.WINDOW_READY, True,
+                                  waited, detail="window appeared")
+            except Exception:
+                pass
             return {"success": True, "action": "wait_for_window",
-                    "title": title_contains,
-                    "waited": round(timeout - (deadline - time.time()), 1)}
+                    "title": title_contains, "waited": waited,
+                    "timeout_used": round(timeout, 1)}
         time.sleep(0.4)
     return {"success": False, "action": "wait_for_window",
-            "error": f"Window '{title_contains}' did not appear within {timeout}s"}
+            "error": f"Window '{title_contains}' did not appear within {timeout:.0f}s"}
 
 
 def _run_action(action: str, params: dict) -> dict:
@@ -3700,8 +3743,10 @@ def _run_action(action: str, params: dict) -> dict:
         "move":         lambda p: move(p.get("x", 0), p.get("y", 0)),
         "wait":         lambda p: ({"success": True, "action": "wait"},
                                    time.sleep(min(float(p.get("seconds", 1)), 15)))[0],
-        "wait_for_window": lambda p: wait_for_window(p.get("title", ""),
-                                                     float(p.get("timeout", 8))),
+        # timeout is a floor; experience can extend it for slow apps.
+        "wait_for_window": lambda p: wait_for_window(
+            p.get("title", ""),
+            float(p["timeout"]) if p.get("timeout") is not None else None),
         "focus_window": lambda p: focus_window(p.get("title", "")),
         "open_url":     lambda p: open_url(p.get("url", "")),
         "write_file":   lambda p: write_file(p.get("path", ""), p.get("content", "")),
@@ -3827,6 +3872,27 @@ def _read_focused_text() -> str | None:
 _NO_RETRY = {"type_text", "click", "click_text", "press", "hotkey"}
 
 
+def _classify(error: str, action: str, result: dict | None = None) -> dict:
+    """Structured failure info. Falls back to a usable shape if the service is
+    unavailable, so execution never breaks because diagnosis broke."""
+    try:
+        from services import experience
+        return experience.classify(error, action, result)
+    except Exception:
+        return {"kind": "unknown", "cause": error or "unknown failure",
+                "remedy": "See the runtime report on the Diagnostics screen.",
+                "retryable": True, "recovery": "retry", "raw": (error or "")[:300]}
+
+
+def _learned_wait(app: str) -> float:
+    """How long this app actually needs to show a window, on THIS machine."""
+    try:
+        from services import experience
+        return experience.launch_wait_for(app)["wait_s"]
+    except Exception:
+        return 8.0
+
+
 def execute_chain(steps: list, max_retries: int = 2) -> dict:
     """
     Run desktop steps with the full execution loop:
@@ -3866,25 +3932,80 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
                 # text didn't land, the step fails with that exact reason.
                 time.sleep(0.3)
 
+        target = params.get("name_or_path") or params.get("app") or last_opened or ""
         retries = 0 if action in _NO_RETRY else max_retries
+
+        # Apps that habitually fail their first attempt on this machine (cold
+        # starts of QQ and similar Electron apps do this) earn one extra try —
+        # learned from observation, not guessed. See services/experience.py.
+        try:
+            from services import experience
+            if action not in _NO_RETRY and experience.needs_extra_attempt(target, action)["extra"]:
+                retries += 1
+        except Exception:
+            pass
+
         verified, reason, r = False, "", {}
         attempts = 0
+        started = time.time()
         while attempts <= retries:
             attempts += 1
             r = _run_action(action, params)
             verified, reason = _verify_action(action, params, r)
             if verified:
                 break
+
+            # Classify BEFORE deciding to retry. Retrying a missing model or an
+            # unresolvable app path just burns seconds and reports the same
+            # thing; a lost-focus failure, on the other hand, is worth one more
+            # go — after actually re-focusing the window.
+            fail = _classify(reason or (r or {}).get("error", ""), action, r)
+            if not fail["retryable"]:
+                break
             if attempts <= retries:
+                if fail["recovery"] == "refocus" and last_opened:
+                    focus_window(last_opened)
+                    time.sleep(0.4)
+                elif fail["recovery"] == "wait_longer" and last_opened:
+                    wait_for_window(last_opened)      # learned per-app timing
                 time.sleep(min(1.0 * attempts, 3.0))   # brief backoff, then retry
 
+        elapsed = round(time.time() - started, 2)
         entry = {"step": i + 1, "action": action, "attempts": attempts,
-                 "verified": verified, "verify_reason": reason, **(r or {})}
+                 "verified": verified, "verify_reason": reason,
+                 "duration_s": elapsed, **(r or {})}
+
+        fail = None
+        if not verified:
+            fail = _classify(reason or (r or {}).get("error", ""), action, r)
+            entry["failure"] = fail
+            # Targeted recovery for the next run: if we couldn't find the app,
+            # the cached path is probably stale (reinstalled, moved, updated).
+            # Forget it so the next launch re-resolves instead of failing
+            # identically forever.
+            if fail["recovery"] == "resolve_path" and target:
+                try:
+                    from services import app_resolver
+                    if app_resolver.forget(target):
+                        entry["recovery_taken"] = f"forgot cached path for '{target}'"
+                except Exception:
+                    pass
         results.append(entry)
 
+        # Record what actually happened so the next run is better informed.
+        try:
+            from services import experience
+            experience.record(target, action, verified, elapsed,
+                              kind=(fail or {}).get("kind", ""), detail=reason)
+        except Exception:
+            pass
+
         if not verified:
+            # Report the CAUSE and the FIX, not just the symptom.
             return {"success": False, "steps": results, "failed_at": i + 1,
-                    "error": f"{action} could not be verified: {reason}"}
+                    "failure": fail,
+                    "error": f"{action} failed: {fail['cause']}",
+                    "what_to_do": fail["remedy"]}
 
         if action == "open_app":
             last_opened = params.get("name_or_path") or params.get("app", "")
@@ -4407,7 +4528,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 34/149: backend/agents/executor_agent.py
+# FILE 34/150: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -4790,7 +4911,10 @@ class ExecutorAgent(BaseAgent):
                                "success")
                 return r
             if t == "wait_for_window":
-                return da.wait_for_window(p.get("title", ""), float(p.get("timeout", 8)))
+                # No timeout given → let experience decide how long this app needs.
+                return da.wait_for_window(
+                    p.get("title", ""),
+                    float(p["timeout"]) if p.get("timeout") is not None else None)
             if t == "type_text":
                 self._emit("[Executor] Typing text")
                 return da.type_text(p.get("text", ""))
@@ -4878,7 +5002,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 35/149: backend/agents/memory_agent.py
+# FILE 35/150: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -5036,7 +5160,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 36/149: backend/agents/orchestrator.py
+# FILE 36/150: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -5155,7 +5279,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 37/149: backend/agents/orchestrator_core.py
+# FILE 37/150: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -5487,7 +5611,7 @@ core = OrchestratorCore()
 ```
 
 ################################################################################
-# FILE 38/149: backend/agents/perception_agent.py
+# FILE 38/150: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -5697,7 +5821,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 39/149: backend/agents/proposal_agent.py
+# FILE 39/150: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -5855,7 +5979,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 40/149: backend/agents/registry.py
+# FILE 40/150: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -6175,7 +6299,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 41/149: backend/agents/scheduler.py
+# FILE 41/150: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -6279,7 +6403,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 42/149: backend/agents/score_agent.py
+# FILE 42/150: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -6480,7 +6604,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 43/149: backend/agents/scout_agent.py
+# FILE 43/150: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -6600,7 +6724,7 @@ class ScoutAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 44/149: backend/agents/v9_models.py
+# FILE 44/150: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -6658,7 +6782,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 45/149: backend/agents/vision_agent.py
+# FILE 45/150: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -7268,14 +7392,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 46/149: backend/core/__init__.py
+# FILE 46/150: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 47/149: backend/core/browser_lock.py
+# FILE 47/150: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
@@ -7418,7 +7542,7 @@ class browser_session:
 ```
 
 ################################################################################
-# FILE 48/149: backend/main.py
+# FILE 48/150: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -7815,14 +7939,14 @@ except Exception as _e:
 ```
 
 ################################################################################
-# FILE 49/149: backend/models/__init__.py
+# FILE 49/150: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import conn, init_db, DB_PATH
 ```
 
 ################################################################################
-# FILE 50/149: backend/models/clickworker.py
+# FILE 50/150: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -7848,7 +7972,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 51/149: backend/models/db.py
+# FILE 51/150: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -8067,7 +8191,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 52/149: backend/models/fiverr.py
+# FILE 52/150: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -8114,7 +8238,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 53/149: backend/models/hubstaff.py
+# FILE 53/150: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -8158,7 +8282,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 54/149: backend/models/zuodao.py
+# FILE 54/150: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -8184,14 +8308,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 55/149: backend/platforms/__init__.py
+# FILE 55/150: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 56/149: backend/platforms/base.py
+# FILE 56/150: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -8236,7 +8360,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 57/149: backend/platforms/contra.py
+# FILE 57/150: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -8321,7 +8445,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 58/149: backend/platforms/hubstaff.py
+# FILE 58/150: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -8521,7 +8645,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 59/149: backend/platforms/peopleperhour.py
+# FILE 59/150: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -8606,7 +8730,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 60/149: backend/platforms/remoteco.py
+# FILE 60/150: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -8705,7 +8829,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 61/149: backend/platforms/remoteok.py
+# FILE 61/150: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -8747,7 +8871,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 62/149: backend/platforms/wellfound.py
+# FILE 62/150: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -8865,7 +8989,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 63/149: backend/platforms/weworkremotely.py
+# FILE 63/150: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -8909,7 +9033,7 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 64/149: backend/requirements.txt
+# FILE 64/150: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -8946,7 +9070,7 @@ cryptography>=42.0.0
 ```
 
 ################################################################################
-# FILE 65/149: backend/routes/__init__.py
+# FILE 65/150: backend/routes/__init__.py
 ################################################################################
 ```py
 from .proposals   import router as proposals_router
@@ -8962,7 +9086,7 @@ from .orchestrator import router as orchestrator_router
 ```
 
 ################################################################################
-# FILE 66/149: backend/routes/agents.py
+# FILE 66/150: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -9455,7 +9579,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 67/149: backend/routes/analytics.py
+# FILE 67/150: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -9474,7 +9598,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 68/149: backend/routes/automation.py
+# FILE 68/150: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -9705,7 +9829,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 69/149: backend/routes/brain.py
+# FILE 69/150: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -9802,7 +9926,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 70/149: backend/routes/clickworker.py
+# FILE 70/150: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -9900,7 +10024,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 71/149: backend/routes/fiverr.py
+# FILE 71/150: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -10078,7 +10202,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 72/149: backend/routes/hubstaff.py
+# FILE 72/150: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -10259,7 +10383,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 73/149: backend/routes/messages.py
+# FILE 73/150: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -10354,7 +10478,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 74/149: backend/routes/mind.py
+# FILE 74/150: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -10455,7 +10579,7 @@ def freelance_resume(platform: str):
 ```
 
 ################################################################################
-# FILE 75/149: backend/routes/orchestrator.py
+# FILE 75/150: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -10597,7 +10721,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 76/149: backend/routes/orchestrator_feed.py
+# FILE 76/150: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -10653,7 +10777,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 77/149: backend/routes/os_console.py
+# FILE 77/150: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -10663,11 +10787,18 @@ GET  /os/state        one live snapshot of everything (replaces 6+ separate poll
 GET  /os/traces       recent request traces (exact execution path per request)
 GET  /os/traces/{id}  one trace in full
 GET  /os/diagnostics  health of the routing itself: failures + worst component
+GET  /os/experience   what Jarvis has learned about this machine's apps/failures
+POST /os/confidence   how likely a plan is to work, before running it
 """
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 
 router = APIRouter()
+
+
+class _Plan(BaseModel):
+    steps: list = []
 
 
 @router.get("/health-check")
@@ -10713,6 +10844,24 @@ def os_trace(trace_id: str):
     return t
 
 
+@router.get("/experience")
+def os_experience(limit: int = 8):
+    """
+    What Jarvis has learned by doing: per-app success rates, how long each app
+    really takes to open on THIS machine, and the actual causes of recent
+    failures (with the fix for each) instead of raw error strings.
+    """
+    from services import experience
+    return experience.summary(limit)
+
+
+@router.post("/confidence")
+def os_confidence(plan: _Plan):
+    """Score a plan against real history before spending time on it."""
+    from services import experience
+    return experience.confidence(plan.steps)
+
+
 @router.get("/diagnostics")
 def os_diagnostics():
     """Is the routing itself healthy? Surfaces silent failures instead of hiding them."""
@@ -10727,7 +10876,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 78/149: backend/routes/planner.py
+# FILE 78/150: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -10852,7 +11001,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 79/149: backend/routes/proposals.py
+# FILE 79/150: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -11058,7 +11207,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 80/149: backend/routes/pulse.py
+# FILE 80/150: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -11092,7 +11241,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 81/149: backend/routes/scraper.py
+# FILE 81/150: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -11236,7 +11385,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 82/149: backend/routes/sessions.py
+# FILE 82/150: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -11351,7 +11500,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 83/149: backend/routes/system.py
+# FILE 83/150: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -11550,7 +11699,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 84/149: backend/routes/workflows.py
+# FILE 84/150: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -11616,7 +11765,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 85/149: backend/routes/zuodao.py
+# FILE 85/150: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -11711,7 +11860,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 86/149: backend/services/__init__.py
+# FILE 86/150: backend/services/__init__.py
 ################################################################################
 ```py
 from .deepseek_service import call_model, generate_proposal, generate_reply_draft, auto_work_job
@@ -11719,7 +11868,7 @@ from .analytics_service import get_analytics
 ```
 
 ################################################################################
-# FILE 87/149: backend/services/analytics_service.py
+# FILE 87/150: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -11821,7 +11970,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 88/149: backend/services/app_resolver.py
+# FILE 88/150: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -11905,6 +12054,25 @@ def remember(name: str, path: str, source: str = "startmenu") -> None:
                        "VALUES(?,?,?,?)", (_key(name), path, source, _now()))
     except Exception:
         pass
+
+
+def forget(name: str) -> bool:
+    """
+    Drop a cached path so the next launch re-resolves from scratch.
+
+    get_cached already discards a path whose file has vanished, but that doesn't
+    cover an app that was reinstalled elsewhere and left a stub or an outdated
+    launcher behind: the file still exists, so the stale entry survives and every
+    launch keeps failing the same way. When a launch fails with "can't find it",
+    we forget what we thought we knew rather than repeating it forever.
+    """
+    try:
+        init_app_paths()
+        with conn() as db:
+            cur = db.execute("DELETE FROM app_paths WHERE name=?", (_key(name),))
+        return bool(cur.rowcount)
+    except Exception:
+        return False
 
 
 def _ps(cmd: str, timeout: int = 8) -> str:
@@ -12020,7 +12188,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 89/149: backend/services/bid_executor.py
+# FILE 89/150: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -12365,7 +12533,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 90/149: backend/services/brain_core.py
+# FILE 90/150: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -12472,7 +12640,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 91/149: backend/services/brain_decision.py
+# FILE 91/150: backend/services/brain_decision.py
 ################################################################################
 ```py
 """
@@ -12730,7 +12898,7 @@ def explain(goal_type: str = "background", objective: str = "") -> dict:
 ```
 
 ################################################################################
-# FILE 92/149: backend/services/brain_service.py
+# FILE 92/150: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -13168,7 +13336,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 93/149: backend/services/browser_monitor.py
+# FILE 93/150: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -13322,7 +13490,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 94/149: backend/services/capability_registry.py
+# FILE 94/150: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -13511,7 +13679,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 95/149: backend/services/clickworker_service.py
+# FILE 95/150: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -13659,7 +13827,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 96/149: backend/services/custom_platforms.py
+# FILE 96/150: backend/services/custom_platforms.py
 ################################################################################
 ```py
 """
@@ -13856,7 +14024,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 97/149: backend/services/deepseek_service.py
+# FILE 97/150: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -14081,7 +14249,7 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 98/149: backend/services/diagnostics.py
+# FILE 98/150: backend/services/diagnostics.py
 ################################################################################
 ```py
 """
@@ -14394,6 +14562,37 @@ def build_report() -> str:
         w(f"(state unavailable: {e})\n")
     w("\n")
 
+    # what Jarvis has learned about THIS machine — the second-most useful
+    # section when something "works on one PC but not here"
+    w("## LEARNED BEHAVIOUR (observed on this machine)\n")
+    try:
+        from services import experience
+        exp = experience.summary(12)
+        o = exp.get("overall") or {}
+        if o.get("samples"):
+            w(f"overall: {int((o['rate'] or 0)*100)}% of the last {o['samples']} "
+              f"actions succeeded")
+            if o.get("top_failure"):
+                w(f" — most common failure: {o['top_failure']} ({o.get('top_failure_cause','')})")
+            w("\n\n")
+        else:
+            w("no observations recorded yet\n\n")
+        if exp.get("apps"):
+            w("  app                  runs  success  learned wait\n")
+            for a in exp["apps"]:
+                wait = f"{a['learned_wait_s']}s" if a.get("learned_wait_s") else "-"
+                w(f"  {a['app'][:20]:<20} {a['runs']:>4}  {int(a['success_rate']*100):>6}%  {wait:>12}\n")
+            w("\n")
+        if exp.get("recent_failures"):
+            w("recent failures, with cause and fix:\n")
+            for f in exp["recent_failures"]:
+                w(f"  [{f['kind']}] {f['app'] or '-'} / {f['action']}  ({f['at']})\n")
+                w(f"      cause : {f['cause']}\n")
+                w(f"      fix   : {f['remedy']}\n")
+    except Exception as e:
+        w(f"(experience unavailable: {e})\n")
+    w("\n")
+
     # execution traces — the most useful part for debugging a bad command
     w("## EXECUTION TRACES (exact path each request took)\n")
     try:
@@ -14417,7 +14616,7 @@ def build_report() -> str:
 ```
 
 ################################################################################
-# FILE 99/149: backend/services/event_bus.py
+# FILE 99/150: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -14510,7 +14709,432 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 100/149: backend/services/fiverr_service.py
+# FILE 100/150: backend/services/experience.py
+################################################################################
+```py
+"""
+services/experience.py — why a step failed, and what Jarvis has learned about it.
+
+Until now every failure was the same failure. `execute_chain` reported "type_text
+could not be verified: typed but the text isn't in the focused field", and the
+only recovery available was "try the identical thing again". That's why the same
+problems kept recurring: nothing distinguished "Chrome needed six seconds to draw
+its window" from "there is no vision model installed" from "Cloudflare is showing
+a challenge page", and all three got the same blind retry.
+
+This module does two things:
+
+1. CLASSIFY. Turn a raw error string into a `kind` with a plain-English cause, a
+   concrete remedy, and — crucially — whether retrying could possibly help. A
+   missing model is not a transient error; retrying it three times just wastes
+   nine seconds and then reports the same thing.
+
+2. LEARN. Record how each target actually behaves on THIS machine and feed that
+   back into execution. If QQ has taken 7.4 seconds to show a window on the last
+   five launches, stop waiting 8 seconds by default and hoping — wait what QQ
+   actually needs. If a target fails on first launch and succeeds on the retry,
+   remember that and pre-emptively allow the retry.
+
+Everything learned is observed, never assumed: with no history the advice is
+exactly the old default, so a fresh install behaves the way it always did and
+gets better from there.
+
+Deliberately NOT here: any attempt to have an LLM diagnose failures. Diagnosis
+that runs on every failed step must be instant and must work when the model is
+the thing that's broken.
+"""
+import json
+import re
+import statistics
+import threading
+from datetime import datetime, timezone
+
+from models.db import conn
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS experience_events (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    target     TEXT,        -- app name, platform, or '' for general
+    action     TEXT,        -- open_app / type_text / submit_bid ...
+    ok         INTEGER,     -- 1 success, 0 failure
+    kind       TEXT,        -- failure kind (empty on success)
+    duration_s REAL,
+    detail     TEXT,
+    created_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_exp_target ON experience_events(target, action);
+CREATE INDEX IF NOT EXISTS idx_exp_created ON experience_events(created_at);
+"""
+
+_init_lock = threading.Lock()
+_ready = False
+
+# How many recent observations to consider per target/action.
+WINDOW = 40
+# Action name for the pure "how long until this app's window existed" measurement.
+# Kept separate from 'open_app' (which times a whole chain step and would skew
+# the estimate upward with focus/settle time that isn't the app's fault).
+WINDOW_READY = "window_ready"
+# Never wait less/more than this for a window, whatever history says.
+MIN_WAIT_S, MAX_WAIT_S = 2.0, 25.0
+DEFAULT_WAIT_S = 8.0
+
+
+# ── Failure taxonomy ─────────────────────────────────────────────────────────
+#
+# kind -> (human cause, remedy, retryable, recovery hint for the executor)
+#
+# `retryable` is about THIS failure, immediately. "Install a model" is not
+# retryable even though it's fixable — retrying cannot change the outcome.
+KINDS = {
+    # Note the remedy wording: typing is in desktop_agent._NO_RETRY, so Jarvis
+    # deliberately does NOT retype — a blind retry would duplicate text in a
+    # field that may have received it after all. Promising a retry here would be
+    # a lie. Retryable stays True because non-typing actions (clicks in a chain,
+    # subsequent steps) genuinely benefit from a re-focus first.
+    "focus_lost": (
+        "The window wasn't accepting keyboard input, so the text didn't land where it should.",
+        "Click the window you want Jarvis to type into, then ask again. Jarvis "
+        "won't retype on its own — that risks entering the text twice.",
+        True, "refocus"),
+    "app_not_found": (
+        "Windows couldn't find that application.",
+        "Open it manually once so Jarvis can learn its real path, or give the full .exe path.",
+        False, "resolve_path"),
+    "app_slow": (
+        "The app was still starting when Jarvis moved on.",
+        "Jarvis now waits longer for this app specifically.",
+        True, "wait_longer"),
+    "window_never_appeared": (
+        "The app was launched but no window ever appeared.",
+        "It may have opened minimised, on another desktop, or failed to start.",
+        True, "wait_longer"),
+    "no_model": (
+        "No local model is installed for this kind of work.",
+        "Run: ollama pull qwen2.5:3b   (and llava:7b for screen understanding)",
+        False, "needs_setup"),
+    "model_too_small": (
+        "The installed model is too small to follow this instruction reliably.",
+        "Run: ollama pull qwen2.5:3b — under ~1B parameters can't hold multi-step instructions.",
+        False, "needs_setup"),
+    "model_timeout": (
+        "The model took too long to answer.",
+        "Usually memory pressure. Close some apps, or use a smaller model.",
+        True, "reduce_load"),
+    "ocr_missing": (
+        "Tesseract OCR isn't installed, so text can't be read off the screen.",
+        "Install Tesseract and make sure it's on PATH.",
+        False, "needs_setup"),
+    "ocr_timeout": (
+        "Reading text off the screen took too long and was cut off.",
+        "Jarvis will analyse a smaller region next time.",
+        True, "reduce_scope"),
+    "login_required": (
+        "You're not logged in to that site.",
+        "Open the login once from the Earn screen — the session is then reused.",
+        False, "needs_login"),
+    "bot_challenge": (
+        "The site showed a bot check (Cloudflare / captcha).",
+        "Jarvis will back off from this site and retry later; solving it needs you.",
+        False, "backoff"),
+    "network": (
+        "The site or service couldn't be reached.",
+        "Check the connection. If you're behind the GFW, this site may need a proxy.",
+        True, "backoff"),
+    "browser_busy": (
+        "Another job was using the browser.",
+        "Jarvis will queue this and run it when the browser is free.",
+        True, "queue"),
+    "element_not_found": (
+        "The thing Jarvis was looking for wasn't on screen.",
+        "The site's layout may have changed, or the page hadn't finished loading.",
+        True, "wait_longer"),
+    "permission": (
+        "Windows refused the action.",
+        "This usually needs Jarvis to run as administrator.",
+        False, "needs_setup"),
+    "clipboard_unavailable": (
+        "Jarvis couldn't verify the typing because the clipboard was in use.",
+        "Harmless — the text may well have been typed; Jarvis just can't prove it.",
+        True, "retry"),
+    "emergency_stop": (
+        "Emergency stop is engaged.",
+        "Clear it from the Computer screen before Jarvis can control the desktop.",
+        False, "needs_setup"),
+    "unknown": (
+        "Jarvis couldn't determine why this failed.",
+        "The full error is in the runtime report on the Diagnostics screen.",
+        True, "retry"),
+}
+
+# Ordered: first match wins, so specific patterns precede general ones.
+_PATTERNS = [
+    ("emergency_stop",   r"emergency stop"),
+    ("clipboard_unavailable", r"clipboard (unavailable|in use)|couldn't verify"),
+    ("focus_lost",       r"isn't in the focused field|didn't have keyboard focus|foreground|could not focus|not accepting input"),
+    ("app_not_found",    r"cannot find|not found|no such file|is not recognized|could not resolve .* path|not installed or not on path"),
+    ("window_never_appeared", r"did not appear within|no window with|window .* not found"),
+    ("app_slow",         r"still (starting|loading)|not ready yet"),
+    ("model_too_small",  r"too small|below the quality"),
+    ("no_model",         r"no models installed|no suitable model|ollama pull|not pulled|model .* missing"),
+    ("model_timeout",    r"(model|ollama|llm).*(timed? ?out|timeout)|timeout.*(model|ollama)"),
+    ("ocr_missing",      r"tesseract.*(not installed|not found)|tesseractnotfound"),
+    ("ocr_timeout",      r"ocr.*(timed? ?out|timeout)|timeout.*ocr"),
+    ("login_required",   r"not logged in|login required|needs[_ ]login|session expired|sign in"),
+    ("bot_challenge",    r"cloudflare|captcha|are you a robot|challenge|access denied|403"),
+    ("browser_busy",     r"browser busy|owned by"),
+    ("network",          r"connection (refused|reset|aborted)|timed out|unreachable|dns|net::|max retries|ssl|proxy"),
+    ("element_not_found", r"not on screen|no match|element not found|selector|could not find .* on screen"),
+    ("permission",       r"permission denied|access is denied|accessdenied|not permitted|administrator"),
+]
+
+
+def classify(error: str, action: str = "", result: dict | None = None) -> dict:
+    """
+    Turn an error message into a structured, actionable failure.
+    Always returns something usable — never raises, never returns None.
+    """
+    text = " ".join(str(x) for x in [
+        error or "",
+        (result or {}).get("error", ""),
+        (result or {}).get("verify_reason", ""),
+        (result or {}).get("message", ""),
+    ]).lower()
+
+    kind = "unknown"
+    for name, pattern in _PATTERNS:
+        if re.search(pattern, text):
+            kind = name
+            break
+
+    # Action context sharpens a few otherwise-ambiguous cases.
+    if kind == "unknown":
+        if action in ("type_text", "press", "hotkey"):
+            kind = "focus_lost"
+        elif action == "open_app":
+            kind = "app_not_found"
+        elif action in ("analyze_screen", "ocr", "read_screen"):
+            kind = "ocr_timeout"
+
+    cause, remedy, retryable, recovery = KINDS[kind]
+    return {"kind": kind, "cause": cause, "remedy": remedy,
+            "retryable": retryable, "recovery": recovery,
+            "raw": (error or "")[:300]}
+
+
+# ── Learning ─────────────────────────────────────────────────────────────────
+
+def _ensure():
+    global _ready
+    if _ready:
+        return
+    with _init_lock:
+        if _ready:
+            return
+        try:
+            with conn() as db:
+                db.executescript(SCHEMA)
+            _ready = True
+        except Exception:
+            pass          # a broken db must never stop the desktop working
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def record(target: str, action: str, ok: bool, duration_s: float | None = None,
+           kind: str = "", detail: str = "") -> None:
+    """Log one observation. Best-effort: never raises into the caller."""
+    _ensure()
+    try:
+        with conn() as db:
+            db.execute(
+                "INSERT INTO experience_events "
+                "(target,action,ok,kind,duration_s,detail,created_at) VALUES (?,?,?,?,?,?,?)",
+                ((target or "").strip().lower()[:80], action or "", 1 if ok else 0,
+                 kind or "", float(duration_s) if duration_s is not None else None,
+                 (detail or "")[:300], _now()))
+    except Exception:
+        pass
+
+
+def _recent(target: str, action: str, limit: int = WINDOW) -> list[dict]:
+    _ensure()
+    try:
+        with conn() as db:
+            rows = db.execute(
+                "SELECT ok, kind, duration_s FROM experience_events "
+                "WHERE target=? AND action=? ORDER BY id DESC LIMIT ?",
+                ((target or "").strip().lower()[:80], action, limit)).fetchall()
+        return [dict(r) for r in rows]
+    except Exception:
+        return []
+
+
+def launch_wait_for(app: str) -> dict:
+    """
+    How long to wait for THIS app's window, learned from what it actually did.
+
+    Uses a high percentile of observed successful launch times rather than the
+    mean: an app that usually takes 2s but sometimes takes 9s must be waited on
+    for 9s, or one launch in five silently types into the wrong window. With no
+    history this returns exactly the old default, so nothing regresses.
+    """
+    rows = [r for r in _recent(app, WINDOW_READY) if r["ok"] and r["duration_s"]]
+    times = sorted(r["duration_s"] for r in rows)
+    if len(times) < 3:
+        return {"wait_s": DEFAULT_WAIT_S, "learned": False,
+                "samples": len(times), "why": "not enough observations yet"}
+
+    # p90 + a second of headroom, clamped to something sane.
+    idx = min(len(times) - 1, int(round(0.9 * (len(times) - 1))))
+    wait = max(MIN_WAIT_S, min(MAX_WAIT_S, times[idx] + 1.0))
+    return {"wait_s": round(wait, 1), "learned": True, "samples": len(times),
+            "median_s": round(statistics.median(times), 1),
+            "slowest_s": round(times[-1], 1),
+            "why": f"{app} has taken up to {times[-1]:.1f}s to show a window here"}
+
+
+def needs_extra_attempt(target: str, action: str) -> dict:
+    """
+    Does this target habitually fail its first attempt and succeed on a retry?
+    (QQ and some Electron apps do exactly this on a cold start.)
+    """
+    rows = _recent(target, action, limit=20)
+    if len(rows) < 5:
+        return {"extra": False, "why": "not enough observations yet"}
+    fails = sum(1 for r in rows if not r["ok"])
+    rate = fails / len(rows)
+    if rate >= 0.3:
+        return {"extra": True, "fail_rate": round(rate, 2), "samples": len(rows),
+                "why": f"{target} has failed {fails} of its last {len(rows)} "
+                       f"{action} attempts here — allowing an extra try"}
+    return {"extra": False, "fail_rate": round(rate, 2), "samples": len(rows)}
+
+
+def reliability(target: str = "", action: str = "") -> dict:
+    """Observed success rate. `target`/`action` empty means 'everything'."""
+    _ensure()
+    where, args = [], []
+    if target:
+        where.append("target=?"); args.append(target.strip().lower()[:80])
+    if action:
+        where.append("action=?"); args.append(action)
+    clause = ("WHERE " + " AND ".join(where)) if where else ""
+    try:
+        with conn() as db:
+            rows = db.execute(
+                f"SELECT ok, kind FROM experience_events {clause} "
+                f"ORDER BY id DESC LIMIT ?", (*args, WINDOW)).fetchall()
+    except Exception:
+        rows = []
+    if not rows:
+        return {"samples": 0, "rate": None, "top_failure": None}
+    ok = sum(1 for r in rows if r["ok"])
+    kinds: dict[str, int] = {}
+    for r in rows:
+        if not r["ok"] and r["kind"]:
+            kinds[r["kind"]] = kinds.get(r["kind"], 0) + 1
+    top = max(kinds.items(), key=lambda kv: kv[1])[0] if kinds else None
+    return {"samples": len(rows), "rate": round(ok / len(rows), 2),
+            "top_failure": top,
+            "top_failure_cause": KINDS.get(top, ("",))[0] if top else None}
+
+
+def confidence(steps: list) -> dict:
+    """
+    How likely is this plan to actually work, before we run it?
+
+    Built from what has genuinely been observed — per-action success rates and
+    per-app history — plus hard blockers (no model installed, emergency stop).
+    A plan with no history scores 0.7: honest uncertainty, not false optimism.
+
+    The point is not the number. The point is that Jarvis can say "I'll try, but
+    QQ has failed 4 of its last 6 launches" BEFORE spending two minutes on it.
+    """
+    steps = steps or []
+    if not steps:
+        return {"score": 0.0, "label": "nothing to do", "factors": [], "blockers": []}
+
+    factors, blockers = [], []
+    score = 0.7
+
+    for s in steps:
+        action = (s or {}).get("action", "")
+        params = (s or {}).get("params", {}) or {}
+        target = params.get("name_or_path") or params.get("app") or ""
+
+        r = reliability(target, action) if target else reliability("", action)
+        if r["samples"] >= 3 and r["rate"] is not None:
+            # Blend towards the observed rate — more samples, more weight.
+            weight = min(0.6, r["samples"] / 40)
+            score = score * (1 - weight) + r["rate"] * weight
+            what = f"{target} {action}" if target else action
+            factors.append(f"{what}: {int(r['rate']*100)}% success over "
+                           f"{r['samples']} runs" +
+                           (f" (usually {r['top_failure']})" if r["top_failure"] else ""))
+
+    # Hard blockers — things that make the plan impossible, not merely unlikely.
+    try:
+        from agents.desktop_agent import is_estopped
+        if is_estopped():
+            blockers.append(KINDS["emergency_stop"][0])
+    except Exception:
+        pass
+    needs_model = any((s or {}).get("action") in
+                      ("analyze_screen", "ask_model", "plan", "summarize") for s in steps)
+    if needs_model:
+        try:
+            from services import model_router
+            if not model_router.pick_model("chat"):
+                blockers.append(KINDS["no_model"][0])
+        except Exception:
+            pass
+
+    if blockers:
+        score = 0.0
+    score = max(0.0, min(1.0, score))
+    label = ("blocked" if blockers else
+             "very likely" if score >= 0.85 else
+             "likely" if score >= 0.65 else
+             "uncertain" if score >= 0.4 else "unlikely")
+    return {"score": round(score, 2), "label": label,
+            "factors": factors[:6], "blockers": blockers}
+
+
+def summary(limit: int = 8) -> dict:
+    """What Jarvis has learned, for the Diagnostics screen."""
+    _ensure()
+    out = {"overall": reliability(), "apps": [], "recent_failures": []}
+    try:
+        with conn() as db:
+            apps = db.execute(
+                "SELECT target, COUNT(*) n, SUM(ok) ok FROM experience_events "
+                "WHERE target != '' GROUP BY target ORDER BY n DESC LIMIT ?",
+                (limit,)).fetchall()
+            for a in apps:
+                learned = launch_wait_for(a["target"])
+                out["apps"].append({
+                    "app": a["target"], "runs": a["n"],
+                    "success_rate": round((a["ok"] or 0) / a["n"], 2),
+                    "learned_wait_s": learned["wait_s"] if learned["learned"] else None,
+                    "note": learned["why"] if learned["learned"] else None})
+            fails = db.execute(
+                "SELECT target, action, kind, detail, created_at FROM experience_events "
+                "WHERE ok=0 ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+            for f in fails:
+                k = KINDS.get(f["kind"] or "unknown", KINDS["unknown"])
+                out["recent_failures"].append({
+                    "app": f["target"], "action": f["action"], "kind": f["kind"],
+                    "cause": k[0], "remedy": k[1], "at": f["created_at"]})
+    except Exception as e:
+        out["error"] = str(e)[:120]
+    return out
+```
+
+################################################################################
+# FILE 101/150: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -14692,7 +15316,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 101/149: backend/services/freelancer_api.py
+# FILE 102/150: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -14907,7 +15531,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 102/149: backend/services/hubstaff_service.py
+# FILE 103/150: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -15107,7 +15731,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 103/149: backend/services/income_engine.py
+# FILE 104/150: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -15378,7 +16002,7 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 104/149: backend/services/maintenance.py
+# FILE 105/150: backend/services/maintenance.py
 ################################################################################
 ```py
 """
@@ -15417,6 +16041,8 @@ KEEP_QUEUE_DAYS      = 14      # done/failed/rejected queue rows
 KEEP_CHAT_MESSAGES   = 2000    # per session cap
 KEEP_SCREENSHOT_DAYS = 3
 KEEP_PULSE_DAYS      = 30
+KEEP_EXPERIENCE_DAYS = 90      # learned behaviour is worth keeping a long time
+KEEP_EXPERIENCE_ROWS = 5000    # …but not forever
 MAX_SCREENSHOT_MB    = 500
 
 _started = False
@@ -15462,6 +16088,7 @@ def prune_rows() -> dict:
     """Delete rows that are old and finished. Never touches pending work."""
     cutoff = (datetime.now(timezone.utc) - timedelta(days=KEEP_QUEUE_DAYS)).isoformat()
     pulse_cutoff = (datetime.now(timezone.utc) - timedelta(days=KEEP_PULSE_DAYS)).isoformat()
+    exp_cutoff = (datetime.now(timezone.utc) - timedelta(days=KEEP_EXPERIENCE_DAYS)).isoformat()
     removed = 0
     try:
         with conn() as db:
@@ -15473,6 +16100,18 @@ def prune_rows() -> dict:
             try:
                 cur = db.execute("DELETE FROM pulse_events WHERE created_at < ?",
                                  (pulse_cutoff,))
+                removed += cur.rowcount or 0
+            except Exception:
+                pass
+            # Learned-behaviour observations. Keep these longer than events —
+            # they're what makes Jarvis better at THIS machine — but cap them so
+            # a year of running doesn't leave a table nothing ever reads past
+            # the newest 40 rows per app.
+            try:
+                cur = db.execute(
+                    "DELETE FROM experience_events WHERE created_at < ? AND id NOT IN "
+                    "(SELECT id FROM experience_events ORDER BY id DESC LIMIT ?)",
+                    (exp_cutoff, KEEP_EXPERIENCE_ROWS))
                 removed += cur.rowcount or 0
             except Exception:
                 pass
@@ -15633,7 +16272,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 105/149: backend/services/model_router.py
+# FILE 106/150: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -15865,7 +16504,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 106/149: backend/services/ollama_manager.py
+# FILE 107/150: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -16160,7 +16799,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 107/149: backend/services/os_state.py
+# FILE 108/150: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -16312,6 +16951,10 @@ def snapshot(timeline_limit: int = 40) -> dict:
         "stats": stats,
         "timeline": (feed_state.get("feed", []) or [])[-timeline_limit:][::-1],
         "traces": _safe(lambda: __import__("services.trace", fromlist=["summary"]).summary(), {}),
+        # How reliable Jarvis has actually been lately, measured not claimed.
+        "reliability": _safe(
+            lambda: __import__("services.experience",
+                               fromlist=["reliability"]).reliability(), {}),
     }
 
 
@@ -16351,7 +16994,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 108/149: backend/services/planner_service.py
+# FILE 109/150: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -16931,7 +17574,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 109/149: backend/services/platform_health.py
+# FILE 110/150: backend/services/platform_health.py
 ################################################################################
 ```py
 """
@@ -17090,7 +17733,7 @@ def _announce_pause(platform: str, error: str) -> None:
 ```
 
 ################################################################################
-# FILE 110/149: backend/services/platform_meta.py
+# FILE 111/150: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -17172,7 +17815,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 111/149: backend/services/profile_service.py
+# FILE 112/150: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -17247,7 +17890,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 112/149: backend/services/pulse_service.py
+# FILE 113/150: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -17524,7 +18167,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 113/149: backend/services/reflection.py
+# FILE 114/150: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -17625,7 +18268,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 114/149: backend/services/session_manager.py
+# FILE 115/150: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -17996,7 +18639,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 115/149: backend/services/tool_registry.py
+# FILE 116/150: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -18153,7 +18796,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 116/149: backend/services/trace.py
+# FILE 117/150: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -18286,7 +18929,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 117/149: backend/services/vault.py
+# FILE 118/150: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -18419,7 +19062,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 118/149: backend/services/workflow_service.py
+# FILE 119/150: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -18657,7 +19300,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 119/149: backend/services/world_model.py
+# FILE 120/150: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -18846,7 +19489,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 120/149: backend/services/zuodao_service.py
+# FILE 121/150: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -18963,7 +19606,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 121/149: frontend/index.html
+# FILE 122/150: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -18981,7 +19624,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 122/149: frontend/package.json
+# FILE 123/150: frontend/package.json
 ################################################################################
 ```json
 {
@@ -19005,7 +19648,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 123/149: frontend/src/App.jsx
+# FILE 124/150: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -19023,7 +19666,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 124/149: frontend/src/JarvisOS.jsx
+# FILE 125/150: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -19470,10 +20113,12 @@ function Console({ os, onRun, reply, busy, history, activity }) {
 function Diagnostics() {
   const [data, setData] = useState(null);
   const [health, setHealth] = useState(null);
+  const [exp, setExp] = useState(null);
   const [open, setOpen] = useState(null);
   const load = () => {
     fetch(`${API}/os/diagnostics`).then((r) => r.json()).then(setData).catch(() => setData(null));
     fetch(`${API}/os/health-check`).then((r) => r.json()).then(setHealth).catch(() => setHealth(null));
+    fetch(`${API}/os/experience`).then((r) => r.json()).then(setExp).catch(() => setExp(null));
   };
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
 
@@ -19530,6 +20175,69 @@ function Diagnostics() {
             ))}
           </div>
         ))}
+      </div>
+
+      {/* What Jarvis has learned by doing — measured on this machine, not claimed */}
+      <div>
+        <div style={sectionLabel}>What Jarvis has learned here</div>
+        <div style={{ ...card, padding: 16 }}>
+          {!exp?.overall?.samples ? (
+            <div style={{ fontSize: 12.5, color: T.dim }}>
+              Nothing observed yet. Once Jarvis has run a few tasks, this shows how
+              reliable each app really is on your PC and what actually goes wrong.
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 14, fontWeight: 600,
+                            color: exp.overall.rate >= 0.8 ? T.green
+                                 : exp.overall.rate >= 0.5 ? T.amber : T.red }}>
+                {Math.round((exp.overall.rate || 0) * 100)}% of the last {exp.overall.samples} actions
+                succeeded
+              </div>
+              {exp.overall.top_failure_cause && (
+                <div style={{ fontSize: 12, color: T.dim, marginTop: 5 }}>
+                  Most common problem: {exp.overall.top_failure_cause}
+                </div>
+              )}
+
+              {(exp.apps || []).length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  {exp.apps.map((a) => (
+                    <div key={a.app} style={{ display: "flex", gap: 12, alignItems: "baseline",
+                                              padding: "5px 0", fontSize: 12.5,
+                                              borderTop: `1px solid ${T.line}` }}>
+                      <span style={{ minWidth: 130 }}>{a.app}</span>
+                      <span style={{ color: a.success_rate >= 0.8 ? T.green : T.amber,
+                                     minWidth: 46 }}>
+                        {Math.round(a.success_rate * 100)}%
+                      </span>
+                      <span style={{ color: T.dim, minWidth: 70 }}>{a.runs} runs</span>
+                      <span style={{ color: T.cyan, flex: 1 }}>
+                        {a.learned_wait_s ? `waits ${a.learned_wait_s}s for it` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(exp.recent_failures || []).length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ ...sectionLabel, marginBottom: 8 }}>Recent problems, and the fix</div>
+                  {exp.recent_failures.slice(0, 5).map((f, i) => (
+                    <div key={i} style={{ background: "rgba(0,0,0,0.25)", borderRadius: 9,
+                                          padding: "9px 12px", marginBottom: 6 }}>
+                      <div style={{ fontSize: 12.5 }}>
+                        <span style={{ color: T.amber }}>{f.app || f.action}</span>
+                        <span style={{ color: T.dim }}> — {f.cause}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: T.cyan, marginTop: 4 }}>{f.remedy}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <div>
@@ -19624,7 +20332,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 125/149: frontend/src/colors.js
+# FILE 126/150: frontend/src/colors.js
 ################################################################################
 ```js
 /**
@@ -19714,7 +20422,7 @@ export function btn(color = '#00d4ff', opts = {}) {
 ```
 
 ################################################################################
-# FILE 126/149: frontend/src/components/UI.jsx
+# FILE 127/150: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -19837,7 +20545,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 127/149: frontend/src/config.js
+# FILE 128/150: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -19862,7 +20570,7 @@ export const apiPatch = (url, body) => apiFetch(url, {
 ```
 
 ################################################################################
-# FILE 128/149: frontend/src/index.css
+# FILE 129/150: frontend/src/index.css
 ################################################################################
 ```css
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19926,7 +20634,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !i
 ```
 
 ################################################################################
-# FILE 129/149: frontend/src/main.jsx
+# FILE 130/150: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from 'react'
@@ -19939,7 +20647,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 ################################################################################
-# FILE 130/149: frontend/src/pages/Agents.jsx
+# FILE 131/150: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -20652,7 +21360,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 131/149: frontend/src/pages/Chat.jsx
+# FILE 132/150: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useState, useRef, useEffect } from 'react'
@@ -20785,7 +21493,7 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 132/149: frontend/src/pages/Earn.jsx
+# FILE 133/150: frontend/src/pages/Earn.jsx
 ################################################################################
 ```jsx
 /**
@@ -21098,7 +21806,7 @@ export default function Earn() {
 ```
 
 ################################################################################
-# FILE 133/149: frontend/src/pages/Settings.jsx
+# FILE 134/150: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -21182,7 +21890,7 @@ export default function Settings() {
 ```
 
 ################################################################################
-# FILE 134/149: frontend/vite.config.js
+# FILE 135/150: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -21194,7 +21902,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 135/149: .gitignore
+# FILE 136/150: .gitignore
 ################################################################################
 ```
 # Python
@@ -21234,7 +21942,7 @@ scratchpad/
 ```
 
 ################################################################################
-# FILE 136/149: FINAL_PROJECT_TREE_backend.txt
+# FILE 137/150: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -21317,7 +22025,7 @@ scratchpad/
 ```
 
 ################################################################################
-# FILE 137/149: FINAL_PROJECT_TREE_frontend.txt
+# FILE 138/150: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -21341,7 +22049,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 138/149: LEGACY_GREP_ARTIFACT.txt
+# FILE 139/150: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -21363,7 +22071,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 139/149: PROJECT_TREE.txt
+# FILE 140/150: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -21481,7 +22189,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 140/149: REQUIREMENTS_SNAPSHOT.txt
+# FILE 141/150: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -21511,7 +22219,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 141/149: RUNTIME_VALIDATION.py
+# FILE 142/150: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -21612,7 +22320,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 142/149: RUN_VALIDATION.bat
+# FILE 143/150: RUN_VALIDATION.bat
 ################################################################################
 ```bat
 @echo off
@@ -21631,7 +22339,7 @@ pause
 ```
 
 ################################################################################
-# FILE 143/149: START_JARVIS.bat
+# FILE 144/150: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
@@ -21780,7 +22488,7 @@ timeout /t 10
 ```
 
 ################################################################################
-# FILE 144/149: legacy_dependency_report.json
+# FILE 145/150: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -21945,7 +22653,7 @@ timeout /t 10
 ```
 
 ################################################################################
-# FILE 145/149: requirements.txt
+# FILE 146/150: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -21978,7 +22686,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 146/149: start.bat
+# FILE 147/150: start.bat
 ################################################################################
 ```bat
 @echo off
@@ -22021,7 +22729,7 @@ pause
 ```
 
 ################################################################################
-# FILE 147/149: start.sh
+# FILE 148/150: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -22058,7 +22766,7 @@ wait
 ```
 
 ################################################################################
-# FILE 148/149: start_frontend.bat
+# FILE 149/150: start_frontend.bat
 ################################################################################
 ```bat
 @echo off
@@ -22073,7 +22781,7 @@ pause
 ```
 
 ################################################################################
-# FILE 149/149: tools/dump_source.py
+# FILE 150/150: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3

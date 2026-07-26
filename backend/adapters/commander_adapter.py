@@ -604,6 +604,26 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
     labels = " → ".join(_step_label(a) for a in steps)
     _emit("executor", labels, "info")
     from services import trace
+
+    # Say up front whether this is likely to work. If something makes it
+    # impossible — emergency stop engaged, no model installed — say so NOW
+    # instead of spending two minutes discovering it one failed step at a time.
+    conf = {}
+    try:
+        from services import experience
+        conf = experience.confidence(chain)
+    except Exception:
+        conf = {}
+    if conf.get("blockers"):
+        blocked = "; ".join(conf["blockers"])
+        _emit("executor", f"Can't run this: {blocked}", "error")
+        trace.finish(f"blocked: {blocked}", ok=False)
+        return {"response": f"I can't do that right now — {blocked}",
+                "intent": intent, "data": {"blocked": conf["blockers"]}}
+    if conf.get("score", 1) < 0.5 and conf.get("factors"):
+        # Worth warning about, not worth refusing over.
+        _emit("executor", f"Heads up: {conf['factors'][0]}", "warning")
+
     try:
         from agents.desktop_agent import execute_chain
         result = execute_chain(chain)
@@ -620,12 +640,17 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
     if not result.get("success"):
         fa = result.get("failed_at", 0)
         done_n = max(0, fa - 1)
-        _emit("executor", result.get("error", "step failed"), "error")
-        trace.finish(result.get("error", "step failed"), ok=False)
-        return {"response": f"I got {done_n}/{len(steps)} steps done, then couldn't "
-                            f"verify: {result.get('error','')}. I didn't mark it done "
-                            f"because it didn't actually complete.",
-                "intent": intent, "data": result}
+        f = result.get("failure") or {}
+        # Tell the user WHY and WHAT TO DO, not just which step index broke.
+        cause = f.get("cause") or result.get("error", "step failed")
+        remedy = f.get("remedy") or result.get("what_to_do") or ""
+        _emit("executor", cause, "error")
+        trace.finish(cause, ok=False)
+        msg = (f"I got {done_n} of {len(steps)} steps done, then stopped. {cause}")
+        if remedy:
+            msg += f"\n\n{remedy}"
+        msg += "\n\nI haven't marked it done, because it didn't actually complete."
+        return {"response": msg, "intent": intent, "data": result}
     _emit("executor", f"Verified done: {labels}", "success")
     trace.finish(f"verified: {labels}", ok=True)
     return {"response": f"Done ✓ (verified: {labels})", "intent": intent, "data": result}

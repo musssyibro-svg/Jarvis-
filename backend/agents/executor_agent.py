@@ -378,7 +378,10 @@ class ExecutorAgent(BaseAgent):
                                "success")
                 return r
             if t == "wait_for_window":
-                return da.wait_for_window(p.get("title", ""), float(p.get("timeout", 8)))
+                # No timeout given → let experience decide how long this app needs.
+                return da.wait_for_window(
+                    p.get("title", ""),
+                    float(p["timeout"]) if p.get("timeout") is not None else None)
             if t == "type_text":
                 self._emit("[Executor] Typing text")
                 return da.type_text(p.get("text", ""))

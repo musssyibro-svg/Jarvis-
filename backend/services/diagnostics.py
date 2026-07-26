@@ -308,6 +308,37 @@ def build_report() -> str:
         w(f"(state unavailable: {e})\n")
     w("\n")
 
+    # what Jarvis has learned about THIS machine — the second-most useful
+    # section when something "works on one PC but not here"
+    w("## LEARNED BEHAVIOUR (observed on this machine)\n")
+    try:
+        from services import experience
+        exp = experience.summary(12)
+        o = exp.get("overall") or {}
+        if o.get("samples"):
+            w(f"overall: {int((o['rate'] or 0)*100)}% of the last {o['samples']} "
+              f"actions succeeded")
+            if o.get("top_failure"):
+                w(f" — most common failure: {o['top_failure']} ({o.get('top_failure_cause','')})")
+            w("\n\n")
+        else:
+            w("no observations recorded yet\n\n")
+        if exp.get("apps"):
+            w("  app                  runs  success  learned wait\n")
+            for a in exp["apps"]:
+                wait = f"{a['learned_wait_s']}s" if a.get("learned_wait_s") else "-"
+                w(f"  {a['app'][:20]:<20} {a['runs']:>4}  {int(a['success_rate']*100):>6}%  {wait:>12}\n")
+            w("\n")
+        if exp.get("recent_failures"):
+            w("recent failures, with cause and fix:\n")
+            for f in exp["recent_failures"]:
+                w(f"  [{f['kind']}] {f['app'] or '-'} / {f['action']}  ({f['at']})\n")
+                w(f"      cause : {f['cause']}\n")
+                w(f"      fix   : {f['remedy']}\n")
+    except Exception as e:
+        w(f"(experience unavailable: {e})\n")
+    w("\n")
+
     # execution traces — the most useful part for debugging a bad command
     w("## EXECUTION TRACES (exact path each request took)\n")
     try:
