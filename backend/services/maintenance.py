@@ -176,6 +176,26 @@ def vacuum() -> dict:
         return {"ok": False, "error": str(e)[:120]}
 
 
+def reap_browser() -> dict:
+    """
+    Close browser pages nothing is reading any more.
+
+    The browser already trims surplus pages, but only when something asks it to
+    navigate. That covers a busy system and does nothing for an idle one: six
+    pages left open when the last scan finished at 2am are six live renderer
+    processes holding memory until morning. On a 16GB machine that is the
+    difference between Jarvis being usable in the morning and not.
+
+    Safe while idle by design — it recycles pages, never the logged-in profile,
+    so sessions survive.
+    """
+    try:
+        from agents import browser_agent
+        return {"ok": True, **browser_agent.reap()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:120]}
+
+
 def unload_idle_models() -> dict:
     """Free a heavy model from RAM when nothing is running (16GB machines)."""
     try:
@@ -199,6 +219,9 @@ def run_due(force: bool = False) -> dict:
 
     if force or now - _last["checkpoint"] > 3600:            # hourly
         did["wal_checkpoint"] = wal_checkpoint()
+        # Browser renderers are the fastest-growing memory cost on this box, so
+        # they get checked hourly rather than waiting for the daily sweep.
+        did["reap_browser"] = reap_browser()
         _last["checkpoint"] = now
 
     if force or now - _last["daily"] > 86400:                # daily

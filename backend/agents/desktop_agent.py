@@ -221,6 +221,28 @@ def press(key: str) -> dict:
 
 # ── Applications ──────────────────────────────────────────────────────────────
 
+def _settle(app: str, floor_s: float) -> bool:
+    """
+    Wait for a just-launched app's window, then report whether it appeared.
+
+    Every launch path used to do `time.sleep(<constant>); _app_visible(...)`, with
+    the constant picked by guesswork — 1.2s, 1.4s, 1.5s. That is wrong in both
+    directions at once. Notepad is drawn in under half a second and we sat there
+    doing nothing for the rest; QQ and Doubao routinely need longer than 1.5s, so
+    the check ran while the app was still starting, reported "not visible", and
+    the next keystroke went into whatever window was actually in front. The
+    Start-Menu path is the worst case for this, because the apps that fall
+    through to it are precisely the slow, unregistered ones.
+
+    So: poll instead of sleep, bounded by what THIS app has really needed on THIS
+    machine (services/experience.py). Fast apps return as soon as they're up;
+    slow apps get the time they've historically taken. Returns as soon as the
+    window exists, so this is strictly faster than the old constants for
+    everything that works, and only slower when something is genuinely wrong.
+    """
+    return bool(wait_for_window(app, timeout=floor_s).get("success"))
+
+
 def open_app(name_or_path: str) -> dict:
     """Open an application by name (Windows) or full path."""
     KNOWN = {
@@ -279,18 +301,16 @@ def open_app(name_or_path: str) -> dict:
                 else:
                     subprocess.Popen([real], shell=False,
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                time.sleep(1.4)
+                vis = _settle(name_or_path, 1.4)
                 return {"success": True, "action": "open_app", "app": name_or_path,
-                        "resolved": real, "method": "resolved",
-                        "verified": _app_visible(name_or_path)}
+                        "resolved": real, "method": "resolved", "verified": vis}
             except Exception:
                 pass
         # 2) No known path — use the Start-Menu-search keystroke trick (this is
         #    what actually worked for QQ the first time). Never `cmd /c start qq`,
         #    which pops the "cannot find the file" dialog.
         if os.name == "nt" and _start_menu_launch(name_or_path):
-            time.sleep(1.5)
-            vis = _app_visible(name_or_path)
+            vis = _settle(name_or_path, 1.5)
             return {"success": vis, "action": "open_app", "app": name_or_path,
                     "resolved": "start menu search", "method": "start_menu",
                     "verified": vis,
@@ -313,8 +333,7 @@ def open_app(name_or_path: str) -> dict:
     except (FileNotFoundError, OSError):
         # mapped exe not found on this machine — try discovery before giving up
         if os.name == "nt" and _start_menu_launch(name_or_path):
-            time.sleep(1.5)
-            vis = _app_visible(name_or_path)
+            vis = _settle(name_or_path, 1.5)
             return {"success": vis, "action": "open_app", "app": name_or_path,
                     "method": "start_menu", "verified": vis}
         return {"success": False, "action": "open_app",
@@ -322,10 +341,9 @@ def open_app(name_or_path: str) -> dict:
     except Exception as e:
         return {"success": False, "action": "open_app", "error": str(e)}
 
-    time.sleep(1.2)
+    vis = _settle(name_or_path, 1.2)
     return {"success": True, "action": "open_app", "app": name_or_path,
-            "resolved": cmd[0], "method": "direct",
-            "verified": _app_visible(name_or_path)}
+            "resolved": cmd[0], "method": "direct", "verified": vis}
 
 
 def _app_visible(name: str) -> bool:

@@ -46,6 +46,8 @@ for _p in PROFILES.values():
 
 MAX_OPEN_PAGES = 6          # reap idle pages beyond this — the real leak
 _ctx: dict = {}             # domain -> context
+_last_used: dict = {}       # domain -> epoch seconds of last real use (see reap)
+_started_at: dict = {}      # domain -> when this browser process was launched
 _ctx_lock = threading.Lock()
 
 
@@ -60,6 +62,8 @@ async def _get_context(headless: bool = True, domain: str = "freelance"):
     Get (or create) the persistent context for a domain. Reaps surplus pages so
     memory stays bounded WITHOUT discarding the logged-in profile.
     """
+    import time as _t
+    _last_used[domain] = _t.time()      # lets the janitor tell idle from busy
     ctx = _ctx.get(domain)
     if ctx:
         try:
@@ -86,6 +90,7 @@ async def _get_context(headless: bool = True, domain: str = "freelance"):
               "--no-sandbox", "--disable-dev-shm-usage"],
     )
     _ctx[domain] = ctx
+    _started_at[domain] = _t.time()
     return ctx
 
 
@@ -153,9 +158,85 @@ def current_page_text(domain: str = "research", limit: int = 4000) -> dict:
         return {"success": False, "error": str(e)[:200]}
 
 
+def reap(idle_after_s: float = 1800, max_age_s: float = 6 * 3600) -> dict:
+    """
+    Housekeeping the maintenance janitor calls on a timer.
+
+    Page reaping used to happen ONLY inside _get_context, i.e. only when
+    something asked for the browser. That works while jobs are flowing and does
+    nothing the moment they stop: finish a scan at 2am with six pages open, go
+    idle until morning, and those six pages — each a live renderer process —
+    hold their memory all night on a 16GB machine. Reaping has to be driven by
+    the clock, not by traffic.
+
+    A context that has genuinely gone idle is CLOSED OUTRIGHT rather than
+    trimmed page by page. Two reasons. Every browser call here runs on a
+    throwaway event loop, and Playwright objects belong to the loop that made
+    them — so closing individual pages from the janitor's loop is unreliable in
+    a way that closing the whole context (already used for shutdown/recovery)
+    is not. And closing the context frees strictly more: the browser process
+    itself, not just its renderers.
+
+    Nothing is lost by doing this. The profile lives on disk, so logins survive
+    a context close and the next navigate relaunches straight back into the
+    logged-in session. That's the distinction the original leak fix got right
+    and this keeps: recycle the RUNNING BROWSER, never the profile.
+
+    Idle time alone is not enough protection for a 24-hour run. With the income
+    engine scanning every 20 minutes, a context is touched often enough that it
+    is never "idle" — and then a single Chromium process accumulates for a full
+    day, which is exactly the leak the long-run audits worried about. So there
+    is also a hard age cap: however busy it has been, a browser that has been
+    running for `max_age_s` gets recycled at the next quiet moment. Cheap
+    insurance — relaunching costs a couple of seconds and the profile makes it
+    invisible.
+
+    Contexts still in active use are left alone entirely — the maintenance
+    janitor won't even call this while the browser lock is held.
+    """
+    import time as _t
+    result = {"checked": 0, "closed_idle": [], "recycled_old": [],
+              "dropped_contexts": []}
+    now = _t.time()
+
+    for domain, ctx in list(_ctx.items()):
+        result["checked"] += 1
+        try:
+            _ = list(ctx.pages)         # cheap liveness probe
+        except Exception:
+            # The context object is unusable — the browser died (crash, or the
+            # user closed the window). Drop the handle so the next call
+            # relaunches cleanly instead of throwing.
+            _ctx.pop(domain, None)
+            _last_used.pop(domain, None)
+            _started_at.pop(domain, None)
+            result["dropped_contexts"].append(domain)
+            continue
+
+        idle = now - _last_used.get(domain, now)
+        age = now - _started_at.get(domain, now)
+        if idle > idle_after_s:
+            if close_domain(domain).get("ok"):
+                result["closed_idle"].append(domain)
+        elif age > max_age_s:
+            if close_domain(domain).get("ok"):
+                result["recycled_old"].append(
+                    {"domain": domain, "age_h": round(age / 3600, 1)})
+
+    if any(result[k] for k in ("closed_idle", "recycled_old", "dropped_contexts")):
+        try:
+            from services import event_bus
+            event_bus.publish("browser.reaped", result)
+        except Exception:
+            pass
+    return result
+
+
 def close_domain(domain: str = "freelance") -> dict:
     """Close one domain's browser (used on shutdown / recovery), keeping others."""
     ctx = _ctx.pop(domain, None)
+    _last_used.pop(domain, None)
+    _started_at.pop(domain, None)
     if not ctx:
         return {"ok": True, "note": "not open"}
     try:
@@ -166,14 +247,19 @@ def close_domain(domain: str = "freelance") -> dict:
 
 
 def status() -> dict:
+    import time as _t
+    now = _t.time()
     out = {}
     for domain, ctx in list(_ctx.items()):
+        idle = round(now - _last_used.get(domain, now))
+        age = round(now - _started_at.get(domain, now))
         try:
-            out[domain] = {"open": True, "pages": len(ctx.pages)}
+            out[domain] = {"open": True, "pages": len(ctx.pages),
+                           "idle_s": idle, "age_s": age}
         except Exception:
-            out[domain] = {"open": False, "pages": 0}
+            out[domain] = {"open": False, "pages": 0, "idle_s": idle, "age_s": age}
     for d in PROFILES:
-        out.setdefault(d, {"open": False, "pages": 0})
+        out.setdefault(d, {"open": False, "pages": 0, "idle_s": None, "age_s": None})
     return {"contexts": out, "max_pages_per_context": MAX_OPEN_PAGES}
 
 
