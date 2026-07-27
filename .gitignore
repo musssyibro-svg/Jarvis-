@@ -36,3 +36,4 @@ scratchpad/
 # Phase 0 failure-injection output (machine-specific, regenerate with tools/failure_injection.py)
 failure_injection_report.txt
 fi_test.db*
+backend/fi_*.db*

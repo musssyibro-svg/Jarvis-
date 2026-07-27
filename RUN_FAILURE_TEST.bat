@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM  JARVIS — Phase 0 failure injection (about 2 minutes)
+REM  JARVIS - Phase 0 failure injection (about 2 minutes)
 REM
 REM  Breaks Jarvis on purpose and checks it fails HONESTLY:
 REM  notices the problem, names the real cause, doesn't retry

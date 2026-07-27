@@ -19,10 +19,17 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 CORS_ORIGINS = os.getenv("CORS_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000").split(",")
+# Vite moves to 5174, 5175, ... whenever 5173 is already taken (a stale dev
+# server from a previous run is enough). The UI then loads fine but every API
+# call is blocked by CORS, which shows up as a console that looks connected and
+# reports nothing — much harder to diagnose than a page that fails to load.
+# Any localhost port is allowed; this server only ever binds to 127.0.0.1.
+CORS_LOCALHOST = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
 
 JARVIS_VERSION = "14.0"
 app = FastAPI(title="Jarvis OS", version=JARVIS_VERSION, docs_url="/api/docs")
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
+                   allow_origin_regex=CORS_LOCALHOST,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 from models.db import conn, init_db
@@ -389,3 +396,30 @@ try:
     register_core_agents()
 except Exception as _e:
     logger.warning(f"Agent registry init failed (non-fatal): {_e}")
+
+
+# ── Running this file directly ───────────────────────────────────────────────
+# `python main.py` is the obvious thing to type, and until now it did nothing
+# visible: the module imported, defined `app`, and exited without ever serving.
+# That looks exactly like a crash with no error, which is a miserable thing to
+# debug. It now starts the server, same as the launcher does.
+if __name__ == "__main__":
+    import sys
+
+    if Path.cwd() != BASE_DIR:
+        # Imports here are relative to backend/, so running from the repo root
+        # fails with a confusing ModuleNotFoundError instead of saying why.
+        print(f"[!] Run this from the backend folder:\n"
+              f"      cd /d {BASE_DIR}\n      python main.py\n")
+    try:
+        import uvicorn
+    except ImportError:
+        print("[X] uvicorn is not installed.\n"
+              "    pip install -r requirements.txt")
+        sys.exit(1)
+
+    port = int(os.getenv("JARVIS_PORT", "8000"))
+    print(f"\n  Jarvis backend  ->  http://127.0.0.1:{port}")
+    print(f"  API docs        ->  http://127.0.0.1:{port}/api/docs")
+    print("  Ctrl+C to stop.\n")
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")

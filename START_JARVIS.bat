@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM  JARVIS — true one-click start (backend + UI + browser)
+REM  JARVIS - true one-click start (backend + UI + browser)
 REM  Double-click this file. Nothing else needs to be run.
 REM ============================================================
 title Jarvis Launcher
@@ -29,6 +29,25 @@ if "%JARVIS_CN%"=="1" (
   echo  [ok] China mirrors enabled ^(set JARVIS_CN=0 to disable^)
 )
 
+REM ---------- 0b. Wrong-folder npm damage ----------
+REM `npm init -y` run in the project root (easy mistake - the UI actually lives
+REM in frontend\) creates a package.json here that shadows the real one. Vite
+REM then starts an empty project on 5173 and the real UI is pushed to 5174+.
+if exist "%ROOT%package.json" (
+  echo.
+  echo  [!] There is a package.json in the PROJECT ROOT. That is not the UI -
+  echo      the UI lives in frontend\. It was probably created by running
+  echo      "npm init" here by mistake, and it will start the wrong project.
+  echo.
+  echo      Delete these from %ROOT%
+  echo          del package.json package-lock.json
+  echo          rmdir /s /q node_modules
+  echo.
+  echo      Run DOCTOR.bat for the full picture.
+  echo.
+  pause
+)
+
 REM ---------- 1. Python ----------
 set "PY="
 where py >nul 2>nul && set "PY=py -3"
@@ -42,7 +61,7 @@ if not defined PY (
 echo  [ok] Python: %PY%
 
 REM ---------- 2. Node / npm ----------
-REM npm is npm.cmd — `where npm` can miss it in some shells, so check both.
+REM npm is npm.cmd - `where npm` can miss it in some shells, so check both.
 set "NPM="
 where npm >nul 2>nul && set "NPM=npm"
 if not defined NPM ( where npm.cmd >nul 2>nul && set "NPM=npm.cmd" )
@@ -81,12 +100,19 @@ REM and without it those features fail at runtime with no obvious cause.
 %PY% -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); p.chromium.executable_path; p.stop()" >nul 2>nul
 if errorlevel 1 (
   echo  [..] Downloading the automation browser ^(first run only^)
+  REM MUST be "chromium", never "chrome". `playwright install chrome` fetches
+  REM the branded Google Chrome MSI from a Google server via a PowerShell
+  REM script that ignores PLAYWRIGHT_DOWNLOAD_HOST entirely, so behind the GFW
+  REM it always dies with "unable to connect to the remote server" no matter
+  REM what mirror is set. Only the chromium download honours the mirror.
   %PY% -m playwright install chromium
   if errorlevel 1 (
     echo  [!] Browser download failed. Freelance automation will not work until it
     echo      succeeds. Retry manually with:
     echo          set PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright
     echo          %PY% -m playwright install chromium
+    echo      Do NOT use "playwright install chrome" - that one cannot use a
+    echo      mirror and will never succeed from here.
   )
 ) else (
   echo  [ok] Automation browser present

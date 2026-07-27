@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 153 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 156 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -12,159 +12,162 @@ TABLE OF CONTENTS
   3. BRAIN_GUIDE.md
   4. CONTROL_FLOW_REPORT.md
   5. DEEPSEEK_BLOCKERS_FIX.md
-  6. FRESH_EYES_AUDIT_2026-07-03.md
-  7. HIDDEN_RUNTIME_AUDIT.md
-  8. MIGRATION_CHANGELOG.md
-  9. PLANNER_AND_DOCTOR.md
- 10. PRE_RELEASE_AUDIT.md
- 11. QA_VERIFICATION_REPORT.md
- 12. README.md
- 13. README_START_HERE.md
- 14. REAL_MACHINE_FIXES.md
- 15. RESEARCH_UPGRADE_2026-07.md
- 16. RUNTIME_VALIDATION_README.md
- 17. STAGE2_CHANGELOG.md
- 18. START_HERE.md
- 19. TESTING_STAGES.md
- 20. V8_PHASE1_REPORT.md
- 21. V9_FINAL_README.md
- 22. V9_STAGE1_MIGRATION.md
- 23. WHAT_JARVIS_NEEDS_FROM_YOU.md
- 24. WINDOWS_DEPLOYMENT.md
- 25. WINDOWS_FAILURE_ANALYSIS.md
- 26. backend/README.md
- 27. backend/adapters/__init__.py
- 28. backend/adapters/commander_adapter.py
- 29. backend/agents/__init__.py
- 30. backend/agents/base_agent.py
- 31. backend/agents/browser_agent.py
- 32. backend/agents/commander.py
- 33. backend/agents/custom/__init__.py
- 34. backend/agents/desktop_agent.py
- 35. backend/agents/executor_agent.py
- 36. backend/agents/memory_agent.py
- 37. backend/agents/orchestrator.py
- 38. backend/agents/orchestrator_core.py
- 39. backend/agents/perception_agent.py
- 40. backend/agents/proposal_agent.py
- 41. backend/agents/registry.py
- 42. backend/agents/scheduler.py
- 43. backend/agents/score_agent.py
- 44. backend/agents/scout_agent.py
- 45. backend/agents/v9_models.py
- 46. backend/agents/vision_agent.py
- 47. backend/core/__init__.py
- 48. backend/core/browser_lock.py
- 49. backend/main.py
- 50. backend/models/__init__.py
- 51. backend/models/clickworker.py
- 52. backend/models/db.py
- 53. backend/models/fiverr.py
- 54. backend/models/hubstaff.py
- 55. backend/models/zuodao.py
- 56. backend/platforms/__init__.py
- 57. backend/platforms/base.py
- 58. backend/platforms/contra.py
- 59. backend/platforms/hubstaff.py
- 60. backend/platforms/peopleperhour.py
- 61. backend/platforms/remoteco.py
- 62. backend/platforms/remoteok.py
- 63. backend/platforms/wellfound.py
- 64. backend/platforms/weworkremotely.py
- 65. backend/requirements.txt
- 66. backend/routes/__init__.py
- 67. backend/routes/agents.py
- 68. backend/routes/analytics.py
- 69. backend/routes/automation.py
- 70. backend/routes/brain.py
- 71. backend/routes/clickworker.py
- 72. backend/routes/fiverr.py
- 73. backend/routes/hubstaff.py
- 74. backend/routes/messages.py
- 75. backend/routes/mind.py
- 76. backend/routes/orchestrator.py
- 77. backend/routes/orchestrator_feed.py
- 78. backend/routes/os_console.py
- 79. backend/routes/planner.py
- 80. backend/routes/proposals.py
- 81. backend/routes/pulse.py
- 82. backend/routes/scraper.py
- 83. backend/routes/sessions.py
- 84. backend/routes/system.py
- 85. backend/routes/workflows.py
- 86. backend/routes/zuodao.py
- 87. backend/services/__init__.py
- 88. backend/services/analytics_service.py
- 89. backend/services/app_resolver.py
- 90. backend/services/bid_executor.py
- 91. backend/services/brain_core.py
- 92. backend/services/brain_decision.py
- 93. backend/services/brain_service.py
- 94. backend/services/browser_monitor.py
- 95. backend/services/capability_registry.py
- 96. backend/services/clickworker_service.py
- 97. backend/services/custom_platforms.py
- 98. backend/services/deepseek_service.py
- 99. backend/services/diagnostics.py
-100. backend/services/event_bus.py
-101. backend/services/experience.py
-102. backend/services/fiverr_service.py
-103. backend/services/freelancer_api.py
-104. backend/services/hubstaff_service.py
-105. backend/services/income_engine.py
-106. backend/services/maintenance.py
-107. backend/services/model_router.py
-108. backend/services/ollama_manager.py
-109. backend/services/os_state.py
-110. backend/services/planner_service.py
-111. backend/services/platform_health.py
-112. backend/services/platform_meta.py
-113. backend/services/profile_service.py
-114. backend/services/pulse_service.py
-115. backend/services/reflection.py
-116. backend/services/session_manager.py
-117. backend/services/tool_registry.py
-118. backend/services/trace.py
-119. backend/services/vault.py
-120. backend/services/workflow_service.py
-121. backend/services/world_model.py
-122. backend/services/zuodao_service.py
-123. frontend/index.html
-124. frontend/package.json
-125. frontend/src/App.jsx
-126. frontend/src/JarvisOS.jsx
-127. frontend/src/colors.js
-128. frontend/src/components/UI.jsx
-129. frontend/src/config.js
-130. frontend/src/index.css
-131. frontend/src/main.jsx
-132. frontend/src/pages/Agents.jsx
-133. frontend/src/pages/Chat.jsx
-134. frontend/src/pages/Earn.jsx
-135. frontend/src/pages/Settings.jsx
-136. frontend/vite.config.js
-137. .gitignore
-138. FINAL_PROJECT_TREE_backend.txt
-139. FINAL_PROJECT_TREE_frontend.txt
-140. LEGACY_GREP_ARTIFACT.txt
-141. PROJECT_TREE.txt
-142. REQUIREMENTS_SNAPSHOT.txt
-143. RUNTIME_VALIDATION.py
-144. RUN_FAILURE_TEST.bat
-145. RUN_VALIDATION.bat
-146. START_JARVIS.bat
-147. legacy_dependency_report.json
-148. requirements.txt
-149. start.bat
-150. start.sh
-151. start_frontend.bat
-152. tools/dump_source.py
-153. tools/failure_injection.py
+  6. FIX_MY_INSTALL.md
+  7. FRESH_EYES_AUDIT_2026-07-03.md
+  8. HIDDEN_RUNTIME_AUDIT.md
+  9. MIGRATION_CHANGELOG.md
+ 10. PLANNER_AND_DOCTOR.md
+ 11. PRE_RELEASE_AUDIT.md
+ 12. QA_VERIFICATION_REPORT.md
+ 13. README.md
+ 14. README_START_HERE.md
+ 15. REAL_MACHINE_FIXES.md
+ 16. RESEARCH_UPGRADE_2026-07.md
+ 17. RUNTIME_VALIDATION_README.md
+ 18. STAGE2_CHANGELOG.md
+ 19. START_HERE.md
+ 20. TESTING_STAGES.md
+ 21. V8_PHASE1_REPORT.md
+ 22. V9_FINAL_README.md
+ 23. V9_STAGE1_MIGRATION.md
+ 24. WHAT_JARVIS_NEEDS_FROM_YOU.md
+ 25. WINDOWS_DEPLOYMENT.md
+ 26. WINDOWS_FAILURE_ANALYSIS.md
+ 27. backend/README.md
+ 28. backend/adapters/__init__.py
+ 29. backend/adapters/commander_adapter.py
+ 30. backend/agents/__init__.py
+ 31. backend/agents/base_agent.py
+ 32. backend/agents/browser_agent.py
+ 33. backend/agents/commander.py
+ 34. backend/agents/custom/__init__.py
+ 35. backend/agents/desktop_agent.py
+ 36. backend/agents/executor_agent.py
+ 37. backend/agents/memory_agent.py
+ 38. backend/agents/orchestrator.py
+ 39. backend/agents/orchestrator_core.py
+ 40. backend/agents/perception_agent.py
+ 41. backend/agents/proposal_agent.py
+ 42. backend/agents/registry.py
+ 43. backend/agents/scheduler.py
+ 44. backend/agents/score_agent.py
+ 45. backend/agents/scout_agent.py
+ 46. backend/agents/v9_models.py
+ 47. backend/agents/vision_agent.py
+ 48. backend/core/__init__.py
+ 49. backend/core/browser_lock.py
+ 50. backend/main.py
+ 51. backend/models/__init__.py
+ 52. backend/models/clickworker.py
+ 53. backend/models/db.py
+ 54. backend/models/fiverr.py
+ 55. backend/models/hubstaff.py
+ 56. backend/models/zuodao.py
+ 57. backend/platforms/__init__.py
+ 58. backend/platforms/base.py
+ 59. backend/platforms/contra.py
+ 60. backend/platforms/hubstaff.py
+ 61. backend/platforms/peopleperhour.py
+ 62. backend/platforms/remoteco.py
+ 63. backend/platforms/remoteok.py
+ 64. backend/platforms/wellfound.py
+ 65. backend/platforms/weworkremotely.py
+ 66. backend/requirements.txt
+ 67. backend/routes/__init__.py
+ 68. backend/routes/agents.py
+ 69. backend/routes/analytics.py
+ 70. backend/routes/automation.py
+ 71. backend/routes/brain.py
+ 72. backend/routes/clickworker.py
+ 73. backend/routes/fiverr.py
+ 74. backend/routes/hubstaff.py
+ 75. backend/routes/messages.py
+ 76. backend/routes/mind.py
+ 77. backend/routes/orchestrator.py
+ 78. backend/routes/orchestrator_feed.py
+ 79. backend/routes/os_console.py
+ 80. backend/routes/planner.py
+ 81. backend/routes/proposals.py
+ 82. backend/routes/pulse.py
+ 83. backend/routes/scraper.py
+ 84. backend/routes/sessions.py
+ 85. backend/routes/system.py
+ 86. backend/routes/workflows.py
+ 87. backend/routes/zuodao.py
+ 88. backend/services/__init__.py
+ 89. backend/services/analytics_service.py
+ 90. backend/services/app_resolver.py
+ 91. backend/services/bid_executor.py
+ 92. backend/services/brain_core.py
+ 93. backend/services/brain_decision.py
+ 94. backend/services/brain_service.py
+ 95. backend/services/browser_monitor.py
+ 96. backend/services/capability_registry.py
+ 97. backend/services/clickworker_service.py
+ 98. backend/services/custom_platforms.py
+ 99. backend/services/deepseek_service.py
+100. backend/services/diagnostics.py
+101. backend/services/event_bus.py
+102. backend/services/experience.py
+103. backend/services/fiverr_service.py
+104. backend/services/freelancer_api.py
+105. backend/services/hubstaff_service.py
+106. backend/services/income_engine.py
+107. backend/services/maintenance.py
+108. backend/services/model_router.py
+109. backend/services/ollama_manager.py
+110. backend/services/os_state.py
+111. backend/services/planner_service.py
+112. backend/services/platform_health.py
+113. backend/services/platform_meta.py
+114. backend/services/profile_service.py
+115. backend/services/pulse_service.py
+116. backend/services/reflection.py
+117. backend/services/session_manager.py
+118. backend/services/tool_registry.py
+119. backend/services/trace.py
+120. backend/services/vault.py
+121. backend/services/workflow_service.py
+122. backend/services/world_model.py
+123. backend/services/zuodao_service.py
+124. frontend/index.html
+125. frontend/package.json
+126. frontend/src/App.jsx
+127. frontend/src/JarvisOS.jsx
+128. frontend/src/colors.js
+129. frontend/src/components/UI.jsx
+130. frontend/src/config.js
+131. frontend/src/index.css
+132. frontend/src/main.jsx
+133. frontend/src/pages/Agents.jsx
+134. frontend/src/pages/Chat.jsx
+135. frontend/src/pages/Earn.jsx
+136. frontend/src/pages/Settings.jsx
+137. frontend/vite.config.js
+138. .gitignore
+139. DOCTOR.bat
+140. FINAL_PROJECT_TREE_backend.txt
+141. FINAL_PROJECT_TREE_frontend.txt
+142. LEGACY_GREP_ARTIFACT.txt
+143. PROJECT_TREE.txt
+144. REQUIREMENTS_SNAPSHOT.txt
+145. RUNTIME_VALIDATION.py
+146. RUN_FAILURE_TEST.bat
+147. RUN_VALIDATION.bat
+148. START_JARVIS.bat
+149. legacy_dependency_report.json
+150. requirements.txt
+151. start.bat
+152. start.sh
+153. start_frontend.bat
+154. tools/doctor.py
+155. tools/dump_source.py
+156. tools/failure_injection.py
 
 
 
 ################################################################################
-# FILE 1/153: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 1/156: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -230,7 +233,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 2/153: ARCHITECTURE.md
+# FILE 2/156: ARCHITECTURE.md
 ################################################################################
 ```md
 # Jarvis architecture (foundational layer)
@@ -297,7 +300,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 3/153: BRAIN_GUIDE.md
+# FILE 3/156: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -353,7 +356,7 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/153: CONTROL_FLOW_REPORT.md
+# FILE 4/156: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -408,7 +411,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 5/153: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 5/156: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -487,7 +490,185 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 6/153: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 6/156: FIX_MY_INSTALL.md
+################################################################################
+```md
+# It won't start — do this
+
+Four separate things went wrong. The first one was mine, and it made the other
+three impossible to diagnose because the launcher printed error messages that
+were simply untrue.
+
+Run everything below from a normal Command Prompt. Your project is on D:, so
+every path starts with `cd /d D:\jarvis_v9`.
+
+---
+
+## Step 1 — get the fixed files
+
+```
+cd /d D:\jarvis_v9
+git pull
+```
+
+If `git pull` complains that `.bat` files have local changes, they're the broken
+ones — throw them away and take the new ones:
+
+```
+git checkout -- *.bat
+git pull
+```
+
+**Not using git?** Then delete every `.bat` in `D:\jarvis_v9` and download them
+again from GitHub. They have to come down fresh — this is the whole fix.
+
+---
+
+## Step 2 — undo the npm accident
+
+`npm init -y` was run in `D:\jarvis_v9`. That created a `package.json` there
+which is **not** the UI — the real one is in `frontend\`. It's why `npm run dev`
+started an empty project, took port 5173, and pushed the real UI to 5175.
+
+```
+cd /d D:\jarvis_v9
+del package.json package-lock.json
+rmdir /s /q node_modules
+```
+
+Do **not** delete `frontend\package.json` or `frontend\node_modules` — those are
+the real ones and they're fine.
+
+Then close every open Command Prompt window running `npm run dev`, or:
+
+```
+taskkill /f /im node.exe
+```
+
+---
+
+## Step 3 — check everything at once
+
+```
+cd /d D:\jarvis_v9
+DOCTOR.bat
+```
+
+This is new. It checks Python, every package, Node, Ollama, the Playwright
+browser, Tesseract, ports, line endings, and the stray package.json — then
+prints exactly what to type for each problem, in order. Work down its list.
+
+---
+
+## Step 4 — the browser download
+
+Your log shows this failing repeatedly:
+
+```
+playwright install chrome        <-- this can NEVER work from China
+```
+
+`chrome` fetches Google's branded MSI from a Google server using a PowerShell
+script that **ignores** `PLAYWRIGHT_DOWNLOAD_HOST`. No mirror can help it. That
+is why you got 无法连接到远程服务器 every time, even after setting the mirror.
+
+Use `chromium` instead — that one does honour the mirror:
+
+```
+set PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright
+python -m playwright install chromium
+```
+
+(You also ran a bare `playwright install`, which returned instantly with no
+output. That usually means it had nothing to do — DOCTOR.bat will tell you
+whether chromium is actually on disk.)
+
+---
+
+## Step 5 — start it
+
+```
+cd /d D:\jarvis_v9
+START_JARVIS.bat
+```
+
+Or by hand, in two windows:
+
+```
+:: window 1
+cd /d D:\jarvis_v9\backend
+python main.py
+
+:: window 2
+cd /d D:\jarvis_v9\frontend
+npm run dev
+```
+
+`python main.py` now actually starts the server. Before, it imported the app and
+exited without serving — no error, no output, which looked like a crash. That's
+fixed.
+
+Two commands that were never going to work, from your log:
+- `python main.py` **in the project root** — main.py is in `backend\`
+- `python app.py` — there is no app.py; the file is `main.py`
+
+---
+
+## Step 6 — Phase 0
+
+```
+cd /d D:\jarvis_v9
+RUN_FAILURE_TEST.bat
+```
+
+---
+
+## What was actually broken
+
+**1. My bug — batch files had Unix line endings.**
+Every `.bat` was written on Linux. cmd.exe parses batch files by byte position,
+and with LF-only endings it loses its place and eats the first characters of
+lines. That produced your output exactly:
+
+| you saw | it was trying to run |
+|---|---|
+| `'tle' 不是内部或外部命令` | `title` |
+| `'tlocal' 不是内部或外部命令` | `setlocal` |
+| `'ho' / 'cho.' 不是内部或外部命令` | `echo` |
+| `'JARVIS' 不是内部或外部命令` | `REM  JARVIS - ...` |
+| **`[X] Python not found on PATH`** | **the check itself was mangled** |
+
+That last line is the important one. Python was installed correctly the whole
+time — you proved it with `python --version`. The launcher was lying because its
+own code had been chewed up. Fixed, plus `.gitattributes` so git can never hand
+you LF `.bat` files again, and the em-dashes are gone (they render as mojibake
+in a Chinese-locale console).
+
+**2. `python main.py` did nothing.** No `if __name__ == "__main__"` block, so it
+loaded and quit silently. Now it starts the server and tells you if you're in
+the wrong folder.
+
+**3. CORS only allowed port 5173.** With stale dev servers holding 5173 and
+5174, Vite moved you to 5175 — the page would have loaded and then every API
+call would have been silently blocked. Any localhost port is allowed now.
+
+**4. `playwright install chrome`** can't use a mirror. Covered in step 4.
+
+---
+
+## Send me this if it still won't go
+
+```
+cd /d D:\jarvis_v9
+DOCTOR.bat > doctor_output.txt
+```
+
+`doctor_output.txt` tells me your exact state. Paste it, or the console output
+of whatever fails.
+```
+
+################################################################################
+# FILE 7/156: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -606,7 +787,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 7/153: HIDDEN_RUNTIME_AUDIT.md
+# FILE 8/156: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -759,7 +940,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 8/153: MIGRATION_CHANGELOG.md
+# FILE 9/156: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -806,7 +987,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 9/153: PLANNER_AND_DOCTOR.md
+# FILE 10/156: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -863,7 +1044,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 10/153: PRE_RELEASE_AUDIT.md
+# FILE 11/156: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1048,7 +1229,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 11/153: QA_VERIFICATION_REPORT.md
+# FILE 12/156: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -1142,7 +1323,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 12/153: README.md
+# FILE 13/156: README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -1278,7 +1459,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 13/153: README_START_HERE.md
+# FILE 14/156: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -1333,7 +1514,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 14/153: REAL_MACHINE_FIXES.md
+# FILE 15/156: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -1434,7 +1615,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 15/153: RESEARCH_UPGRADE_2026-07.md
+# FILE 16/156: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -1523,7 +1704,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 16/153: RUNTIME_VALIDATION_README.md
+# FILE 17/156: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -1561,7 +1742,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 17/153: STAGE2_CHANGELOG.md
+# FILE 18/156: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -1598,7 +1779,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 18/153: START_HERE.md
+# FILE 19/156: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -1749,7 +1930,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 19/153: TESTING_STAGES.md
+# FILE 20/156: TESTING_STAGES.md
 ################################################################################
 ```md
 # Proving Jarvis actually works — in the right order
@@ -1847,7 +2028,7 @@ Everything else has been tested. This hasn't, and can't be.
 ```
 
 ################################################################################
-# FILE 20/153: V8_PHASE1_REPORT.md
+# FILE 21/156: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -1903,7 +2084,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 21/153: V9_FINAL_README.md
+# FILE 22/156: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -1965,7 +2146,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 22/153: V9_STAGE1_MIGRATION.md
+# FILE 23/156: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -2029,7 +2210,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 23/153: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 24/156: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -2101,7 +2282,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 24/153: WINDOWS_DEPLOYMENT.md
+# FILE 25/156: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -2139,7 +2320,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 25/153: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 26/156: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -2229,7 +2410,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 26/153: backend/README.md
+# FILE 27/156: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -2365,14 +2546,14 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 27/153: backend/adapters/__init__.py
+# FILE 28/156: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 28/153: backend/adapters/commander_adapter.py
+# FILE 29/156: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -3034,14 +3215,14 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 ```
 
 ################################################################################
-# FILE 29/153: backend/agents/__init__.py
+# FILE 30/156: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 30/153: backend/agents/base_agent.py
+# FILE 31/156: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -3064,7 +3245,7 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 31/153: backend/agents/browser_agent.py
+# FILE 32/156: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
@@ -3361,7 +3542,7 @@ class BrowserAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 32/153: backend/agents/commander.py
+# FILE 33/156: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -3498,14 +3679,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 33/153: backend/agents/custom/__init__.py
+# FILE 34/156: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 34/153: backend/agents/desktop_agent.py
+# FILE 35/156: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -4733,7 +4914,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 35/153: backend/agents/executor_agent.py
+# FILE 36/156: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -5207,7 +5388,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 36/153: backend/agents/memory_agent.py
+# FILE 37/156: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -5365,7 +5546,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 37/153: backend/agents/orchestrator.py
+# FILE 38/156: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -5484,7 +5665,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 38/153: backend/agents/orchestrator_core.py
+# FILE 39/156: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -5816,7 +5997,7 @@ core = OrchestratorCore()
 ```
 
 ################################################################################
-# FILE 39/153: backend/agents/perception_agent.py
+# FILE 40/156: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -6026,7 +6207,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 40/153: backend/agents/proposal_agent.py
+# FILE 41/156: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -6184,7 +6365,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 41/153: backend/agents/registry.py
+# FILE 42/156: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -6504,7 +6685,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 42/153: backend/agents/scheduler.py
+# FILE 43/156: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -6608,7 +6789,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 43/153: backend/agents/score_agent.py
+# FILE 44/156: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -6809,7 +6990,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 44/153: backend/agents/scout_agent.py
+# FILE 45/156: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -6929,7 +7110,7 @@ class ScoutAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 45/153: backend/agents/v9_models.py
+# FILE 46/156: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -6987,7 +7168,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 46/153: backend/agents/vision_agent.py
+# FILE 47/156: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -7597,14 +7778,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 47/153: backend/core/__init__.py
+# FILE 48/156: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 48/153: backend/core/browser_lock.py
+# FILE 49/156: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
@@ -7747,7 +7928,7 @@ class browser_session:
 ```
 
 ################################################################################
-# FILE 49/153: backend/main.py
+# FILE 50/156: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -7771,10 +7952,17 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 CORS_ORIGINS = os.getenv("CORS_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000").split(",")
+# Vite moves to 5174, 5175, ... whenever 5173 is already taken (a stale dev
+# server from a previous run is enough). The UI then loads fine but every API
+# call is blocked by CORS, which shows up as a console that looks connected and
+# reports nothing — much harder to diagnose than a page that fails to load.
+# Any localhost port is allowed; this server only ever binds to 127.0.0.1.
+CORS_LOCALHOST = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
 
 JARVIS_VERSION = "14.0"
 app = FastAPI(title="Jarvis OS", version=JARVIS_VERSION, docs_url="/api/docs")
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
+                   allow_origin_regex=CORS_LOCALHOST,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 from models.db import conn, init_db
@@ -8141,17 +8329,44 @@ try:
     register_core_agents()
 except Exception as _e:
     logger.warning(f"Agent registry init failed (non-fatal): {_e}")
+
+
+# ── Running this file directly ───────────────────────────────────────────────
+# `python main.py` is the obvious thing to type, and until now it did nothing
+# visible: the module imported, defined `app`, and exited without ever serving.
+# That looks exactly like a crash with no error, which is a miserable thing to
+# debug. It now starts the server, same as the launcher does.
+if __name__ == "__main__":
+    import sys
+
+    if Path.cwd() != BASE_DIR:
+        # Imports here are relative to backend/, so running from the repo root
+        # fails with a confusing ModuleNotFoundError instead of saying why.
+        print(f"[!] Run this from the backend folder:\n"
+              f"      cd /d {BASE_DIR}\n      python main.py\n")
+    try:
+        import uvicorn
+    except ImportError:
+        print("[X] uvicorn is not installed.\n"
+              "    pip install -r requirements.txt")
+        sys.exit(1)
+
+    port = int(os.getenv("JARVIS_PORT", "8000"))
+    print(f"\n  Jarvis backend  ->  http://127.0.0.1:{port}")
+    print(f"  API docs        ->  http://127.0.0.1:{port}/api/docs")
+    print("  Ctrl+C to stop.\n")
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
 ```
 
 ################################################################################
-# FILE 50/153: backend/models/__init__.py
+# FILE 51/156: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import conn, init_db, DB_PATH
 ```
 
 ################################################################################
-# FILE 51/153: backend/models/clickworker.py
+# FILE 52/156: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -8177,7 +8392,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 52/153: backend/models/db.py
+# FILE 53/156: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -8396,7 +8611,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 53/153: backend/models/fiverr.py
+# FILE 54/156: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -8443,7 +8658,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 54/153: backend/models/hubstaff.py
+# FILE 55/156: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -8487,7 +8702,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 55/153: backend/models/zuodao.py
+# FILE 56/156: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -8513,14 +8728,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 56/153: backend/platforms/__init__.py
+# FILE 57/156: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 57/153: backend/platforms/base.py
+# FILE 58/156: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -8565,7 +8780,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 58/153: backend/platforms/contra.py
+# FILE 59/156: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -8650,7 +8865,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 59/153: backend/platforms/hubstaff.py
+# FILE 60/156: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -8850,7 +9065,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 60/153: backend/platforms/peopleperhour.py
+# FILE 61/156: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -8935,7 +9150,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 61/153: backend/platforms/remoteco.py
+# FILE 62/156: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -9034,7 +9249,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 62/153: backend/platforms/remoteok.py
+# FILE 63/156: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -9076,7 +9291,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 63/153: backend/platforms/wellfound.py
+# FILE 64/156: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -9194,7 +9409,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 64/153: backend/platforms/weworkremotely.py
+# FILE 65/156: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -9238,7 +9453,7 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 65/153: backend/requirements.txt
+# FILE 66/156: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -9275,7 +9490,7 @@ cryptography>=42.0.0
 ```
 
 ################################################################################
-# FILE 66/153: backend/routes/__init__.py
+# FILE 67/156: backend/routes/__init__.py
 ################################################################################
 ```py
 from .proposals   import router as proposals_router
@@ -9291,7 +9506,7 @@ from .orchestrator import router as orchestrator_router
 ```
 
 ################################################################################
-# FILE 67/153: backend/routes/agents.py
+# FILE 68/156: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -9784,7 +9999,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 68/153: backend/routes/analytics.py
+# FILE 69/156: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -9803,7 +10018,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 69/153: backend/routes/automation.py
+# FILE 70/156: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -10034,7 +10249,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 70/153: backend/routes/brain.py
+# FILE 71/156: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -10131,7 +10346,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 71/153: backend/routes/clickworker.py
+# FILE 72/156: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -10229,7 +10444,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 72/153: backend/routes/fiverr.py
+# FILE 73/156: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -10407,7 +10622,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 73/153: backend/routes/hubstaff.py
+# FILE 74/156: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -10588,7 +10803,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 74/153: backend/routes/messages.py
+# FILE 75/156: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -10683,7 +10898,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 75/153: backend/routes/mind.py
+# FILE 76/156: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -10784,7 +10999,7 @@ def freelance_resume(platform: str):
 ```
 
 ################################################################################
-# FILE 76/153: backend/routes/orchestrator.py
+# FILE 77/156: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -10926,7 +11141,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 77/153: backend/routes/orchestrator_feed.py
+# FILE 78/156: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -10982,7 +11197,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 78/153: backend/routes/os_console.py
+# FILE 79/156: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -11081,7 +11296,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 79/153: backend/routes/planner.py
+# FILE 80/156: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -11206,7 +11421,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 80/153: backend/routes/proposals.py
+# FILE 81/156: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -11412,7 +11627,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 81/153: backend/routes/pulse.py
+# FILE 82/156: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -11446,7 +11661,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 82/153: backend/routes/scraper.py
+# FILE 83/156: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -11590,7 +11805,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 83/153: backend/routes/sessions.py
+# FILE 84/156: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -11705,7 +11920,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 84/153: backend/routes/system.py
+# FILE 85/156: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -11904,7 +12119,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 85/153: backend/routes/workflows.py
+# FILE 86/156: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -11970,7 +12185,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 86/153: backend/routes/zuodao.py
+# FILE 87/156: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -12065,7 +12280,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 87/153: backend/services/__init__.py
+# FILE 88/156: backend/services/__init__.py
 ################################################################################
 ```py
 from .deepseek_service import call_model, generate_proposal, generate_reply_draft, auto_work_job
@@ -12073,7 +12288,7 @@ from .analytics_service import get_analytics
 ```
 
 ################################################################################
-# FILE 88/153: backend/services/analytics_service.py
+# FILE 89/156: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -12175,7 +12390,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 89/153: backend/services/app_resolver.py
+# FILE 90/156: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -12393,7 +12608,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 90/153: backend/services/bid_executor.py
+# FILE 91/156: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -12738,7 +12953,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 91/153: backend/services/brain_core.py
+# FILE 92/156: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -12845,7 +13060,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 92/153: backend/services/brain_decision.py
+# FILE 93/156: backend/services/brain_decision.py
 ################################################################################
 ```py
 """
@@ -13103,7 +13318,7 @@ def explain(goal_type: str = "background", objective: str = "") -> dict:
 ```
 
 ################################################################################
-# FILE 93/153: backend/services/brain_service.py
+# FILE 94/156: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -13541,7 +13756,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 94/153: backend/services/browser_monitor.py
+# FILE 95/156: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -13695,7 +13910,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 95/153: backend/services/capability_registry.py
+# FILE 96/156: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -13884,7 +14099,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 96/153: backend/services/clickworker_service.py
+# FILE 97/156: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -14032,7 +14247,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 97/153: backend/services/custom_platforms.py
+# FILE 98/156: backend/services/custom_platforms.py
 ################################################################################
 ```py
 """
@@ -14229,7 +14444,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 98/153: backend/services/deepseek_service.py
+# FILE 99/156: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -14454,7 +14669,7 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 99/153: backend/services/diagnostics.py
+# FILE 100/156: backend/services/diagnostics.py
 ################################################################################
 ```py
 """
@@ -14821,7 +15036,7 @@ def build_report() -> str:
 ```
 
 ################################################################################
-# FILE 100/153: backend/services/event_bus.py
+# FILE 101/156: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -14914,7 +15129,7 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 101/153: backend/services/experience.py
+# FILE 102/156: backend/services/experience.py
 ################################################################################
 ```py
 """
@@ -15339,7 +15554,7 @@ def summary(limit: int = 8) -> dict:
 ```
 
 ################################################################################
-# FILE 102/153: backend/services/fiverr_service.py
+# FILE 103/156: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -15521,7 +15736,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 103/153: backend/services/freelancer_api.py
+# FILE 104/156: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -15736,7 +15951,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 104/153: backend/services/hubstaff_service.py
+# FILE 105/156: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -15936,7 +16151,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 105/153: backend/services/income_engine.py
+# FILE 106/156: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -16207,7 +16422,7 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 106/153: backend/services/maintenance.py
+# FILE 107/156: backend/services/maintenance.py
 ################################################################################
 ```py
 """
@@ -16500,7 +16715,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 107/153: backend/services/model_router.py
+# FILE 108/156: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -16732,7 +16947,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 108/153: backend/services/ollama_manager.py
+# FILE 109/156: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -17027,7 +17242,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 109/153: backend/services/os_state.py
+# FILE 110/156: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -17222,7 +17437,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 110/153: backend/services/planner_service.py
+# FILE 111/156: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -17802,7 +18017,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 111/153: backend/services/platform_health.py
+# FILE 112/156: backend/services/platform_health.py
 ################################################################################
 ```py
 """
@@ -17961,7 +18176,7 @@ def _announce_pause(platform: str, error: str) -> None:
 ```
 
 ################################################################################
-# FILE 112/153: backend/services/platform_meta.py
+# FILE 113/156: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -18043,7 +18258,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 113/153: backend/services/profile_service.py
+# FILE 114/156: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -18118,7 +18333,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 114/153: backend/services/pulse_service.py
+# FILE 115/156: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -18395,7 +18610,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 115/153: backend/services/reflection.py
+# FILE 116/156: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -18496,7 +18711,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 116/153: backend/services/session_manager.py
+# FILE 117/156: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -18867,7 +19082,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 117/153: backend/services/tool_registry.py
+# FILE 118/156: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -19024,7 +19239,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 118/153: backend/services/trace.py
+# FILE 119/156: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -19157,7 +19372,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 119/153: backend/services/vault.py
+# FILE 120/156: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -19290,7 +19505,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 120/153: backend/services/workflow_service.py
+# FILE 121/156: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -19528,7 +19743,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 121/153: backend/services/world_model.py
+# FILE 122/156: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -19717,7 +19932,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 122/153: backend/services/zuodao_service.py
+# FILE 123/156: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -19834,7 +20049,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 123/153: frontend/index.html
+# FILE 124/156: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -19852,7 +20067,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 124/153: frontend/package.json
+# FILE 125/156: frontend/package.json
 ################################################################################
 ```json
 {
@@ -19876,7 +20091,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 125/153: frontend/src/App.jsx
+# FILE 126/156: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -19894,7 +20109,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 126/153: frontend/src/JarvisOS.jsx
+# FILE 127/156: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -20560,7 +20775,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 127/153: frontend/src/colors.js
+# FILE 128/156: frontend/src/colors.js
 ################################################################################
 ```js
 /**
@@ -20650,7 +20865,7 @@ export function btn(color = '#00d4ff', opts = {}) {
 ```
 
 ################################################################################
-# FILE 128/153: frontend/src/components/UI.jsx
+# FILE 129/156: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -20773,7 +20988,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 129/153: frontend/src/config.js
+# FILE 130/156: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -20798,7 +21013,7 @@ export const apiPatch = (url, body) => apiFetch(url, {
 ```
 
 ################################################################################
-# FILE 130/153: frontend/src/index.css
+# FILE 131/156: frontend/src/index.css
 ################################################################################
 ```css
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -20862,7 +21077,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !i
 ```
 
 ################################################################################
-# FILE 131/153: frontend/src/main.jsx
+# FILE 132/156: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from 'react'
@@ -20875,7 +21090,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 ################################################################################
-# FILE 132/153: frontend/src/pages/Agents.jsx
+# FILE 133/156: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -21588,7 +21803,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 133/153: frontend/src/pages/Chat.jsx
+# FILE 134/156: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useState, useRef, useEffect } from 'react'
@@ -21721,7 +21936,7 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 134/153: frontend/src/pages/Earn.jsx
+# FILE 135/156: frontend/src/pages/Earn.jsx
 ################################################################################
 ```jsx
 /**
@@ -22034,7 +22249,7 @@ export default function Earn() {
 ```
 
 ################################################################################
-# FILE 135/153: frontend/src/pages/Settings.jsx
+# FILE 136/156: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect } from 'react'
@@ -22118,7 +22333,7 @@ export default function Settings() {
 ```
 
 ################################################################################
-# FILE 136/153: frontend/vite.config.js
+# FILE 137/156: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -22130,7 +22345,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 137/153: .gitignore
+# FILE 138/156: .gitignore
 ################################################################################
 ```
 # Python
@@ -22174,7 +22389,37 @@ fi_test.db*
 ```
 
 ################################################################################
-# FILE 138/153: FINAL_PROJECT_TREE_backend.txt
+# FILE 139/156: DOCTOR.bat
+################################################################################
+```bat
+@echo off
+REM ============================================================
+REM  JARVIS DOCTOR - run this FIRST when something will not start.
+REM  Checks every dependency and the mistakes that produce
+REM  misleading errors, then prints exactly what to fix.
+REM ============================================================
+title Jarvis Doctor
+cd /d "%~dp0"
+
+set "PY="
+where py >/dev/null 2>/dev/null && set "PY=py -3"
+if not defined PY ( where python >/dev/null 2>/dev/null && set "PY=python" )
+if not defined PY (
+  echo.
+  echo  [STOP] Python is not on PATH.
+  echo         Install Python 3.11 from python.org and TICK
+  echo         "Add Python to PATH" during setup.
+  echo.
+  pause & exit /b 1
+)
+
+%PY% tools\doctor.py
+echo.
+pause
+```
+
+################################################################################
+# FILE 140/156: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -22257,7 +22502,7 @@ fi_test.db*
 ```
 
 ################################################################################
-# FILE 139/153: FINAL_PROJECT_TREE_frontend.txt
+# FILE 141/156: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -22281,7 +22526,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 140/153: LEGACY_GREP_ARTIFACT.txt
+# FILE 142/156: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -22303,7 +22548,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 141/153: PROJECT_TREE.txt
+# FILE 143/156: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -22421,7 +22666,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 142/153: REQUIREMENTS_SNAPSHOT.txt
+# FILE 144/156: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -22451,7 +22696,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 143/153: RUNTIME_VALIDATION.py
+# FILE 145/156: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -22552,12 +22797,12 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 144/153: RUN_FAILURE_TEST.bat
+# FILE 146/156: RUN_FAILURE_TEST.bat
 ################################################################################
 ```bat
 @echo off
 REM ============================================================
-REM  JARVIS — Phase 0 failure injection (about 2 minutes)
+REM  JARVIS - Phase 0 failure injection (about 2 minutes)
 REM
 REM  Breaks Jarvis on purpose and checks it fails HONESTLY:
 REM  notices the problem, names the real cause, doesn't retry
@@ -22596,7 +22841,7 @@ pause
 ```
 
 ################################################################################
-# FILE 145/153: RUN_VALIDATION.bat
+# FILE 147/156: RUN_VALIDATION.bat
 ################################################################################
 ```bat
 @echo off
@@ -22615,12 +22860,12 @@ pause
 ```
 
 ################################################################################
-# FILE 146/153: START_JARVIS.bat
+# FILE 148/156: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
 REM ============================================================
-REM  JARVIS — true one-click start (backend + UI + browser)
+REM  JARVIS - true one-click start (backend + UI + browser)
 REM  Double-click this file. Nothing else needs to be run.
 REM ============================================================
 title Jarvis Launcher
@@ -22649,6 +22894,25 @@ if "%JARVIS_CN%"=="1" (
   echo  [ok] China mirrors enabled ^(set JARVIS_CN=0 to disable^)
 )
 
+REM ---------- 0b. Wrong-folder npm damage ----------
+REM `npm init -y` run in the project root (easy mistake - the UI actually lives
+REM in frontend\) creates a package.json here that shadows the real one. Vite
+REM then starts an empty project on 5173 and the real UI is pushed to 5174+.
+if exist "%ROOT%package.json" (
+  echo.
+  echo  [!] There is a package.json in the PROJECT ROOT. That is not the UI -
+  echo      the UI lives in frontend\. It was probably created by running
+  echo      "npm init" here by mistake, and it will start the wrong project.
+  echo.
+  echo      Delete these from %ROOT%
+  echo          del package.json package-lock.json
+  echo          rmdir /s /q node_modules
+  echo.
+  echo      Run DOCTOR.bat for the full picture.
+  echo.
+  pause
+)
+
 REM ---------- 1. Python ----------
 set "PY="
 where py >nul 2>nul && set "PY=py -3"
@@ -22662,7 +22926,7 @@ if not defined PY (
 echo  [ok] Python: %PY%
 
 REM ---------- 2. Node / npm ----------
-REM npm is npm.cmd — `where npm` can miss it in some shells, so check both.
+REM npm is npm.cmd - `where npm` can miss it in some shells, so check both.
 set "NPM="
 where npm >nul 2>nul && set "NPM=npm"
 if not defined NPM ( where npm.cmd >nul 2>nul && set "NPM=npm.cmd" )
@@ -22701,12 +22965,19 @@ REM and without it those features fail at runtime with no obvious cause.
 %PY% -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); p.chromium.executable_path; p.stop()" >nul 2>nul
 if errorlevel 1 (
   echo  [..] Downloading the automation browser ^(first run only^)
+  REM MUST be "chromium", never "chrome". `playwright install chrome` fetches
+  REM the branded Google Chrome MSI from a Google server via a PowerShell
+  REM script that ignores PLAYWRIGHT_DOWNLOAD_HOST entirely, so behind the GFW
+  REM it always dies with "unable to connect to the remote server" no matter
+  REM what mirror is set. Only the chromium download honours the mirror.
   %PY% -m playwright install chromium
   if errorlevel 1 (
     echo  [!] Browser download failed. Freelance automation will not work until it
     echo      succeeds. Retry manually with:
     echo          set PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright
     echo          %PY% -m playwright install chromium
+    echo      Do NOT use "playwright install chrome" - that one cannot use a
+    echo      mirror and will never succeed from here.
   )
 ) else (
   echo  [ok] Automation browser present
@@ -22764,7 +23035,7 @@ timeout /t 10
 ```
 
 ################################################################################
-# FILE 147/153: legacy_dependency_report.json
+# FILE 149/156: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -22929,7 +23200,7 @@ timeout /t 10
 ```
 
 ################################################################################
-# FILE 148/153: requirements.txt
+# FILE 150/156: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -22962,7 +23233,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 149/153: start.bat
+# FILE 151/156: start.bat
 ################################################################################
 ```bat
 @echo off
@@ -23005,7 +23276,7 @@ pause
 ```
 
 ################################################################################
-# FILE 150/153: start.sh
+# FILE 152/156: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -23042,7 +23313,7 @@ wait
 ```
 
 ################################################################################
-# FILE 151/153: start_frontend.bat
+# FILE 153/156: start_frontend.bat
 ################################################################################
 ```bat
 @echo off
@@ -23057,7 +23328,334 @@ pause
 ```
 
 ################################################################################
-# FILE 152/153: tools/dump_source.py
+# FILE 154/156: tools/doctor.py
+################################################################################
+```py
+"""
+tools/doctor.py - "why won't it start?", answered in ten seconds.
+
+The existing diagnostics live inside the backend, which is useless when the
+backend is the thing that won't come up. This runs standalone: no server, no
+FastAPI, no database. Plain Python, works from any directory, on any drive.
+
+It checks the things that have ACTUALLY gone wrong on this project, not a
+generic dependency list - including several that produce error messages
+pointing at the wrong culprit entirely:
+
+  * .bat files with Unix line endings. cmd.exe loses its place and eats the
+    start of lines, so you get "'tle' is not recognized" and a launcher that
+    claims Python isn't installed when it plainly is.
+  * a stray package.json at the repo root (from `npm init -y` in the wrong
+    folder), which makes `npm run dev` start the wrong project.
+  * `playwright install chrome` vs `chromium` - the first ignores the China
+    mirror and can never succeed behind the GFW.
+  * ports already held by a dev server from a previous run.
+
+Run it:  python tools/doctor.py
+"""
+import json
+import os
+import shutil
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+BACKEND = ROOT / "backend"
+FRONTEND = ROOT / "frontend"
+
+OK, WARN, BAD = "ok", "warn", "BAD"
+_rows = []
+
+
+def add(status, what, detail, fix=""):
+    _rows.append((status, what, detail, fix))
+
+
+def _run(cmd, timeout=8):
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return (r.stdout or r.stderr or "").strip()
+    except Exception:
+        return ""
+
+
+# ── 1. Am I even looking at the right folder? ────────────────────────────────
+
+def check_layout():
+    if not BACKEND.is_dir():
+        add(BAD, "Project layout", f"no backend/ under {ROOT}",
+            "You're running this from outside the Jarvis folder. cd to it first.")
+        return
+    add(OK, "Project layout", f"{ROOT}")
+
+    if not (BACKEND / "main.py").is_file():
+        add(BAD, "backend/main.py", "missing", "Re-clone or re-download the project.")
+    if not (FRONTEND / "package.json").is_file():
+        add(BAD, "frontend/package.json", "missing", "Re-clone or re-download the project.")
+
+    # The classic: `npm init -y` run at the repo root by mistake.
+    stray = ROOT / "package.json"
+    if stray.is_file():
+        try:
+            name = json.loads(stray.read_text(encoding="utf-8")).get("name", "?")
+        except Exception:
+            name = "?"
+        add(BAD, "Stray package.json at root", f'name="{name}" - this is NOT the UI',
+            f'The UI lives in frontend/. Delete these THREE from {ROOT}:\n'
+            f'          del package.json package-lock.json\n'
+            f'          rmdir /s /q node_modules\n'
+            f'      then:  cd frontend  &&  npm install  &&  npm run dev')
+    if (ROOT / "node_modules").is_dir() and not stray.is_file():
+        add(WARN, "node_modules at root", "leftover from an npm command in the wrong folder",
+            f"rmdir /s /q {ROOT / 'node_modules'}")
+
+
+# ── 2. Line endings - the one that produces lying error messages ─────────────
+
+def check_line_endings():
+    bad = []
+    for bat in sorted(ROOT.glob("*.bat")):
+        try:
+            data = bat.read_bytes()
+        except OSError:
+            continue
+        if b"\n" in data and b"\r\n" not in data:
+            bad.append(bat.name)
+    if bad:
+        add(BAD, "Batch file line endings", f"Unix (LF) in: {', '.join(bad)}",
+            "This is why the launcher printed nonsense like \"'tle' is not\n"
+            "      recognized\" and claimed Python was missing. cmd.exe needs CRLF.\n"
+            "      Fix:  git config core.autocrlf true  &&  git checkout -- *.bat\n"
+            "      Or in PowerShell, per file:\n"
+            "          (Get-Content x.bat -Raw) -replace \"`r`n\",\"`n\" -replace \"`n\",\"`r`n\" |\n"
+            "              Set-Content x.bat -NoNewline")
+    elif list(ROOT.glob("*.bat")):
+        add(OK, "Batch file line endings", "CRLF - cmd.exe will parse these correctly")
+
+
+# ── 3. Python and its packages ───────────────────────────────────────────────
+
+def check_python():
+    v = sys.version_info
+    label = f"{v.major}.{v.minor}.{v.micro} at {sys.executable}"
+    if v < (3, 10):
+        add(BAD, "Python", label, "Jarvis needs 3.10+. Install 3.11 from python.org.")
+    else:
+        add(OK, "Python", label)
+
+    req = BACKEND / "requirements.txt"
+    if not req.is_file():
+        add(WARN, "requirements.txt", "not found in backend/")
+        return
+
+    # import name -> what breaks without it
+    NEEDED = {
+        "fastapi": "the backend won't start at all",
+        "uvicorn": "the backend won't start at all",
+        "pydantic": "the backend won't start at all",
+        "dotenv": "the backend won't start at all",
+        "psutil": "no system stats, and Phase 0 can't run",
+        "requests": "no job scanning",
+        "bs4": "no job scanning",
+        "playwright": "no freelance login or bidding",
+        "ollama": "no local AI",
+        "pyautogui": "no desktop control (mouse/keyboard)",
+        "pygetwindow": "no window focus - typing lands in the wrong window",
+        "pyperclip": "typing verification is skipped",
+        "PIL": "no screenshots",
+        "mss": "slow screenshots",
+        "pytesseract": "no reading text off the screen",
+        "cv2": "no finding things on screen by image",
+        "cryptography": "the encrypted credential vault won't open",
+    }
+    missing = []
+    for mod, why in NEEDED.items():
+        try:
+            __import__(mod)
+        except BaseException:
+            # BaseException on purpose: a half-broken native wheel can raise a
+            # pyo3 PanicException, which is not an Exception subclass.
+            missing.append((mod, why))
+    if missing:
+        add(BAD, "Python packages", f"{len(missing)} missing: "
+            + ", ".join(m for m, _ in missing),
+            f"cd /d {BACKEND}  &&  python -m pip install -r requirements.txt\n"
+            + "\n".join(f"          {m:<14} missing -> {w}" for m, w in missing))
+    else:
+        add(OK, "Python packages", f"all {len(NEEDED)} present")
+
+
+# ── 4. Node ──────────────────────────────────────────────────────────────────
+
+def check_node():
+    node = shutil.which("node")
+    npm = shutil.which("npm") or shutil.which("npm.cmd")
+    if not node:
+        add(BAD, "Node.js", "not on PATH", "Install Node.js LTS from nodejs.org.")
+    else:
+        add(OK, "Node.js", _run([node, "-v"]) or node)
+    if not npm:
+        add(BAD, "npm", "not on PATH", "Comes with Node.js - reinstall it.")
+    else:
+        add(OK, "npm", _run([npm, "-v"], timeout=20) or npm)
+
+    if FRONTEND.is_dir() and not (FRONTEND / "node_modules").is_dir():
+        add(WARN, "UI packages", "frontend/node_modules missing",
+            f"cd /d {FRONTEND}  &&  npm install")
+    elif FRONTEND.is_dir():
+        add(OK, "UI packages", "frontend/node_modules present")
+
+
+# ── 5. Ollama ────────────────────────────────────────────────────────────────
+
+def check_ollama():
+    host = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+    try:
+        import urllib.request
+        with urllib.request.urlopen(f"{host}/api/tags", timeout=4) as r:
+            data = json.loads(r.read().decode())
+        names = [m.get("name") or m.get("model") for m in data.get("models", [])]
+    except Exception as e:
+        add(BAD, "Ollama", f"not answering on {host} ({str(e)[:40]})",
+            "Open a new terminal and run:  ollama serve")
+        return
+    if not names:
+        add(BAD, "Ollama models", "running, but no models installed",
+            "ollama pull qwen2.5:3b        (thinking)\n"
+            "          ollama pull llava:7b          (understanding the screen)")
+        return
+
+    add(OK, "Ollama", f"{len(names)} model(s): {', '.join(names[:4])}")
+    tiny = [n for n in names if any(t in n for t in (":0.5b", ":1b", "0_5b"))]
+    big = [n for n in names if not any(t in n for t in (":0.5b", ":1b", "0_5b"))]
+    if tiny and not big:
+        add(WARN, "Model size", f"only tiny models: {', '.join(tiny)}",
+            "Under ~1B parameters can't follow multi-step instructions - this is\n"
+            "      the single biggest reason Jarvis feels stupid.\n"
+            "          ollama pull qwen2.5:3b")
+    if not any("llava" in n or "vision" in n or "minicpm-v" in n for n in names):
+        add(WARN, "Vision model", "none installed",
+            "Screen understanding falls back to plain OCR.\n"
+            "          ollama pull llava:7b")
+
+
+# ── 6. Playwright browser ────────────────────────────────────────────────────
+
+def check_playwright():
+    try:
+        import playwright  # noqa: F401
+    except ImportError:
+        add(BAD, "Playwright", "package not installed",
+            "pip install playwright")
+        return
+    root = os.environ.get("PLAYWRIGHT_BROWSERS_PATH") or os.path.expandvars(
+        r"%LOCALAPPDATA%\ms-playwright" if os.name == "nt" else "~/.cache/ms-playwright")
+    root = Path(os.path.expanduser(root))
+    have = root.is_dir() and any(p.name.startswith("chromium") for p in root.iterdir())
+    if have:
+        add(OK, "Automation browser", f"chromium present in {root}")
+    else:
+        add(BAD, "Automation browser", "chromium not downloaded",
+            'set PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright\n'
+            "          python -m playwright install chromium\n"
+            '      NOTE: use "chromium", NOT "chrome". `playwright install chrome`\n'
+            "      fetches Google's MSI directly and ignores the mirror, so from\n"
+            "      China it always fails with \"unable to connect to remote server\".")
+
+
+# ── 7. Tesseract ─────────────────────────────────────────────────────────────
+
+def check_tesseract():
+    exe = shutil.which("tesseract")
+    if exe:
+        add(OK, "Tesseract OCR", (_run([exe, "--version"]).splitlines() or ["?"])[0])
+    else:
+        add(WARN, "Tesseract OCR", "not on PATH",
+            "Only needed to read text off the screen. Install from\n"
+            "      github.com/UB-Mannheim/tesseract/wiki and tick 'Add to PATH'.")
+
+
+# ── 8. Ports ─────────────────────────────────────────────────────────────────
+
+def check_ports():
+    busy = []
+    for port, who in ((8000, "backend"), (5173, "UI"), (11434, "Ollama")):
+        s = socket.socket()
+        s.settimeout(0.4)
+        try:
+            s.connect(("127.0.0.1", port))
+            busy.append((port, who))
+        except Exception:
+            pass
+        finally:
+            s.close()
+    inuse = {p for p, _ in busy}
+    if 11434 in inuse:
+        add(OK, "Port 11434", "Ollama is listening")
+    if 8000 in inuse:
+        add(WARN, "Port 8000", "already in use",
+            "A backend may already be running - check your open terminals before\n"
+            "      starting another. If it's stale:  taskkill /f /im python.exe")
+    if 5173 in inuse:
+        add(WARN, "Port 5173", "already in use",
+            "Vite will fall back to 5174/5175. That now works (CORS allows any\n"
+            "      localhost port), but a stale dev server may serve the WRONG\n"
+            "      project. To clear:  taskkill /f /im node.exe")
+
+
+def main():
+    print("=" * 74)
+    print("JARVIS DOCTOR - why won't it start?")
+    print(f"looking at: {ROOT}")
+    print("=" * 74)
+
+    for fn in (check_layout, check_line_endings, check_python, check_node,
+               check_ollama, check_playwright, check_tesseract, check_ports):
+        try:
+            fn()
+        except Exception as e:
+            add(WARN, fn.__name__, f"check itself failed: {str(e)[:60]}")
+
+    bad = [r for r in _rows if r[0] == BAD]
+    warn = [r for r in _rows if r[0] == WARN]
+
+    print()
+    for status, what, detail, _ in _rows:
+        mark = {OK: "[ ok ]", WARN: "[warn]", BAD: "[STOP]"}[status]
+        print(f"  {mark} {what:<28} {detail}")
+
+    if bad or warn:
+        print("\n" + "=" * 74)
+        print("  WHAT TO DO, IN ORDER")
+        print("=" * 74)
+        for i, (status, what, _, fix) in enumerate(bad + warn, 1):
+            if not fix:
+                continue
+            tag = "MUST FIX" if status == BAD else "optional"
+            print(f"\n  {i}. [{tag}] {what}")
+            for line in fix.splitlines():
+                print(f"      {line}")
+
+    print("\n" + "=" * 74)
+    if bad:
+        print(f"  {len(bad)} thing(s) will stop Jarvis starting. Fix those first.")
+    elif warn:
+        print("  Nothing blocking. The warnings above limit what Jarvis can do.")
+        print("  Next:  START_JARVIS.bat")
+    else:
+        print("  Everything checks out. Next:  START_JARVIS.bat")
+    print("=" * 74)
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+################################################################################
+# FILE 155/156: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
@@ -23156,7 +23754,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 153/153: tools/failure_injection.py
+# FILE 156/156: tools/failure_injection.py
 ################################################################################
 ```py
 """
