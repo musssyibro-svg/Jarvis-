@@ -43,6 +43,43 @@ _APP_ALIASES = {
 }
 
 
+# Phrases that mean "produce writing", not "reproduce these characters".
+_COMPOSE_HINTS = (
+    "about ", "a story", "a poem", "an essay", "a letter", "an email",
+    "yourself", "myself", "an introduction", "a summary", "a bio",
+    "a report", "an analysis", "a proposal", "a draft", "a note",
+    "a list of", "a plan", "a review", "a paragraph", "a message to",
+    "explain ", "describe ", "why ", "how to ",
+)
+# ...and phrases that mean the literal opposite, whatever else is in the string.
+_LITERAL_HINTS = ("exactly", "verbatim", "literally", "the words", "character for character")
+
+
+def _wants_composition(verb: str, text: str) -> bool:
+    """
+    Should Jarvis GENERATE this text, or type it as given?
+
+    Getting this wrong is bad in both directions, so the rule is deliberately
+    conservative: `type` is always literal, and `write` is only generative when
+    the phrasing clearly asks for composed prose. "write hello" still types
+    hello. When in doubt, type literally — a wrong literal is obvious and
+    harmless, whereas wrongly generating replaces what the user actually wanted
+    to say with an invention.
+    """
+    t = (text or "").strip().lower()
+    if not t:
+        return False
+    if any(h in t for h in _LITERAL_HINTS):
+        return False
+    if not verb.startswith(("write", "compose")):
+        return False          # type/say/ask/send are never generative
+    if any(h in t for h in _COMPOSE_HINTS):
+        return True
+    # A long phrase after "write" reads as a description of what to write
+    # ("write a short introduction for my portfolio site"), not as the text.
+    return len(t.split()) >= 5
+
+
 def _canon_app(word: str) -> str:
     w = (word or "").strip().lower()
     return _APP_ALIASES.get(w, w)
@@ -92,10 +129,19 @@ def resolve_steps(text: str) -> list[dict] | None:
         verb = am.group(2)
         text = am.group(3).strip()
         text = re.sub(r"^it\s+", "", text).strip() or text   # "ask it how..." -> "how..."
+
+        # TYPE vs WRITE. "type hello" means put those five characters on screen.
+        # "write about yourself" means produce a piece of writing — and Jarvis
+        # used to type the literal words "about yourself", which is the single
+        # most obviously stupid thing it did. `compose` generates the text with
+        # the LLM first, then types the result.
+        body = ({"action": "compose",   "params": {"prompt": text, "topic": text}}
+                if _wants_composition(verb, text)
+                else {"action": "type_text", "params": {"text": text}})
         steps = [
             {"action": "open_app",        "params": {"name_or_path": app}},
             {"action": "wait_for_window", "params": {"title": app, "timeout": 12}},
-            {"action": "type_text",       "params": {"text": text}},
+            body,
         ]
         # Press Enter only for send/ask/search verbs (chat & search boxes submit
         # on Enter). For "type/write" into an editor like Notepad, leave it be.

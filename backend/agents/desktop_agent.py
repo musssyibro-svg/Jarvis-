@@ -4,6 +4,7 @@ Full desktop control: mouse, keyboard, window management, file ops.
 Uses PyAutoGUI + PyWinAuto (Windows) with graceful fallback.
 """
 import os
+import re
 import sys
 import time
 import subprocess
@@ -221,6 +222,73 @@ def press(key: str) -> dict:
 
 # ── Applications ──────────────────────────────────────────────────────────────
 
+def compose_and_type(prompt: str, max_words: int = 180) -> dict:
+    """
+    Generate text with the LLM, then type it. This is what "open notepad and
+    write about yourself" should always have done.
+
+    Kept separate from type_text on purpose. Typing is deterministic and instant;
+    composing calls a model, can take seconds, and can fail. Merging them would
+    make every literal `type` pay the cost and the risk of a model call.
+
+    On failure it types NOTHING and says why. The alternative — falling back to
+    typing the prompt — is exactly the bug being fixed here, and would put the
+    words "about yourself" into the user's document.
+    """
+    topic = (prompt or "").strip()
+    if not topic:
+        return {"success": False, "action": "compose", "error": "nothing to write about"}
+
+    try:
+        from services.deepseek_service import call_model
+        instruction = (
+            f"Write the following, in plain prose, under {max_words} words.\n"
+            f"Topic: {topic}\n\n"
+            f"Output ONLY the finished text. No preamble, no 'Sure, here is', "
+            f"no markdown, no quotes around it, no commentary afterwards."
+        )
+        text = (call_model(instruction, fast=True, task="chat") or "").strip()
+    except Exception as e:
+        return {"success": False, "action": "compose",
+                "error": f"couldn't reach the model: {str(e)[:120]}"}
+
+    # call_model returns its errors as a string rather than raising.
+    if not text or text.startswith("[Ollama") or text.startswith("[Anthropic"):
+        return {"success": False, "action": "compose",
+                "error": text or "the model returned nothing"}
+
+    text = _strip_model_preamble(text)
+    if not text:
+        return {"success": False, "action": "compose",
+                "error": "the model replied but produced no usable text"}
+
+    res = type_text_raw(text)
+    res.update(action="compose", topic=topic, composed=text,
+               words=len(text.split()))
+    return res
+
+
+def _strip_model_preamble(text: str) -> str:
+    """
+    Remove the conversational wrapper small models add no matter how firmly
+    they're told not to ("Sure! Here's a short bio:", ```fences```, surrounding
+    quotes). Without this the document starts with the model talking to you.
+    """
+    t = (text or "").strip()
+    if t.startswith("```"):
+        parts = t.split("```")
+        t = (parts[1] if len(parts) > 1 else t).strip()
+        if "\n" in t and " " not in t.split("\n", 1)[0]:
+            t = t.split("\n", 1)[1].strip()        # drop a language tag line
+    lead = re.match(r"^(sure|certainly|of course|okay|ok|here(?:'s| is)|below is)\b[^\n]{0,80}?[:\n]",
+                    t, re.IGNORECASE)
+    if lead:
+        t = t[lead.end():].strip()
+    if len(t) > 1 and t[0] in "\"'“" and t[-1] in "\"'”":
+        t = t[1:-1].strip()
+    return t
+
+
 def _settle(app: str, floor_s: float) -> bool:
     """
     Wait for a just-launched app's window, then report whether it appeared.
@@ -431,6 +499,8 @@ def _run_action(action: str, params: dict) -> dict:
         "open_app":     lambda p: open_app(p.get("name_or_path") or p.get("app", "")),
         "close_app":    lambda p: close_app(p.get("process_name") or p.get("app", "")),
         "type_text":    lambda p: type_text_raw(p.get("text", "")),
+        # compose = generate with the LLM first, then type the result
+        "compose":      lambda p: compose_and_type(p.get("prompt") or p.get("topic", "")),
         "press":        lambda p: press(p.get("key", "")),
         "hotkey":       lambda p: hotkey(*p.get("keys", [])),
         "click":        lambda p: click(p.get("x"), p.get("y"),
@@ -501,6 +571,25 @@ def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
     if action == "click_text":
         return bool(result.get("found", True)), result.get("error", "")
 
+    if action == "compose":
+        # The model may have failed before a single key was pressed. That's a
+        # real failure and must not be reported as done.
+        if not result.get("success"):
+            return False, result.get("error", "compose failed")
+        composed = (result.get("composed") or "").strip()
+        if not composed:
+            return False, "nothing was composed"
+        got = _read_focused_text()
+        if got is None:
+            return True, f"composed {result.get('words', 0)} words (couldn't verify)"
+        # Compare on the opening words: the whole passage may be long, and
+        # editors wrap/reflow, but the start is stable.
+        head = " ".join(composed.lower().split())[:60]
+        if head and head in " ".join(got.lower().split()):
+            return True, f"composed and confirmed ({result.get('words', 0)} words)"
+        return False, ("composed the text but it isn't in the focused field — "
+                       "the window probably didn't have keyboard focus")
+
     # type_text / press / hotkey / click / move / wait / open_url / focus_window:
     if action == "type_text":
         # Real check where possible: select-all + copy + read the clipboard, and
@@ -564,7 +653,7 @@ def _read_focused_text() -> str | None:
 
 # Actions that must NOT be blindly re-run on a failed verify (retyping would
 # duplicate text / re-click). They get one honest attempt.
-_NO_RETRY = {"type_text", "click", "click_text", "press", "hotkey"}
+_NO_RETRY = {"type_text", "compose", "click", "click_text", "press", "hotkey"}
 
 
 def _classify(error: str, action: str, result: dict | None = None) -> dict:
@@ -605,7 +694,7 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
     results = []
     steps = steps or []
     last_opened = None            # the app we most recently opened in this chain
-    _INPUT = {"type_text", "press", "hotkey", "click", "click_text"}
+    _INPUT = {"type_text", "compose", "press", "hotkey", "click", "click_text"}
     for i, s in enumerate(steps):
         action = (s or {}).get("action", "")
         params = (s or {}).get("params", {}) or {}
@@ -789,6 +878,43 @@ def close_window(title_contains: str) -> dict:
         return {"success": False, "error": str(e)}
 
 
+def _process_names_for(app: str) -> set:
+    """
+    Executable names a window for this app might belong to.
+
+    Window titles are LOCALISED; executable names are not. On a Chinese Windows
+    install Notepad's title is "无标题 - 记事本", which contains no "notepad" at
+    all — so every title-based lookup failed and focus_window reported "No
+    window with 'notepad'" on literally every run. The process is still
+    notepad.exe in any language, so that's what we match on.
+    """
+    a = (app or "").strip().lower()
+    if not a:
+        return set()
+    names = {a, f"{a}.exe", a.replace(" ", ""), f"{a.replace(' ', '')}.exe"}
+    # Whatever app_resolver actually launched is the most reliable answer.
+    try:
+        from services.app_resolver import get_cached
+        real = get_cached(a)
+        if real:
+            names.add(os.path.basename(real).lower())
+    except Exception:
+        pass
+    ALIASES = {
+        "chrome": {"chrome.exe"}, "edge": {"msedge.exe"}, "msedge": {"msedge.exe"},
+        "firefox": {"firefox.exe"}, "explorer": {"explorer.exe"},
+        "files": {"explorer.exe"}, "calculator": {"calculatorapp.exe", "calc.exe"},
+        "calc": {"calculatorapp.exe", "calc.exe"},
+        "vscode": {"code.exe"}, "code": {"code.exe"},
+        "word": {"winword.exe"}, "excel": {"excel.exe"},
+        "terminal": {"cmd.exe", "windowsterminal.exe"},
+        "wechat": {"wechat.exe", "weixin.exe"},
+        "qq": {"qq.exe"}, "doubao": {"doubao.exe"},
+    }
+    names |= ALIASES.get(a, set())
+    return {n for n in names if n}
+
+
 def _win32_focus(title_contains: str) -> bool:
     """
     Bring a window to the front using the Win32 API directly (ctypes — no new
@@ -797,6 +923,9 @@ def _win32_focus(title_contains: str) -> bool:
     foreground window. The accepted workaround is to attach our input queue to
     the foreground thread first, which is what this does. This is the fix for
     the live "opened notepad but couldn't bring it to the foreground" failure.
+
+    Windows are matched by TITLE or by OWNING PROCESS — see _process_names_for.
+    Title-only matching silently fails on any non-English Windows.
     """
     if os.name != "nt":
         return False
@@ -806,8 +935,19 @@ def _win32_focus(title_contains: str) -> bool:
         u32 = ctypes.windll.user32
         k32 = ctypes.windll.kernel32
 
-        target = {"hwnd": None}
+        target = {"hwnd": None, "by": None}
         needle = (title_contains or "").lower()
+        want_procs = _process_names_for(title_contains)
+
+        def _proc_name(hwnd):
+            try:
+                pid = wintypes.DWORD()
+                u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+                if not pid.value:
+                    return ""
+                return (psutil.Process(pid.value).name() or "").lower()
+            except Exception:
+                return ""
 
         @ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
         def _enum(hwnd, _):
@@ -815,12 +955,15 @@ def _win32_focus(title_contains: str) -> bool:
                 return True
             n = u32.GetWindowTextLengthW(hwnd)
             if n <= 0:
-                return True
+                return True            # no title = tool window, not ours
             buf = ctypes.create_unicode_buffer(n + 1)
             u32.GetWindowTextW(hwnd, buf, n + 1)
-            if needle in buf.value.lower():
-                target["hwnd"] = hwnd
-                return False       # stop enumerating
+            if needle and needle in buf.value.lower():
+                target["hwnd"], target["by"] = hwnd, "title"
+                return False           # exact-ish title match wins outright
+            if want_procs and _proc_name(hwnd) in want_procs:
+                target["hwnd"], target["by"] = hwnd, "process"
+                # keep enumerating in case a title match exists further on
             return True
 
         u32.EnumWindows(_enum, 0)
@@ -862,9 +1005,16 @@ def focus_window(title_contains: str) -> dict:
     if not HAS_WINDOWS:
         return {"success": False, "error": "pygetwindow not available"}
     try:
-        wins = [w for w in gw.getWindowsWithTitle(title_contains) if w.title.strip()]
+        # getWindowsWithTitle is case-SENSITIVE and title-only, so it misses
+        # "Untitled - Notepad" for "notepad" and misses localised titles
+        # entirely. Do our own case-insensitive scan, then fall back to
+        # matching the owning process by geometry-free title comparison.
+        wins = [w for w in gw.getAllWindows()
+                if w.title and title_contains.lower() in w.title.lower()]
         if not wins:
-            return {"success": False, "error": f"No window with '{title_contains}'"}
+            return {"success": False,
+                    "error": f"No window found for '{title_contains}' "
+                             f"(checked window titles and running processes)"}
         win = wins[0]
         for attempt in range(3):
             try:
@@ -902,11 +1052,18 @@ def focus_window(title_contains: str) -> dict:
 
 
 def _is_foreground(title_contains: str) -> bool:
-    """Is a window matching this title currently the active/foreground window?"""
+    """
+    Is a window for this app currently the active/foreground window?
+
+    Checks the owning process as well as the title, for the same reason
+    _win32_focus does: window titles are localised and an English app name will
+    never appear in "无标题 - 记事本".
+    """
     needle = (title_contains or "").lower()
     if os.name == "nt":
         try:
             import ctypes
+            from ctypes import wintypes
             u32 = ctypes.windll.user32
             hwnd = u32.GetForegroundWindow()
             if hwnd:
@@ -915,6 +1072,12 @@ def _is_foreground(title_contains: str) -> bool:
                 u32.GetWindowTextW(hwnd, buf, n + 1)
                 if needle and needle in buf.value.lower():
                     return True
+                pid = wintypes.DWORD()
+                u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+                if pid.value:
+                    pname = (psutil.Process(pid.value).name() or "").lower()
+                    if pname in _process_names_for(title_contains):
+                        return True
         except Exception:
             pass
     if not HAS_WINDOWS:

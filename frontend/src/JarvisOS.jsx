@@ -180,6 +180,22 @@ export default function JarvisOS() {
     }).filter(Boolean);
   })();
 
+  // The newest real event, with how long ago it happened — drives the live
+  // strip. Events from Jarvis itself only; echoing the user's own message back
+  // as "currently doing" would be a lie.
+  const liveNow = (() => {
+    const e = feed.find((f) => f.agent && f.agent !== "you" && f.msg);
+    if (!e) return null;
+    const t = eventTime(e);
+    const secs = t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null;
+    const ago = secs == null ? ""
+      : secs < 5 ? "just now"
+      : secs < 60 ? `${secs}s ago`
+      : secs < 3600 ? `${Math.round(secs / 60)}m ago`
+      : `${Math.round(secs / 3600)}h ago`;
+    return { agent: e.agent, msg: String(e.msg).slice(0, 200), ago };
+  })();
+
   const online = !!os;
   const working = !!os?.status?.running || busy;
   const statusLabel = busy ? "Thinking" : (os?.status?.label || (online ? "Ready" : "Offline"));
@@ -215,6 +231,35 @@ export default function JarvisOS() {
         </div>
       </header>
 
+      {/*
+        "What is it doing RIGHT NOW?" — the single most requested thing.
+
+        Jarvis was working perfectly well and saying nothing about it, so from
+        the outside a 20-minute scan and a crash look identical. This strip is
+        the last real event plus how long ago, so there is always an answer to
+        "is something happening?" — visible from every surface, not just Earn.
+        It hides itself when genuinely idle rather than inventing reassurance.
+      */}
+      {liveNow && (
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 10,
+                      padding: "7px 18px", fontSize: 12.5,
+                      borderBottom: `1px solid ${T.line}`,
+                      background: working ? "rgba(84,214,255,0.07)" : "rgba(255,255,255,0.02)",
+                      color: working ? T.cyan : T.dim }}>
+          {working
+            ? <span className="think-ring" style={{ color: T.cyan, width: 13, height: 13 }} />
+            : <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.dim }} />}
+          <span style={{ textTransform: "uppercase", fontSize: 9, letterSpacing: "0.14em",
+                         opacity: 0.65 }}>{liveNow.agent}</span>
+          <span style={{ flex: 1, minWidth: 0, overflow: "hidden",
+                         textOverflow: "ellipsis", whiteSpace: "nowrap",
+                         color: working ? T.text : T.dim }}>
+            {liveNow.msg}
+          </span>
+          <span style={{ fontSize: 11, opacity: 0.6 }}>{liveNow.ago}</span>
+        </div>
+      )}
+
       {/* ── Body: rail · surface · timeline (all persistent) ── */}
       <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
 
@@ -234,14 +279,35 @@ export default function JarvisOS() {
           })}
         </nav>
 
-        <main style={{ flex: 1, minWidth: 0, overflow: "auto" }}>
-          {surface === "console"   && <Console os={os} onRun={run} reply={reply} busy={busy}
+        {/*
+          Surfaces stay MOUNTED and are hidden with CSS rather than unmounted.
+
+          Conditional rendering destroys a surface the moment you navigate away,
+          taking its state with it: the Earn page lost its queue, its scan
+          results and the site you were half-way through adding every single
+          time you glanced at Diagnostics. Re-fetching on return doesn't fix
+          that — there's still a blank flash, in-progress form input is gone,
+          and anything the backend doesn't persist is gone for good.
+
+          Keeping them mounted costs one hidden subtree each and means every
+          surface keeps its scroll position, its inputs, and its data. It also
+          means their polling keeps running, so returning to a tab shows current
+          state instead of a spinner.
+        */}
+        <main style={{ flex: 1, minWidth: 0, overflow: "auto", position: "relative" }}>
+          {SURFACES.map(({ id }) => (
+            <div key={id}
+                 style={{ display: surface === id ? "block" : "none", minHeight: "100%" }}
+                 aria-hidden={surface !== id}>
+              {id === "console"   && <Console os={os} onRun={run} reply={reply} busy={busy}
                                               history={history} activity={activityMarks} />}
-          {surface === "chat"      && <Chat />}
-          {surface === "computer"  && <Agents />}
-          {surface === "freelance" && <Earn />}
-          {surface === "diag"      && <Diagnostics />}
-          {surface === "settings"  && <Settings />}
+              {id === "chat"      && <Chat />}
+              {id === "computer"  && <Agents live={feed} />}
+              {id === "freelance" && <Earn live={feed} />}
+              {id === "diag"      && <Diagnostics />}
+              {id === "settings"  && <Settings />}
+            </div>
+          ))}
         </main>
 
         {/* Timeline — the sense that something is always happening. */}

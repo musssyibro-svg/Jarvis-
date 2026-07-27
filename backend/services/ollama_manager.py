@@ -105,15 +105,22 @@ def _resolve(preferred: str, installed: list, kind: str) -> str | None:
     }.get(kind, [])
     matches = [n for n in installed if any(h in n.lower() for h in role_hints)]
     if matches:
-        # For 'fast', prefer the smallest-looking model (avoid 7b if a lighter exists)
+        # "fast" means the LIGHTEST MODEL THAT IS STILL WORTH ASKING, not the
+        # lightest model full stop. The old version sorted purely by size, so a
+        # 0.5B model beat an installed 3B every time — and a sub-1B model can't
+        # hold a multi-part instruction, which is the single biggest reason
+        # Jarvis felt stupid while every subsystem reported healthy.
         if kind == "fast":
-            def _weight(name):
-                low = name.lower()
-                for sz, w in (("0.5b",0),("1.5b",1),("1b",1),("2b",2),("3b",3),("7b",7),("8b",8),("13b",13)):
-                    if sz in low:
-                        return w
-                return 5
-            matches.sort(key=_weight)
+            def _params(name):
+                m = re.search(r"[:\-](\d+(?:\.\d+)?)\s*b\b", name.lower())
+                return float(m.group(1)) if m else 3.0
+
+            usable = [n for n in matches if _params(n) >= 1.5]
+            # Among usable models take the smallest (genuinely "fast"); if
+            # nothing clears the floor, fall back to the biggest of a bad lot.
+            if usable:
+                return min(usable, key=_params)
+            return max(matches, key=_params)
         return matches[0]
     # 4. vision MUST be a real vision model — never fall back to a text model
     if kind == "vision":
@@ -179,8 +186,23 @@ def validate_model(model: str) -> dict:
 
 # ── Core call with retry ─────────────────────────────────────────────────────
 
+# Generation limits. WITHOUT THESE, num_predict is unlimited and a model will
+# happily generate until it decides to stop — which on a CPU-only 16GB machine
+# meant a single screen analysis took 288 SECONDS, and a batch of 15 proposals
+# never finished at all (the "0 proposals generated, engine looks frozen" bug).
+# The model isn't broken and the machine isn't too slow; nobody ever told it
+# when to stop.
+LIMITS = {
+    #                num_predict  num_ctx   hard timeout (s)
+    "vision":       (320,         2048,     90),
+    "fast":         (400,         4096,     60),
+    "reasoning":    (700,         8192,    120),
+}
+
+
 def _chat_with_retry(model: str, messages: list, retries: int = 2,
-                     backoff: float = 1.0, images: list | None = None) -> dict:
+                     backoff: float = 1.0, images: list | None = None,
+                     kind: str = "fast") -> dict:
     o = _get_ollama()
     if not o:
         return {"ok": False, "text": "", "error": "ollama package not installed"}
@@ -194,21 +216,38 @@ def _chat_with_retry(model: str, messages: list, retries: int = 2,
     except Exception:
         ka = "60s"
 
+    n_predict, n_ctx, budget_s = LIMITS.get(kind, LIMITS["fast"])
+    options = {"num_predict": n_predict, "num_ctx": n_ctx, "temperature": 0.7}
+
     last_err = None
+    started = time.time()
     for attempt in range(retries + 1):
+        # A timeout is not worth retrying: the second attempt is the same work
+        # on the same machine and will take just as long. Retrying a 90-second
+        # timeout three times is how a slow call became a five-minute hang.
+        if time.time() - started > budget_s:
+            return {"ok": False, "text": "",
+                    "error": f"{model} exceeded its {budget_s}s budget. It is "
+                             f"probably running on CPU. A smaller model would "
+                             f"be much faster here."}
         try:
             # llava takes images on the last user message
             if images:
                 msgs = list(messages)
                 msgs[-1] = {**msgs[-1], "images": images}
-                resp = o.chat(model=model, messages=msgs, keep_alive=ka)
+                resp = o.chat(model=model, messages=msgs, keep_alive=ka,
+                              options=options)
             else:
-                resp = o.chat(model=model, messages=messages, keep_alive=ka)
+                resp = o.chat(model=model, messages=messages, keep_alive=ka,
+                              options=options)
             text = resp["message"]["content"]
             text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
-            return {"ok": True, "text": text, "error": None}
+            return {"ok": True, "text": text, "error": None,
+                    "took_s": round(time.time() - started, 1)}
         except Exception as e:
             last_err = str(e)
+            if "timed out" in last_err.lower() or "timeout" in last_err.lower():
+                break                       # see above — don't repeat a timeout
             if attempt < retries:
                 time.sleep(backoff * (attempt + 1))
     return {"ok": False, "text": "", "error": last_err}
@@ -236,7 +275,7 @@ def fast(prompt: str, system: str = "") -> str:
     model = resolve_models()["resolved"]["fast"] or FAST_MODEL
     msgs = ([{"role": "system", "content": system}] if system else []) + \
            [{"role": "user", "content": prompt}]
-    r = _chat_with_retry(model, msgs)
+    r = _chat_with_retry(model, msgs, kind="fast")
     return r["text"] if r["ok"] else f"[Ollama fast error ({model}): {r['error']}]"
 
 
@@ -247,7 +286,7 @@ def reason(prompt: str, system: str = "", history: list | None = None) -> str:
     if history:
         msgs += [{"role": m["role"], "content": m["content"]} for m in history[-10:]]
     msgs.append({"role": "user", "content": prompt})
-    r = _chat_with_retry(model, msgs)
+    r = _chat_with_retry(model, msgs, kind="reasoning")
     return r["text"] if r["ok"] else f"[Ollama reason error ({model}): {r['error']}]"
 
 
@@ -273,7 +312,10 @@ def vision(prompt: str, image_b64: str) -> dict:
     with _large_lock:   # ensures only one large-model session at a time
         try:
             msgs = [{"role": "user", "content": prompt}]
-            r = _chat_with_retry(model, msgs, images=[image_b64])
+            # Vision gets the tightest budget: it is the slowest call Jarvis makes
+            # and the one a user is most likely to be sitting waiting for.
+            r = _chat_with_retry(model, msgs, retries=0, images=[image_b64],
+                                 kind="vision")
             return {"ok": r["ok"], "text": r["text"], "error": r["error"], "model": model}
         finally:
             _unload(model)   # free RAM immediately after

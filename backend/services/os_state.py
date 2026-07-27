@@ -47,11 +47,28 @@ def snapshot(timeline_limit: int = 40) -> dict:
     def _ollama():
         from services.ollama_manager import resolve_models
         info = resolve_models()
-        return {"online": bool(info.get("installed")),
-                "models": info.get("installed", [])[:6],
-                "fast": info.get("resolved", {}).get("fast"),
-                "reasoning": info.get("resolved", {}).get("reasoning"),
-                "vision": info.get("resolved", {}).get("vision")}
+        out = {"online": bool(info.get("installed")),
+               "models": info.get("installed", [])[:8],
+               "fast": info.get("resolved", {}).get("fast"),
+               "reasoning": info.get("resolved", {}).get("reasoning"),
+               "vision": info.get("resolved", {}).get("vision")}
+        # Report the model that chat ACTUALLY uses. Those two answers can
+        # differ: resolve_models() reads the configured name, while real calls
+        # go through model_router, which ranks by quality and free RAM. The
+        # console was showing the config, so it reported qwen2.5:0.5b as "in
+        # use" — and told the user to fix something that may already be fine.
+        try:
+            from services import model_router
+            for role, task in (("fast", "chat"), ("reasoning", "planning"),
+                               ("vision", "vision")):
+                pick = model_router.pick(task)
+                if pick.get("model"):
+                    out[role] = pick["model"]
+                    if pick.get("warning"):
+                        out.setdefault("warnings", []).append(pick["warning"])
+        except Exception:
+            pass
+        return out
     ollama = _safe(_ollama, {"online": False, "models": []})
 
     world = _safe(lambda: __import__("services.world_model", fromlist=["get_cached"]).get_cached(), {}) or {}
