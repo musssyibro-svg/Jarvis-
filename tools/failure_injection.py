@@ -47,6 +47,7 @@ import argparse
 import io
 import os
 import sys
+import threading
 import time
 import traceback
 from datetime import datetime
@@ -462,7 +463,71 @@ def s_classification():
     return r.ok(f"All {len(cases)} real errors classified; no futile retries.")
 
 
+def s_control():
+    """
+    Pause and cancel must actually take effect, and must never leave work
+    half-done. An autonomous system you can't stop isn't trustworthy; one that
+    stops mid-action leaves half a bid on a real freelance site.
+    """
+    r = Result("control", "Pause / resume / cancel behave")
+    from services import control
+
+    control.clear()
+    if control.status()["mode"] != "running":
+        return r.bad("Didn't start in the running state.")
+
+    # A checkpoint with nothing pending must not block.
+    t0 = time.time()
+    control.checkpoint("noop")
+    if time.time() - t0 > 0.5:
+        return r.bad("checkpoint() blocked when nothing was pending — this "
+                     "would slow every step of every task.")
+
+    # Pause, then confirm a worker actually holds.
+    control.pause("test")
+    held = {"blocked": False}
+
+    def worker():
+        try:
+            control.checkpoint("test-step")
+            held["blocked"] = True
+        except control.Cancelled:
+            held["cancelled"] = True
+
+    th = threading.Thread(target=worker, daemon=True)
+    th.start()
+    th.join(timeout=1.5)
+    if not th.is_alive():
+        control.clear()
+        return r.bad("A paused worker did NOT hold — pause does nothing.")
+    r.note("a paused worker holds at the checkpoint")
+
+    # A cancel must release a paused worker, not deadlock it.
+    control.cancel("test")
+    th.join(timeout=3)
+    if th.is_alive():
+        control.clear()
+        return r.bad("Cancelling while paused left the worker stuck forever. "
+                     "This would need a restart to clear.")
+    if not held.get("cancelled"):
+        control.clear()
+        return r.bad("Worker resumed instead of cancelling.")
+    r.note("cancel releases a paused worker and raises Cancelled")
+
+    control.clear()
+    if control.status()["mode"] != "running" or control.is_cancelled():
+        return r.bad("clear() didn't reset — the next task would start cancelled.")
+
+    # Explain must work without a model and without inventing anything.
+    ex = control.explain(3)
+    if "because" not in ex or not isinstance(ex.get("steps"), list):
+        return r.bad("explain() returned nothing usable.")
+    r.note(f"explain() answered with {len(ex['because'])} reason(s)")
+    return r.ok("Pause holds, cancel releases cleanly, clear resets.")
+
+
 SCENARIOS = {
+    "control":        (s_control, False),
     "missing_app":    (s_missing_app, False),
     "clipboard":      (s_clipboard, False),
     "no_model":       (s_no_model, False),

@@ -17,6 +17,21 @@ logger = logging.getLogger("jarvis")
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
+
+# Never proxy localhost.
+#
+# One review suggested teaching Jarvis to honour HTTP_PROXY. `requests` already
+# does that by default — the real hazard here is the opposite one. Anyone behind
+# the GFW is running a proxy or 加速器, and with HTTP_PROXY set, calls to
+# 127.0.0.1:11434 get sent to that proxy too. Ollama is on this machine, so the
+# proxy has no route to it: the model appears offline, Jarvis reports "Ollama
+# isn't running" while it plainly is, and no amount of restarting helps.
+_no_proxy = os.environ.get("NO_PROXY", "") or os.environ.get("no_proxy", "")
+_local = ["127.0.0.1", "localhost", "::1"]
+_missing = [h for h in _local if h not in _no_proxy]
+if _missing:
+    merged = ",".join(filter(None, [_no_proxy] + _missing))
+    os.environ["NO_PROXY"] = os.environ["no_proxy"] = merged
 CORS_ORIGINS = os.getenv("CORS_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000").split(",")
 # Vite moves to 5174, 5175, ... whenever 5173 is already taken (a stale dev

@@ -60,6 +60,7 @@ class OrchestratorCore:
         self.error       = None
         self._transitions = 0
         self._skipped = False   # True when a run was skipped due to collision
+        self._cancelled = False # True when the user cancelled (not a failure)
 
     # ── SSE structured event ────────────────────────────────────────────────────
     _UI_STATE = {
@@ -114,7 +115,23 @@ class OrchestratorCore:
             _RUN_LOCK.release()
 
     def _run_locked(self) -> dict:
+        from services import control
         while self.state not in (AgentState.COMPLETE, AgentState.FAILED):
+            # Interruption point. BETWEEN states, never inside one — pausing
+            # halfway through a bid submission would leave a half-filled form on
+            # a live freelance site. The cost is that a pause takes as long as
+            # the current step; the benefit is Jarvis is never interrupted into
+            # an inconsistent state.
+            try:
+                control.checkpoint(step=self.state.name.lower())
+            except control.Cancelled as c:
+                self.error = f"cancelled: {c}"
+                self.state = AgentState.FAILED
+                self._cancelled = True
+                self._emit("orchestrator", "Cancelled — stopped cleanly between "
+                                           "steps, nothing left half-done.", "warning")
+                break
+
             self._transitions += 1
             if self._transitions > self.MAX_TRANSITIONS:
                 self.error = "max transitions exceeded"
@@ -314,6 +331,10 @@ class OrchestratorCore:
     def snapshot(self) -> dict:
         return {
             "skipped":     getattr(self, "_skipped", False),
+            # A cancel is a user decision, not a fault. Reporting it as a
+            # failure would make the console cry wolf and pollute the
+            # reliability numbers experience.py learns from.
+            "cancelled":   getattr(self, "_cancelled", False),
             "state":       self.state.name,
             "goal":        self.goal.to_dict() if self.goal else None,
             "progress":    self.progress,

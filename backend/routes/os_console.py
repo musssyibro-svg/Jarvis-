@@ -62,6 +62,45 @@ def os_trace(trace_id: str):
     return t
 
 
+@router.get("/control")
+def control_status():
+    """Is Jarvis running, pausing, paused or cancelling?"""
+    from services import control
+    return control.status()
+
+
+@router.post("/control/{command}")
+def control_command(command: str, body: dict | None = None):
+    """
+    pause / resume / cancel / clear.
+
+    None of these kill anything mid-action: the step in flight always finishes
+    first. Interrupting a bid submission halfway would leave a half-filled form
+    on a real freelance site.
+    """
+    from services import control
+    reason = (body or {}).get("reason", "")
+    fn = {"pause": lambda: control.pause(reason),
+          "resume": control.resume,
+          "cancel": lambda: control.cancel(reason),
+          "clear": control.clear}.get(command)
+    if not fn:
+        raise HTTPException(400, "command must be pause, resume, cancel or clear")
+    return fn()
+
+
+@router.get("/explain")
+def explain(limit: int = 6):
+    """
+    "Why are you doing this?" — answered from the execution trace and live
+    state, not by asking a model to narrate its own behaviour. A model asked to
+    explain itself writes a plausible story whether or not it matches what the
+    code did, which is worse than no explanation because it convinces.
+    """
+    from services import control
+    return control.explain(limit)
+
+
 @router.get("/experience")
 def os_experience(limit: int = 8):
     """

@@ -716,6 +716,19 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
                 # text didn't land, the step fails with that exact reason.
                 time.sleep(0.3)
 
+        # Pause/cancel lands BETWEEN steps. Never inside one: stopping halfway
+        # through typing leaves half a sentence in the user's document.
+        try:
+            from services import control
+            control.checkpoint(step=f"{action}")
+        except Exception as c:
+            if type(c).__name__ == "Cancelled":
+                return {"success": False, "steps": results, "cancelled": True,
+                        "failed_at": i + 1,
+                        "error": "Cancelled — stopped between steps, nothing half-done.",
+                        "what_to_do": "Nothing to clean up. Ask again when ready."}
+            # control unavailable is not a reason to refuse to work
+
         target = params.get("name_or_path") or params.get("app") or last_opened or ""
         retries = 0 if action in _NO_RETRY else max_retries
 

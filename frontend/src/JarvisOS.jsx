@@ -83,7 +83,33 @@ export default function JarvisOS() {
   const [busy, setBusy] = useState(false);
   const [reply, setReply] = useState(null);
   const [history, setHistory] = useState([]);   // rolling CPU/RAM samples
+  const [ctrl, setCtrl] = useState(null);       // pause/resume/cancel state
+  const [why, setWhy] = useState(null);         // "why are you doing this?"
   const sseRef = useRef(null);
+
+  /* Pause / Resume / Cancel. Optimistic so the button responds immediately,
+     then reconciled from the server — a control that lags feels broken, and a
+     control that feels broken doesn't get trusted with autonomy. */
+  const ctl = useCallback(async (cmd) => {
+    setCtrl((c) => ({ ...(c || {}),
+                      can_pause: cmd === "resume", can_resume: cmd === "pause",
+                      mode: cmd === "pause" ? "pausing"
+                          : cmd === "cancel" ? "cancelling" : "running" }));
+    try {
+      const r = await fetch(`${API}/os/control/${cmd}`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      if (r.ok) setCtrl(await fetch(`${API}/os/control`).then((x) => x.json()));
+    } catch { /* the poll below will correct it */ }
+  }, []);
+
+  const askWhy = useCallback(async () => {
+    if (why) return setWhy(null);               // second press closes it
+    try {
+      setWhy(await fetch(`${API}/os/explain`).then((r) => r.json()));
+    } catch {
+      setWhy({ because: ["Couldn't reach the backend to ask."] });
+    }
+  }, [why]);
 
   const [sessionId] = useState(() => {
     try {
@@ -108,6 +134,7 @@ export default function JarvisOS() {
           // Seed the timeline from what already happened. Without this the
           // console opens blank until the next live event, which reads as
           // "nothing is running" even when Jarvis has been working for hours.
+          fetch(`${API}/os/control`).then((x) => x.json()).then(setCtrl).catch(() => {});
           setFeed((f) => (f.length ? f : (d.timeline || []).map((e) => ({
             ...e, _t: eventTime(e), _k: `seed_${e.at || e.ts}_${Math.random()}`,
           }))));
@@ -257,6 +284,49 @@ export default function JarvisOS() {
             {liveNow.msg}
           </span>
           <span style={{ fontSize: 11, opacity: 0.6 }}>{liveNow.ago}</span>
+
+          {/* Being able to STOP is part of trusting it to run on its own.
+              Neither button kills anything mid-action — the current step
+              always finishes first. */}
+          <button onClick={() => ctl(ctrl?.can_resume ? "resume" : "pause")}
+            style={{ padding: "3px 10px", borderRadius: 7, fontSize: 11, cursor: "pointer",
+                     background: "transparent", color: ctrl?.can_resume ? T.green : T.dim,
+                     border: `1px solid ${ctrl?.can_resume ? T.green : T.line}` }}>
+            {ctrl?.can_resume ? "Resume" : "Pause"}
+          </button>
+          {working && (
+            <button onClick={() => ctl("cancel")}
+              style={{ padding: "3px 10px", borderRadius: 7, fontSize: 11, cursor: "pointer",
+                       background: "transparent", color: T.red,
+                       border: `1px solid rgba(255,95,109,0.4)` }}>
+              Stop
+            </button>
+          )}
+          <button onClick={askWhy} title="Why are you doing this?"
+            style={{ padding: "3px 10px", borderRadius: 7, fontSize: 11, cursor: "pointer",
+                     background: "transparent", color: T.dim, border: `1px solid ${T.line}` }}>
+            Why?
+          </button>
+        </div>
+      )}
+
+      {/* Plain-English answer to "why", built from the real execution trace. */}
+      {why && (
+        <div style={{ flexShrink: 0, padding: "10px 18px", fontSize: 12.5,
+                      borderBottom: `1px solid ${T.line}`,
+                      background: "rgba(169,139,255,0.06)", color: T.text }}>
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {why.goal && <div style={{ marginBottom: 4 }}>
+                <span style={{ color: T.dim }}>Goal: </span>{why.goal}</div>}
+              {(why.because || []).map((b, i) => (
+                <div key={i} style={{ color: T.dim, lineHeight: 1.6 }}>· {b}</div>
+              ))}
+            </div>
+            <button onClick={() => setWhy(null)}
+              style={{ background: "none", border: "none", color: T.dim,
+                       cursor: "pointer", fontSize: 15, alignSelf: "flex-start" }}>✕</button>
+          </div>
         </div>
       )}
 
