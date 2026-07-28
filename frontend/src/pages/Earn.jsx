@@ -32,6 +32,7 @@ export default function Earn() {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ label: "", jobs_url: "", login_url: "", kind: "board", username: "", password: "" });
   const [switching, setSwitching] = useState(false);
+  const [receipt, setReceipt] = useState(null);   // "what did it actually send?"
 
   /**
    * Pending intent. The switch used to flip back and forth: you pressed Start,
@@ -125,6 +126,15 @@ export default function Earn() {
     load();
   };
 
+  const openReceipt = async (id) => {
+    setReceipt({ loading: true, id });
+    try {
+      setReceipt(await fetch(`${API}/automation/queue/${id}/receipt`).then(r => r.json()));
+    } catch (e) {
+      setReceipt({ id, error: String(e.message || e) });
+    }
+  };
+
   const openLogin = async (slug) => {
     const r = await fetch(`${API}/sessions/open-login/${slug}`, { method: "POST" });
     const d = await r.json(); setMsg(d.message || d.error || "");
@@ -185,6 +195,79 @@ export default function Earn() {
 
       {msg && <div style={{ ...card, borderColor: "rgba(84,214,255,0.3)", fontSize: 12.5, color: T.cyan }}>{msg}</div>}
 
+      {/* Receipt: the evidence panel. */}
+      {receipt && (
+        <div style={{ ...card, borderColor: "rgba(84,214,255,0.35)" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ ...lbl, flex: 1, marginBottom: 0 }}>
+              What Jarvis actually sent
+            </div>
+            <button onClick={() => setReceipt(null)}
+              style={{ background: "none", border: "none", color: T.dim,
+                       cursor: "pointer", fontSize: 16 }}>✕</button>
+          </div>
+
+          {receipt.loading && <div style={{ color: T.dim, fontSize: 13 }}>Loading…</div>}
+          {receipt.error && <div style={{ color: T.red, fontSize: 13 }}>{receipt.error}</div>}
+
+          {!receipt.loading && !receipt.error && (
+            <>
+              <div style={{ fontSize: 13, marginBottom: 8 }}>{receipt.job_title}</div>
+              {receipt.note && (
+                <div style={{ fontSize: 12.5, color: T.amber, marginBottom: 10 }}>
+                  {receipt.note}
+                </div>
+              )}
+
+              {receipt.proposal_text && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, color: T.dim, letterSpacing: "0.12em",
+                                textTransform: "uppercase", marginBottom: 6 }}>
+                    Proposal text
+                  </div>
+                  <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: 9, padding: 12,
+                                fontSize: 12.5, lineHeight: 1.65, whiteSpace: "pre-wrap",
+                                maxHeight: 260, overflowY: "auto" }}>
+                    {receipt.proposal_text}
+                  </div>
+                </div>
+              )}
+
+              {receipt.receipt && (
+                <div style={{ fontSize: 12.5, color: T.dim, lineHeight: 1.8 }}>
+                  <div>Sent: {receipt.receipt.at}</div>
+                  <div>Outcome: <span style={{
+                    color: receipt.receipt.outcome === "sent" ? T.green : T.red }}>
+                    {receipt.receipt.outcome}</span></div>
+                  <div>Site confirmed it:{" "}
+                    <span style={{ color: receipt.receipt.confirmed_by_site ? T.green : T.amber }}>
+                      {receipt.receipt.confirmed_by_site ? "yes" : "no - check the screenshot"}
+                    </span></div>
+                  {receipt.receipt.final_url && (
+                    <div style={{ wordBreak: "break-all" }}>
+                      Ended on: {receipt.receipt.final_url}</div>
+                  )}
+                </div>
+              )}
+
+              {receipt.proof_url && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 10, color: T.dim, letterSpacing: "0.12em",
+                                textTransform: "uppercase", marginBottom: 6 }}>
+                    The page after submitting
+                  </div>
+                  <a href={`${API}${receipt.proof_url}`} target="_blank" rel="noreferrer">
+                    <img src={`${API}${receipt.proof_url}`} alt="submission proof"
+                         style={{ maxWidth: "100%", borderRadius: 9,
+                                  border: `1px solid ${T.line}` }} />
+                  </a>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {/* What it needs from you */}
       {(needLogin > 0 || sessions.some(s => s.logged_in === false)) && (
         <div style={{ ...card, borderColor: "rgba(245,181,68,0.35)" }}>
@@ -230,6 +313,15 @@ export default function Earn() {
                 <span style={{ fontSize: 11, color: c, minWidth: 130, textAlign: "right" }}>{what}</span>
                 {link && <a href={link} target="_blank" rel="noreferrer"
                             style={{ fontSize: 11, color: T.cyan, textDecoration: "none" }}>open ↗</a>}
+                {/* Proof. "It says it submitted" is not evidence — this opens the
+                    exact text sent, the URL it landed on, and a screenshot of the
+                    page after clicking submit. */}
+                <button onClick={() => openReceipt(q.id)}
+                  style={{ fontSize: 11, padding: "2px 9px", borderRadius: 7,
+                           cursor: "pointer", background: "transparent",
+                           border: `1px solid ${T.line}`, color: T.dim }}>
+                  Proof
+                </button>
               </div>
             );
           })}

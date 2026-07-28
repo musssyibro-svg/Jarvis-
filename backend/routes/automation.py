@@ -2,7 +2,7 @@
 import json, threading
 from datetime import datetime, timezone
 from typing import Optional, List
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from models.db import conn
 
@@ -122,6 +122,58 @@ def list_queue(status: Optional[str] = None, limit: int = 100):
         except: pass
         result.append(d)
     return {"queue": result, "total": len(result)}
+
+
+@router.get("/queue/{qid}/receipt")
+def queue_receipt(qid: int):
+    """
+    What Jarvis ACTUALLY did for this item: the exact proposal text it sent,
+    the URL it ended on, whether the site confirmed it, and a screenshot of the
+    page after submitting.
+
+    This exists because "it says it submitted" is not evidence. Without a
+    receipt there is no way to tell a real submission from a silent failure,
+    and no reason to trust the engine with anything unattended.
+    """
+    with conn() as db:
+        row = db.execute("SELECT * FROM automation_queue WHERE id=?", (qid,)).fetchone()
+    if not row:
+        raise HTTPException(404, "no such queue item")
+    d = dict(row)
+    try:
+        payload = json.loads(d.get("payload") or "{}")
+    except Exception:
+        payload = {}
+    receipt = payload.get("receipt")
+    job = payload.get("job", {}) or {}
+    return {
+        "id": qid,
+        "status": d.get("status"),
+        "platform": d.get("platform"),
+        "job_title": d.get("job_title"),
+        "job_url": job.get("link") or (receipt or {}).get("job_url"),
+        # The proposal is shown whether or not it was sent — you should be able
+        # to read what Jarvis wrote BEFORE approving it, not only afterwards.
+        "proposal_text": payload.get("application") or (receipt or {}).get("submitted_text"),
+        "receipt": receipt,
+        "proof_url": (f"/automation/proof/{receipt['proof_screenshot']}"
+                      if receipt and receipt.get("proof_screenshot") else None),
+        "note": (None if receipt else
+                 "Not submitted yet - no receipt. Approve it, or turn on "
+                 "auto-submit, and a receipt is recorded the moment it is sent."),
+    }
+
+
+@router.get("/proof/{path:path}")
+def get_proof(path: str):
+    """Serve a submission screenshot. Confined to the screenshots folder."""
+    from fastapi.responses import FileResponse
+    from pathlib import Path as _P
+    root = (_P(__file__).resolve().parent.parent / "screenshots").resolve()
+    target = (root / path).resolve()
+    if not str(target).startswith(str(root)) or not target.is_file():
+        raise HTTPException(404, "no such proof")
+    return FileResponse(str(target), media_type="image/png")
 
 @router.patch("/queue/{qid}/status")
 def update_queue_item(qid: int, status: str):

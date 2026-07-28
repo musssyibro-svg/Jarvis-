@@ -383,8 +383,33 @@ def get_settings():
     return {"settings": [dict(r) for r in rows]}
 @app.post("/settings/{key}")
 def save_setting(key: str, p: SettingIn):
-    with conn() as db: db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)",(key,p.value))
-    return {"success": True}
+    """
+    Save a setting and make it take effect immediately.
+
+    Goes through services.config rather than writing the row directly, because
+    a bare INSERT was the whole bug: the value landed in the table and nothing
+    ever read it, so the UI said "saved" while the running system carried on
+    with the old value. config.set() also drops the read cache and mirrors the
+    value into the environment, so the very next request sees it.
+    """
+    from services import config
+    res = config.set(key, p.value)
+    if not res.get("ok"):
+        raise HTTPException(500, res.get("error", "could not save"))
+    return {"success": True, **res}
+
+
+@app.get("/settings/effective")
+def effective_settings():
+    """
+    Every setting, its live value, and WHERE that value came from.
+
+    This is the answer to "I set it and nothing happened" — it shows whether
+    the running system actually agrees with what you chose, or is still using
+    an environment variable or a built-in default.
+    """
+    from services import config
+    return {"settings": config.effective()}
 
 
 # ── V9: goal-driven orchestrator entry point ─────────────────────────────────

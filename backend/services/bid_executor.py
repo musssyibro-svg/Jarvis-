@@ -136,18 +136,63 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
             "bid placed", "bid submitted", "your bid", "successfully",
         ]
         page_text = (await page.content()).lower()
-        if any(ind in page_text for ind in success_indicators) or "manage" in page.url.lower():
-            STATE.emit("executor", "✓ Bid submitted successfully", "success")
-            return {"success": True, "message": "Bid submitted"}
 
-        STATE.emit("executor", "Submitted, but could not confirm success — please verify manually", "warning")
-        return {"success": True, "message": "Submitted (unconfirmed) — verify on Freelancer"}
+        # PROOF. "It said it submitted" is not evidence, and the user is right
+        # to distrust it: a screenshot of the page after the click, plus the URL
+        # we ended on, is the only thing that shows what actually reached the
+        # site. Captured for success AND failure — a failed submit is exactly
+        # when you most want to see what the page looked like.
+        proof = await _capture_proof(page)
+
+        if any(ind in page_text for ind in success_indicators) or "manage" in page.url.lower():
+            STATE.emit("executor", "Bid submitted - proof saved", "success")
+            return {"success": True, "message": "Bid submitted", "confirmed": True,
+                    **proof}
+
+        STATE.emit("executor", "Submitted, but the site did not confirm it - "
+                               "check the proof screenshot", "warning")
+        return {"success": True, "confirmed": False,
+                "message": "Submitted, but the page showed no confirmation. "
+                           "Open the proof screenshot to see what happened.",
+                **proof}
 
     except Exception as e:
         STATE.emit("executor", f"Error: {e}", "error")
-        return {"success": False, "message": str(e)}
+        proof = {}
+        try:
+            proof = await _capture_proof(page)
+        except Exception:
+            pass
+        return {"success": False, "message": str(e), **proof}
     finally:
         await page.close()
+
+
+async def _capture_proof(page) -> dict:
+    """
+    Save what the page actually looked like, and where we ended up.
+
+    Without this the only record of a submission is Jarvis's own claim that it
+    worked. That is precisely the thing the user cannot verify and should not
+    have to take on trust.
+    """
+    out = {}
+    try:
+        out["final_url"] = page.url
+        out["page_title"] = (await page.title())[:120]
+    except Exception:
+        pass
+    try:
+        from pathlib import Path as _P
+        from datetime import datetime as _dt
+        shots = _P(__file__).resolve().parent.parent / "screenshots" / "receipts"
+        shots.mkdir(parents=True, exist_ok=True)
+        name = f"bid-{_dt.now().strftime('%Y%m%d-%H%M%S')}.png"
+        await page.screenshot(path=str(shots / name), full_page=False)
+        out["proof_screenshot"] = f"receipts/{name}"
+    except Exception as e:
+        out["proof_error"] = str(e)[:100]
+    return out
 
 
 def _run_submit(job_url: str, proposal_text: str, headless: bool = True) -> dict:
@@ -253,9 +298,25 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
     result = _run_submit(job_url, proposal_txt, headless=headless)
     now = _now()
 
+    # Keep the receipt with the queue item: what was sent, where it landed, and
+    # a screenshot. This is what turns "it says it did it" into something you
+    # can actually check.
+    payload["receipt"] = {
+        "at": now,
+        "submitted_text": proposal_txt,
+        "job_url": job_url,
+        "final_url": result.get("final_url"),
+        "page_title": result.get("page_title"),
+        "proof_screenshot": result.get("proof_screenshot"),
+        "confirmed_by_site": result.get("confirmed"),
+        "outcome": "sent" if result.get("success") else "failed",
+        "message": result.get("message", ""),
+    }
+
     if result.get("success"):
         with conn() as db:
-            db.execute("UPDATE automation_queue SET status='done',processed_at=? WHERE id=?", (now, qid))
+            db.execute("UPDATE automation_queue SET status='done',processed_at=?,payload=? "
+                       "WHERE id=?", (now, json.dumps(payload), qid))
 
             # Create/update a proposals row so MemoryAgent tracks this bid
             existing = db.execute(
@@ -281,7 +342,8 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
         STATE.emit("executor", f"✓ Done: {item['job_title'][:50]}", "success")
     else:
         with conn() as db:
-            db.execute("UPDATE automation_queue SET status='failed',processed_at=? WHERE id=?", (now, qid))
+            db.execute("UPDATE automation_queue SET status='failed',processed_at=?,payload=? "
+                       "WHERE id=?", (now, json.dumps(payload), qid))
         STATE.emit("executor", f"✗ Failed: {item['job_title'][:50]} — {result.get('message','')}", "error")
 
     return result

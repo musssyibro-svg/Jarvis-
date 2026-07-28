@@ -45,6 +45,15 @@ PY_PACKAGES = [
 
 WINDOWS_ONLY = {"pygetwindow"}
 
+
+def _cfg(key: str, default: str) -> str:
+    """Setting > environment > default — the same order the running code uses."""
+    try:
+        from services import config
+        return config.get(key, default) or default
+    except Exception:
+        return default
+
 # Playwright's browser download goes to a Google-hosted CDN, which is not
 # reachable from mainland China. Quoting the bare command sends people into a
 # ten-minute hang; the mirror line is the difference between working and not.
@@ -120,16 +129,21 @@ def _check_ollama_models() -> list[dict]:
     out = []
     try:
         import requests
-        url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+        url = _cfg("ollama_url", "http://127.0.0.1:11434")
         r = requests.get(f"{url}/api/tags", timeout=3)
         models = [m.get("name", "") for m in r.json().get("models", [])]
         out.append({"group": "Ollama", "name": "Ollama server", "ok": True,
                     "detail": f"running · {len(models)} model(s)",
                     "why": "all local AI", "fix": None})
         wanted = [
-            ("fast chat/proposals", os.getenv("OLLAMA_FAST_MODEL", "qwen2.5:1.5b"), "qwen2.5:1.5b"),
-            ("reasoning/planning",  os.getenv("OLLAMA_REASONING_MODEL", "deepseek-r1:1.5b"), "deepseek-r1:1.5b"),
-            ("vision (screen)",     os.getenv("OLLAMA_VISION_MODEL", "llava:7b"), "llava:7b"),
+            # Read through config, NOT os.getenv. Reading the env var here is
+            # why Diagnostics kept reporting "you haven't set this" straight
+            # after the user set it in Settings and saved: the row went to the
+            # database, this looked at an environment variable nobody had set,
+            # and the two never met.
+            ("fast chat/proposals", _cfg("ollama_fast_model", "qwen2.5:3b"), "qwen2.5:3b"),
+            ("reasoning/planning",  _cfg("ollama_reasoning_model", "deepseek-r1:1.5b"), "deepseek-r1:1.5b"),
+            ("vision (screen)",     _cfg("ollama_vision_model", "llava:7b"), "llava:7b"),
         ]
         for role, want, pull in wanted:
             base = want.split(":")[0]

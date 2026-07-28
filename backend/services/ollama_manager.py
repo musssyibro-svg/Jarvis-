@@ -25,7 +25,36 @@ from dataclasses import dataclass
 
 # ── Approved model registry ──────────────────────────────────────────────────
 
-FAST_MODEL      = os.getenv("OLLAMA_FAST_MODEL",      "qwen2.5:0.5b")
+# Read LIVE, never frozen at import.
+#
+# These used to be module-level os.getenv() constants, which broke settings in
+# two ways at once: nothing consulted the settings table at all, and even after
+# wiring it in, a change wouldn't apply until the backend restarted. Choosing a
+# model in the UI and seeing Diagnostics still report the old one is exactly the
+# "I set it, saved it, refreshed, still nothing" complaint.
+def _cfg(key: str, default: str) -> str:
+    try:
+        from services import config
+        return config.get(key, default) or default
+    except Exception:
+        return default
+
+
+def fast_model() -> str:
+    return _cfg("ollama_fast_model", "qwen2.5:3b")
+
+
+def reasoning_model() -> str:
+    return _cfg("ollama_reasoning_model", "deepseek-r1:1.5b")
+
+
+def vision_model() -> str:
+    return _cfg("ollama_vision_model", "llava:7b")
+
+
+# Backwards compatibility for existing readers. These are the values at import
+# time; every code path that matters calls the functions above instead.
+FAST_MODEL      = os.getenv("OLLAMA_FAST_MODEL",      "qwen2.5:3b")
 REASONING_MODEL = os.getenv("OLLAMA_REASONING_MODEL", "deepseek-r1:1.5b")
 VISION_MODEL    = os.getenv("OLLAMA_VISION_MODEL",    "llava:7b")
 
@@ -135,18 +164,20 @@ def resolve_models() -> dict:
     usable names. No hardcoded assumption that the preferred model exists.
     """
     installed = _list_installed()
+    # Live values, so a model chosen in Settings takes effect on the next call.
+    want_fast, want_reason, want_vision = fast_model(), reasoning_model(), vision_model()
     resolved = {
-        "fast":      _resolve(FAST_MODEL,      installed, "fast"),
-        "reasoning": _resolve(REASONING_MODEL, installed, "reasoning"),
-        "vision":    _resolve(VISION_MODEL,    installed, "vision"),
+        "fast":      _resolve(want_fast,   installed, "fast"),
+        "reasoning": _resolve(want_reason, installed, "reasoning"),
+        "vision":    _resolve(want_vision, installed, "vision"),
     }
     return {
         "installed":  installed,
-        "preferred":  {"fast": FAST_MODEL, "reasoning": REASONING_MODEL, "vision": VISION_MODEL},
+        "preferred":  {"fast": want_fast, "reasoning": want_reason, "vision": want_vision},
         "resolved":   resolved,
         "using_fallback": {
-            k: (resolved[k] is not None and resolved[k] != {"fast": FAST_MODEL,
-                "reasoning": REASONING_MODEL, "vision": VISION_MODEL}[k])
+            k: (resolved[k] is not None and resolved[k] != {"fast": want_fast,
+                "reasoning": want_reason, "vision": want_vision}[k])
             for k in resolved
         },
     }
