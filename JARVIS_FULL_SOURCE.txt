@@ -4214,7 +4214,8 @@ def _run_action(action: str, params: dict) -> dict:
             p.get("title", ""),
             float(p["timeout"]) if p.get("timeout") is not None else None),
         "focus_window": lambda p: focus_window(p.get("title", "")),
-        "open_url":     lambda p: open_url(p.get("url", "")),
+        "open_url":     lambda p: open_url(p.get("url", ""), p.get("browser", ""),
+                                           p.get("query", "")),
         "write_file":   lambda p: write_file(p.get("path", ""), p.get("content", "")),
         "screenshot":   lambda p: __import__("agents.vision_agent", fromlist=["screenshot"]).screenshot(),
         "click_text":   lambda p: __import__("agents.vision_agent", fromlist=["click_text"]).click_text(p.get("text", "")),
@@ -4567,14 +4568,41 @@ def switch_window(title_contains: str) -> dict:
     return focus_window(title_contains)
 
 
-def open_url(url: str) -> dict:
-    """Open a URL in the default browser."""
+def open_url(url: str, browser: str = "", query: str = "") -> dict:
+    """
+    Open a URL, in a SPECIFIC browser when one is named.
+
+    webbrowser.open() uses the OS default, which is not necessarily the browser
+    the user asked for or even one that is installed. Naming the executable
+    means "open browser and search X" lands in the browser Jarvis actually
+    resolved rather than whatever Windows happens to be configured with.
+    """
+    if not url:
+        return {"success": False, "action": "open_url", "error": "no URL"}
+    exe = None
+    if browser:
+        try:
+            from services.app_resolver import resolve as _resolve_app
+            exe = _resolve_app(browser)
+        except Exception:
+            exe = None
     try:
-        import webbrowser
-        webbrowser.open(url)
-        return {"success": True, "action": "open_url", "url": url}
+        if exe:
+            subprocess.Popen([exe, url], shell=False,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            import webbrowser
+            webbrowser.open(url)
+        # Give the page a moment so a following screenshot/analyze sees content
+        # rather than a blank tab.
+        time.sleep(2.0)
+        if browser:
+            focus_window(browser)
+        return {"success": True, "action": "open_url", "url": url,
+                "browser": browser or "system default",
+                **({"query": query} if query else {})}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "action": "open_url", "url": url, "error": str(e)}
 
 
 def close_window(title_contains: str) -> dict:
@@ -10392,6 +10420,48 @@ def list_queue(status: Optional[str] = None, limit: int = 100):
         except: pass
         result.append(d)
     return {"queue": result, "total": len(result)}
+
+
+@router.post("/queue/approve-all")
+def approve_all():
+    """
+    Approve every drafted proposal at once.
+
+    The Earn page showed drafts and no way to act on them, so the pipeline
+    stopped dead at "written" with nothing to press. Approving marks them ready
+    for the executor; submission still happens through bid_executor, which
+    records a receipt for each one.
+    """
+    with conn() as db:
+        cur = db.execute(
+            "UPDATE automation_queue SET status='approved', processed_at=? "
+            "WHERE status='pending'", (_now(),))
+        n = cur.rowcount or 0
+    if n:
+        try:
+            from agents.orchestrator import STATE
+            STATE.emit("executor", f"{n} proposal(s) approved - submitting now.", "success")
+        except Exception:
+            pass
+    return {"ok": True, "approved": n,
+            "message": (f"{n} approved and queued for submission."
+                        if n else "Nothing was waiting for approval.")}
+
+
+@router.post("/queue/{qid}/approve")
+def approve_one(qid: int):
+    with conn() as db:
+        db.execute("UPDATE automation_queue SET status='approved', processed_at=? "
+                   "WHERE id=? AND status IN ('pending','ready')", (_now(), qid))
+    return {"ok": True, "id": qid, "status": "approved"}
+
+
+@router.post("/queue/{qid}/reject")
+def reject_one(qid: int):
+    with conn() as db:
+        db.execute("UPDATE automation_queue SET status='rejected', processed_at=? "
+                   "WHERE id=?", (_now(), qid))
+    return {"ok": True, "id": qid, "status": "rejected"}
 
 
 @router.get("/queue/{qid}/receipt")
@@ -19986,6 +20056,7 @@ Both the chat commander and the project planner call resolve_steps() first.
 Deterministic where we can be, generative only where we must be — the hybrid
 pattern that keeps a local assistant fast and predictable.
 """
+import os
 import re
 
 # Apps Jarvis can launch by name. Superset of desktop_agent.KNOWN plus the
@@ -20008,9 +20079,97 @@ _MESSAGE_WORDS = ("message", "messages", "chat", "chats", "inbox", "notification
                   "notifications", "dm", "dms")
 
 _APP_ALIASES = {
-    "browser": "chrome", "googlechrome": "chrome", "msedge": "edge",
+    # NOTE: "browser" is resolved at RUNTIME by default_browser(), not mapped
+    # here. It used to be hardcoded to "chrome", so "open browser and search X"
+    # tried to launch Chrome on a machine that doesn't have Chrome installed.
+    "googlechrome": "chrome", "msedge": "edge",
     "weixin": "wechat", "task manager": "taskmanager", "notepad++": "notepad",
 }
+
+# ── Which browser, and which search engine ───────────────────────────────────
+
+_BROWSER_CACHE = {"at": 0.0, "name": None}
+
+
+def default_browser() -> str:
+    """
+    The browser that is ACTUALLY on this machine.
+
+    "browser" used to mean Chrome, full stop. On a PC without Chrome that's a
+    guaranteed failure, and the user has to say "Edge" every single time — which
+    is precisely the opposite of an assistant that knows your computer.
+
+    Preference order is Edge first on Windows: it ships with the OS, so it is
+    the one browser guaranteed to exist, and it shares the same engine as
+    Chrome so anything automated against one works against the other.
+    """
+    import time as _t
+    if _BROWSER_CACHE["name"] and _t.time() - _BROWSER_CACHE["at"] < 300:
+        return _BROWSER_CACHE["name"]
+
+    chosen = None
+    # An explicit preference always wins.
+    try:
+        from services import config
+        pref = (config.get("preferred_browser", "") or "").strip().lower()
+        if pref:
+            chosen = pref
+    except Exception:
+        pass
+
+    if not chosen:
+        import os as _os
+        CANDIDATES = [
+            ("edge", [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                      r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"]),
+            ("chrome", [r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"]),
+            ("firefox", [r"C:\Program Files\Mozilla Firefox\firefox.exe"]),
+        ]
+        for name, paths in CANDIDATES:
+            if any(_os.path.exists(p) for p in paths):
+                chosen = name
+                break
+        if not chosen:
+            # Fall back to whatever app_resolver can find rather than guessing.
+            try:
+                from services.app_resolver import resolve as _r
+                for name in ("edge", "chrome", "firefox"):
+                    if _r(name):
+                        chosen = name
+                        break
+            except Exception:
+                pass
+    chosen = chosen or "edge"
+    _BROWSER_CACHE.update(name=chosen, at=_t.time())
+    return chosen
+
+
+def search_url(query: str) -> str:
+    """
+    A search URL that actually loads from where the user is.
+
+    Google is unreachable from mainland China without a VPN, so sending a
+    search there produces a hang and then a blank page — Jarvis looks broken
+    when the network is the problem. Bing's China endpoint works without one.
+    Configurable, because this is a preference, not a fact.
+    """
+    from urllib.parse import quote_plus
+    q = quote_plus((query or "").strip())
+    try:
+        from services import config
+        engine = (config.get("search_engine", "") or "").strip().lower()
+    except Exception:
+        engine = ""
+    if not engine:
+        engine = "bing-cn" if (os.getenv("JARVIS_CN", "1") == "1") else "google"
+    return {
+        "google": f"https://www.google.com/search?q={q}",
+        "bing":   f"https://www.bing.com/search?q={q}",
+        "bing-cn": f"https://cn.bing.com/search?q={q}",
+        "baidu":  f"https://www.baidu.com/s?wd={q}",
+        "duckduckgo": f"https://duckduckgo.com/?q={q}",
+    }.get(engine, f"https://cn.bing.com/search?q={q}")
 
 
 # Phrases that mean "produce writing", not "reproduce these characters".
@@ -20052,7 +20211,60 @@ def _wants_composition(verb: str, text: str) -> bool:
 
 def _canon_app(word: str) -> str:
     w = (word or "").strip().lower()
+    if w == "browser":
+        return default_browser()      # what's installed, not what we assumed
     return _APP_ALIASES.get(w, w)
+
+
+# Words that end a search query and begin a NEW instruction.
+#
+# "search BMW M4 and analyze the page" is TWO steps. Searching the literal
+# string "BMW M4 and analyze the page" is what Jarvis did, and it's worse than
+# useless — it produces a page of results about a sentence nobody wrote. The
+# query stops at the first of these; everything after is a separate step.
+_FOLLOW_ON = (
+    "and analyz", "then analyz", "and analys", "then analys",
+    "and read", "then read", "and screenshot", "then screenshot",
+    "and take a screenshot", "then take a screenshot",
+    "and summar", "then summar", "and tell me", "then tell me",
+    "and check", "then check", "and show me", "then show me",
+    "and describe", "then describe", "and open", "then open",
+    "and click", "then click", "and save", "then save",
+)
+
+
+def split_query(text: str):
+    """
+    Split "<query> and <do something else>" into (query, follow_on_verb|None).
+
+    Deliberately literal rather than model-driven: this runs on every command
+    and has to be instant and predictable. A model that occasionally decides
+    "BMW M4 and analyze the page" is all one query is exactly the failure being
+    fixed here.
+    """
+    low = (text or "").strip()
+    if not low:
+        return "", None
+    lowered = low.lower()
+    cut, verb = None, None
+    for marker in _FOLLOW_ON:
+        i = lowered.find(marker)
+        # Require at least a couple of words before the marker, so "and" inside
+        # a genuine query ("black and decker") isn't treated as a step break.
+        if i > 6 and (cut is None or i < cut):
+            cut, verb = i, marker
+    if cut is None:
+        return low.strip(" ,.;"), None
+    query = low[:cut].strip(" ,.;")
+    rest = lowered[cut:]
+    if "screenshot" in rest:
+        follow = "screenshot"
+    elif any(w in rest for w in ("analyz", "analys", "describe", "tell me",
+                                 "summar", "read", "show me", "check")):
+        follow = "analyze"
+    else:
+        follow = None
+    return query, follow
 
 
 def _looks_like_known_app(word: str) -> bool:
@@ -20099,6 +20311,27 @@ def resolve_steps(text: str) -> list[dict] | None:
         verb = am.group(2)
         text = am.group(3).strip()
         text = re.sub(r"^it\s+", "", text).strip() or text   # "ask it how..." -> "how..."
+
+        # ── Browser + search is its own thing ─────────────────────────────────
+        # Typing into a browser window is the fragile way to search: it depends
+        # on where focus lands and whether the address bar is selected. Going
+        # straight to a search URL always works, and it lets a follow-on step
+        # ("...and analyze the page") run against the loaded results.
+        if verb.startswith("search") and app in ("edge", "chrome", "firefox", "browser"):
+            query, follow = split_query(text)
+            steps = [{"action": "open_url", "params": {"url": search_url(query),
+                                                       "browser": app,
+                                                       "query": query}}]
+            if follow == "screenshot":
+                steps.append({"action": "screenshot", "params": {}})
+            elif follow == "analyze":
+                steps += [
+                    {"action": "wait", "params": {"seconds": 2}},
+                    {"action": "analyze", "params": {
+                        "prompt": f"These are search results for '{query}'. "
+                                  f"Summarise what they say about it."}},
+                ]
+            return steps
 
         # TYPE vs WRITE. "type hello" means put those five characters on screen.
         # "write about yourself" means produce a piece of writing — and Jarvis
@@ -23132,6 +23365,23 @@ export default function Earn() {
     load();
   };
 
+  // Approve controls. The page showed drafts with nothing to press, so the
+  // pipeline visibly stopped at "written" and there was no way to move it on.
+  const act = async (path, note) => {
+    setMsg(note);
+    try {
+      const r = await fetch(`${API}${path}`, { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      setMsg(d.message || note);
+    } catch (e) {
+      setMsg(`Couldn't do that: ${e.message}`);
+    }
+    load();
+  };
+  const approveAll = () => act("/automation/queue/approve-all", "Approving all drafts…");
+  const submitApproved = () => act("/automation/execute-approved",
+                                   "Submitting approved proposals…");
+
   const openReceipt = async (id) => {
     setReceipt({ loading: true, id });
     try {
@@ -23190,6 +23440,32 @@ export default function Earn() {
             </div>
           ))}
         </div>
+
+        {/* Something to press. Drafts are worthless if you can't act on them. */}
+        {(pending > 0 || queue.some(q => q.status === "approved")) && (
+          <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap",
+                        alignItems: "center" }}>
+            {pending > 0 && (
+              <button onClick={approveAll}
+                style={{ padding: "9px 18px", borderRadius: 10, border: "none",
+                         background: T.green, color: "#052018", fontWeight: 700,
+                         fontSize: 13, cursor: "pointer" }}>
+                Approve all {pending} draft{pending === 1 ? "" : "s"}
+              </button>
+            )}
+            {queue.some(q => q.status === "approved") && (
+              <button onClick={submitApproved}
+                style={{ padding: "9px 18px", borderRadius: 10, fontSize: 13,
+                         cursor: "pointer", background: "rgba(84,214,255,0.1)",
+                         border: `1px solid rgba(84,214,255,0.4)`, color: T.cyan }}>
+                Submit {queue.filter(q => q.status === "approved").length} approved
+              </button>
+            )}
+            <span style={{ fontSize: 12, color: T.dim }}>
+              Each submission saves a receipt you can open with "Proof".
+            </span>
+          </div>
+        )}
 
         <label style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 14, fontSize: 12.5,
                         color: profile?.auto_submit ? T.amber : T.dim, cursor: "pointer" }}>
@@ -23322,6 +23598,22 @@ export default function Earn() {
                 {/* Proof. "It says it submitted" is not evidence — this opens the
                     exact text sent, the URL it landed on, and a screenshot of the
                     page after clicking submit. */}
+                {(q.status === "pending" || q.status === "ready") && (
+                  <>
+                    <button onClick={() => act(`/automation/queue/${q.id}/approve`, "Approved.")}
+                      style={{ fontSize: 11, padding: "2px 9px", borderRadius: 7,
+                               cursor: "pointer", background: "rgba(62,230,168,0.1)",
+                               border: `1px solid rgba(62,230,168,0.4)`, color: T.green }}>
+                      Approve
+                    </button>
+                    <button onClick={() => act(`/automation/queue/${q.id}/reject`, "Rejected.")}
+                      style={{ fontSize: 11, padding: "2px 9px", borderRadius: 7,
+                               cursor: "pointer", background: "transparent",
+                               border: `1px solid ${T.line}`, color: T.dim }}>
+                      Skip
+                    </button>
+                  </>
+                )}
                 <button onClick={() => openReceipt(q.id)}
                   style={{ fontSize: 11, padding: "2px 9px", borderRadius: 7,
                            cursor: "pointer", background: "transparent",

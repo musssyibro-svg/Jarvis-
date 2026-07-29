@@ -16,6 +16,7 @@ Both the chat commander and the project planner call resolve_steps() first.
 Deterministic where we can be, generative only where we must be — the hybrid
 pattern that keeps a local assistant fast and predictable.
 """
+import os
 import re
 
 # Apps Jarvis can launch by name. Superset of desktop_agent.KNOWN plus the
@@ -38,9 +39,97 @@ _MESSAGE_WORDS = ("message", "messages", "chat", "chats", "inbox", "notification
                   "notifications", "dm", "dms")
 
 _APP_ALIASES = {
-    "browser": "chrome", "googlechrome": "chrome", "msedge": "edge",
+    # NOTE: "browser" is resolved at RUNTIME by default_browser(), not mapped
+    # here. It used to be hardcoded to "chrome", so "open browser and search X"
+    # tried to launch Chrome on a machine that doesn't have Chrome installed.
+    "googlechrome": "chrome", "msedge": "edge",
     "weixin": "wechat", "task manager": "taskmanager", "notepad++": "notepad",
 }
+
+# ── Which browser, and which search engine ───────────────────────────────────
+
+_BROWSER_CACHE = {"at": 0.0, "name": None}
+
+
+def default_browser() -> str:
+    """
+    The browser that is ACTUALLY on this machine.
+
+    "browser" used to mean Chrome, full stop. On a PC without Chrome that's a
+    guaranteed failure, and the user has to say "Edge" every single time — which
+    is precisely the opposite of an assistant that knows your computer.
+
+    Preference order is Edge first on Windows: it ships with the OS, so it is
+    the one browser guaranteed to exist, and it shares the same engine as
+    Chrome so anything automated against one works against the other.
+    """
+    import time as _t
+    if _BROWSER_CACHE["name"] and _t.time() - _BROWSER_CACHE["at"] < 300:
+        return _BROWSER_CACHE["name"]
+
+    chosen = None
+    # An explicit preference always wins.
+    try:
+        from services import config
+        pref = (config.get("preferred_browser", "") or "").strip().lower()
+        if pref:
+            chosen = pref
+    except Exception:
+        pass
+
+    if not chosen:
+        import os as _os
+        CANDIDATES = [
+            ("edge", [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                      r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"]),
+            ("chrome", [r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"]),
+            ("firefox", [r"C:\Program Files\Mozilla Firefox\firefox.exe"]),
+        ]
+        for name, paths in CANDIDATES:
+            if any(_os.path.exists(p) for p in paths):
+                chosen = name
+                break
+        if not chosen:
+            # Fall back to whatever app_resolver can find rather than guessing.
+            try:
+                from services.app_resolver import resolve as _r
+                for name in ("edge", "chrome", "firefox"):
+                    if _r(name):
+                        chosen = name
+                        break
+            except Exception:
+                pass
+    chosen = chosen or "edge"
+    _BROWSER_CACHE.update(name=chosen, at=_t.time())
+    return chosen
+
+
+def search_url(query: str) -> str:
+    """
+    A search URL that actually loads from where the user is.
+
+    Google is unreachable from mainland China without a VPN, so sending a
+    search there produces a hang and then a blank page — Jarvis looks broken
+    when the network is the problem. Bing's China endpoint works without one.
+    Configurable, because this is a preference, not a fact.
+    """
+    from urllib.parse import quote_plus
+    q = quote_plus((query or "").strip())
+    try:
+        from services import config
+        engine = (config.get("search_engine", "") or "").strip().lower()
+    except Exception:
+        engine = ""
+    if not engine:
+        engine = "bing-cn" if (os.getenv("JARVIS_CN", "1") == "1") else "google"
+    return {
+        "google": f"https://www.google.com/search?q={q}",
+        "bing":   f"https://www.bing.com/search?q={q}",
+        "bing-cn": f"https://cn.bing.com/search?q={q}",
+        "baidu":  f"https://www.baidu.com/s?wd={q}",
+        "duckduckgo": f"https://duckduckgo.com/?q={q}",
+    }.get(engine, f"https://cn.bing.com/search?q={q}")
 
 
 # Phrases that mean "produce writing", not "reproduce these characters".
@@ -82,7 +171,60 @@ def _wants_composition(verb: str, text: str) -> bool:
 
 def _canon_app(word: str) -> str:
     w = (word or "").strip().lower()
+    if w == "browser":
+        return default_browser()      # what's installed, not what we assumed
     return _APP_ALIASES.get(w, w)
+
+
+# Words that end a search query and begin a NEW instruction.
+#
+# "search BMW M4 and analyze the page" is TWO steps. Searching the literal
+# string "BMW M4 and analyze the page" is what Jarvis did, and it's worse than
+# useless — it produces a page of results about a sentence nobody wrote. The
+# query stops at the first of these; everything after is a separate step.
+_FOLLOW_ON = (
+    "and analyz", "then analyz", "and analys", "then analys",
+    "and read", "then read", "and screenshot", "then screenshot",
+    "and take a screenshot", "then take a screenshot",
+    "and summar", "then summar", "and tell me", "then tell me",
+    "and check", "then check", "and show me", "then show me",
+    "and describe", "then describe", "and open", "then open",
+    "and click", "then click", "and save", "then save",
+)
+
+
+def split_query(text: str):
+    """
+    Split "<query> and <do something else>" into (query, follow_on_verb|None).
+
+    Deliberately literal rather than model-driven: this runs on every command
+    and has to be instant and predictable. A model that occasionally decides
+    "BMW M4 and analyze the page" is all one query is exactly the failure being
+    fixed here.
+    """
+    low = (text or "").strip()
+    if not low:
+        return "", None
+    lowered = low.lower()
+    cut, verb = None, None
+    for marker in _FOLLOW_ON:
+        i = lowered.find(marker)
+        # Require at least a couple of words before the marker, so "and" inside
+        # a genuine query ("black and decker") isn't treated as a step break.
+        if i > 6 and (cut is None or i < cut):
+            cut, verb = i, marker
+    if cut is None:
+        return low.strip(" ,.;"), None
+    query = low[:cut].strip(" ,.;")
+    rest = lowered[cut:]
+    if "screenshot" in rest:
+        follow = "screenshot"
+    elif any(w in rest for w in ("analyz", "analys", "describe", "tell me",
+                                 "summar", "read", "show me", "check")):
+        follow = "analyze"
+    else:
+        follow = None
+    return query, follow
 
 
 def _looks_like_known_app(word: str) -> bool:
@@ -129,6 +271,27 @@ def resolve_steps(text: str) -> list[dict] | None:
         verb = am.group(2)
         text = am.group(3).strip()
         text = re.sub(r"^it\s+", "", text).strip() or text   # "ask it how..." -> "how..."
+
+        # ── Browser + search is its own thing ─────────────────────────────────
+        # Typing into a browser window is the fragile way to search: it depends
+        # on where focus lands and whether the address bar is selected. Going
+        # straight to a search URL always works, and it lets a follow-on step
+        # ("...and analyze the page") run against the loaded results.
+        if verb.startswith("search") and app in ("edge", "chrome", "firefox", "browser"):
+            query, follow = split_query(text)
+            steps = [{"action": "open_url", "params": {"url": search_url(query),
+                                                       "browser": app,
+                                                       "query": query}}]
+            if follow == "screenshot":
+                steps.append({"action": "screenshot", "params": {}})
+            elif follow == "analyze":
+                steps += [
+                    {"action": "wait", "params": {"seconds": 2}},
+                    {"action": "analyze", "params": {
+                        "prompt": f"These are search results for '{query}'. "
+                                  f"Summarise what they say about it."}},
+                ]
+            return steps
 
         # TYPE vs WRITE. "type hello" means put those five characters on screen.
         # "write about yourself" means produce a piece of writing — and Jarvis

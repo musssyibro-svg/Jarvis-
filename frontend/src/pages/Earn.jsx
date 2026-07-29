@@ -126,6 +126,23 @@ export default function Earn() {
     load();
   };
 
+  // Approve controls. The page showed drafts with nothing to press, so the
+  // pipeline visibly stopped at "written" and there was no way to move it on.
+  const act = async (path, note) => {
+    setMsg(note);
+    try {
+      const r = await fetch(`${API}${path}`, { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      setMsg(d.message || note);
+    } catch (e) {
+      setMsg(`Couldn't do that: ${e.message}`);
+    }
+    load();
+  };
+  const approveAll = () => act("/automation/queue/approve-all", "Approving all drafts…");
+  const submitApproved = () => act("/automation/execute-approved",
+                                   "Submitting approved proposals…");
+
   const openReceipt = async (id) => {
     setReceipt({ loading: true, id });
     try {
@@ -184,6 +201,32 @@ export default function Earn() {
             </div>
           ))}
         </div>
+
+        {/* Something to press. Drafts are worthless if you can't act on them. */}
+        {(pending > 0 || queue.some(q => q.status === "approved")) && (
+          <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap",
+                        alignItems: "center" }}>
+            {pending > 0 && (
+              <button onClick={approveAll}
+                style={{ padding: "9px 18px", borderRadius: 10, border: "none",
+                         background: T.green, color: "#052018", fontWeight: 700,
+                         fontSize: 13, cursor: "pointer" }}>
+                Approve all {pending} draft{pending === 1 ? "" : "s"}
+              </button>
+            )}
+            {queue.some(q => q.status === "approved") && (
+              <button onClick={submitApproved}
+                style={{ padding: "9px 18px", borderRadius: 10, fontSize: 13,
+                         cursor: "pointer", background: "rgba(84,214,255,0.1)",
+                         border: `1px solid rgba(84,214,255,0.4)`, color: T.cyan }}>
+                Submit {queue.filter(q => q.status === "approved").length} approved
+              </button>
+            )}
+            <span style={{ fontSize: 12, color: T.dim }}>
+              Each submission saves a receipt you can open with "Proof".
+            </span>
+          </div>
+        )}
 
         <label style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 14, fontSize: 12.5,
                         color: profile?.auto_submit ? T.amber : T.dim, cursor: "pointer" }}>
@@ -316,6 +359,22 @@ export default function Earn() {
                 {/* Proof. "It says it submitted" is not evidence — this opens the
                     exact text sent, the URL it landed on, and a screenshot of the
                     page after clicking submit. */}
+                {(q.status === "pending" || q.status === "ready") && (
+                  <>
+                    <button onClick={() => act(`/automation/queue/${q.id}/approve`, "Approved.")}
+                      style={{ fontSize: 11, padding: "2px 9px", borderRadius: 7,
+                               cursor: "pointer", background: "rgba(62,230,168,0.1)",
+                               border: `1px solid rgba(62,230,168,0.4)`, color: T.green }}>
+                      Approve
+                    </button>
+                    <button onClick={() => act(`/automation/queue/${q.id}/reject`, "Rejected.")}
+                      style={{ fontSize: 11, padding: "2px 9px", borderRadius: 7,
+                               cursor: "pointer", background: "transparent",
+                               border: `1px solid ${T.line}`, color: T.dim }}>
+                      Skip
+                    </button>
+                  </>
+                )}
                 <button onClick={() => openReceipt(q.id)}
                   style={{ fontSize: 11, padding: "2px 9px", borderRadius: 7,
                            cursor: "pointer", background: "transparent",

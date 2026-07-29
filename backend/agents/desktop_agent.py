@@ -513,7 +513,8 @@ def _run_action(action: str, params: dict) -> dict:
             p.get("title", ""),
             float(p["timeout"]) if p.get("timeout") is not None else None),
         "focus_window": lambda p: focus_window(p.get("title", "")),
-        "open_url":     lambda p: open_url(p.get("url", "")),
+        "open_url":     lambda p: open_url(p.get("url", ""), p.get("browser", ""),
+                                           p.get("query", "")),
         "write_file":   lambda p: write_file(p.get("path", ""), p.get("content", "")),
         "screenshot":   lambda p: __import__("agents.vision_agent", fromlist=["screenshot"]).screenshot(),
         "click_text":   lambda p: __import__("agents.vision_agent", fromlist=["click_text"]).click_text(p.get("text", "")),
@@ -866,14 +867,41 @@ def switch_window(title_contains: str) -> dict:
     return focus_window(title_contains)
 
 
-def open_url(url: str) -> dict:
-    """Open a URL in the default browser."""
+def open_url(url: str, browser: str = "", query: str = "") -> dict:
+    """
+    Open a URL, in a SPECIFIC browser when one is named.
+
+    webbrowser.open() uses the OS default, which is not necessarily the browser
+    the user asked for or even one that is installed. Naming the executable
+    means "open browser and search X" lands in the browser Jarvis actually
+    resolved rather than whatever Windows happens to be configured with.
+    """
+    if not url:
+        return {"success": False, "action": "open_url", "error": "no URL"}
+    exe = None
+    if browser:
+        try:
+            from services.app_resolver import resolve as _resolve_app
+            exe = _resolve_app(browser)
+        except Exception:
+            exe = None
     try:
-        import webbrowser
-        webbrowser.open(url)
-        return {"success": True, "action": "open_url", "url": url}
+        if exe:
+            subprocess.Popen([exe, url], shell=False,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            import webbrowser
+            webbrowser.open(url)
+        # Give the page a moment so a following screenshot/analyze sees content
+        # rather than a blank tab.
+        time.sleep(2.0)
+        if browser:
+            focus_window(browser)
+        return {"success": True, "action": "open_url", "url": url,
+                "browser": browser or "system default",
+                **({"query": query} if query else {})}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "action": "open_url", "url": url, "error": str(e)}
 
 
 def close_window(title_contains: str) -> dict:

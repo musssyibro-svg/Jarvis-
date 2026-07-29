@@ -124,6 +124,48 @@ def list_queue(status: Optional[str] = None, limit: int = 100):
     return {"queue": result, "total": len(result)}
 
 
+@router.post("/queue/approve-all")
+def approve_all():
+    """
+    Approve every drafted proposal at once.
+
+    The Earn page showed drafts and no way to act on them, so the pipeline
+    stopped dead at "written" with nothing to press. Approving marks them ready
+    for the executor; submission still happens through bid_executor, which
+    records a receipt for each one.
+    """
+    with conn() as db:
+        cur = db.execute(
+            "UPDATE automation_queue SET status='approved', processed_at=? "
+            "WHERE status='pending'", (_now(),))
+        n = cur.rowcount or 0
+    if n:
+        try:
+            from agents.orchestrator import STATE
+            STATE.emit("executor", f"{n} proposal(s) approved - submitting now.", "success")
+        except Exception:
+            pass
+    return {"ok": True, "approved": n,
+            "message": (f"{n} approved and queued for submission."
+                        if n else "Nothing was waiting for approval.")}
+
+
+@router.post("/queue/{qid}/approve")
+def approve_one(qid: int):
+    with conn() as db:
+        db.execute("UPDATE automation_queue SET status='approved', processed_at=? "
+                   "WHERE id=? AND status IN ('pending','ready')", (_now(), qid))
+    return {"ok": True, "id": qid, "status": "approved"}
+
+
+@router.post("/queue/{qid}/reject")
+def reject_one(qid: int):
+    with conn() as db:
+        db.execute("UPDATE automation_queue SET status='rejected', processed_at=? "
+                   "WHERE id=?", (_now(), qid))
+    return {"ok": True, "id": qid, "status": "rejected"}
+
+
 @router.get("/queue/{qid}/receipt")
 def queue_receipt(qid: int):
     """
