@@ -267,14 +267,18 @@ def create_plan(body: PlanRequest, background_tasks: BackgroundTasks):
     OrchestratorCore, which owns PLANNING as a state. planner.py is being retired.
     """
     from agents.v9_models import Goal
-    from agents.orchestrator_core import OrchestratorCore
+    from agents.orchestrator_core import get_core
     goal = Goal(goal_type="task", objective=body.goal,
                 constraints={"context": body.context},
                 approval_required=False)
-    core = OrchestratorCore()
+    core = get_core()          # shared instance so /v9/state reflects this run
     core.set_goal(goal)
     if body.execute:
-        background_tasks.add_task(core.run_full_workflow)
+        # A real thread, not BackgroundTasks: BackgroundTasks runs AFTER the
+        # response is sent and holds a response worker for the whole multi-minute
+        # run, so the server stops answering while a scan is in progress.
+        import threading
+        threading.Thread(target=core.run_full_workflow, daemon=True).start()
         return {"goal_id": goal.goal_id, "goal": goal.to_dict(), "executing": True}
     return {"goal_id": goal.goal_id, "goal": goal.to_dict(), "executing": False}
 

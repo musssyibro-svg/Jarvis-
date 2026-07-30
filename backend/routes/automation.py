@@ -17,7 +17,7 @@ class AutoRequest(BaseModel):
     max_jobs: int = 10
 
 @router.post("/start")
-async def start_auto(req: AutoRequest, background_tasks: BackgroundTasks):
+async def start_auto(req: AutoRequest, background_tasks: BackgroundTasks = None):
     """
     V9: Auto Mode now runs through OrchestratorCore (single source of workflow
     state), not services.automation_engine.run_auto_mode (deprecated duplicate
@@ -84,15 +84,21 @@ def stop_auto():
     # Consolidated onto the real orchestrator + income engine. The old code wrote
     # services.automation_engine._state, a dead dict nothing reads — a legacy
     # no-op. Stop both the pipeline feed and the always-on loop.
-    from agents.orchestrator import STATE
-    STATE.set(running=False, stage="stopped")
-    STATE.emit("orchestrator", "Auto mode stop requested")
+    # Setting STATE alone was decorative: the running core never read it, so the
+    # workflow carried on regardless. Ask the core itself to halt.
+    res = {}
+    try:
+        from agents.orchestrator_core import get_core
+        res = get_core().request_stop("auto mode stop")
+    except Exception as e:
+        res = {"ok": False, "error": str(e)[:120]}
     try:
         from services.income_engine import stop as income_stop
         income_stop()
     except Exception:
         pass
-    return {"message": "Stopped orchestrator + income engine"}
+    return {"message": "Stopping - the current step finishes first, then Jarvis halts.",
+            **res}
 
 @router.get("/status")
 def auto_status():
@@ -249,24 +255,32 @@ def list_platform_jobs(platform: Optional[str] = None, limit: int = 100):
 
 @router.get("/today-stats")
 def today_stats():
+    """
+    Dashboard counters.
+
+    Every count is isolated. This used to be one `with conn()` block of bare
+    queries, so a single missing table — hubstaff_jobs on a fresh install, say —
+    500'd the WHOLE endpoint and the dashboard showed nothing at all. A count
+    that can't be taken is 0, not a reason to hide the other seven.
+    """
     today = _now()[:10]
-    with conn() as db:
-        jobs_today = db.execute(
-            "SELECT COUNT(*) as c FROM platform_jobs WHERE scraped_at LIKE ?", (f"{today}%",)
-        ).fetchone()["c"]
-        apps_today = db.execute(
-            "SELECT COUNT(*) as c FROM automation_queue WHERE created_at LIKE ?", (f"{today}%",)
-        ).fetchone()["c"]
-        replies_today = db.execute(
-            "SELECT COUNT(*) as c FROM proposals WHERE got_reply=1 AND updated_at LIKE ?", (f"{today}%",)
-        ).fetchone()["c"]
-        hubstaff_jobs = db.execute("SELECT COUNT(*) as c FROM hubstaff_jobs").fetchone()["c"]
-        cw_tasks = db.execute("SELECT COUNT(*) as c FROM clickworker_tasks WHERE status='available'").fetchone()["c"]
-        zd_tasks = db.execute("SELECT COUNT(*) as c FROM zuodao_tasks WHERE status='available'").fetchone()["c"]
-        proposals_sent = db.execute(
-            "SELECT COUNT(*) as c FROM proposals WHERE status != 'draft'"
-        ).fetchone()["c"]
-        won = db.execute("SELECT COUNT(*) as c FROM proposals WHERE won=1").fetchone()["c"]
+
+    def count(sql, args=()):
+        try:
+            with conn() as db:
+                row = db.execute(sql, args).fetchone()
+            return (row["c"] if row else 0) or 0
+        except Exception:
+            return 0
+
+    jobs_today = count("SELECT COUNT(*) as c FROM platform_jobs WHERE scraped_at LIKE ?", (f"{today}%",))
+    apps_today = count("SELECT COUNT(*) as c FROM automation_queue WHERE created_at LIKE ?", (f"{today}%",))
+    replies_today = count("SELECT COUNT(*) as c FROM proposals WHERE got_reply=1 AND updated_at LIKE ?", (f"{today}%",))
+    hubstaff_jobs = count("SELECT COUNT(*) as c FROM hubstaff_jobs")
+    cw_tasks = count("SELECT COUNT(*) as c FROM clickworker_tasks WHERE status='available'")
+    zd_tasks = count("SELECT COUNT(*) as c FROM zuodao_tasks WHERE status='available'")
+    proposals_sent = count("SELECT COUNT(*) as c FROM proposals WHERE status != 'draft'")
+    won = count("SELECT COUNT(*) as c FROM proposals WHERE won=1")
     return {
         "jobs_today":       jobs_today,
         "apps_generated":   apps_today,

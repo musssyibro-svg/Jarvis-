@@ -426,8 +426,10 @@ def v9_goal(body: ChatIn):
 
 @app.get("/v9/state")
 def v9_state():
-    from agents.orchestrator_core import core
-    return core.snapshot()
+    # get_core(), not the module-level `core` name — routes used to run their
+    # work on throwaway instances, so this reported IDLE during a live run.
+    from agents.orchestrator_core import get_core
+    return get_core().snapshot()
 
 
 # V9: register core agents in the registry (lookup hooks; no behavior change)

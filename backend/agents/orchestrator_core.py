@@ -26,19 +26,26 @@ class AgentState(Enum):
     RECOVERING = 6
     COMPLETE   = 7
     FAILED     = 8
+    # A user halt is NOT a failure. Filing it as FAILED made the console
+    # report an error for something the user deliberately did, and
+    # poisoned the reliability figures experience.py learns from.
+    STOPPED    = 9
 
 
 # Explicit, mandatory transition table (allowed next states per current state).
 TRANSITIONS = {
     AgentState.IDLE:       {AgentState.PLANNING},
-    AgentState.PLANNING:   {AgentState.SCOUTING, AgentState.FAILED},
-    AgentState.SCOUTING:   {AgentState.PROPOSING, AgentState.FAILED, AgentState.COMPLETE},
-    AgentState.PROPOSING:  {AgentState.EXECUTING, AgentState.FAILED, AgentState.COMPLETE},
-    AgentState.EXECUTING:  {AgentState.VERIFYING, AgentState.RECOVERING},
-    AgentState.VERIFYING:  {AgentState.COMPLETE, AgentState.RECOVERING},
-    AgentState.RECOVERING: {AgentState.EXECUTING, AgentState.FAILED},
+    AgentState.PLANNING:   {AgentState.SCOUTING, AgentState.FAILED, AgentState.STOPPED},
+    AgentState.SCOUTING:   {AgentState.PROPOSING, AgentState.FAILED, AgentState.COMPLETE,
+                            AgentState.STOPPED},
+    AgentState.PROPOSING:  {AgentState.EXECUTING, AgentState.FAILED, AgentState.COMPLETE,
+                            AgentState.STOPPED},
+    AgentState.EXECUTING:  {AgentState.VERIFYING, AgentState.RECOVERING, AgentState.STOPPED},
+    AgentState.VERIFYING:  {AgentState.COMPLETE, AgentState.RECOVERING, AgentState.STOPPED},
+    AgentState.RECOVERING: {AgentState.EXECUTING, AgentState.FAILED, AgentState.STOPPED},
     AgentState.COMPLETE:   set(),
     AgentState.FAILED:     set(),
+    AgentState.STOPPED:    set(),
 }
 
 MAX_RETRIES = 3
@@ -67,11 +74,53 @@ class OrchestratorCore:
         "IDLE": "idle", "PLANNING": "thinking", "SCOUTING": "scouting",
         "PROPOSING": "proposing", "EXECUTING": "executing", "VERIFYING": "executing",
         "RECOVERING": "thinking", "COMPLETE": "speaking", "FAILED": "approval",
+        "STOPPED": "idle",
     }
 
     def _emit(self, agent: str, message: str, level: str = "info"):
         ui = self._UI_STATE.get(self.state.name, "thinking")
         STATE.emit(agent, f"[{self.state.name}] {message}", level, state=ui)
+
+    # ── Publish state to the shared bus ─────────────────────────────────────────
+    def _sync(self):
+        """
+        Write running/stage/progress into the SHARED STATE the UI reads.
+
+        This is the freelance control bug in one method. The core only ever
+        called STATE.emit(), which appends to the LOG FEED — it never wrote the
+        status fields. GET /orchestrator/status returns STATE.get(), which the
+        Earn page and sidebar poll. So the log scrolled with real progress while
+        every status field said idle: the pipeline ran, and the UI had no idea.
+
+        Must be called on EVERY transition, not just at start and end, or the
+        stage indicator freezes on whatever it saw last.
+        """
+        running = self.state not in (AgentState.IDLE, AgentState.COMPLETE,
+                                     AgentState.FAILED, AgentState.STOPPED)
+        try:
+            STATE.set(running=running,
+                      stage=self.state.name.lower(),
+                      progress=self.progress,
+                      error=self.error,
+                      stopped=self.state == AgentState.STOPPED)
+        except Exception:
+            pass      # the bus must never be able to break the workflow
+
+    # ── Stop ────────────────────────────────────────────────────────────────────
+    def request_stop(self, reason: str = "user asked") -> dict:
+        """
+        Ask the run to halt at the next safe point.
+
+        Delegates to services.control rather than adding a second stop
+        mechanism. Two independent stop paths that don't know about each other
+        is exactly how this got broken in the first place — there were already
+        two stop ROUTES, and neither reached the running code.
+        """
+        try:
+            from services import control
+            return control.cancel(reason)
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:120]}
 
     # ── Guarded transition (enforces the table) ─────────────────────────────────
     def transition_state(self, target: AgentState):
@@ -81,13 +130,25 @@ class OrchestratorCore:
 
     # ── Goal entry point ────────────────────────────────────────────────────────
     def set_goal(self, goal: Goal):
+        # Full reset. The core is a SINGLETON now, so a previous run's terminal
+        # state would otherwise make the next set_goal raise IllegalTransition
+        # (COMPLETE has no allowed successors).
         self.goal     = goal
         self.world    = WorldState()
         self.progress = 0
         self.retries  = 0
         self.error    = None
         self._transitions = 0
+        self._skipped = False
+        self._cancelled = False
+        self.state    = AgentState.IDLE
+        try:
+            from services import control
+            control.clear()          # a stale cancel must not kill a new goal
+        except Exception:
+            pass
         self.transition_state(AgentState.PLANNING)
+        self._sync()
         self._emit("orchestrator", f"Goal set: {goal.goal_type} / {goal.objective}")
 
     # ── Full workflow loop ──────────────────────────────────────────────────────
@@ -110,9 +171,11 @@ class OrchestratorCore:
                        "(not an error)", "info")
             return self.snapshot()
         try:
+            self._sync()
             return self._run_locked()
         finally:
             _RUN_LOCK.release()
+            self._sync()        # belt and braces: never leave running=True
 
     def _run_locked(self) -> dict:
         from services import control
@@ -125,10 +188,10 @@ class OrchestratorCore:
             try:
                 control.checkpoint(step=self.state.name.lower())
             except control.Cancelled as c:
-                self.error = f"cancelled: {c}"
-                self.state = AgentState.FAILED
+                self.error = None            # a user stop is not an error
+                self.state = AgentState.STOPPED
                 self._cancelled = True
-                self._emit("orchestrator", "Cancelled — stopped cleanly between "
+                self._emit("orchestrator", "Stopped — halted cleanly between "
                                            "steps, nothing left half-done.", "warning")
                 break
 
@@ -149,12 +212,31 @@ class OrchestratorCore:
                 self.error = f"no handler for {self.state.name}"
                 self.state = AgentState.FAILED
                 break
-            handler()
+            try:
+                handler()
+            except Exception as e:
+                # A handler that throws used to escape the loop entirely, which
+                # left STATE.running stuck True forever — after that every start
+                # was refused as "already running" until the backend restarted.
+                self.error = f"{self.state.name.lower()} failed: {e}"
+                self.state = AgentState.FAILED
+                self._emit("orchestrator", self.error, "error")
+                break
+            self._sync()        # publish after EVERY transition, not just at the ends
 
         self._emit("orchestrator",
                    f"Workflow finished: {self.state.name}"
                    + (f" ({self.error})" if self.error else ""),
-                   "success" if self.state == AgentState.COMPLETE else "error")
+                   "success" if self.state == AgentState.COMPLETE
+                   else "warning" if self.state == AgentState.STOPPED else "error")
+        # ALWAYS publish the terminal state. If this is skipped on any path,
+        # running stays True and the next start is refused forever.
+        self._sync()
+        try:
+            from services import control
+            control.clear()      # don't let this run's stop bleed into the next
+        except Exception:
+            pass
         return self.snapshot()
 
     # alias kept for older callers
@@ -173,13 +255,22 @@ class OrchestratorCore:
         self.transition_state(AgentState.SCOUTING)
 
     def _scout(self):
-        self._emit("scout", "Scanning platforms")
+        c0 = self.goal.constraints or {}
+        per = int(c0.get("max_per_platform") or c0.get("max_jobs") or 10)
+        plats = c0.get("platforms", [])
+        # Say the number out loud. If the limit you set isn't in this line, the
+        # setting didn't reach the scan — which is exactly what was happening.
+        self._emit("scout", f"Scanning {len(plats) or '?'} platform(s), "
+                            f"up to {per} each")
         try:
             from agents.scout_agent import ScoutAgent
             c = self.goal.constraints or {}
             res = ScoutAgent().run({
                 "platforms":        c.get("platforms", ["remoteok", "weworkremotely", "hubstaff"]),
-                "max_per_platform": c.get("max_jobs", 10),
+                # Honour what the user actually set. This read max_jobs, which
+                # the start route never populated correctly, so every scan used
+                # the default no matter what you chose.
+                "max_per_platform": int(c.get("max_per_platform") or c.get("max_jobs") or 10),
                 "category":         self.goal.objective,
             })
             self.world.jobs = res.get("jobs", [])
@@ -233,7 +324,7 @@ class OrchestratorCore:
                 "qualified_jobs": self.world.jobs,
                 "your_name":      c.get("your_name", ""),
                 "your_skills":    c.get("your_skills", ""),
-                "max_generate":   c.get("max_jobs", 10),
+                "max_generate":   int(c.get("max_generate") or c.get("max_jobs") or 10),
             })
             generated = res.get("generated", [])
             for entry in generated:
@@ -345,3 +436,25 @@ class OrchestratorCore:
 
 
 core = OrchestratorCore()
+
+
+# ── Module singleton ─────────────────────────────────────────────────────────
+#
+# Every route used to do `core = OrchestratorCore()` — a throwaway local. The
+# work ran on that instance and then vanished, while /v9/state read a
+# module-level object nothing had ever touched, so it reported IDLE during a
+# live run. One shared instance, one truth.
+_CORE: "OrchestratorCore | None" = None
+_CORE_LOCK = threading.Lock()
+
+
+def get_core() -> "OrchestratorCore":
+    global _CORE
+    with _CORE_LOCK:
+        if _CORE is None:
+            _CORE = OrchestratorCore()
+        return _CORE
+
+
+# Back-compat for modules that imported the name directly.
+core = get_core()

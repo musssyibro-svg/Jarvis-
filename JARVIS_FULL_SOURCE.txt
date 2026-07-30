@@ -5910,19 +5910,26 @@ class AgentState(Enum):
     RECOVERING = 6
     COMPLETE   = 7
     FAILED     = 8
+    # A user halt is NOT a failure. Filing it as FAILED made the console
+    # report an error for something the user deliberately did, and
+    # poisoned the reliability figures experience.py learns from.
+    STOPPED    = 9
 
 
 # Explicit, mandatory transition table (allowed next states per current state).
 TRANSITIONS = {
     AgentState.IDLE:       {AgentState.PLANNING},
-    AgentState.PLANNING:   {AgentState.SCOUTING, AgentState.FAILED},
-    AgentState.SCOUTING:   {AgentState.PROPOSING, AgentState.FAILED, AgentState.COMPLETE},
-    AgentState.PROPOSING:  {AgentState.EXECUTING, AgentState.FAILED, AgentState.COMPLETE},
-    AgentState.EXECUTING:  {AgentState.VERIFYING, AgentState.RECOVERING},
-    AgentState.VERIFYING:  {AgentState.COMPLETE, AgentState.RECOVERING},
-    AgentState.RECOVERING: {AgentState.EXECUTING, AgentState.FAILED},
+    AgentState.PLANNING:   {AgentState.SCOUTING, AgentState.FAILED, AgentState.STOPPED},
+    AgentState.SCOUTING:   {AgentState.PROPOSING, AgentState.FAILED, AgentState.COMPLETE,
+                            AgentState.STOPPED},
+    AgentState.PROPOSING:  {AgentState.EXECUTING, AgentState.FAILED, AgentState.COMPLETE,
+                            AgentState.STOPPED},
+    AgentState.EXECUTING:  {AgentState.VERIFYING, AgentState.RECOVERING, AgentState.STOPPED},
+    AgentState.VERIFYING:  {AgentState.COMPLETE, AgentState.RECOVERING, AgentState.STOPPED},
+    AgentState.RECOVERING: {AgentState.EXECUTING, AgentState.FAILED, AgentState.STOPPED},
     AgentState.COMPLETE:   set(),
     AgentState.FAILED:     set(),
+    AgentState.STOPPED:    set(),
 }
 
 MAX_RETRIES = 3
@@ -5951,11 +5958,53 @@ class OrchestratorCore:
         "IDLE": "idle", "PLANNING": "thinking", "SCOUTING": "scouting",
         "PROPOSING": "proposing", "EXECUTING": "executing", "VERIFYING": "executing",
         "RECOVERING": "thinking", "COMPLETE": "speaking", "FAILED": "approval",
+        "STOPPED": "idle",
     }
 
     def _emit(self, agent: str, message: str, level: str = "info"):
         ui = self._UI_STATE.get(self.state.name, "thinking")
         STATE.emit(agent, f"[{self.state.name}] {message}", level, state=ui)
+
+    # ── Publish state to the shared bus ─────────────────────────────────────────
+    def _sync(self):
+        """
+        Write running/stage/progress into the SHARED STATE the UI reads.
+
+        This is the freelance control bug in one method. The core only ever
+        called STATE.emit(), which appends to the LOG FEED — it never wrote the
+        status fields. GET /orchestrator/status returns STATE.get(), which the
+        Earn page and sidebar poll. So the log scrolled with real progress while
+        every status field said idle: the pipeline ran, and the UI had no idea.
+
+        Must be called on EVERY transition, not just at start and end, or the
+        stage indicator freezes on whatever it saw last.
+        """
+        running = self.state not in (AgentState.IDLE, AgentState.COMPLETE,
+                                     AgentState.FAILED, AgentState.STOPPED)
+        try:
+            STATE.set(running=running,
+                      stage=self.state.name.lower(),
+                      progress=self.progress,
+                      error=self.error,
+                      stopped=self.state == AgentState.STOPPED)
+        except Exception:
+            pass      # the bus must never be able to break the workflow
+
+    # ── Stop ────────────────────────────────────────────────────────────────────
+    def request_stop(self, reason: str = "user asked") -> dict:
+        """
+        Ask the run to halt at the next safe point.
+
+        Delegates to services.control rather than adding a second stop
+        mechanism. Two independent stop paths that don't know about each other
+        is exactly how this got broken in the first place — there were already
+        two stop ROUTES, and neither reached the running code.
+        """
+        try:
+            from services import control
+            return control.cancel(reason)
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:120]}
 
     # ── Guarded transition (enforces the table) ─────────────────────────────────
     def transition_state(self, target: AgentState):
@@ -5965,13 +6014,25 @@ class OrchestratorCore:
 
     # ── Goal entry point ────────────────────────────────────────────────────────
     def set_goal(self, goal: Goal):
+        # Full reset. The core is a SINGLETON now, so a previous run's terminal
+        # state would otherwise make the next set_goal raise IllegalTransition
+        # (COMPLETE has no allowed successors).
         self.goal     = goal
         self.world    = WorldState()
         self.progress = 0
         self.retries  = 0
         self.error    = None
         self._transitions = 0
+        self._skipped = False
+        self._cancelled = False
+        self.state    = AgentState.IDLE
+        try:
+            from services import control
+            control.clear()          # a stale cancel must not kill a new goal
+        except Exception:
+            pass
         self.transition_state(AgentState.PLANNING)
+        self._sync()
         self._emit("orchestrator", f"Goal set: {goal.goal_type} / {goal.objective}")
 
     # ── Full workflow loop ──────────────────────────────────────────────────────
@@ -5994,9 +6055,11 @@ class OrchestratorCore:
                        "(not an error)", "info")
             return self.snapshot()
         try:
+            self._sync()
             return self._run_locked()
         finally:
             _RUN_LOCK.release()
+            self._sync()        # belt and braces: never leave running=True
 
     def _run_locked(self) -> dict:
         from services import control
@@ -6009,10 +6072,10 @@ class OrchestratorCore:
             try:
                 control.checkpoint(step=self.state.name.lower())
             except control.Cancelled as c:
-                self.error = f"cancelled: {c}"
-                self.state = AgentState.FAILED
+                self.error = None            # a user stop is not an error
+                self.state = AgentState.STOPPED
                 self._cancelled = True
-                self._emit("orchestrator", "Cancelled — stopped cleanly between "
+                self._emit("orchestrator", "Stopped — halted cleanly between "
                                            "steps, nothing left half-done.", "warning")
                 break
 
@@ -6033,12 +6096,31 @@ class OrchestratorCore:
                 self.error = f"no handler for {self.state.name}"
                 self.state = AgentState.FAILED
                 break
-            handler()
+            try:
+                handler()
+            except Exception as e:
+                # A handler that throws used to escape the loop entirely, which
+                # left STATE.running stuck True forever — after that every start
+                # was refused as "already running" until the backend restarted.
+                self.error = f"{self.state.name.lower()} failed: {e}"
+                self.state = AgentState.FAILED
+                self._emit("orchestrator", self.error, "error")
+                break
+            self._sync()        # publish after EVERY transition, not just at the ends
 
         self._emit("orchestrator",
                    f"Workflow finished: {self.state.name}"
                    + (f" ({self.error})" if self.error else ""),
-                   "success" if self.state == AgentState.COMPLETE else "error")
+                   "success" if self.state == AgentState.COMPLETE
+                   else "warning" if self.state == AgentState.STOPPED else "error")
+        # ALWAYS publish the terminal state. If this is skipped on any path,
+        # running stays True and the next start is refused forever.
+        self._sync()
+        try:
+            from services import control
+            control.clear()      # don't let this run's stop bleed into the next
+        except Exception:
+            pass
         return self.snapshot()
 
     # alias kept for older callers
@@ -6057,13 +6139,22 @@ class OrchestratorCore:
         self.transition_state(AgentState.SCOUTING)
 
     def _scout(self):
-        self._emit("scout", "Scanning platforms")
+        c0 = self.goal.constraints or {}
+        per = int(c0.get("max_per_platform") or c0.get("max_jobs") or 10)
+        plats = c0.get("platforms", [])
+        # Say the number out loud. If the limit you set isn't in this line, the
+        # setting didn't reach the scan — which is exactly what was happening.
+        self._emit("scout", f"Scanning {len(plats) or '?'} platform(s), "
+                            f"up to {per} each")
         try:
             from agents.scout_agent import ScoutAgent
             c = self.goal.constraints or {}
             res = ScoutAgent().run({
                 "platforms":        c.get("platforms", ["remoteok", "weworkremotely", "hubstaff"]),
-                "max_per_platform": c.get("max_jobs", 10),
+                # Honour what the user actually set. This read max_jobs, which
+                # the start route never populated correctly, so every scan used
+                # the default no matter what you chose.
+                "max_per_platform": int(c.get("max_per_platform") or c.get("max_jobs") or 10),
                 "category":         self.goal.objective,
             })
             self.world.jobs = res.get("jobs", [])
@@ -6117,7 +6208,7 @@ class OrchestratorCore:
                 "qualified_jobs": self.world.jobs,
                 "your_name":      c.get("your_name", ""),
                 "your_skills":    c.get("your_skills", ""),
-                "max_generate":   c.get("max_jobs", 10),
+                "max_generate":   int(c.get("max_generate") or c.get("max_jobs") or 10),
             })
             generated = res.get("generated", [])
             for entry in generated:
@@ -6229,6 +6320,28 @@ class OrchestratorCore:
 
 
 core = OrchestratorCore()
+
+
+# ── Module singleton ─────────────────────────────────────────────────────────
+#
+# Every route used to do `core = OrchestratorCore()` — a throwaway local. The
+# work ran on that instance and then vanished, while /v9/state read a
+# module-level object nothing had ever touched, so it reported IDLE during a
+# live run. One shared instance, one truth.
+_CORE: "OrchestratorCore | None" = None
+_CORE_LOCK = threading.Lock()
+
+
+def get_core() -> "OrchestratorCore":
+    global _CORE
+    with _CORE_LOCK:
+        if _CORE is None:
+            _CORE = OrchestratorCore()
+        return _CORE
+
+
+# Back-compat for modules that imported the name directly.
+core = get_core()
 ```
 
 ################################################################################
@@ -8594,8 +8707,10 @@ def v9_goal(body: ChatIn):
 
 @app.get("/v9/state")
 def v9_state():
-    from agents.orchestrator_core import core
-    return core.snapshot()
+    # get_core(), not the module-level `core` name — routes used to run their
+    # work on throwaway instances, so this reported IDLE during a live run.
+    from agents.orchestrator_core import get_core
+    return get_core().snapshot()
 
 
 # V9: register core agents in the registry (lookup hooks; no behavior change)
@@ -9696,7 +9811,7 @@ RSS = ["https://weworkremotely.com/remote-jobs.rss",
        "https://weworkremotely.com/categories/remote-programming-jobs.rss"]
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; JarvisBot/3.0)"}
 
-def _clean(t): return re.sub(r"\s+"," ",re.sub(r"<[^>]+"," ",t)).strip()
+def _clean(t): return re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",t)).strip()
 
 class WeWorkRemotelyPlatform(BasePlatform):
     name = "weworkremotely"
@@ -10053,14 +10168,18 @@ def create_plan(body: PlanRequest, background_tasks: BackgroundTasks):
     OrchestratorCore, which owns PLANNING as a state. planner.py is being retired.
     """
     from agents.v9_models import Goal
-    from agents.orchestrator_core import OrchestratorCore
+    from agents.orchestrator_core import get_core
     goal = Goal(goal_type="task", objective=body.goal,
                 constraints={"context": body.context},
                 approval_required=False)
-    core = OrchestratorCore()
+    core = get_core()          # shared instance so /v9/state reflects this run
     core.set_goal(goal)
     if body.execute:
-        background_tasks.add_task(core.run_full_workflow)
+        # A real thread, not BackgroundTasks: BackgroundTasks runs AFTER the
+        # response is sent and holds a response worker for the whole multi-minute
+        # run, so the server stops answering while a scan is in progress.
+        import threading
+        threading.Thread(target=core.run_full_workflow, daemon=True).start()
         return {"goal_id": goal.goal_id, "goal": goal.to_dict(), "executing": True}
     return {"goal_id": goal.goal_id, "goal": goal.to_dict(), "executing": False}
 
@@ -10315,7 +10434,7 @@ class AutoRequest(BaseModel):
     max_jobs: int = 10
 
 @router.post("/start")
-async def start_auto(req: AutoRequest, background_tasks: BackgroundTasks):
+async def start_auto(req: AutoRequest, background_tasks: BackgroundTasks = None):
     """
     V9: Auto Mode now runs through OrchestratorCore (single source of workflow
     state), not services.automation_engine.run_auto_mode (deprecated duplicate
@@ -10382,15 +10501,21 @@ def stop_auto():
     # Consolidated onto the real orchestrator + income engine. The old code wrote
     # services.automation_engine._state, a dead dict nothing reads — a legacy
     # no-op. Stop both the pipeline feed and the always-on loop.
-    from agents.orchestrator import STATE
-    STATE.set(running=False, stage="stopped")
-    STATE.emit("orchestrator", "Auto mode stop requested")
+    # Setting STATE alone was decorative: the running core never read it, so the
+    # workflow carried on regardless. Ask the core itself to halt.
+    res = {}
+    try:
+        from agents.orchestrator_core import get_core
+        res = get_core().request_stop("auto mode stop")
+    except Exception as e:
+        res = {"ok": False, "error": str(e)[:120]}
     try:
         from services.income_engine import stop as income_stop
         income_stop()
     except Exception:
         pass
-    return {"message": "Stopped orchestrator + income engine"}
+    return {"message": "Stopping - the current step finishes first, then Jarvis halts.",
+            **res}
 
 @router.get("/status")
 def auto_status():
@@ -10547,24 +10672,32 @@ def list_platform_jobs(platform: Optional[str] = None, limit: int = 100):
 
 @router.get("/today-stats")
 def today_stats():
+    """
+    Dashboard counters.
+
+    Every count is isolated. This used to be one `with conn()` block of bare
+    queries, so a single missing table — hubstaff_jobs on a fresh install, say —
+    500'd the WHOLE endpoint and the dashboard showed nothing at all. A count
+    that can't be taken is 0, not a reason to hide the other seven.
+    """
     today = _now()[:10]
-    with conn() as db:
-        jobs_today = db.execute(
-            "SELECT COUNT(*) as c FROM platform_jobs WHERE scraped_at LIKE ?", (f"{today}%",)
-        ).fetchone()["c"]
-        apps_today = db.execute(
-            "SELECT COUNT(*) as c FROM automation_queue WHERE created_at LIKE ?", (f"{today}%",)
-        ).fetchone()["c"]
-        replies_today = db.execute(
-            "SELECT COUNT(*) as c FROM proposals WHERE got_reply=1 AND updated_at LIKE ?", (f"{today}%",)
-        ).fetchone()["c"]
-        hubstaff_jobs = db.execute("SELECT COUNT(*) as c FROM hubstaff_jobs").fetchone()["c"]
-        cw_tasks = db.execute("SELECT COUNT(*) as c FROM clickworker_tasks WHERE status='available'").fetchone()["c"]
-        zd_tasks = db.execute("SELECT COUNT(*) as c FROM zuodao_tasks WHERE status='available'").fetchone()["c"]
-        proposals_sent = db.execute(
-            "SELECT COUNT(*) as c FROM proposals WHERE status != 'draft'"
-        ).fetchone()["c"]
-        won = db.execute("SELECT COUNT(*) as c FROM proposals WHERE won=1").fetchone()["c"]
+
+    def count(sql, args=()):
+        try:
+            with conn() as db:
+                row = db.execute(sql, args).fetchone()
+            return (row["c"] if row else 0) or 0
+        except Exception:
+            return 0
+
+    jobs_today = count("SELECT COUNT(*) as c FROM platform_jobs WHERE scraped_at LIKE ?", (f"{today}%",))
+    apps_today = count("SELECT COUNT(*) as c FROM automation_queue WHERE created_at LIKE ?", (f"{today}%",))
+    replies_today = count("SELECT COUNT(*) as c FROM proposals WHERE got_reply=1 AND updated_at LIKE ?", (f"{today}%",))
+    hubstaff_jobs = count("SELECT COUNT(*) as c FROM hubstaff_jobs")
+    cw_tasks = count("SELECT COUNT(*) as c FROM clickworker_tasks WHERE status='available'")
+    zd_tasks = count("SELECT COUNT(*) as c FROM zuodao_tasks WHERE status='available'")
+    proposals_sent = count("SELECT COUNT(*) as c FROM proposals WHERE status != 'draft'")
+    won = count("SELECT COUNT(*) as c FROM proposals WHERE won=1")
     return {
         "jobs_today":       jobs_today,
         "apps_generated":   apps_today,
@@ -11403,29 +11536,57 @@ def start_pipeline(req: PipelineRequest):
     invoked. STATE (the SSE feed) in agents.orchestrator is preserved and reused.
     """
     from agents.v9_models import Goal
-    from agents.orchestrator_core import OrchestratorCore
+    from agents.orchestrator_core import get_core, AgentState
+    from fastapi import HTTPException
+
+    core = get_core()          # the SHARED instance, not a throwaway local
+    if core.state not in (AgentState.IDLE, AgentState.COMPLETE,
+                          AgentState.FAILED, AgentState.STOPPED):
+        # Silently doing nothing here is why pressing Start twice looked broken.
+        raise HTTPException(409, f"A pipeline is already running ({core.state.name.lower()}). "
+                                 f"Stop it first, or wait for it to finish.")
+
+    # Pass EVERY field. This used to read `req.max_jobs`, which does not exist
+    # on PipelineRequest — getattr silently returned the default 5, so the
+    # per-platform limit you set was thrown away, and min_score, max_generate,
+    # your_name and your_skills never reached the Goal at all.
     goal = Goal(
         goal_type="freelance_application",
         objective=f"Pipeline across {', '.join(req.platforms)}",
-        constraints={"platforms": req.platforms, "max_jobs": getattr(req, "max_jobs", 5),
-                     "auto_apply": False},
+        constraints={
+            "platforms":        req.platforms,
+            "max_per_platform": req.max_per_platform,
+            "max_jobs":         req.max_per_platform,   # legacy readers
+            "min_score":        req.min_score,
+            "max_generate":     req.max_generate,
+            "your_name":        getattr(req, "your_name", ""),
+            "your_skills":      getattr(req, "your_skills", ""),
+            "auto_apply":       False,
+        },
         approval_required=True,
         success_condition={"min_applied": 0},
     )
-    core = OrchestratorCore()
     core.set_goal(goal)
     import threading
     threading.Thread(target=core.run_full_workflow, daemon=True).start()
-    return {"message": "Pipeline started (OrchestratorCore)", "platforms": req.platforms,
+    return {"message": "Pipeline started", "platforms": req.platforms,
+            "max_per_platform": req.max_per_platform,
+            "min_score": req.min_score, "max_generate": req.max_generate,
             "goal_id": goal.goal_id}
 
 
 @router.post("/stop")
 def stop_pipeline():
-    from agents.orchestrator import STATE
-    STATE.set(running=False, stage="stopped")
-    STATE.emit("orchestrator", "Pipeline stop requested")
-    return {"message": "Stop signal sent"}
+    """
+    Actually stop the running pipeline.
+
+    This used to set a flag on STATE that the core never read, so Stop was
+    decorative. It now asks the core to halt at the next safe point — the step
+    in flight finishes first, so a bid submission is never cut in half.
+    """
+    from agents.orchestrator_core import get_core
+    res = get_core().request_stop("stop pressed")
+    return {"message": "Stopping - the current step will finish first.", **res}
 
 
 @router.get("/status")
