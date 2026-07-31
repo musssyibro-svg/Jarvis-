@@ -53,56 +53,18 @@ _BROWSER_CACHE = {"at": 0.0, "name": None}
 
 def default_browser() -> str:
     """
-    The browser that is ACTUALLY on this machine.
+    The browser actually on this machine.
 
-    "browser" used to mean Chrome, full stop. On a PC without Chrome that's a
-    guaranteed failure, and the user has to say "Edge" every single time — which
-    is precisely the opposite of an assistant that knows your computer.
-
-    Preference order is Edge first on Windows: it ships with the OS, so it is
-    the one browser guaranteed to exist, and it shares the same engine as
-    Chrome so anything automated against one works against the other.
+    Now a thin wrapper over services/providers.py, which does this for EVERY
+    capability rather than special-casing browsers. Jarvis thinks in terms of
+    "search the web", not "run chrome.exe" — so it adapts to whatever is
+    installed instead of expecting the machine to match the code.
     """
-    import time as _t
-    if _BROWSER_CACHE["name"] and _t.time() - _BROWSER_CACHE["at"] < 300:
-        return _BROWSER_CACHE["name"]
-
-    chosen = None
-    # An explicit preference always wins.
     try:
-        from services import config
-        pref = (config.get("preferred_browser", "") or "").strip().lower()
-        if pref:
-            chosen = pref
+        from services import providers
+        return providers.provider_for("web_search") or "edge"
     except Exception:
-        pass
-
-    if not chosen:
-        import os as _os
-        CANDIDATES = [
-            ("edge", [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                      r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"]),
-            ("chrome", [r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-                        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"]),
-            ("firefox", [r"C:\Program Files\Mozilla Firefox\firefox.exe"]),
-        ]
-        for name, paths in CANDIDATES:
-            if any(_os.path.exists(p) for p in paths):
-                chosen = name
-                break
-        if not chosen:
-            # Fall back to whatever app_resolver can find rather than guessing.
-            try:
-                from services.app_resolver import resolve as _r
-                for name in ("edge", "chrome", "firefox"):
-                    if _r(name):
-                        chosen = name
-                        break
-            except Exception:
-                pass
-    chosen = chosen or "edge"
-    _BROWSER_CACHE.update(name=chosen, at=_t.time())
-    return chosen
+        return "edge"
 
 
 def search_url(query: str) -> str:
@@ -259,6 +221,42 @@ def resolve_steps(text: str) -> list[dict] | None:
                             f"List each sender and a one-line summary. If none are "
                             f"visible, say so."}},
         ]
+
+    # ── "message <who> on <app>: <text>" / "send <who> a message" ─────────────
+    # Resolves the APP by capability when none is named: on this machine that
+    # means QQ or WeChat, not whatever a generic assistant would assume.
+    mm = re.match(r"^\s*(?:send|message|text|dm)\s+(?:a\s+message\s+to\s+)?"
+                  r"([\w][\w .\u4e00-\u9fff-]{0,40}?)\s*"
+                  r"(?:\s+(?:on|in|via|using)\s+([\w+]+))?"
+                  r"\s*(?:saying|that says|:|,)\s*[\"'\u201c]?(.+?)[\"'\u201d]?\s*$", low)
+    if mm:
+        who, app_named, body = mm.group(1).strip(), (mm.group(2) or "").strip(), mm.group(3).strip()
+        # "send Ahmed a message ..." — the name is Ahmed, not "Ahmed a message".
+        # The greedy capture swallows the filler, and clicking the wrong contact
+        # means sending a real message to the wrong person.
+        who = re.sub(r"\s+(?:an?\s+)?(?:message|msg|text|dm|note)$", "", who,
+                     flags=re.IGNORECASE).strip()
+        app = _canon_app(app_named) if app_named else None
+        if not app:
+            try:
+                from services import providers
+                app = providers.provider_for("message")
+            except Exception:
+                app = None
+        if app:
+            steps = [
+                {"action": "open_app",        "params": {"name_or_path": app}},
+                {"action": "wait_for_window", "params": {"title": app, "timeout": 15}},
+                # Find the conversation before typing. Sending a message to
+                # whatever chat happens to be open is worse than not sending it.
+                {"action": "click_text",      "params": {"text": who}},
+                {"action": "wait",            "params": {"seconds": 1}},
+            ]
+            steps.append({"action": "compose", "params": {"prompt": body, "topic": body}}
+                         if _wants_composition("write", body)
+                         else {"action": "type_text", "params": {"text": body}})
+            steps.append({"action": "press", "params": {"key": "enter"}})
+            return steps
 
     # ── "open <app> and ask/type/say/search <text>" → open, focus, type, enter ──
     # This is the doubao case: "open doubao and ask it how it is" must actually

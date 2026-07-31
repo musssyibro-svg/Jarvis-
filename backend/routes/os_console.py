@@ -101,6 +101,19 @@ def explain(limit: int = 6):
     return control.explain(limit)
 
 
+@router.get("/providers")
+def providers_status():
+    """
+    What Jarvis will use for each capability on THIS machine, and why.
+
+    "Why did it open Edge?" should have a visible answer before execution, not
+    be a surprise afterwards. Override any of these with a provider_<capability>
+    setting.
+    """
+    from services import providers
+    return providers.status()
+
+
 @router.get("/experience")
 def os_experience(limit: int = 8):
     """
