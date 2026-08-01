@@ -2,52 +2,45 @@
 
 Plain steps. No explanations unless something breaks.
 
----
-
-## Step 1 — Get the new version (5 min)
-
-Open **Git CMD** from your Start Menu. Paste these **one line at a time**:
-
-```
-cd /d D:\
-```
-```
-git clone -b claude/jarvis-automation-rebuild-37xvhr https://github.com/musssyibro-svg/Jarvis-.git jarvis_new
-```
-
-If `D:\jarvis_new` already exists from before, do this instead:
-
-```
-cd /d D:\jarvis_new
-```
-```
-git pull
-```
-
-**If git is slow or blocked:** go to the repo on GitHub in your browser, switch
-the branch to `claude/jarvis-automation-rebuild-37xvhr`, click **Code → Download
-ZIP**, and extract to `D:\jarvis_new`.
+**Stay in `D:\jarvis_v9`.** Don't make a new folder. Everything below works in
+the one you already have.
 
 ---
 
-## Step 2 — Bring your old data across (1 min, optional)
+## Step 1 — Update (2 min)
 
-Keeps your learned timings and any website logins. One line at a time:
+Open `D:\jarvis_v9` in File Explorer. **Double-click `UPDATE.bat`.**
 
-```
-copy D:\jarvis_v9\backend\jarvis.db D:\jarvis_new\backend\
-```
-```
-xcopy /e /i /y D:\jarvis_v9\backend\browser-profile D:\jarvis_new\backend\browser-profile
-```
+That's it. It downloads the newest version and puts it in place. It does **not**
+touch your database, your logins, your settings or your saved token.
 
-Don't delete `D:\jarvis_v9` yet. Keep it until the new one works.
+You don't need git. You don't need to clone anything. Last time the clone
+failed because GitHub timed out *and* because the backticks from my message got
+pasted into the command — that's on me, and `UPDATE.bat` removes the whole
+problem.
+
+If `UPDATE.bat` says every download source failed, your network can't reach
+GitHub right now. Wait a few minutes and run it again.
+
+---
+
+## Step 2 — There is now only ONE launcher
+
+You ran `START_JARVIS.bat`. That was the old V8 one — it pulled the wrong
+models and never installed the UI, which is why `npm run dev` then died with
+*"Cannot find module 'vite'"*.
+
+I deleted it, along with `start.bat`, `start_frontend.bat` and
+`RUN_VALIDATION.bat`. Four launchers, all subtly different, all wrong.
+
+**The only one now is `START.bat`.** If you double-click the old name out of
+habit, it just runs `START.bat` for you.
 
 ---
 
 ## Step 3 — Start it (first run: 10–20 min)
 
-Open `D:\jarvis_new` in File Explorer. **Double-click `START.bat`.**
+**Double-click `START.bat`.**
 
 That's it. It installs everything missing — Python packages, the automation
 browser, UI packages, AI models — then starts Jarvis and opens your browser.
@@ -69,10 +62,20 @@ It prints a numbered list of exactly what to type. Work down the list, then run
 If you still can't get it going, run this and send me the file:
 
 ```
-cd /d D:\jarvis_new
+cd /d D:\jarvis_v9
 ```
 ```
 DOCTOR.bat > doctor_output.txt
+```
+
+**If the UI window shows "Cannot find module 'vite'"** — `START.bat` now
+installs it for you automatically. If it still happens, run:
+
+```
+cd /d D:\jarvis_v9\frontend
+```
+```
+npm install --registry=https://registry.npmmirror.com
 ```
 
 ---
@@ -98,7 +101,21 @@ ollama rm deepseek-r1:latest
 
 ---
 
-## Step 6 — Look at the two new screens first
+## Step 6 — Look at the new screens first
+
+There are four now: **Planner**, **Memory**, **Logs**, and a rebuilt
+**Settings**.
+
+- **Logs** — every decision with a timestamp and a reason. Three tabs: the live
+  feed (filter by subsystem, or "problems only"), the exact code path each
+  request took, and how confident it was in each finished run. This is what you
+  send me instead of describing what happened.
+- **Memory** — everything Jarvis knows, in one editable place. Facts it always
+  has in mind, a search box that runs the *real* retrieval so you can see what a
+  question would pull up, and a way to write down longer things (your rates,
+  how you like proposals worded).
+
+
 
 **Settings** now shows five things, and the important one is at the bottom:
 
@@ -142,10 +159,19 @@ Type them into the Jarvis chat box.
 | `what's on my screen` | Describes your screen in **under a minute** |
 | `why?` | The full step chain of what just happened |
 | `remember that I am a freelance developer` | It saves that and stops asking |
+| `simulate applying for jobs` | What a freelance run *would* do. Sends nothing. |
 
-Before running anything risky you can check it first: go to **Planner → Check a
-command first**, type the sentence, press **Show plan**. It shows you exactly
-what it will do, without doing it.
+Before running anything risky you can check it first. Go to **Planner → Check a
+command first**, type the sentence, and press either:
+
+- **Show plan** — the steps it would run.
+- **Simulate** — the steps *plus* what each one touches, how long it would take
+  on your PC, and what would stop it. Runs nothing at all.
+
+You can do the same in chat: `what would you do if I say open notepad and write
+about yourself`. And before letting it loose on freelancing: `simulate applying
+for jobs` tells you which sites it would search, how many proposals it would
+write, and whether it would submit them — without scanning or sending anything.
 
 If any of those misbehave, tell me **which one** and what it did instead.
 
@@ -218,7 +244,7 @@ they did nothing.
 Not needed. Only do this if you want it.
 
 ```
-cd /d D:\jarvis_new\backend
+cd /d D:\jarvis_v9\backend
 ```
 ```
 pip install fastmcp
@@ -227,20 +253,23 @@ pip install fastmcp
 python mcp_server.py --http
 ```
 
-Then point Cherry Studio, Claude Desktop or Cline at `http://127.0.0.1:8765/mcp`.
+It prints a token. Point Cherry Studio, Claude Desktop or Cline at
+`http://127.0.0.1:8765/mcp` and add that token as a header called
+`X-Jarvis-Token`.
 
-They get fourteen commands — search the web, control the desktop, find freelance
-jobs, look at the screen, ask why something failed. Jarvis stays exactly as it
-is; this is just another way to talk to it.
+They get fifteen commands — search the web, control the desktop, find freelance
+jobs, look at the screen, ask why something failed, and simulate anything first.
+Jarvis stays exactly as it is; this is just another way to talk to it.
 
-It only listens on your own PC. Nothing on your network can reach it.
+It only listens on your own PC, and now it needs the token, so nothing else can
+drive it even from this machine.
 
 ---
 
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 14 or 15 passes.
+purpose and checks it fails honestly. You want 15 or 16 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 
@@ -253,7 +282,7 @@ your accounts. Keep it on `127.0.0.1` — that's the default and you don't have 
 do anything.
 
 If you ever want the freelance engine running but nothing touching your desktop,
-put this line in `D:\jarvis_new\backend\.env`:
+put this line in `D:\jarvis_v9\backend\.env`:
 
 ```
 DESKTOP_CONTROL_ENABLED=0

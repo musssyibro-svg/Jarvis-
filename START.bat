@@ -54,6 +54,35 @@ start "Jarvis Backend" cmd /k "cd /d ""%ROOT%backend"" && %PY% -m uvicorn main:a
 REM ---- frontend ----
 set "NPM=npm"
 where npm >/dev/null 2>/dev/null || set "NPM=npm.cmd"
+
+REM Confirm the build tool is REALLY there before launching the UI window.
+REM "node_modules exists" is not the same question: a ZIP extracted over an old
+REM copy leaves the folder without vite in it, and `npm run dev` then dies with
+REM "Cannot find module 'vite'" in a window that closes too fast to read.
+if not exist "%ROOT%frontend\node_modules\vite\package.json" (
+  echo.
+  echo  The UI packages are missing or incomplete. Installing them now.
+  echo  This takes a few minutes the first time.
+  echo.
+  pushd "%ROOT%frontend"
+  if "%JARVIS_CN%"=="1" (
+    call %NPM% install --no-audit --no-fund --registry=https://registry.npmmirror.com
+  ) else (
+    call %NPM% install --no-audit --no-fund
+  )
+  popd
+)
+if not exist "%ROOT%frontend\node_modules\vite\package.json" (
+  echo.
+  echo  The UI still won't install. Jarvis's backend will start anyway, but
+  echo  there will be no web page. Run this by hand to see the real error:
+  echo.
+  echo      cd /d "%ROOT%frontend"
+  echo      npm install --registry=https://registry.npmmirror.com
+  echo.
+  pause
+)
+
 echo  Starting Jarvis UI...
 start "Jarvis UI" cmd /k "cd /d ""%ROOT%frontend"" && %NPM% run dev"
 
@@ -68,8 +97,17 @@ if not errorlevel 1 goto ready
 curl -s http://localhost:5174 >/dev/null 2>nul
 if not errorlevel 1 ( set "UIPORT=5174" & goto ready2 )
 if %tries% lss 40 goto wait
+echo.
 echo  The UI did not answer after 80 seconds.
-echo  Look at the "Jarvis UI" window for the error.
+echo.
+echo  Look at the "Jarvis UI" window - the error is in there. The usual one is
+echo  "Cannot find module 'vite'", which means the UI packages didn't install.
+echo  Fix it with:
+echo.
+echo      cd /d "%ROOT%frontend"
+echo      npm install --registry=https://registry.npmmirror.com
+echo.
+echo  The backend is still running at http://127.0.0.1:8000 either way.
 goto done
 
 :ready

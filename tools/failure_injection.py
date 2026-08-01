@@ -754,8 +754,83 @@ def s_teach_privacy():
     return r.ok("Passwords are never recorded; normal input still is.")
 
 
+def s_simulation():
+    """
+    A simulation must execute NOTHING. This is the whole feature: a dry run with
+    side effects is worse than no dry run, because it gets trusted.
+    """
+    r = Result("simulation", "Simulating never executes anything")
+    from services import simulate, live_plan
+
+    live_plan.clear()
+
+    # Monkey-patch the executor so that ANY execution during a simulation is
+    # caught, rather than hoping it didn't happen.
+    from agents import desktop_agent
+    fired = {"n": 0}
+    real_run, real_chain = desktop_agent._run_action, desktop_agent.execute_chain
+
+    def trap(*a, **k):
+        fired["n"] += 1
+        return {"success": False, "error": "trapped"}
+
+    desktop_agent._run_action = trap
+    desktop_agent.execute_chain = trap
+    try:
+        sim = simulate.task("open notepad and type hello and analyze the page")
+        earn = simulate.earning()
+    finally:
+        desktop_agent._run_action, desktop_agent.execute_chain = real_run, real_chain
+
+    if fired["n"]:
+        return r.bad(f"Simulating ran {fired['n']} real action(s). A dry run with "
+                     f"side effects is the worst possible version of this feature.")
+    r.note("no desktop action was executed")
+
+    if live_plan.snapshot()["status"] != "none":
+        return r.bad("Simulating published a live plan — the UI would show work "
+                     "in progress that isn't happening.")
+    r.note("no plan was published")
+
+    if not sim.get("would"):
+        return r.bad("Task simulation produced no steps to show.")
+    if len(sim["would"]) < 3:
+        return r.bad(f"Only {len(sim['would'])} step(s) — the sentence has three "
+                     f"clauses, so decomposition didn't run.")
+    r.note(f"showed {len(sim['would'])} steps with effects and estimates")
+
+    # Every step must declare what it touches; "unknown" everywhere would make
+    # the risk column decorative.
+    unknown = [w for w in sim["would"] if w["level"] == "unknown"]
+    if unknown:
+        return r.bad(f"{len(unknown)} step(s) don't say what they'd touch: "
+                     + ", ".join(w["action"] for w in unknown))
+    if not any(w["level"] in ("writes", "sensitive") for w in sim["would"]):
+        return r.bad("Typing wasn't flagged as changing anything.")
+    r.note("side effects are labelled, typing flagged as a change")
+
+    if not earn.get("would") or "note" not in earn:
+        return r.bad("Freelance simulation returned nothing usable.")
+    if earn.get("auto_submit") and not any("auto-submit is ON" in w.lower() or
+                                           "auto-submit" in w.lower()
+                                           for w in earn.get("warnings", [])):
+        return r.bad("Auto-submit is on and the simulation didn't warn about it.")
+    r.note("freelance cycle described without scanning or sending")
+
+    # The trigger must be explicit. If a plain command were read as a request to
+    # simulate, the thing the user asked for would silently not happen.
+    if simulate.match("open notepad and type hello") is not None:
+        return r.bad("A normal command was mistaken for a simulation request. "
+                     "The user's actual command would silently not run.")
+    if simulate.match("what would you do if I say open notepad") is None:
+        return r.bad("An explicit simulation request wasn't recognised.")
+    r.note("only explicit requests trigger a simulation")
+    return r.ok("Shows the full plan and its effects, executes nothing.")
+
+
 SCENARIOS = {
     "control":        (s_control, False),
+    "simulation":     (s_simulation, False),
     "decompose":      (s_decompose, False),
     "plan_visibility": (s_plan_visibility, False),
     "selfeval":       (s_selfeval, False),

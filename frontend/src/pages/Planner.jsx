@@ -47,6 +47,93 @@ function btn(color, disabled) {
 
 const secs = (ms) => (ms == null ? "" : ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`);
 
+/* How alarming is a step? Only three tiers, because a legend nobody reads is
+   the same as no legend. Safe steps are grey and get out of the way. */
+const RISK = {
+  safe:      { c: T.dim,    mark: "·" },
+  visible:   { c: T.cyan,   mark: "·" },
+  network:   { c: T.cyan,   mark: "·" },
+  writes:    { c: T.amber,  mark: "!" },
+  disruptive:{ c: T.amber,  mark: "!" },
+  sensitive: { c: T.red,    mark: "!!" },
+  unknown:   { c: T.amber,  mark: "?" },
+};
+
+function Simulation({ sim }) {
+  if (sim.loading) {
+    return <div style={{ marginTop: 12, fontSize: 12, color: T.dim }}>Working it out…</div>;
+  }
+  const earning = sim.kind === "earning";
+  const steps = sim.would || [];
+
+  return (
+    <div style={{ marginTop: 14, padding: 14, borderRadius: 11,
+                  background: "rgba(169,139,255,0.06)",
+                  border: `1px solid rgba(169,139,255,0.25)` }}>
+      <div style={{ ...label, color: T.violet, marginBottom: 10 }}>
+        {earning ? "If you start earning now" : "If you run that"}
+      </div>
+
+      {!sim.possible && (
+        <div style={{ fontSize: 12.5, color: T.amber, marginBottom: 10 }}>
+          {sim.reason || "This can't run right now."}
+        </div>
+      )}
+
+      {steps.map((s, i) => {
+        const r = RISK[s.level] || RISK.unknown;
+        return (
+          <div key={i} style={{ display: "flex", gap: 10, padding: "5px 0",
+                                alignItems: "baseline" }}>
+            <span style={{ color: r.c, width: 18, fontSize: 12, flexShrink: 0 }}>
+              {r.mark}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, color: T.text }}>
+                {s.text || s.would}
+              </div>
+              {s.effect && (
+                <div style={{ fontSize: 11, color: r.c, marginTop: 2 }}>
+                  {s.effect} · ~{s.seconds}s ({s.basis})
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {sim.estimate && (
+        <div style={{ fontSize: 12, color: T.text, marginTop: 10 }}>
+          Would take {sim.estimate}.
+          {sim.changes_things?.length > 0 &&
+            ` ${sim.changes_things.length} of ${steps.length} steps change something
+              outside Jarvis.`}
+        </div>
+      )}
+
+      {(sim.blockers || []).map((b, i) => (
+        <div key={i} style={{ fontSize: 11.5, marginTop: 7,
+                              color: b.fatal ? T.red : T.amber }}>
+          {b.fatal ? "Stops it: " : "Heads up: "}{b.what} — {b.fix}
+        </div>
+      ))}
+      {(sim.warnings || []).map((w, i) => (
+        <div key={i} style={{ fontSize: 11.5, color: T.amber, marginTop: 7 }}>{w}</div>
+      ))}
+      {(sim.unresolved || []).map((u, i) => (
+        <div key={i} style={{ fontSize: 11.5, color: T.amber, marginTop: 7 }}>
+          I don't understand this part: "{u}"
+        </div>
+      ))}
+
+      <div style={{ fontSize: 11, color: T.dim, marginTop: 12,
+                    borderTop: `1px solid ${T.line}`, paddingTop: 9 }}>
+        {sim.note}
+      </div>
+    </div>
+  );
+}
+
 export default function Planner({ live = [] }) {
   const [plan, setPlan] = useState(null);
   const [why, setWhy] = useState(null);
@@ -54,6 +141,7 @@ export default function Planner({ live = [] }) {
   const [teach, setTeach] = useState(null);
   const [teachName, setTeachName] = useState("");
   const [preview, setPreview] = useState(null);
+  const [sim, setSim] = useState(null);
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const timer = useRef(null);
@@ -102,8 +190,13 @@ export default function Planner({ live = [] }) {
     load();
   };
 
+  /* Two levels of "before you run it".
+     Show plan  — the step list, instant, no backend work beyond parsing.
+     Simulate   — the same steps PLUS what each one touches, how long it would
+                  take on this machine, and what would block it. Runs nothing. */
   const doPreview = async () => {
     if (!draft.trim()) return;
+    setPreview(null);
     try {
       const r = await fetch(`${API}/os/plan/preview`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -111,6 +204,18 @@ export default function Planner({ live = [] }) {
       });
       setPreview(await r.json());
     } catch { setPreview({ plan: [], unresolved: [draft] }); }
+  };
+
+  const doSimulate = async (command) => {
+    setPreview(null);
+    setSim({ loading: true });
+    try {
+      const r = await fetch(`${API}/os/simulate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(command ? { command } : {}),
+      });
+      setSim(await r.json());
+    } catch { setSim({ possible: false, reason: "backend didn't answer" }); }
   };
 
   const teachToggle = async () => {
@@ -231,7 +336,18 @@ export default function Planner({ live = [] }) {
                             border: `1px solid ${T.line}`, borderRadius: 8,
                             padding: "8px 11px", fontSize: 12, outline: "none" }} />
             <button style={btn(T.cyan)} onClick={doPreview}>Show plan</button>
+            <button style={btn(T.violet)} onClick={() => doSimulate(draft)}>Simulate</button>
           </div>
+          <div style={{ fontSize: 11, color: T.dim, marginTop: 7 }}>
+            Simulate also shows what each step would touch, how long it would
+            take on this PC, and what would stop it. It runs nothing.{" "}
+            <button onClick={() => doSimulate("")}
+                    style={{ background: "none", border: "none", color: T.violet,
+                             cursor: "pointer", fontSize: 11, padding: 0 }}>
+              Simulate a freelance run instead
+            </button>
+          </div>
+          {sim && <Simulation sim={sim} />}
           {preview && (
             <div style={{ marginTop: 10, fontSize: 12 }}>
               {(preview.plan || []).map((p, i) => (

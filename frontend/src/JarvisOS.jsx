@@ -18,6 +18,8 @@ import Chat from "./pages/Chat";
 import Agents from "./pages/Agents";
 import Earn from "./pages/Earn";
 import Planner from "./pages/Planner";
+import Logs from "./pages/Logs";
+import Memory from "./pages/Memory";
 import Settings from "./pages/Settings";
 
 /* ── One visual language ─────────────────────────────────────────────────── */
@@ -42,6 +44,8 @@ const SURFACES = [
   { id: "planner",   label: "Planner",   icon: "◫" },
   { id: "computer",  label: "Computer",  icon: "⬒" },
   { id: "freelance", label: "Earn",      icon: "◆" },
+  { id: "memory",    label: "Memory",    icon: "◧" },
+  { id: "logs",      label: "Logs",      icon: "≡" },
   { id: "diag",      label: "Diagnostics", icon: "◇" },
   { id: "settings",  label: "Settings",  icon: "⚙" },
 ];
@@ -377,6 +381,8 @@ export default function JarvisOS() {
               {id === "planner"   && <Planner live={feed} />}
               {id === "computer"  && <Agents live={feed} />}
               {id === "freelance" && <Earn live={feed} />}
+              {id === "memory"    && <Memory />}
+              {id === "logs"      && <Logs live={feed} />}
               {id === "diag"      && <Diagnostics />}
               {id === "settings"  && <Settings />}
             </div>

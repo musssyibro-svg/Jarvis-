@@ -214,6 +214,20 @@ def os_plan_control(command: str, body: dict | None = None):
     return res
 
 
+@router.post("/simulate")
+def os_simulate(body: dict | None = None):
+    """
+    "What would you do?" — the full plan, every side effect, a time estimate,
+    and anything that would block it. Executes nothing: no window opens, no page
+    loads, no proposal is sent.
+
+    Pass {"command": "..."} for a task, or {} for a freelance cycle.
+    """
+    from services import simulate
+    cmd = ((body or {}).get("command") or "").strip()
+    return simulate.task(cmd) if cmd else simulate.earning()
+
+
 @router.get("/why")
 def os_why():
     """

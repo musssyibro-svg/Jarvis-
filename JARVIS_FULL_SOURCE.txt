@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 173 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 176 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -10,181 +10,184 @@ TABLE OF CONTENTS
   1. AGENT_EXTENSIBILITY_REPORT.md
   2. ARCHITECTURE.md
   3. BRAIN_GUIDE.md
-  4. CONTROL_FLOW_REPORT.md
-  5. DEEPSEEK_BLOCKERS_FIX.md
-  6. DO_THIS.md
-  7. FIX_MY_INSTALL.md
-  8. FRESH_EYES_AUDIT_2026-07-03.md
-  9. HIDDEN_RUNTIME_AUDIT.md
- 10. MIGRATION_CHANGELOG.md
- 11. PLANNER_AND_DOCTOR.md
- 12. PRE_RELEASE_AUDIT.md
- 13. QA_VERIFICATION_REPORT.md
- 14. README.md
- 15. README_START_HERE.md
- 16. REAL_MACHINE_FIXES.md
- 17. RESEARCH_UPGRADE_2026-07.md
- 18. RUNTIME_VALIDATION_README.md
- 19. STAGE2_CHANGELOG.md
- 20. START_HERE.md
- 21. TESTING_STAGES.md
- 22. V8_PHASE1_REPORT.md
- 23. V9_FINAL_README.md
- 24. V9_STAGE1_MIGRATION.md
- 25. WHAT_JARVIS_NEEDS_FROM_YOU.md
- 26. WINDOWS_DEPLOYMENT.md
- 27. WINDOWS_FAILURE_ANALYSIS.md
- 28. backend/README.md
- 29. backend/adapters/__init__.py
- 30. backend/adapters/commander_adapter.py
- 31. backend/agents/__init__.py
- 32. backend/agents/base_agent.py
- 33. backend/agents/browser_agent.py
- 34. backend/agents/commander.py
- 35. backend/agents/custom/__init__.py
- 36. backend/agents/desktop_agent.py
- 37. backend/agents/executor_agent.py
- 38. backend/agents/memory_agent.py
- 39. backend/agents/orchestrator.py
- 40. backend/agents/orchestrator_core.py
- 41. backend/agents/perception_agent.py
- 42. backend/agents/proposal_agent.py
- 43. backend/agents/registry.py
- 44. backend/agents/scheduler.py
- 45. backend/agents/score_agent.py
- 46. backend/agents/scout_agent.py
- 47. backend/agents/v9_models.py
- 48. backend/agents/vision_agent.py
- 49. backend/core/__init__.py
- 50. backend/core/browser_lock.py
- 51. backend/main.py
- 52. backend/mcp_server.py
- 53. backend/models/__init__.py
- 54. backend/models/clickworker.py
- 55. backend/models/db.py
- 56. backend/models/fiverr.py
- 57. backend/models/hubstaff.py
- 58. backend/models/zuodao.py
- 59. backend/platforms/__init__.py
- 60. backend/platforms/base.py
- 61. backend/platforms/contra.py
- 62. backend/platforms/hubstaff.py
- 63. backend/platforms/peopleperhour.py
- 64. backend/platforms/remoteco.py
- 65. backend/platforms/remoteok.py
- 66. backend/platforms/wellfound.py
- 67. backend/platforms/weworkremotely.py
- 68. backend/requirements.txt
- 69. backend/routes/__init__.py
- 70. backend/routes/agents.py
- 71. backend/routes/analytics.py
- 72. backend/routes/automation.py
- 73. backend/routes/brain.py
- 74. backend/routes/clickworker.py
- 75. backend/routes/fiverr.py
- 76. backend/routes/hubstaff.py
- 77. backend/routes/messages.py
- 78. backend/routes/mind.py
- 79. backend/routes/orchestrator.py
- 80. backend/routes/orchestrator_feed.py
- 81. backend/routes/os_console.py
- 82. backend/routes/planner.py
- 83. backend/routes/proposals.py
- 84. backend/routes/pulse.py
- 85. backend/routes/scraper.py
- 86. backend/routes/sessions.py
- 87. backend/routes/system.py
- 88. backend/routes/workflows.py
- 89. backend/routes/zuodao.py
- 90. backend/services/__init__.py
- 91. backend/services/analytics_service.py
- 92. backend/services/app_resolver.py
- 93. backend/services/auth.py
- 94. backend/services/bid_executor.py
- 95. backend/services/brain_core.py
- 96. backend/services/brain_decision.py
- 97. backend/services/brain_service.py
- 98. backend/services/browser_monitor.py
- 99. backend/services/capability_registry.py
-100. backend/services/clickworker_service.py
-101. backend/services/config.py
-102. backend/services/control.py
-103. backend/services/custom_platforms.py
-104. backend/services/decompose.py
-105. backend/services/deepseek_service.py
-106. backend/services/diagnostics.py
-107. backend/services/environment.py
-108. backend/services/event_bus.py
-109. backend/services/experience.py
-110. backend/services/fiverr_service.py
-111. backend/services/freelancer_api.py
-112. backend/services/hubstaff_service.py
-113. backend/services/income_engine.py
-114. backend/services/live_plan.py
-115. backend/services/maintenance.py
-116. backend/services/model_router.py
-117. backend/services/narrate.py
-118. backend/services/ollama_manager.py
-119. backend/services/os_state.py
-120. backend/services/persona.py
-121. backend/services/planner_service.py
-122. backend/services/platform_health.py
-123. backend/services/platform_meta.py
-124. backend/services/profile_service.py
-125. backend/services/providers.py
-126. backend/services/pulse_service.py
-127. backend/services/reflection.py
-128. backend/services/selfeval.py
-129. backend/services/session_manager.py
-130. backend/services/teach.py
-131. backend/services/tool_registry.py
-132. backend/services/trace.py
-133. backend/services/vault.py
-134. backend/services/workflow_service.py
-135. backend/services/world_model.py
-136. backend/services/zuodao_service.py
-137. frontend/index.html
-138. frontend/package.json
-139. frontend/src/App.jsx
-140. frontend/src/JarvisOS.jsx
-141. frontend/src/colors.js
-142. frontend/src/components/UI.jsx
-143. frontend/src/config.js
-144. frontend/src/index.css
-145. frontend/src/main.jsx
-146. frontend/src/pages/Agents.jsx
-147. frontend/src/pages/Chat.jsx
-148. frontend/src/pages/Earn.jsx
-149. frontend/src/pages/Planner.jsx
-150. frontend/src/pages/Settings.jsx
-151. frontend/vite.config.js
-152. .gitignore
-153. DOCTOR.bat
-154. FINAL_PROJECT_TREE_backend.txt
-155. FINAL_PROJECT_TREE_frontend.txt
-156. LEGACY_GREP_ARTIFACT.txt
-157. PROJECT_TREE.txt
-158. REQUIREMENTS_SNAPSHOT.txt
-159. RUNTIME_VALIDATION.py
-160. RUN_FAILURE_TEST.bat
-161. RUN_VALIDATION.bat
-162. START.bat
-163. START_JARVIS.bat
-164. failure_injection_report.txt
-165. legacy_dependency_report.json
-166. requirements.txt
-167. start.bat
-168. start.sh
-169. start_frontend.bat
-170. tools/doctor.py
-171. tools/dump_source.py
-172. tools/failure_injection.py
-173. tools/setup.py
+  4. CLAUDE.md
+  5. CONTROL_FLOW_REPORT.md
+  6. DEEPSEEK_BLOCKERS_FIX.md
+  7. DO_THIS.md
+  8. FIX_MY_INSTALL.md
+  9. FRESH_EYES_AUDIT_2026-07-03.md
+ 10. HIDDEN_RUNTIME_AUDIT.md
+ 11. MIGRATION_CHANGELOG.md
+ 12. PLANNER_AND_DOCTOR.md
+ 13. PRE_RELEASE_AUDIT.md
+ 14. QA_VERIFICATION_REPORT.md
+ 15. README.md
+ 16. README_START_HERE.md
+ 17. REAL_MACHINE_FIXES.md
+ 18. RESEARCH_UPGRADE_2026-07.md
+ 19. RUNTIME_VALIDATION_README.md
+ 20. STAGE2_CHANGELOG.md
+ 21. START_HERE.md
+ 22. TESTING_STAGES.md
+ 23. V8_PHASE1_REPORT.md
+ 24. V9_FINAL_README.md
+ 25. V9_STAGE1_MIGRATION.md
+ 26. WHAT_JARVIS_NEEDS_FROM_YOU.md
+ 27. WINDOWS_DEPLOYMENT.md
+ 28. WINDOWS_FAILURE_ANALYSIS.md
+ 29. backend/README.md
+ 30. backend/adapters/__init__.py
+ 31. backend/adapters/commander_adapter.py
+ 32. backend/agents/__init__.py
+ 33. backend/agents/base_agent.py
+ 34. backend/agents/browser_agent.py
+ 35. backend/agents/commander.py
+ 36. backend/agents/custom/__init__.py
+ 37. backend/agents/desktop_agent.py
+ 38. backend/agents/executor_agent.py
+ 39. backend/agents/memory_agent.py
+ 40. backend/agents/orchestrator.py
+ 41. backend/agents/orchestrator_core.py
+ 42. backend/agents/perception_agent.py
+ 43. backend/agents/proposal_agent.py
+ 44. backend/agents/registry.py
+ 45. backend/agents/scheduler.py
+ 46. backend/agents/score_agent.py
+ 47. backend/agents/scout_agent.py
+ 48. backend/agents/v9_models.py
+ 49. backend/agents/vision_agent.py
+ 50. backend/core/__init__.py
+ 51. backend/core/browser_lock.py
+ 52. backend/main.py
+ 53. backend/mcp_server.py
+ 54. backend/models/__init__.py
+ 55. backend/models/clickworker.py
+ 56. backend/models/db.py
+ 57. backend/models/fiverr.py
+ 58. backend/models/hubstaff.py
+ 59. backend/models/zuodao.py
+ 60. backend/platforms/__init__.py
+ 61. backend/platforms/base.py
+ 62. backend/platforms/contra.py
+ 63. backend/platforms/hubstaff.py
+ 64. backend/platforms/peopleperhour.py
+ 65. backend/platforms/remoteco.py
+ 66. backend/platforms/remoteok.py
+ 67. backend/platforms/wellfound.py
+ 68. backend/platforms/weworkremotely.py
+ 69. backend/requirements.txt
+ 70. backend/routes/__init__.py
+ 71. backend/routes/agents.py
+ 72. backend/routes/analytics.py
+ 73. backend/routes/automation.py
+ 74. backend/routes/brain.py
+ 75. backend/routes/clickworker.py
+ 76. backend/routes/fiverr.py
+ 77. backend/routes/hubstaff.py
+ 78. backend/routes/messages.py
+ 79. backend/routes/mind.py
+ 80. backend/routes/orchestrator.py
+ 81. backend/routes/orchestrator_feed.py
+ 82. backend/routes/os_console.py
+ 83. backend/routes/planner.py
+ 84. backend/routes/proposals.py
+ 85. backend/routes/pulse.py
+ 86. backend/routes/scraper.py
+ 87. backend/routes/sessions.py
+ 88. backend/routes/system.py
+ 89. backend/routes/workflows.py
+ 90. backend/routes/zuodao.py
+ 91. backend/services/__init__.py
+ 92. backend/services/analytics_service.py
+ 93. backend/services/app_resolver.py
+ 94. backend/services/auth.py
+ 95. backend/services/bid_executor.py
+ 96. backend/services/brain_core.py
+ 97. backend/services/brain_decision.py
+ 98. backend/services/brain_service.py
+ 99. backend/services/browser_monitor.py
+100. backend/services/capability_registry.py
+101. backend/services/clickworker_service.py
+102. backend/services/config.py
+103. backend/services/control.py
+104. backend/services/custom_platforms.py
+105. backend/services/decompose.py
+106. backend/services/deepseek_service.py
+107. backend/services/diagnostics.py
+108. backend/services/environment.py
+109. backend/services/event_bus.py
+110. backend/services/experience.py
+111. backend/services/fiverr_service.py
+112. backend/services/freelancer_api.py
+113. backend/services/hubstaff_service.py
+114. backend/services/income_engine.py
+115. backend/services/live_plan.py
+116. backend/services/maintenance.py
+117. backend/services/model_router.py
+118. backend/services/narrate.py
+119. backend/services/ollama_manager.py
+120. backend/services/os_state.py
+121. backend/services/persona.py
+122. backend/services/planner_service.py
+123. backend/services/platform_health.py
+124. backend/services/platform_meta.py
+125. backend/services/profile_service.py
+126. backend/services/providers.py
+127. backend/services/pulse_service.py
+128. backend/services/reflection.py
+129. backend/services/selfeval.py
+130. backend/services/session_manager.py
+131. backend/services/simulate.py
+132. backend/services/teach.py
+133. backend/services/tool_registry.py
+134. backend/services/trace.py
+135. backend/services/vault.py
+136. backend/services/workflow_service.py
+137. backend/services/world_model.py
+138. backend/services/zuodao_service.py
+139. frontend/index.html
+140. frontend/package.json
+141. frontend/src/App.jsx
+142. frontend/src/JarvisOS.jsx
+143. frontend/src/colors.js
+144. frontend/src/components/UI.jsx
+145. frontend/src/config.js
+146. frontend/src/index.css
+147. frontend/src/main.jsx
+148. frontend/src/pages/Agents.jsx
+149. frontend/src/pages/Chat.jsx
+150. frontend/src/pages/Earn.jsx
+151. frontend/src/pages/Logs.jsx
+152. frontend/src/pages/Memory.jsx
+153. frontend/src/pages/Planner.jsx
+154. frontend/src/pages/Settings.jsx
+155. frontend/vite.config.js
+156. .gitignore
+157. DOCTOR.bat
+158. FINAL_PROJECT_TREE_backend.txt
+159. FINAL_PROJECT_TREE_frontend.txt
+160. LEGACY_GREP_ARTIFACT.txt
+161. PROJECT_TREE.txt
+162. REQUIREMENTS_SNAPSHOT.txt
+163. RUNTIME_VALIDATION.py
+164. RUN_FAILURE_TEST.bat
+165. START.bat
+166. START_JARVIS.bat
+167. UPDATE.bat
+168. failure_injection_report.txt
+169. legacy_dependency_report.json
+170. requirements.txt
+171. start.sh
+172. tools/doctor.py
+173. tools/dump_source.py
+174. tools/failure_injection.py
+175. tools/setup.py
+176. tools/update.py
 
 
 
 ################################################################################
-# FILE 1/173: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 1/176: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -250,7 +253,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 2/173: ARCHITECTURE.md
+# FILE 2/176: ARCHITECTURE.md
 ################################################################################
 ```md
 # Jarvis architecture (foundational layer)
@@ -317,7 +320,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 3/173: BRAIN_GUIDE.md
+# FILE 3/176: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -373,7 +376,219 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/173: CONTROL_FLOW_REPORT.md
+# FILE 4/176: CLAUDE.md
+################################################################################
+```md
+# Jarvis — how to work on this repo
+
+Read this before writing code. It is not a style guide; it is the set of
+decisions that have already been made, and the reasons, so they don't get
+re-litigated or accidentally undone.
+
+---
+
+## What Jarvis is
+
+A local AI operating system on one Windows PC in mainland China. It controls the
+desktop, drives a logged-in browser, and runs an autonomous freelance income
+engine. One user. No cloud dependency. No VPN.
+
+**Jarvis Core is permanent. Everything else is a client.** The React console,
+Cherry Studio, Claude Desktop, whatever comes next — they are interchangeable
+ways to reach the same backend. Never move logic into a frontend. Never make a
+capability reachable only from one client.
+
+---
+
+## The one rule that outranks all the others
+
+**Never report something as done unless it was verified.**
+
+Not "the API call returned 200". Not "the function didn't raise". Verified means
+the world was observed afterwards and the change was actually there: the window
+exists, the text is in the field, the page loaded, the proposal was sent.
+
+This is not a nicety. A system that can type on your keyboard and submit
+proposals to real clients under your name is only usable if its reports are
+true. A false "Done ✓" is worse than a crash, because a crash is visible.
+
+Applies to your own work too. Do not tell the user a fix works until you have
+run it. If you couldn't run it, say which part is unverified and why.
+
+---
+
+## Before you write anything
+
+1. **Search this repository first.** Most things already exist. `experience.py`
+   already learns per-app timings. `providers.py` already picks apps by
+   capability. `control.py` already does cooperative pause/cancel. `trace.py`
+   already records request paths. Adding a second one of these is worse than
+   having none, because they will disagree.
+2. **Then search for a maintained library.** Do not write an OCR engine, a
+   scheduler, a browser driver, a vector store, or an auth library.
+3. **Then adapt something from the community**, with a comment saying where it
+   came from and what was changed.
+4. **Only then write it from scratch**, and say in the module docstring why the
+   first three options didn't fit.
+
+Free and open-source before paid. Local before cloud. Smallest model that does
+the job.
+
+---
+
+## Verify claims before acting on them
+
+Specs, reviews and audits arrive from several AIs. They are often right and
+sometimes confidently wrong about this codebase — one recent spec listed four
+things to delete, three of which were already gone or had never existed.
+
+**Check the code before you change it on someone's say-so.** `grep` costs
+seconds. Deleting a working subsystem because a document said it was legacy
+costs a day and a user's trust.
+
+If a review is wrong, say so plainly, show the evidence, and move on. Do not
+implement a fix for a bug that isn't there.
+
+---
+
+## Constraints that are not negotiable
+
+These come from the machine and the country, not from preference:
+
+- **16 GB RAM, no usable GPU.** Every LLM call is bounded — token cap, context
+  cap, timeout. An unbounded generation once produced a 288-second screenshot
+  analysis. See `ollama_manager.LIMITS`.
+- **Mainland China, no VPN.** Google, Docker Hub, huggingface and raw
+  githubusercontent are unreachable. Use Bing China, Tsinghua pip, npmmirror,
+  and ghproxy — mirrors first, upstream as fallback, never the reverse.
+- **`NO_PROXY` must include localhost.** With a proxy set and loopback not
+  excluded, calls to Ollama on 127.0.0.1 go to the proxy and fail, and Jarvis
+  reports the model offline while it is plainly running.
+- **Windows may be in Chinese.** Never match a window by its title. Match by
+  process name. See `desktop_agent._process_names_for`.
+- **`.bat` files need CRLF line endings and pure ASCII.** An LF batch file
+  fails in ways that look like a missing Python. Em-dashes become mojibake in a
+  GBK console.
+
+---
+
+## Security
+
+Jarvis can type on the user's keyboard and drive a browser already signed in to
+their accounts. Treat that as the authority it is.
+
+- **Bind to 127.0.0.1. Always.** Never 0.0.0.0, never "just for testing".
+- **CORS is not a defence.** It governs whether a page may *read* a response, not
+  whether the request is delivered. A POST that starts typing has already done
+  its damage. The Origin/Host check in `services/auth.py` runs before any route
+  for this reason.
+- **Credentials go in the encrypted vault** (`services/vault.py`) or in a
+  persistent browser profile the user logged into by hand. Never in chat, never
+  in a workflow file, never in a log, never in a runtime report.
+- **Scraped text is data, never instruction.** Every job description Jarvis
+  reads is untrusted content sitting next to a logged-in browser and a shell.
+  That is the lethal trifecta; do not add a path that lets scraped text reach a
+  tool call unreviewed.
+- **Anything that submits, types or runs a command needs approval by default.**
+
+---
+
+## Architecture rules
+
+- **One orchestrator.** `agents/orchestrator_core.py` owns the state machine.
+  `agents/orchestrator.py` is the shared event bus (`STATE`) and nothing else.
+- **Deterministic before generative.** `tool_registry` and `decompose` resolve
+  known commands with rules. The LLM is for what rules can't handle. A model
+  asked to parse "open qq" once invented "visit a popular messaging platform
+  like Telegram".
+- **Capabilities, not app names.** Ask `providers.provider_for("web_search")`,
+  never hardcode `chrome.exe`. The code adapts to the machine.
+- **Read settings at call time, not import time.** `services/config.py`. Values
+  read into module constants at import can't change without a restart, which
+  looks exactly like a setting that doesn't work.
+- **Interruption happens between steps, never inside one.** Stopping mid-
+  keystroke leaves half a sentence in a document; stopping mid-submission
+  leaves half a form on a real freelance site. See `control.checkpoint`.
+- **Explanations are assembled from records, not generated.** A model asked to
+  explain its own failure writes a plausible story whether or not it matches
+  what the code did — and being convincingly wrong is worse than silent.
+
+---
+
+## When something is partly understood
+
+Say so. Do not run the half you understood and report success.
+
+The worst class of bug in this project is silent partial execution: a sentence
+where two clauses parsed and one didn't, and the reply said "Done ✓". If part of
+a request can't be handled, do the rest and name what you skipped.
+
+---
+
+## Errors
+
+- Never swallow an exception to make a path look like it worked.
+- Every error message states the **cause** and the **fix**, not the symptom.
+  "open_app failed" is useless. "Windows couldn't find that application — open
+  it manually once so Jarvis can learn its real path" is not.
+- A missing optional dependency is a **skip with an install hint**, not a
+  failure. Reporting it as a failure sends the user hunting for a bug that
+  isn't there.
+
+---
+
+## Testing
+
+`python tools/failure_injection.py` — breaks things on purpose and checks Jarvis
+fails honestly. Run it before claiming anything is finished. Add a scenario for
+each new subsystem; the scenario should describe the *user-visible harm*, not
+the function signature.
+
+Current baseline: 14 passed, 0 failed, 1 skipped (clipboard needs a display).
+
+---
+
+## Code
+
+Python: PEP 8, type hints, small focused functions, no global state beyond the
+few deliberate module singletons. JavaScript: small components, async/await,
+no hardcoded API URLs — import from `config.js`.
+
+Comments explain **why**, especially why an obvious alternative was rejected.
+Do not comment what the code already says. Do not leave dead code.
+
+---
+
+## Documentation
+
+- `DO_THIS.md` — what the user actually runs. Plain English, no jargon,
+  **one command per line with no inline commentary** (a code block with a
+  trailing note was once pasted whole into a terminal and ran as one line).
+- `JARVIS_FULL_SOURCE.txt` — regenerate with `python tools/dump_source.py`
+  after every change.
+- Module docstrings carry the reasoning. That is where the "why" lives.
+
+---
+
+## Git
+
+Small focused commits. Message says what changed and **why it was wrong
+before**. Never commit broken code. Never commit secrets, tokens, or
+`.jarvis_token`.
+
+---
+
+## The filter for every new feature
+
+> Does this make Jarvis more autonomous, or more trustworthy?
+
+If neither, don't build it. A prettier dashboard is not the goal. An assistant
+that understands the machine, learns the user's habits, does the work, and can
+be believed when it says what it did — that is the goal.
+```
+
+################################################################################
+# FILE 5/176: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -428,7 +643,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 5/173: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 6/176: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -507,59 +722,52 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 6/173: DO_THIS.md
+# FILE 7/176: DO_THIS.md
 ################################################################################
 ```md
 # Do this
 
 Plain steps. No explanations unless something breaks.
 
----
-
-## Step 1 — Get the new version (5 min)
-
-Open **Git CMD** from your Start Menu. Paste these **one line at a time**:
-
-```
-cd /d D:\
-```
-```
-git clone -b claude/jarvis-automation-rebuild-37xvhr https://github.com/musssyibro-svg/Jarvis-.git jarvis_new
-```
-
-If `D:\jarvis_new` already exists from before, do this instead:
-
-```
-cd /d D:\jarvis_new
-```
-```
-git pull
-```
-
-**If git is slow or blocked:** go to the repo on GitHub in your browser, switch
-the branch to `claude/jarvis-automation-rebuild-37xvhr`, click **Code → Download
-ZIP**, and extract to `D:\jarvis_new`.
+**Stay in `D:\jarvis_v9`.** Don't make a new folder. Everything below works in
+the one you already have.
 
 ---
 
-## Step 2 — Bring your old data across (1 min, optional)
+## Step 1 — Update (2 min)
 
-Keeps your learned timings and any website logins. One line at a time:
+Open `D:\jarvis_v9` in File Explorer. **Double-click `UPDATE.bat`.**
 
-```
-copy D:\jarvis_v9\backend\jarvis.db D:\jarvis_new\backend\
-```
-```
-xcopy /e /i /y D:\jarvis_v9\backend\browser-profile D:\jarvis_new\backend\browser-profile
-```
+That's it. It downloads the newest version and puts it in place. It does **not**
+touch your database, your logins, your settings or your saved token.
 
-Don't delete `D:\jarvis_v9` yet. Keep it until the new one works.
+You don't need git. You don't need to clone anything. Last time the clone
+failed because GitHub timed out *and* because the backticks from my message got
+pasted into the command — that's on me, and `UPDATE.bat` removes the whole
+problem.
+
+If `UPDATE.bat` says every download source failed, your network can't reach
+GitHub right now. Wait a few minutes and run it again.
+
+---
+
+## Step 2 — There is now only ONE launcher
+
+You ran `START_JARVIS.bat`. That was the old V8 one — it pulled the wrong
+models and never installed the UI, which is why `npm run dev` then died with
+*"Cannot find module 'vite'"*.
+
+I deleted it, along with `start.bat`, `start_frontend.bat` and
+`RUN_VALIDATION.bat`. Four launchers, all subtly different, all wrong.
+
+**The only one now is `START.bat`.** If you double-click the old name out of
+habit, it just runs `START.bat` for you.
 
 ---
 
 ## Step 3 — Start it (first run: 10–20 min)
 
-Open `D:\jarvis_new` in File Explorer. **Double-click `START.bat`.**
+**Double-click `START.bat`.**
 
 That's it. It installs everything missing — Python packages, the automation
 browser, UI packages, AI models — then starts Jarvis and opens your browser.
@@ -581,10 +789,20 @@ It prints a numbered list of exactly what to type. Work down the list, then run
 If you still can't get it going, run this and send me the file:
 
 ```
-cd /d D:\jarvis_new
+cd /d D:\jarvis_v9
 ```
 ```
 DOCTOR.bat > doctor_output.txt
+```
+
+**If the UI window shows "Cannot find module 'vite'"** — `START.bat` now
+installs it for you automatically. If it still happens, run:
+
+```
+cd /d D:\jarvis_v9\frontend
+```
+```
+npm install --registry=https://registry.npmmirror.com
 ```
 
 ---
@@ -610,7 +828,21 @@ ollama rm deepseek-r1:latest
 
 ---
 
-## Step 6 — Look at the two new screens first
+## Step 6 — Look at the new screens first
+
+There are four now: **Planner**, **Memory**, **Logs**, and a rebuilt
+**Settings**.
+
+- **Logs** — every decision with a timestamp and a reason. Three tabs: the live
+  feed (filter by subsystem, or "problems only"), the exact code path each
+  request took, and how confident it was in each finished run. This is what you
+  send me instead of describing what happened.
+- **Memory** — everything Jarvis knows, in one editable place. Facts it always
+  has in mind, a search box that runs the *real* retrieval so you can see what a
+  question would pull up, and a way to write down longer things (your rates,
+  how you like proposals worded).
+
+
 
 **Settings** now shows five things, and the important one is at the bottom:
 
@@ -654,10 +886,19 @@ Type them into the Jarvis chat box.
 | `what's on my screen` | Describes your screen in **under a minute** |
 | `why?` | The full step chain of what just happened |
 | `remember that I am a freelance developer` | It saves that and stops asking |
+| `simulate applying for jobs` | What a freelance run *would* do. Sends nothing. |
 
-Before running anything risky you can check it first: go to **Planner → Check a
-command first**, type the sentence, press **Show plan**. It shows you exactly
-what it will do, without doing it.
+Before running anything risky you can check it first. Go to **Planner → Check a
+command first**, type the sentence, and press either:
+
+- **Show plan** — the steps it would run.
+- **Simulate** — the steps *plus* what each one touches, how long it would take
+  on your PC, and what would stop it. Runs nothing at all.
+
+You can do the same in chat: `what would you do if I say open notepad and write
+about yourself`. And before letting it loose on freelancing: `simulate applying
+for jobs` tells you which sites it would search, how many proposals it would
+write, and whether it would submit them — without scanning or sending anything.
 
 If any of those misbehave, tell me **which one** and what it did instead.
 
@@ -730,7 +971,7 @@ they did nothing.
 Not needed. Only do this if you want it.
 
 ```
-cd /d D:\jarvis_new\backend
+cd /d D:\jarvis_v9\backend
 ```
 ```
 pip install fastmcp
@@ -739,20 +980,23 @@ pip install fastmcp
 python mcp_server.py --http
 ```
 
-Then point Cherry Studio, Claude Desktop or Cline at `http://127.0.0.1:8765/mcp`.
+It prints a token. Point Cherry Studio, Claude Desktop or Cline at
+`http://127.0.0.1:8765/mcp` and add that token as a header called
+`X-Jarvis-Token`.
 
-They get fourteen commands — search the web, control the desktop, find freelance
-jobs, look at the screen, ask why something failed. Jarvis stays exactly as it
-is; this is just another way to talk to it.
+They get fifteen commands — search the web, control the desktop, find freelance
+jobs, look at the screen, ask why something failed, and simulate anything first.
+Jarvis stays exactly as it is; this is just another way to talk to it.
 
-It only listens on your own PC. Nothing on your network can reach it.
+It only listens on your own PC, and now it needs the token, so nothing else can
+drive it even from this machine.
 
 ---
 
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 14 or 15 passes.
+purpose and checks it fails honestly. You want 15 or 16 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 
@@ -765,7 +1009,7 @@ your accounts. Keep it on `127.0.0.1` — that's the default and you don't have 
 do anything.
 
 If you ever want the freelance engine running but nothing touching your desktop,
-put this line in `D:\jarvis_new\backend\.env`:
+put this line in `D:\jarvis_v9\backend\.env`:
 
 ```
 DESKTOP_CONTROL_ENABLED=0
@@ -773,7 +1017,7 @@ DESKTOP_CONTROL_ENABLED=0
 ```
 
 ################################################################################
-# FILE 7/173: FIX_MY_INSTALL.md
+# FILE 8/176: FIX_MY_INSTALL.md
 ################################################################################
 ```md
 # It won't start — do this
@@ -951,7 +1195,7 @@ of whatever fails.
 ```
 
 ################################################################################
-# FILE 8/173: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 9/176: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -1070,7 +1314,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 9/173: HIDDEN_RUNTIME_AUDIT.md
+# FILE 10/176: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -1223,7 +1467,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 10/173: MIGRATION_CHANGELOG.md
+# FILE 11/176: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -1270,7 +1514,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 11/173: PLANNER_AND_DOCTOR.md
+# FILE 12/176: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -1327,7 +1571,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 12/173: PRE_RELEASE_AUDIT.md
+# FILE 13/176: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1512,7 +1756,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 13/173: QA_VERIFICATION_REPORT.md
+# FILE 14/176: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -1606,7 +1850,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 14/173: README.md
+# FILE 15/176: README.md
 ################################################################################
 ```md
 # Jarvis OS — autonomous desktop assistant + freelance income engine
@@ -1748,7 +1992,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 15/173: README_START_HERE.md
+# FILE 16/176: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -1803,7 +2047,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 16/173: REAL_MACHINE_FIXES.md
+# FILE 17/176: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -1904,7 +2148,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 17/173: RESEARCH_UPGRADE_2026-07.md
+# FILE 18/176: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -1993,7 +2237,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 18/173: RUNTIME_VALIDATION_README.md
+# FILE 19/176: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -2031,7 +2275,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 19/173: STAGE2_CHANGELOG.md
+# FILE 20/176: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -2068,7 +2312,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 20/173: START_HERE.md
+# FILE 21/176: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -2219,7 +2463,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 21/173: TESTING_STAGES.md
+# FILE 22/176: TESTING_STAGES.md
 ################################################################################
 ```md
 # Proving Jarvis actually works — in the right order
@@ -2317,7 +2561,7 @@ Everything else has been tested. This hasn't, and can't be.
 ```
 
 ################################################################################
-# FILE 22/173: V8_PHASE1_REPORT.md
+# FILE 23/176: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -2373,7 +2617,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 23/173: V9_FINAL_README.md
+# FILE 24/176: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -2435,7 +2679,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 24/173: V9_STAGE1_MIGRATION.md
+# FILE 25/176: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -2499,7 +2743,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 25/173: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 26/176: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -2571,7 +2815,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 26/173: WINDOWS_DEPLOYMENT.md
+# FILE 27/176: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -2609,7 +2853,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 27/173: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 28/176: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -2699,7 +2943,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 28/173: backend/README.md
+# FILE 29/176: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -2835,14 +3079,14 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 29/173: backend/adapters/__init__.py
+# FILE 30/176: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 30/173: backend/adapters/commander_adapter.py
+# FILE 31/176: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -2952,6 +3196,21 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
                     "data": narrate.why()}
         except Exception:
             pass
+
+    # ── "what would you do?" — show the whole plan, run none of it ────────────
+    # Checked before every execution path, because a simulation request that
+    # falls through and EXECUTES is the one bug this feature cannot have.
+    try:
+        from services import simulate
+        sim_req = simulate.match(message)
+    except Exception:
+        sim_req = None
+    if sim_req:
+        from services import simulate
+        sim = (simulate.earning() if sim_req["what"] == "earning"
+               else simulate.task(sim_req["command"]))
+        return {"response": simulate.as_text(sim), "intent": "simulation",
+                "data": sim}
 
     # ── Teach by demonstration: "watch me ..." / "that's it" ──────────────────
     try:
@@ -3607,14 +3866,14 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 ```
 
 ################################################################################
-# FILE 31/173: backend/agents/__init__.py
+# FILE 32/176: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 32/173: backend/agents/base_agent.py
+# FILE 33/176: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -3637,7 +3896,7 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 33/173: backend/agents/browser_agent.py
+# FILE 34/176: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
@@ -3934,7 +4193,7 @@ class BrowserAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 34/173: backend/agents/commander.py
+# FILE 35/176: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -4071,14 +4330,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 35/173: backend/agents/custom/__init__.py
+# FILE 36/176: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 36/173: backend/agents/desktop_agent.py
+# FILE 37/176: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -5595,7 +5854,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 37/173: backend/agents/executor_agent.py
+# FILE 38/176: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -6069,7 +6328,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 38/173: backend/agents/memory_agent.py
+# FILE 39/176: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -6227,7 +6486,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 39/173: backend/agents/orchestrator.py
+# FILE 40/176: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -6346,7 +6605,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 40/173: backend/agents/orchestrator_core.py
+# FILE 41/176: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -6812,7 +7071,7 @@ core = get_core()
 ```
 
 ################################################################################
-# FILE 41/173: backend/agents/perception_agent.py
+# FILE 42/176: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -7022,7 +7281,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 42/173: backend/agents/proposal_agent.py
+# FILE 43/176: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -7180,7 +7439,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 43/173: backend/agents/registry.py
+# FILE 44/176: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -7500,7 +7759,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 44/173: backend/agents/scheduler.py
+# FILE 45/176: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -7604,7 +7863,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 45/173: backend/agents/score_agent.py
+# FILE 46/176: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -7805,7 +8064,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 46/173: backend/agents/scout_agent.py
+# FILE 47/176: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -7925,7 +8184,7 @@ class ScoutAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 47/173: backend/agents/v9_models.py
+# FILE 48/176: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -7983,7 +8242,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 48/173: backend/agents/vision_agent.py
+# FILE 49/176: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -8593,14 +8852,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 49/173: backend/core/__init__.py
+# FILE 50/176: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 50/173: backend/core/browser_lock.py
+# FILE 51/176: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
@@ -8743,7 +9002,7 @@ class browser_session:
 ```
 
 ################################################################################
-# FILE 51/173: backend/main.py
+# FILE 52/176: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -9270,7 +9529,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 52/173: backend/mcp_server.py
+# FILE 53/176: backend/mcp_server.py
 ################################################################################
 ```py
 """
@@ -9399,6 +9658,23 @@ def preview_task(command: str) -> dict:
     """
     from services import decompose
     return _j(decompose.preview, command)
+
+
+@mcp.tool
+def simulate(command: str = "") -> dict:
+    """
+    Show what WOULD happen, without doing any of it.
+
+    Call this before run_task for anything the user might not want done blindly,
+    and always before find_freelance_jobs — that one can send proposals to real
+    clients under the user's name.
+
+    Pass a command for a task simulation, or nothing for a freelance cycle.
+    Returns every step, what each one touches, a time estimate and any blockers.
+    Executes nothing.
+    """
+    from services import simulate as sim
+    return _j(sim.task, command) if command.strip() else _j(sim.earning)
 
 
 @mcp.tool
@@ -9566,6 +9842,46 @@ def teach_by_watching(action: str, name: str = "") -> dict:
 
 # ── serving ──────────────────────────────────────────────────────────────────
 
+def _http_auth():
+    """
+    A token gate for HTTP mode.
+
+    stdio needs none: the client launches this process, owns it, and nothing is
+    listening on a port. HTTP is different — an open port that can type on the
+    user's keyboard and drive a logged-in browser is the exact shape of the
+    problem Microsoft's AutoJack research described, where untrusted web content
+    reached a local agent socket. Loopback is not a trust boundary on its own.
+
+    Returns middleware, or None if this FastMCP build doesn't expose the hook —
+    in which case we say so plainly rather than implying protection that isn't
+    there.
+    """
+    from services import auth
+    token = auth.token()
+
+    try:
+        from starlette.middleware import Middleware
+        from starlette.middleware.base import BaseHTTPMiddleware
+        from starlette.responses import JSONResponse
+    except ImportError:
+        return None, token
+
+    class _Gate(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            supplied = (request.headers.get("x-jarvis-token", "")
+                        or request.headers.get("authorization", "")
+                        .removeprefix("Bearer ").strip())
+            if not auth.token_ok(supplied):
+                return JSONResponse(
+                    {"error": "This Jarvis MCP server needs a token. It's in "
+                              "backend/.jarvis_token — send it as the "
+                              "X-Jarvis-Token header, or as a Bearer token."},
+                    status_code=401)
+            return await call_next(request)
+
+    return [Middleware(_Gate)], token
+
+
 def main() -> None:
     http = "--http" in sys.argv
     if not http:
@@ -9576,11 +9892,40 @@ def main() -> None:
 
     host = "127.0.0.1"      # not configurable on purpose — see the module docstring
     port = int(os.getenv("JARVIS_MCP_PORT", "8765"))
-    print(f"Jarvis MCP  ->  http://{host}:{port}/mcp   (loopback only)",
+    middleware, token = _http_auth()
+
+    print(f"\nJarvis MCP  ->  http://{host}:{port}/mcp   (loopback only)",
           file=sys.stderr)
-    print("Point Cherry Studio / Claude Desktop / Cline at that URL.",
+    print("Point Cherry Studio / Claude Desktop / Cline at that URL.\n",
           file=sys.stderr)
-    mcp.run(transport="http", host=host, port=port)
+    if middleware:
+        print("This port requires a token. In your client, add the header:",
+              file=sys.stderr)
+        print(f"    X-Jarvis-Token: {token}\n", file=sys.stderr)
+        print("(Also saved in backend/.jarvis_token. Don't paste it into a chat.)\n",
+              file=sys.stderr)
+    else:
+        print("!! This FastMCP build doesn't expose a middleware hook, so the",
+              file=sys.stderr)
+        print("!! port is UNAUTHENTICATED. Any program on this PC can drive",
+              file=sys.stderr)
+        print("!! Jarvis. Use stdio mode instead unless you need multiple",
+              file=sys.stderr)
+        print("!! clients at once.\n", file=sys.stderr)
+
+    try:
+        mcp.run(transport="http", host=host, port=port, middleware=middleware)
+    except TypeError:
+        # Older FastMCP: no middleware parameter. Refuse rather than serve an
+        # open door while having just printed that it's protected.
+        if middleware:
+            print("This FastMCP version can't take the auth middleware.",
+                  file=sys.stderr)
+            print("Upgrade it:   pip install -U fastmcp", file=sys.stderr)
+            print("Or use stdio mode (no --http), which needs no token.",
+                  file=sys.stderr)
+            sys.exit(1)
+        mcp.run(transport="http", host=host, port=port)
 
 
 if __name__ == "__main__":
@@ -9588,14 +9933,14 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 53/173: backend/models/__init__.py
+# FILE 54/176: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import conn, init_db, DB_PATH
 ```
 
 ################################################################################
-# FILE 54/173: backend/models/clickworker.py
+# FILE 55/176: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -9621,7 +9966,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 55/173: backend/models/db.py
+# FILE 56/176: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -9840,7 +10185,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 56/173: backend/models/fiverr.py
+# FILE 57/176: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -9887,7 +10232,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 57/173: backend/models/hubstaff.py
+# FILE 58/176: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -9931,7 +10276,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 58/173: backend/models/zuodao.py
+# FILE 59/176: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -9957,14 +10302,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 59/173: backend/platforms/__init__.py
+# FILE 60/176: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 60/173: backend/platforms/base.py
+# FILE 61/176: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -10009,7 +10354,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 61/173: backend/platforms/contra.py
+# FILE 62/176: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -10094,7 +10439,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 62/173: backend/platforms/hubstaff.py
+# FILE 63/176: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -10294,7 +10639,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 63/173: backend/platforms/peopleperhour.py
+# FILE 64/176: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -10379,7 +10724,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 64/173: backend/platforms/remoteco.py
+# FILE 65/176: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -10478,7 +10823,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 65/173: backend/platforms/remoteok.py
+# FILE 66/176: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -10520,7 +10865,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 66/173: backend/platforms/wellfound.py
+# FILE 67/176: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -10638,7 +10983,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 67/173: backend/platforms/weworkremotely.py
+# FILE 68/176: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -10682,7 +11027,7 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 68/173: backend/requirements.txt
+# FILE 69/176: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -10731,7 +11076,7 @@ pynput>=1.7.6
 ```
 
 ################################################################################
-# FILE 69/173: backend/routes/__init__.py
+# FILE 70/176: backend/routes/__init__.py
 ################################################################################
 ```py
 from .proposals   import router as proposals_router
@@ -10747,7 +11092,7 @@ from .orchestrator import router as orchestrator_router
 ```
 
 ################################################################################
-# FILE 70/173: backend/routes/agents.py
+# FILE 71/176: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -11244,7 +11589,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 71/173: backend/routes/analytics.py
+# FILE 72/176: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -11263,7 +11608,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 72/173: backend/routes/automation.py
+# FILE 73/176: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -11602,7 +11947,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 73/173: backend/routes/brain.py
+# FILE 74/176: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -11699,7 +12044,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 74/173: backend/routes/clickworker.py
+# FILE 75/176: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -11797,7 +12142,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 75/173: backend/routes/fiverr.py
+# FILE 76/176: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -11975,7 +12320,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 76/173: backend/routes/hubstaff.py
+# FILE 77/176: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -12156,7 +12501,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 77/173: backend/routes/messages.py
+# FILE 78/176: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -12251,7 +12596,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 78/173: backend/routes/mind.py
+# FILE 79/176: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -12352,7 +12697,7 @@ def freelance_resume(platform: str):
 ```
 
 ################################################################################
-# FILE 79/173: backend/routes/orchestrator.py
+# FILE 80/176: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -12522,7 +12867,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 80/173: backend/routes/orchestrator_feed.py
+# FILE 81/176: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -12578,7 +12923,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 81/173: backend/routes/os_console.py
+# FILE 82/176: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -12797,6 +13142,20 @@ def os_plan_control(command: str, body: dict | None = None):
     return res
 
 
+@router.post("/simulate")
+def os_simulate(body: dict | None = None):
+    """
+    "What would you do?" — the full plan, every side effect, a time estimate,
+    and anything that would block it. Executes nothing: no window opens, no page
+    loads, no proposal is sent.
+
+    Pass {"command": "..."} for a task, or {} for a freelance cycle.
+    """
+    from services import simulate
+    cmd = ((body or {}).get("command") or "").strip()
+    return simulate.task(cmd) if cmd else simulate.earning()
+
+
 @router.get("/why")
 def os_why():
     """
@@ -12865,7 +13224,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 82/173: backend/routes/planner.py
+# FILE 83/176: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -12990,7 +13349,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 83/173: backend/routes/proposals.py
+# FILE 84/176: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -13196,7 +13555,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 84/173: backend/routes/pulse.py
+# FILE 85/176: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -13230,7 +13589,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 85/173: backend/routes/scraper.py
+# FILE 86/176: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -13374,7 +13733,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 86/173: backend/routes/sessions.py
+# FILE 87/176: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -13489,7 +13848,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 87/173: backend/routes/system.py
+# FILE 88/176: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -13688,7 +14047,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 88/173: backend/routes/workflows.py
+# FILE 89/176: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -13754,7 +14113,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 89/173: backend/routes/zuodao.py
+# FILE 90/176: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -13849,7 +14208,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 90/173: backend/services/__init__.py
+# FILE 91/176: backend/services/__init__.py
 ################################################################################
 ```py
 from .deepseek_service import call_model, generate_proposal, generate_reply_draft, auto_work_job
@@ -13857,7 +14216,7 @@ from .analytics_service import get_analytics
 ```
 
 ################################################################################
-# FILE 91/173: backend/services/analytics_service.py
+# FILE 92/176: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -13959,7 +14318,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 92/173: backend/services/app_resolver.py
+# FILE 93/176: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -14177,7 +14536,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 93/173: backend/services/auth.py
+# FILE 94/176: backend/services/auth.py
 ################################################################################
 ```py
 """
@@ -14444,7 +14803,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 94/173: backend/services/bid_executor.py
+# FILE 95/176: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -14851,7 +15210,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 95/173: backend/services/brain_core.py
+# FILE 96/176: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -14958,7 +15317,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 96/173: backend/services/brain_decision.py
+# FILE 97/176: backend/services/brain_decision.py
 ################################################################################
 ```py
 """
@@ -15216,7 +15575,7 @@ def explain(goal_type: str = "background", objective: str = "") -> dict:
 ```
 
 ################################################################################
-# FILE 97/173: backend/services/brain_service.py
+# FILE 98/176: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -15654,7 +16013,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 98/173: backend/services/browser_monitor.py
+# FILE 99/176: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -15808,7 +16167,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 99/173: backend/services/capability_registry.py
+# FILE 100/176: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -15997,7 +16356,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 100/173: backend/services/clickworker_service.py
+# FILE 101/176: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -16145,7 +16504,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 101/173: backend/services/config.py
+# FILE 102/176: backend/services/config.py
 ################################################################################
 ```py
 """
@@ -16343,7 +16702,7 @@ def effective() -> dict:
 ```
 
 ################################################################################
-# FILE 102/173: backend/services/control.py
+# FILE 103/176: backend/services/control.py
 ################################################################################
 ```py
 """
@@ -16551,7 +16910,7 @@ def explain(limit: int = 6) -> dict:
 ```
 
 ################################################################################
-# FILE 103/173: backend/services/custom_platforms.py
+# FILE 104/176: backend/services/custom_platforms.py
 ################################################################################
 ```py
 """
@@ -16748,7 +17107,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 104/173: backend/services/decompose.py
+# FILE 105/176: backend/services/decompose.py
 ################################################################################
 ```py
 """
@@ -17264,7 +17623,7 @@ def preview(text: str) -> dict:
 ```
 
 ################################################################################
-# FILE 105/173: backend/services/deepseek_service.py
+# FILE 106/176: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -17489,7 +17848,7 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 106/173: backend/services/diagnostics.py
+# FILE 107/176: backend/services/diagnostics.py
 ################################################################################
 ```py
 """
@@ -17870,7 +18229,7 @@ def build_report() -> str:
 ```
 
 ################################################################################
-# FILE 107/173: backend/services/environment.py
+# FILE 108/176: backend/services/environment.py
 ################################################################################
 ```py
 """
@@ -18311,7 +18670,7 @@ def start() -> None:
 ```
 
 ################################################################################
-# FILE 108/173: backend/services/event_bus.py
+# FILE 109/176: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -18404,7 +18763,7 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 109/173: backend/services/experience.py
+# FILE 110/176: backend/services/experience.py
 ################################################################################
 ```py
 """
@@ -18829,7 +19188,7 @@ def summary(limit: int = 8) -> dict:
 ```
 
 ################################################################################
-# FILE 110/173: backend/services/fiverr_service.py
+# FILE 111/176: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -19011,7 +19370,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 111/173: backend/services/freelancer_api.py
+# FILE 112/176: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -19226,7 +19585,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 112/173: backend/services/hubstaff_service.py
+# FILE 113/176: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -19426,7 +19785,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 113/173: backend/services/income_engine.py
+# FILE 114/176: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -19697,7 +20056,7 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 114/173: backend/services/live_plan.py
+# FILE 115/176: backend/services/live_plan.py
 ################################################################################
 ```py
 """
@@ -19996,7 +20355,7 @@ def _publish(topic: str, payload: dict) -> None:
 ```
 
 ################################################################################
-# FILE 115/173: backend/services/maintenance.py
+# FILE 116/176: backend/services/maintenance.py
 ################################################################################
 ```py
 """
@@ -20289,7 +20648,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 116/173: backend/services/model_router.py
+# FILE 117/176: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -20521,7 +20880,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 117/173: backend/services/narrate.py
+# FILE 118/176: backend/services/narrate.py
 ################################################################################
 ```py
 """
@@ -20721,7 +21080,7 @@ def as_text() -> str:
 ```
 
 ################################################################################
-# FILE 118/173: backend/services/ollama_manager.py
+# FILE 119/176: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -21089,7 +21448,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 119/173: backend/services/os_state.py
+# FILE 120/176: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -21301,7 +21660,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 120/173: backend/services/persona.py
+# FILE 121/176: backend/services/persona.py
 ################################################################################
 ```py
 """
@@ -21610,7 +21969,7 @@ def _quiet_sync():
 ```
 
 ################################################################################
-# FILE 121/173: backend/services/planner_service.py
+# FILE 122/176: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -22190,7 +22549,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 122/173: backend/services/platform_health.py
+# FILE 123/176: backend/services/platform_health.py
 ################################################################################
 ```py
 """
@@ -22349,7 +22708,7 @@ def _announce_pause(platform: str, error: str) -> None:
 ```
 
 ################################################################################
-# FILE 123/173: backend/services/platform_meta.py
+# FILE 124/176: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -22431,7 +22790,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 124/173: backend/services/profile_service.py
+# FILE 125/176: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -22506,7 +22865,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 125/173: backend/services/providers.py
+# FILE 126/176: backend/services/providers.py
 ################################################################################
 ```py
 """
@@ -22719,7 +23078,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 126/173: backend/services/pulse_service.py
+# FILE 127/176: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -22996,7 +23355,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 127/173: backend/services/reflection.py
+# FILE 128/176: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -23097,7 +23456,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 128/173: backend/services/selfeval.py
+# FILE 129/176: backend/services/selfeval.py
 ################################################################################
 ```py
 """
@@ -23363,7 +23722,7 @@ def summary(limit: int = 10) -> dict:
 ```
 
 ################################################################################
-# FILE 129/173: backend/services/session_manager.py
+# FILE 130/176: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -23734,7 +24093,434 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 130/173: backend/services/teach.py
+# FILE 131/176: backend/services/simulate.py
+################################################################################
+```py
+"""
+services/simulate.py — "what would you do?", answered without doing it.
+
+Trust in an autonomous system is not built by watching it succeed. It's built by
+being able to check its intentions before it acts. "Apply for jobs" is a
+frightening thing to say to something that can submit on your behalf; "here is
+what I would do, proceed?" is not.
+
+    Simulation
+      would search    remoteok, weworkremotely, hubstaff
+      would find      ~15 jobs
+      would draft     up to 10 proposals
+      would submit    0 (approval is required)
+      would take      about 8 minutes
+      Proceed?
+
+Two things are simulated:
+
+  TASKS      a desktop/browser command. Reuses decompose(), so the plan shown
+             is the EXACT step list that would run — not a description of it.
+             Every step is annotated with whether it touches anything real.
+
+  EARNING    a freelance cycle. Reads the live config, the real platform list,
+             real platform health and the real queue, then reports what a cycle
+             would do. Numbers come from configuration and history, not from
+             running a scan.
+
+THE ONE RULE: a simulation must never execute anything. No app opens, no page
+loads, no keystroke is sent, no row is written. Everything below is computed
+from configuration, history and static resolution. A "dry run" with side effects
+is worse than no dry run, because it is trusted.
+
+Estimates are labelled as estimates and derived from measured history where
+there is any (experience.py knows how long this machine really takes to open an
+app). Where there is no history, it says so rather than inventing a number.
+"""
+from __future__ import annotations
+
+
+# ── what a step actually touches ─────────────────────────────────────────────
+
+# Anything that changes something outside Jarvis. These are the lines in a plan
+# worth reading twice before approving.
+_SIDE_EFFECTS = {
+    "open_app":    ("opens a window on your screen", "visible"),
+    "close_app":   ("closes a running program", "disruptive"),
+    "open_url":    ("loads a web page", "network"),
+    "type_text":   ("types into whatever has focus", "writes"),
+    "compose":     ("generates text, then types it", "writes"),
+    "press":       ("sends a keystroke", "writes"),
+    "hotkey":      ("sends a key combination", "writes"),
+    "click":       ("clicks at a screen position", "writes"),
+    "click_text":  ("clicks on something on screen", "writes"),
+    "scroll":      ("scrolls the active window", "visible"),
+    "credential":  ("fills a saved login", "sensitive"),
+    "write_file":  ("writes a file to disk", "writes"),
+    "run_command": ("runs a shell command", "sensitive"),
+}
+_HARMLESS = {"screenshot", "analyze", "wait", "wait_for_window", "focus_window"}
+
+
+def _estimate(step: dict) -> tuple[float, str]:
+    """
+    How long would this step take, and do we actually know?
+
+    Measured history beats a guess, and the difference is stated. A confident
+    fabricated number is worse than an honest "no idea yet" — it gets used for
+    planning and then quietly disappoints.
+    """
+    action = (step or {}).get("action", "")
+    params = (step or {}).get("params", {}) or {}
+
+    if action == "wait":
+        return float(params.get("seconds", 2)), "exact"
+
+    if action in ("open_app", "wait_for_window"):
+        target = params.get("name_or_path") or params.get("title") or ""
+        try:
+            from services import experience
+            got = experience.launch_wait_for(target)
+            if got.get("samples", 0) >= 3:
+                return float(got.get("seconds", 4)), "measured here"
+        except Exception:
+            pass
+        return 4.0, "typical"
+
+    if action == "analyze":
+        # Vision on a CPU is the slowest thing Jarvis does. Saying "2s" here
+        # would make every estimate a lie on this particular machine.
+        try:
+            from services import environment
+            if not environment.get("gpu.usable_for_llm"):
+                return 45.0, "no GPU — vision runs on the CPU"
+        except Exception:
+            pass
+        return 12.0, "typical"
+
+    if action == "compose":
+        return 15.0, "typical"
+    if action in ("type_text",):
+        text = str(params.get("text", ""))
+        try:
+            from services import config
+            per_char = float(config.get("typing_speed", "0.03") or 0.03)
+        except Exception:
+            per_char = 0.03
+        return max(len(text) * per_char, 0.5), "from your typing speed"
+    if action == "open_url":
+        return 3.0, "typical"
+    return 1.0, "typical"
+
+
+def task(command: str) -> dict:
+    """
+    Dry-run a command. Nothing is executed.
+
+    Returns the exact steps that would run, what each one touches, a time
+    estimate with its basis, and anything that would stop it.
+    """
+    from services import decompose
+
+    d = decompose.decompose(command or "")
+    if not d.get("ok"):
+        return {"kind": "task", "command": command, "possible": False,
+                "reason": d.get("reason") or "I don't know how to do that yet",
+                "unresolved": d.get("unresolved", []),
+                "would": [], "seconds": 0}
+
+    would, total = [], 0.0
+    for i, step in enumerate(d["steps"]):
+        action = step.get("action", "")
+        secs, basis = _estimate(step)
+        total += secs
+        effect, level = _SIDE_EFFECTS.get(
+            action, ("reads only, changes nothing", "safe")
+            if action in _HARMLESS else ("unknown effect", "unknown"))
+        would.append({
+            "n": i + 1,
+            "text": decompose.describe(step),
+            "action": action,
+            "effect": effect,
+            "level": level,
+            "seconds": round(secs, 1),
+            "basis": basis,
+        })
+
+    blockers = _blockers(d["steps"])
+    return {
+        "kind": "task",
+        "command": command,
+        "possible": not any(b["fatal"] for b in blockers),
+        "would": would,
+        "seconds": round(total, 1),
+        "estimate": _human_time(total),
+        "changes_things": [w for w in would if w["level"] != "safe"],
+        "blockers": blockers,
+        "unresolved": d.get("unresolved", []),
+        "note": "Nothing was run. No window opened, nothing was typed.",
+    }
+
+
+def _blockers(steps: list[dict]) -> list[dict]:
+    """
+    What would stop this, checked WITHOUT starting anything.
+
+    Resolution only: is the app known, is a model present, is there a browser.
+    Deliberately does not "test" by launching — a simulation that opens a window
+    to check whether it can open a window is not a simulation.
+    """
+    out = []
+    try:
+        from services import environment
+        env = environment.scan()
+    except Exception:
+        env = {}
+
+    needs_model = any(s.get("action") in ("compose", "analyze") for s in steps)
+    if needs_model and not env.get("ollama", {}).get("running"):
+        out.append({"fatal": True, "what": "Ollama isn't running",
+                    "why": "steps that write or read the screen need a local model",
+                    "fix": "start Ollama, then simulate again"})
+
+    for s in steps:
+        if s.get("action") != "open_app":
+            continue
+        name = (s.get("params") or {}).get("name_or_path", "")
+        if not name:
+            continue
+        try:
+            from services import app_resolver
+            found = app_resolver.resolve(name)
+        except Exception:
+            found = None
+        if not found and name not in (env.get("apps") or {}) \
+                and name not in (env.get("browsers") or {}):
+            out.append({"fatal": False, "what": f"'{name}' hasn't been located yet",
+                        "why": "it may still be found via the Start Menu at run time",
+                        "fix": f"open {name} by hand once and Jarvis will remember "
+                               f"where it lives"})
+
+    if any(s.get("action") == "credential" for s in steps):
+        out.append({"fatal": False, "what": "this needs a saved login",
+                    "why": "a demonstration recorded a password field here",
+                    "fix": "add it under Settings -> Logins, or be ready to type it"})
+    return out
+
+
+def _human_time(seconds: float) -> str:
+    if seconds < 60:
+        return f"about {int(seconds)} seconds"
+    if seconds < 3600:
+        return f"about {int(seconds / 60)} minute{'s' if seconds >= 120 else ''}"
+    return f"about {seconds / 3600:.1f} hours"
+
+
+# ── the freelance engine ─────────────────────────────────────────────────────
+
+def earning() -> dict:
+    """
+    What one freelance cycle would do, without scanning or submitting anything.
+
+    This is the one people most want before pressing the button: the engine can
+    submit real proposals to real clients under your name, and "trust me" is not
+    an acceptable answer to "what are you about to do?".
+    """
+    try:
+        from services import income_engine
+        cfg = income_engine.get_config()
+        status = income_engine.status()
+    except Exception as e:
+        return {"kind": "earning", "possible": False, "reason": str(e)[:200]}
+
+    try:
+        platforms = income_engine._active_platforms(cfg)
+    except Exception:
+        platforms = cfg.get("platforms") or []
+
+    try:
+        from services import config
+        max_jobs = int(config.get("income_max_jobs", "15") or 15)
+        min_score = int(config.get("income_min_score", "30") or 30)
+        auto = (config.get("auto_submit", "false") or "false").lower() in ("1", "true", "yes")
+    except Exception:
+        max_jobs, min_score, auto = 15, 30, False
+
+    try:
+        from services import profile_service
+        prof = profile_service.get_profile()
+        max_generate = int(prof.get("max_generate") or 10)
+    except Exception:
+        prof, max_generate = {}, 10
+
+    # Real queue state, read not computed.
+    pending = approved = 0
+    try:
+        from models.db import conn
+        with conn() as db:
+            rows = db.execute("SELECT status, COUNT(*) n FROM automation_queue "
+                              "GROUP BY status").fetchall()
+        counts = {r["status"]: r["n"] for r in rows}
+        pending, approved = counts.get("pending", 0), counts.get("approved", 0)
+    except Exception:
+        pass
+
+    # Per-site health, so a paused site is shown as paused rather than promised.
+    # should_scan() is the same check a real cycle makes, which is the point —
+    # a simulation that consults a different source can disagree with reality.
+    health = []
+    for p in platforms:
+        try:
+            from services import platform_health
+            will_scan, why = platform_health.should_scan(p)
+        except Exception:
+            will_scan, why = True, ""
+        health.append({"platform": p, "paused": not will_scan, "note": why})
+    live = [h for h in health if not h["paused"]]
+
+    steps = [
+        {"n": 1, "would": f"Search {len(live)} platform(s): "
+                          f"{', '.join(h['platform'] for h in live) or 'none available'}",
+         "level": "network"},
+        {"n": 2, "would": f"Keep jobs scoring {min_score} or better, up to {max_jobs}",
+         "level": "safe"},
+        {"n": 3, "would": f"Write up to {max_generate} proposals as "
+                          f"{prof.get('name') or 'you'}",
+         "level": "writes"},
+        {"n": 4, "would": ("SUBMIT them automatically — auto-submit is ON"
+                           if auto else
+                           "Put them in the queue and wait for you to approve"),
+         "level": "sensitive" if auto else "safe"},
+    ]
+
+    # Roughly: a scan per site, plus a model call per proposal. Vision-free, so
+    # the dominant cost is generation.
+    est = len(live) * 25 + max_generate * 20
+    warnings = []
+    if auto:
+        warnings.append("Auto-submit is ON. Proposals will be sent to real "
+                        "clients without you seeing them first.")
+    if not live:
+        warnings.append("Every platform is paused or unconfigured — a cycle "
+                        "would find nothing.")
+    paused = [h for h in health if h["paused"]]
+    if paused:
+        warnings.append("Paused: " + ", ".join(
+            f"{h['platform']} ({h['note'] or 'repeated failures'})" for h in paused))
+    if pending:
+        warnings.append(f"{pending} proposal(s) are already waiting for you to "
+                        f"approve. A new cycle adds to that.")
+
+    return {
+        "kind": "earning",
+        "possible": bool(live),
+        "running": bool(status.get("running")),
+        "would": steps,
+        "platforms": health,
+        "queue": {"pending": pending, "approved": approved},
+        "auto_submit": auto,
+        "seconds": est,
+        "estimate": _human_time(est),
+        "warnings": warnings,
+        "note": "Nothing was scanned and nothing was sent. These numbers come "
+                "from your settings and the current queue.",
+    }
+
+
+def as_text(sim: dict) -> str:
+    """The simulation as a block a person can read in chat."""
+    if not sim:
+        return "Nothing to simulate."
+    if sim.get("kind") == "earning":
+        lines = ["If you start earning now:", ""]
+        for s in sim["would"]:
+            mark = "!" if s["level"] in ("sensitive", "writes") else " "
+            lines.append(f"  {mark} {s['n']}. {s['would']}")
+        lines += ["", f"  Would take: {sim['estimate']} (estimate)"]
+        if sim["queue"]["pending"]:
+            lines.append(f"  Already waiting for you: {sim['queue']['pending']} draft(s)")
+        for w in sim.get("warnings", []):
+            lines.append(f"  ! {w}")
+        lines += ["", sim["note"], "", "Say \"start earning\" to actually do it."]
+        return "\n".join(lines)
+
+    # Not understood at all — there is no plan to show.
+    if not sim.get("would"):
+        out = [f"I don't know how to do \"{sim.get('command', '')}\""
+               + (f" — {sim['reason']}" if sim.get("reason") else ".")]
+        for u in sim.get("unresolved", []):
+            out.append(f"  The part I don't understand: \"{u}\"")
+        for b in sim.get("blockers", []):
+            out.append(f"  - {b['what']}: {b['fix']}")
+        return "\n".join(out)
+
+    # Understood but currently blocked. Still show the plan: knowing WHAT it
+    # would do is the point, and "it's blocked" without the plan tells you
+    # nothing about whether you'd have wanted it in the first place.
+    head = (f"If you ask me to \"{sim['command']}\", here's exactly what happens:"
+            if sim.get("possible") else
+            f"This is what \"{sim['command']}\" would do — but it can't run right "
+            f"now (see the bottom):")
+    lines = [head, ""]
+    for s in sim["would"]:
+        mark = "!" if s["level"] not in ("safe",) else " "
+        lines.append(f"  {mark} {s['n']}. {s['text']}")
+        lines.append(f"        {s['effect']} · ~{s['seconds']}s ({s['basis']})")
+    lines += ["", f"  Total: {sim['estimate']}"]
+    changing = sim.get("changes_things") or []
+    if changing:
+        lines.append(f"  {len(changing)} of {len(sim['would'])} steps change "
+                     f"something outside Jarvis.")
+    for b in sim.get("blockers", []):
+        lines.append(f"  {'STOPS IT' if b['fatal'] else 'heads up'}: {b['what']} "
+                     f"— {b['fix']}")
+    for u in sim.get("unresolved", []):
+        lines.append(f"  I don't understand this part: \"{u}\"")
+    lines += ["", sim["note"]]
+    return "\n".join(lines)
+
+
+# ── recognising the request ──────────────────────────────────────────────────
+
+_PREFIXES = (
+    "simulate ", "dry run ", "dry-run ", "what would you do if ",
+    "what would happen if ", "preview ", "pretend ", "rehearse ",
+    "what would you do when i say ", "don't do it but ",
+)
+# Stems, not phrases. "simulate applying for jobs" and "simulate apply for jobs"
+# are the same request, and matching only the exact phrase sent one of them down
+# the desktop-task path where it became a nonsense plan.
+_EARNING_WORDS = ("earn", "freelanc", "job", "proposal", "bid", "income",
+                  "appl", "client", "gig")
+
+
+def match(message: str) -> dict | None:
+    """
+    Is this a "show me first" request?
+
+    Only fires on an explicit prefix. Guessing that a normal command was meant
+    as a simulation would mean the thing the user asked for silently doesn't
+    happen, which is worse than doing it.
+    """
+    m = (message or "").strip().lower()
+    if not m:
+        return None
+    for p in _PREFIXES:
+        if m.startswith(p):
+            rest = m[len(p):].strip(" :,?\"'")
+            # "what would you do if I SAY open notepad" — the command starts
+            # after the quoting phrase. Leaving it in makes the first clause
+            # "i say open notepad", which parses as an app called "i say".
+            for lead in ("i say ", "i said ", "you say ", "i ask you to ",
+                         "i tell you to ", "i asked you to ", "i type "):
+                if rest.startswith(lead):
+                    rest = rest[len(lead):].strip()
+                    break
+            if not rest or any(w in rest for w in _EARNING_WORDS):
+                return {"what": "earning"}
+            return {"what": "task", "command": rest}
+    if m in ("what would you do", "simulate", "dry run", "show me first"):
+        return {"what": "earning"}
+    return None
+```
+
+################################################################################
+# FILE 132/176: backend/services/teach.py
 ################################################################################
 ```py
 """
@@ -24141,7 +24927,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 131/173: backend/services/tool_registry.py
+# FILE 133/176: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -24505,7 +25291,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 132/173: backend/services/trace.py
+# FILE 134/176: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -24638,7 +25424,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 133/173: backend/services/vault.py
+# FILE 135/176: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -24771,7 +25557,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 134/173: backend/services/workflow_service.py
+# FILE 136/176: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -25009,7 +25795,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 135/173: backend/services/world_model.py
+# FILE 137/176: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -25198,7 +25984,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 136/173: backend/services/zuodao_service.py
+# FILE 138/176: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -25315,7 +26101,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 137/173: frontend/index.html
+# FILE 139/176: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -25333,7 +26119,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 138/173: frontend/package.json
+# FILE 140/176: frontend/package.json
 ################################################################################
 ```json
 {
@@ -25357,7 +26143,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 139/173: frontend/src/App.jsx
+# FILE 141/176: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -25375,7 +26161,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 140/173: frontend/src/JarvisOS.jsx
+# FILE 142/176: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -25398,6 +26184,8 @@ import Chat from "./pages/Chat";
 import Agents from "./pages/Agents";
 import Earn from "./pages/Earn";
 import Planner from "./pages/Planner";
+import Logs from "./pages/Logs";
+import Memory from "./pages/Memory";
 import Settings from "./pages/Settings";
 
 /* ── One visual language ─────────────────────────────────────────────────── */
@@ -25422,6 +26210,8 @@ const SURFACES = [
   { id: "planner",   label: "Planner",   icon: "◫" },
   { id: "computer",  label: "Computer",  icon: "⬒" },
   { id: "freelance", label: "Earn",      icon: "◆" },
+  { id: "memory",    label: "Memory",    icon: "◧" },
+  { id: "logs",      label: "Logs",      icon: "≡" },
   { id: "diag",      label: "Diagnostics", icon: "◇" },
   { id: "settings",  label: "Settings",  icon: "⚙" },
 ];
@@ -25757,6 +26547,8 @@ export default function JarvisOS() {
               {id === "planner"   && <Planner live={feed} />}
               {id === "computer"  && <Agents live={feed} />}
               {id === "freelance" && <Earn live={feed} />}
+              {id === "memory"    && <Memory />}
+              {id === "logs"      && <Logs live={feed} />}
               {id === "diag"      && <Diagnostics />}
               {id === "settings"  && <Settings />}
             </div>
@@ -26180,7 +26972,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 141/173: frontend/src/colors.js
+# FILE 143/176: frontend/src/colors.js
 ################################################################################
 ```js
 /**
@@ -26270,7 +27062,7 @@ export function btn(color = '#00d4ff', opts = {}) {
 ```
 
 ################################################################################
-# FILE 142/173: frontend/src/components/UI.jsx
+# FILE 144/176: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -26393,7 +27185,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 143/173: frontend/src/config.js
+# FILE 145/176: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -26418,7 +27210,7 @@ export const apiPatch = (url, body) => apiFetch(url, {
 ```
 
 ################################################################################
-# FILE 144/173: frontend/src/index.css
+# FILE 146/176: frontend/src/index.css
 ################################################################################
 ```css
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26482,7 +27274,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !i
 ```
 
 ################################################################################
-# FILE 145/173: frontend/src/main.jsx
+# FILE 147/176: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from 'react'
@@ -26495,7 +27287,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 ################################################################################
-# FILE 146/173: frontend/src/pages/Agents.jsx
+# FILE 148/176: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -27208,7 +28000,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 147/173: frontend/src/pages/Chat.jsx
+# FILE 149/176: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useState, useRef, useEffect } from 'react'
@@ -27341,7 +28133,7 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 148/173: frontend/src/pages/Earn.jsx
+# FILE 150/176: frontend/src/pages/Earn.jsx
 ################################################################################
 ```jsx
 /**
@@ -27805,7 +28597,521 @@ export default function Earn() {
 ```
 
 ################################################################################
-# FILE 149/173: frontend/src/pages/Planner.jsx
+# FILE 151/176: frontend/src/pages/Logs.jsx
+################################################################################
+```jsx
+/**
+ * Logs.jsx — every decision, with a timestamp and a reason.
+ *
+ * The activity strip on the right of the shell is a glance: the last few things
+ * that happened, no filtering, no depth. That's right for a glance and useless
+ * when something has gone wrong and you need to find out where.
+ *
+ * This is the full record. Three sources, deliberately kept separate because
+ * they answer different questions:
+ *
+ *   LIVE FEED   what each subsystem announced, as it happened (SSE)
+ *   TRACES      the code path a request actually took, step by step
+ *   GRADES      confidence in each finished run, and what changed as a result
+ *
+ * Filters are on the things you actually filter by when hunting a problem:
+ * which subsystem, how bad, and free text. Errors-only is one click, because
+ * that is the first thing anyone does.
+ *
+ * The feed arrives through the shell's existing SSE connection rather than
+ * opening a second one. Two EventSources to the same endpoint would double the
+ * server's fan-out for no benefit, and this page has to be cheap enough to
+ * leave open.
+ */
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { API } from "../config.js";
+import { T } from "../JarvisOS.jsx";
+
+const card = { background: "#0d1220", border: `1px solid ${T.line}`, borderRadius: 14 };
+const label = {
+  fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
+  color: T.dim, marginBottom: 10, fontWeight: 600,
+};
+const LEVEL = { info: T.cyan, success: T.green, warning: T.amber, error: T.red };
+
+const chip = (on, color) => ({
+  background: on ? `${color}22` : "transparent",
+  border: `1px solid ${on ? `${color}66` : T.line}`,
+  color: on ? color : T.dim,
+  borderRadius: 999, padding: "3px 11px", fontSize: 11, cursor: "pointer",
+  letterSpacing: "0.03em",
+});
+
+const TABS = [
+  { id: "feed", label: "Live feed" },
+  { id: "traces", label: "Request traces" },
+  { id: "grades", label: "Confidence" },
+];
+
+export default function Logs({ live = [] }) {
+  const [tab, setTab] = useState("feed");
+  const [agent, setAgent] = useState("");
+  const [errorsOnly, setErrorsOnly] = useState(false);
+  const [q, setQ] = useState("");
+  const [traces, setTraces] = useState(null);
+  const [grades, setGrades] = useState(null);
+  const [openTrace, setOpenTrace] = useState(null);
+
+  const load = useCallback(async () => {
+    try { setTraces(await fetch(`${API}/os/traces?limit=30`).then((r) => r.json())); } catch {}
+    try { setGrades(await fetch(`${API}/os/selfeval?limit=25`).then((r) => r.json())); } catch {}
+  }, []);
+  useEffect(() => { load(); }, [load, tab]);
+
+  const agents = useMemo(
+    () => [...new Set((live || []).map((f) => f.agent).filter(Boolean))].sort(),
+    [live]);
+
+  const rows = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return (live || []).filter((f) => {
+      if (agent && f.agent !== agent) return false;
+      if (errorsOnly && !["error", "warning"].includes(f.level)) return false;
+      if (needle && !`${f.agent} ${f.msg}`.toLowerCase().includes(needle)) return false;
+      return true;
+    });
+  }, [live, agent, errorsOnly, q]);
+
+  const download = () => window.open(`${API}/os/report`, "_blank");
+
+  return (
+    <div style={{ padding: 22, display: "flex", flexDirection: "column",
+                  gap: 14, height: "100%", minHeight: 0 }}>
+
+      {/* Tabs + actions */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        {TABS.map((t) => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={chip(tab === t.id, T.cyan)}>
+            {t.label}
+          </button>
+        ))}
+        <div style={{ flex: 1 }} />
+        <button onClick={load} style={chip(false, T.violet)}>Refresh</button>
+        <button onClick={download} style={chip(false, T.green)}>Download full report</button>
+      </div>
+
+      {/* Filters — only meaningful for the feed */}
+      {tab === "feed" && (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <button onClick={() => setAgent("")} style={chip(!agent, T.dim)}>everything</button>
+          {agents.map((a) => (
+            <button key={a} onClick={() => setAgent(a === agent ? "" : a)}
+                    style={chip(a === agent, T.cyan)}>{a}</button>
+          ))}
+          <button onClick={() => setErrorsOnly((v) => !v)} style={chip(errorsOnly, T.red)}>
+            problems only
+          </button>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="find…"
+                 style={{ background: "rgba(0,0,0,0.35)", color: T.text, marginLeft: "auto",
+                          border: `1px solid ${T.line}`, borderRadius: 8,
+                          padding: "6px 11px", fontSize: 12, outline: "none", width: 180 }} />
+        </div>
+      )}
+
+      <section style={{ ...card, flex: 1, minHeight: 0, overflow: "auto", padding: 4 }}>
+
+        {/* ── Live feed ─────────────────────────────────────────────────── */}
+        {tab === "feed" && (
+          rows.length === 0 ? (
+            <Empty>
+              {live.length === 0
+                ? "Nothing yet. Ask Jarvis to do something and it fills up live."
+                : "Nothing matches that filter."}
+            </Empty>
+          ) : rows.map((f) => (
+            <div key={f._k} style={{ display: "flex", gap: 12, padding: "7px 12px",
+                                     borderBottom: `1px solid rgba(255,255,255,0.03)`,
+                                     alignItems: "baseline" }}>
+              <span style={{ fontSize: 10.5, color: T.dim, width: 62, flexShrink: 0,
+                             fontVariantNumeric: "tabular-nums" }}>{f.ts}</span>
+              <span style={{ fontSize: 10, width: 82, flexShrink: 0,
+                             color: LEVEL[f.level] || T.dim, letterSpacing: "0.06em",
+                             textTransform: "uppercase" }}>{f.agent}</span>
+              <span style={{ fontSize: 12.5, color: f.level === "error" ? T.red
+                                    : f.level === "warning" ? T.amber : T.text,
+                             wordBreak: "break-word" }}>{f.msg}</span>
+            </div>
+          ))
+        )}
+
+        {/* ── Traces ────────────────────────────────────────────────────── */}
+        {tab === "traces" && (
+          !traces?.traces?.length ? (
+            <Empty>No requests traced yet.</Empty>
+          ) : (
+            <>
+              {traces.summary && (
+                <div style={{ padding: "10px 14px", fontSize: 12, color: T.dim,
+                              borderBottom: `1px solid ${T.line}` }}>
+                  {traces.summary.total} traced ·{" "}
+                  <span style={{ color: traces.summary.failed ? T.red : T.green }}>
+                    {traces.summary.failed || 0} failed
+                  </span>
+                </div>
+              )}
+              {traces.traces.map((t) => (
+                <div key={t.id} style={{ borderBottom: `1px solid rgba(255,255,255,0.03)` }}>
+                  <button onClick={() => setOpenTrace(openTrace === t.id ? null : t.id)}
+                          style={{ display: "flex", gap: 12, width: "100%", padding: "9px 14px",
+                                   background: "transparent", border: "none", cursor: "pointer",
+                                   alignItems: "baseline", textAlign: "left" }}>
+                    <span style={{ color: t.ok === false ? T.red : T.green, fontSize: 12 }}>
+                      {t.ok === false ? "✕" : "●"}
+                    </span>
+                    <span style={{ fontSize: 12.5, color: T.text, flex: 1, minWidth: 0 }}>
+                      {t.label || t.kind}
+                    </span>
+                    <span style={{ fontSize: 11, color: T.dim }}>
+                      {t.steps?.length || 0} steps
+                      {t.ms ? ` · ${(t.ms / 1000).toFixed(1)}s` : ""}
+                    </span>
+                  </button>
+                  {openTrace === t.id && (
+                    <div style={{ padding: "2px 14px 12px 38px" }}>
+                      {(t.steps || []).map((s, i) => (
+                        <div key={i} style={{ display: "flex", gap: 10, padding: "3px 0",
+                                              fontSize: 11.5 }}>
+                          <span style={{ color: s.ok === false ? T.red
+                                              : s.ok === true ? T.green : T.dim }}>
+                            {s.ok === false ? "✕" : s.ok === true ? "✓" : "·"}
+                          </span>
+                          <span style={{ color: T.text, width: 210, flexShrink: 0 }}>
+                            {s.component}
+                          </span>
+                          <span style={{ color: T.dim, wordBreak: "break-word" }}>
+                            {s.detail}
+                          </span>
+                        </div>
+                      ))}
+                      {t.result && (
+                        <div style={{ fontSize: 11.5, marginTop: 6,
+                                      color: t.ok === false ? T.red : T.dim }}>
+                          → {t.result}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          )
+        )}
+
+        {/* ── Confidence ────────────────────────────────────────────────── */}
+        {tab === "grades" && (
+          !grades?.runs?.length ? (
+            <Empty>No finished runs graded yet.</Empty>
+          ) : (
+            <>
+              <div style={{ padding: "12px 14px", fontSize: 12, color: T.dim,
+                            borderBottom: `1px solid ${T.line}`, lineHeight: 1.5 }}>
+                {grades.note}
+              </div>
+              {grades.runs.map((r, i) => (
+                <div key={i} style={{ padding: "10px 14px",
+                                      borderBottom: `1px solid rgba(255,255,255,0.03)` }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, width: 46,
+                                   color: r.confidence >= 70 ? T.green : T.amber }}>
+                      {r.confidence}%
+                    </span>
+                    <span style={{ fontSize: 12.5, color: r.ok ? T.text : T.red, flex: 1 }}>
+                      {r.goal}
+                    </span>
+                    <span style={{ fontSize: 10.5, color: T.dim }}>
+                      {r.verified}/{r.steps} verified
+                    </span>
+                  </div>
+                  {(r.reasons || []).map((why, j) => (
+                    <div key={j} style={{ fontSize: 11.5, color: T.dim, marginLeft: 58 }}>
+                      {why}
+                    </div>
+                  ))}
+                  {r.applied?.applied && (
+                    <div style={{ fontSize: 11.5, color: T.green, marginLeft: 58, marginTop: 3 }}>
+                      Changed for next time: {r.applied.effect}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          )
+        )}
+      </section>
+    </div>
+  );
+}
+
+function Empty({ children }) {
+  return <div style={{ padding: 24, fontSize: 12.5, color: T.dim }}>{children}</div>;
+}
+```
+
+################################################################################
+# FILE 152/176: frontend/src/pages/Memory.jsx
+################################################################################
+```jsx
+/**
+ * Memory.jsx — everything Jarvis knows, in one place you can edit.
+ *
+ * Memory was invisible. Facts went in through chat ("remember that…"), documents
+ * went in through upload, and the only way to find out what was actually stored
+ * was to ask and hope. A memory you can't inspect is a memory you can't trust,
+ * and one wrong fact in there quietly steers every future answer.
+ *
+ * Two kinds of memory, shown separately because they behave differently:
+ *
+ *   FACTS       short, durable, always in context. A handful of them.
+ *               Editable and deletable, with the source of each one shown —
+ *               you told me / found on this PC / noticed from use.
+ *
+ *   DOCUMENTS   longer text, retrieved only when relevant. Searchable, so you
+ *               can see exactly what a query would pull up before it gets used
+ *               to answer something.
+ *
+ * The search box runs the real retrieval, not a text filter — what you see here
+ * is what the model would be given.
+ */
+import { useState, useEffect, useCallback } from "react";
+import { API } from "../config.js";
+import { T } from "../JarvisOS.jsx";
+
+const card = {
+  background: "#0d1220", border: `1px solid ${T.line}`, borderRadius: 14,
+  padding: 18, marginBottom: 16,
+};
+const label = {
+  fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
+  color: T.dim, marginBottom: 12, fontWeight: 600,
+};
+const input = {
+  background: "rgba(0,0,0,0.35)", color: T.text, border: `1px solid ${T.line}`,
+  borderRadius: 8, padding: "8px 12px", fontSize: 12.5, outline: "none",
+};
+const btn = (color) => ({
+  background: `${color}1f`, border: `1px solid ${color}55`, color,
+  borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 600,
+  cursor: "pointer",
+});
+
+const SOURCE_WORDS = {
+  stated: "you told me",
+  observed: "found on this PC",
+  inferred: "noticed from how you work",
+};
+
+export default function Memory() {
+  const [persona, setPersona] = useState(null);
+  const [docs, setDocs] = useState([]);
+  const [status, setStatus] = useState(null);
+  const [q, setQ] = useState("");
+  const [hits, setHits] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [newNote, setNewNote] = useState({ title: "", body: "" });
+  const [note, setNote] = useState("");
+
+  const load = useCallback(async () => {
+    const get = async (p, set, pick = (x) => x) => {
+      try { set(pick(await fetch(`${API}${p}`).then((r) => r.json()))); } catch {}
+    };
+    get("/os/persona", setPersona);
+    get("/brain/documents", setDocs, (j) => j.documents || j || []);
+    get("/brain/status", setStatus);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const search = async () => {
+    if (!q.trim()) return setHits(null);
+    setBusy(true);
+    try {
+      const r = await fetch(`${API}/brain/search?q=${encodeURIComponent(q)}&k=6`);
+      setHits(await r.json());
+    } catch { setHits({ results: [], error: "couldn't reach the backend" }); }
+    setBusy(false);
+  };
+
+  const forget = async (field) => {
+    await fetch(`${API}/os/persona/${field}`, { method: "DELETE" }).catch(() => {});
+    load();
+  };
+
+  const removeDoc = async (id) => {
+    await fetch(`${API}/brain/document/${id}`, { method: "DELETE" }).catch(() => {});
+    load();
+  };
+
+  const addNote = async () => {
+    if (!newNote.body.trim()) return;
+    setNote("");
+    try {
+      const r = await fetch(`${API}/brain/ingest`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newNote.title || "note", text: newNote.body,
+                               source: "you" }),
+      });
+      const j = await r.json().catch(() => ({}));
+      setNote(r.ok ? `Saved — split into ${j.chunks ?? "?"} searchable piece(s).`
+                   : (j.detail || "Couldn't save that."));
+      if (r.ok) setNewNote({ title: "", body: "" });
+    } catch { setNote("Backend didn't answer."); }
+    load();
+  };
+
+  const known = persona?.known || [];
+
+  return (
+    <div style={{ padding: 22, maxWidth: 900 }}>
+
+      {/* ── Facts ──────────────────────────────────────────────────────── */}
+      <section style={card}>
+        <div style={label}>Facts it always knows</div>
+        <div style={{ fontSize: 12, color: T.dim, marginBottom: 14, lineHeight: 1.5 }}>
+          These go into every answer without being retrieved. Kept short on
+          purpose — a prompt stuffed with remembered trivia produces answers
+          about the trivia.
+        </div>
+        {known.length === 0 && (
+          <div style={{ fontSize: 12.5, color: T.dim }}>
+            Nothing yet. Say "remember that I…" in chat, or add facts in Settings.
+          </div>
+        )}
+        {known.map((f) => (
+          <div key={f.field} style={{ display: "flex", gap: 12, alignItems: "baseline",
+                                      padding: "8px 0",
+                                      borderBottom: `1px solid ${T.line}` }}>
+            <div style={{ width: 130, fontSize: 11.5, color: T.dim, flexShrink: 0 }}>
+              {f.field.replace(/_/g, " ")}
+            </div>
+            <div style={{ flex: 1, fontSize: 12.5, color: T.text, minWidth: 0 }}>
+              {f.value}
+              <div style={{ fontSize: 10.5, color: T.dim, marginTop: 2 }}>
+                {SOURCE_WORDS[f.source] || f.source}
+                {f.evidence ? ` — ${f.evidence}` : ""}
+              </div>
+            </div>
+            <button onClick={() => forget(f.field)}
+                    style={{ ...btn(T.dim), padding: "3px 10px", fontSize: 10.5 }}>
+              Forget
+            </button>
+          </div>
+        ))}
+      </section>
+
+      {/* ── Search ─────────────────────────────────────────────────────── */}
+      <section style={card}>
+        <div style={label}>What would it recall?</div>
+        <div style={{ fontSize: 12, color: T.dim, marginBottom: 12, lineHeight: 1.5 }}>
+          This runs the real retrieval. What comes back is exactly what the model
+          would be handed if you asked this in chat.
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={q} onChange={(e) => setQ(e.target.value)}
+                 onKeyDown={(e) => e.key === "Enter" && search()}
+                 placeholder="try: my rate, freelance profile, what I decided about…"
+                 style={{ ...input, flex: 1 }} />
+          <button style={btn(T.cyan)} onClick={search} disabled={busy}>
+            {busy ? "…" : "Search"}
+          </button>
+        </div>
+        {status && (
+          <div style={{ fontSize: 11, color: T.dim, marginTop: 8 }}>
+            {status.documents ?? docs.length} document(s) ·{" "}
+            {status.embeddings || status.vector
+              ? "meaning-based search is on"
+              : "keyword search only — pull nomic-embed-text for meaning-based search"}
+          </div>
+        )}
+        {hits && (
+          <div style={{ marginTop: 14 }}>
+            {!(hits.results || []).length && (
+              <div style={{ fontSize: 12.5, color: T.dim }}>
+                Nothing came back. It would answer from general knowledge only.
+              </div>
+            )}
+            {(hits.results || []).map((h, i) => (
+              <div key={i} style={{ padding: "10px 0",
+                                    borderTop: `1px solid ${T.line}` }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
+                  <span style={{ fontSize: 12.5, color: T.text, flex: 1 }}>
+                    {h.title || h.source || "untitled"}
+                  </span>
+                  {h.score != null && (
+                    <span style={{ fontSize: 10.5, color: T.dim }}>
+                      match {typeof h.score === "number" ? h.score.toFixed(2) : h.score}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: T.dim, marginTop: 4, lineHeight: 1.5 }}>
+                  {(h.text || h.chunk || "").slice(0, 400)}
+                  {(h.text || "").length > 400 ? "…" : ""}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Teach it something in writing ──────────────────────────────── */}
+      <section style={card}>
+        <div style={label}>Tell it something longer</div>
+        <div style={{ fontSize: 12, color: T.dim, marginBottom: 12, lineHeight: 1.5 }}>
+          For anything too long to be a fact — your rates and terms, how you like
+          proposals written, notes on a client. Retrieved when relevant.
+        </div>
+        <input value={newNote.title} placeholder="what is this? e.g. my rates"
+               onChange={(e) => setNewNote((n) => ({ ...n, title: e.target.value }))}
+               style={{ ...input, width: "100%", marginBottom: 8 }} />
+        <textarea value={newNote.body} rows={5}
+                  placeholder="write it here…"
+                  onChange={(e) => setNewNote((n) => ({ ...n, body: e.target.value }))}
+                  style={{ ...input, width: "100%", resize: "vertical",
+                           fontFamily: "inherit", lineHeight: 1.5 }} />
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 10 }}>
+          <button style={btn(T.green)} onClick={addNote}>Remember this</button>
+          {note && <span style={{ fontSize: 12, color: T.dim }}>{note}</span>}
+        </div>
+      </section>
+
+      {/* ── Everything stored ──────────────────────────────────────────── */}
+      <section style={card}>
+        <div style={label}>Everything stored ({docs.length})</div>
+        {docs.length === 0 && (
+          <div style={{ fontSize: 12.5, color: T.dim }}>Nothing stored yet.</div>
+        )}
+        {docs.map((d) => (
+          <div key={d.id} style={{ display: "flex", gap: 12, alignItems: "baseline",
+                                   padding: "8px 0",
+                                   borderBottom: `1px solid ${T.line}` }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, color: T.text }}>
+                {d.title || "untitled"}
+              </div>
+              <div style={{ fontSize: 10.5, color: T.dim, marginTop: 2 }}>
+                {d.source || "note"}
+                {d.project ? ` · ${d.project}` : ""}
+                {d.chunks ? ` · ${d.chunks} pieces` : ""}
+                {d.created_at ? ` · ${String(d.created_at).slice(0, 10)}` : ""}
+              </div>
+            </div>
+            <button onClick={() => removeDoc(d.id)}
+                    style={{ ...btn(T.red), padding: "3px 10px", fontSize: 10.5 }}>
+              Delete
+            </button>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+```
+
+################################################################################
+# FILE 153/176: frontend/src/pages/Planner.jsx
 ################################################################################
 ```jsx
 /**
@@ -27857,6 +29163,93 @@ function btn(color, disabled) {
 
 const secs = (ms) => (ms == null ? "" : ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`);
 
+/* How alarming is a step? Only three tiers, because a legend nobody reads is
+   the same as no legend. Safe steps are grey and get out of the way. */
+const RISK = {
+  safe:      { c: T.dim,    mark: "·" },
+  visible:   { c: T.cyan,   mark: "·" },
+  network:   { c: T.cyan,   mark: "·" },
+  writes:    { c: T.amber,  mark: "!" },
+  disruptive:{ c: T.amber,  mark: "!" },
+  sensitive: { c: T.red,    mark: "!!" },
+  unknown:   { c: T.amber,  mark: "?" },
+};
+
+function Simulation({ sim }) {
+  if (sim.loading) {
+    return <div style={{ marginTop: 12, fontSize: 12, color: T.dim }}>Working it out…</div>;
+  }
+  const earning = sim.kind === "earning";
+  const steps = sim.would || [];
+
+  return (
+    <div style={{ marginTop: 14, padding: 14, borderRadius: 11,
+                  background: "rgba(169,139,255,0.06)",
+                  border: `1px solid rgba(169,139,255,0.25)` }}>
+      <div style={{ ...label, color: T.violet, marginBottom: 10 }}>
+        {earning ? "If you start earning now" : "If you run that"}
+      </div>
+
+      {!sim.possible && (
+        <div style={{ fontSize: 12.5, color: T.amber, marginBottom: 10 }}>
+          {sim.reason || "This can't run right now."}
+        </div>
+      )}
+
+      {steps.map((s, i) => {
+        const r = RISK[s.level] || RISK.unknown;
+        return (
+          <div key={i} style={{ display: "flex", gap: 10, padding: "5px 0",
+                                alignItems: "baseline" }}>
+            <span style={{ color: r.c, width: 18, fontSize: 12, flexShrink: 0 }}>
+              {r.mark}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, color: T.text }}>
+                {s.text || s.would}
+              </div>
+              {s.effect && (
+                <div style={{ fontSize: 11, color: r.c, marginTop: 2 }}>
+                  {s.effect} · ~{s.seconds}s ({s.basis})
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {sim.estimate && (
+        <div style={{ fontSize: 12, color: T.text, marginTop: 10 }}>
+          Would take {sim.estimate}.
+          {sim.changes_things?.length > 0 &&
+            ` ${sim.changes_things.length} of ${steps.length} steps change something
+              outside Jarvis.`}
+        </div>
+      )}
+
+      {(sim.blockers || []).map((b, i) => (
+        <div key={i} style={{ fontSize: 11.5, marginTop: 7,
+                              color: b.fatal ? T.red : T.amber }}>
+          {b.fatal ? "Stops it: " : "Heads up: "}{b.what} — {b.fix}
+        </div>
+      ))}
+      {(sim.warnings || []).map((w, i) => (
+        <div key={i} style={{ fontSize: 11.5, color: T.amber, marginTop: 7 }}>{w}</div>
+      ))}
+      {(sim.unresolved || []).map((u, i) => (
+        <div key={i} style={{ fontSize: 11.5, color: T.amber, marginTop: 7 }}>
+          I don't understand this part: "{u}"
+        </div>
+      ))}
+
+      <div style={{ fontSize: 11, color: T.dim, marginTop: 12,
+                    borderTop: `1px solid ${T.line}`, paddingTop: 9 }}>
+        {sim.note}
+      </div>
+    </div>
+  );
+}
+
 export default function Planner({ live = [] }) {
   const [plan, setPlan] = useState(null);
   const [why, setWhy] = useState(null);
@@ -27864,6 +29257,7 @@ export default function Planner({ live = [] }) {
   const [teach, setTeach] = useState(null);
   const [teachName, setTeachName] = useState("");
   const [preview, setPreview] = useState(null);
+  const [sim, setSim] = useState(null);
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const timer = useRef(null);
@@ -27912,8 +29306,13 @@ export default function Planner({ live = [] }) {
     load();
   };
 
+  /* Two levels of "before you run it".
+     Show plan  — the step list, instant, no backend work beyond parsing.
+     Simulate   — the same steps PLUS what each one touches, how long it would
+                  take on this machine, and what would block it. Runs nothing. */
   const doPreview = async () => {
     if (!draft.trim()) return;
+    setPreview(null);
     try {
       const r = await fetch(`${API}/os/plan/preview`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -27921,6 +29320,18 @@ export default function Planner({ live = [] }) {
       });
       setPreview(await r.json());
     } catch { setPreview({ plan: [], unresolved: [draft] }); }
+  };
+
+  const doSimulate = async (command) => {
+    setPreview(null);
+    setSim({ loading: true });
+    try {
+      const r = await fetch(`${API}/os/simulate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(command ? { command } : {}),
+      });
+      setSim(await r.json());
+    } catch { setSim({ possible: false, reason: "backend didn't answer" }); }
   };
 
   const teachToggle = async () => {
@@ -28041,7 +29452,18 @@ export default function Planner({ live = [] }) {
                             border: `1px solid ${T.line}`, borderRadius: 8,
                             padding: "8px 11px", fontSize: 12, outline: "none" }} />
             <button style={btn(T.cyan)} onClick={doPreview}>Show plan</button>
+            <button style={btn(T.violet)} onClick={() => doSimulate(draft)}>Simulate</button>
           </div>
+          <div style={{ fontSize: 11, color: T.dim, marginTop: 7 }}>
+            Simulate also shows what each step would touch, how long it would
+            take on this PC, and what would stop it. It runs nothing.{" "}
+            <button onClick={() => doSimulate("")}
+                    style={{ background: "none", border: "none", color: T.violet,
+                             cursor: "pointer", fontSize: 11, padding: 0 }}>
+              Simulate a freelance run instead
+            </button>
+          </div>
+          {sim && <Simulation sim={sim} />}
           {preview && (
             <div style={{ marginTop: 10, fontSize: 12 }}>
               {(preview.plan || []).map((p, i) => (
@@ -28201,7 +29623,7 @@ export default function Planner({ live = [] }) {
 ```
 
 ################################################################################
-# FILE 150/173: frontend/src/pages/Settings.jsx
+# FILE 154/176: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 /**
@@ -28524,7 +29946,7 @@ function Row({ s }) {
 ```
 
 ################################################################################
-# FILE 151/173: frontend/vite.config.js
+# FILE 155/176: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -28536,7 +29958,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 152/173: .gitignore
+# FILE 156/176: .gitignore
 ################################################################################
 ```
 # Python
@@ -28581,7 +30003,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 153/173: DOCTOR.bat
+# FILE 157/176: DOCTOR.bat
 ################################################################################
 ```bat
 @echo off
@@ -28611,7 +30033,7 @@ pause
 ```
 
 ################################################################################
-# FILE 154/173: FINAL_PROJECT_TREE_backend.txt
+# FILE 158/176: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -28694,7 +30116,7 @@ pause
 ```
 
 ################################################################################
-# FILE 155/173: FINAL_PROJECT_TREE_frontend.txt
+# FILE 159/176: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -28718,7 +30140,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 156/173: LEGACY_GREP_ARTIFACT.txt
+# FILE 160/176: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -28740,7 +30162,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 157/173: PROJECT_TREE.txt
+# FILE 161/176: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -28858,7 +30280,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 158/173: REQUIREMENTS_SNAPSHOT.txt
+# FILE 162/176: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -28888,7 +30310,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 159/173: RUNTIME_VALIDATION.py
+# FILE 163/176: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -28989,7 +30411,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 160/173: RUN_FAILURE_TEST.bat
+# FILE 164/176: RUN_FAILURE_TEST.bat
 ################################################################################
 ```bat
 @echo off
@@ -29033,26 +30455,7 @@ pause
 ```
 
 ################################################################################
-# FILE 161/173: RUN_VALIDATION.bat
-################################################################################
-```bat
-@echo off
-REM Runtime validation for the 4 required V9 commands.
-REM Run this on the Windows target with Ollama running.
-echo ============================================
-echo  Jarvis V9 Runtime Validation
-echo  Opens Notepad + Chrome, screenshots, auto mode
-echo ============================================
-cd /d "%~dp0backend"
-python ..\RUNTIME_VALIDATION.py
-echo.
-echo Artifacts written to a runtime_validation_* folder above.
-echo Send back: sse_log.txt, results.json, and the PNG screenshots.
-pause
-```
-
-################################################################################
-# FILE 162/173: START.bat
+# FILE 165/176: START.bat
 ################################################################################
 ```bat
 @echo off
@@ -29111,6 +30514,35 @@ start "Jarvis Backend" cmd /k "cd /d ""%ROOT%backend"" && %PY% -m uvicorn main:a
 REM ---- frontend ----
 set "NPM=npm"
 where npm >/dev/null 2>/dev/null || set "NPM=npm.cmd"
+
+REM Confirm the build tool is REALLY there before launching the UI window.
+REM "node_modules exists" is not the same question: a ZIP extracted over an old
+REM copy leaves the folder without vite in it, and `npm run dev` then dies with
+REM "Cannot find module 'vite'" in a window that closes too fast to read.
+if not exist "%ROOT%frontend\node_modules\vite\package.json" (
+  echo.
+  echo  The UI packages are missing or incomplete. Installing them now.
+  echo  This takes a few minutes the first time.
+  echo.
+  pushd "%ROOT%frontend"
+  if "%JARVIS_CN%"=="1" (
+    call %NPM% install --no-audit --no-fund --registry=https://registry.npmmirror.com
+  ) else (
+    call %NPM% install --no-audit --no-fund
+  )
+  popd
+)
+if not exist "%ROOT%frontend\node_modules\vite\package.json" (
+  echo.
+  echo  The UI still won't install. Jarvis's backend will start anyway, but
+  echo  there will be no web page. Run this by hand to see the real error:
+  echo.
+  echo      cd /d "%ROOT%frontend"
+  echo      npm install --registry=https://registry.npmmirror.com
+  echo.
+  pause
+)
+
 echo  Starting Jarvis UI...
 start "Jarvis UI" cmd /k "cd /d ""%ROOT%frontend"" && %NPM% run dev"
 
@@ -29125,8 +30557,17 @@ if not errorlevel 1 goto ready
 curl -s http://localhost:5174 >/dev/null 2>nul
 if not errorlevel 1 ( set "UIPORT=5174" & goto ready2 )
 if %tries% lss 40 goto wait
+echo.
 echo  The UI did not answer after 80 seconds.
-echo  Look at the "Jarvis UI" window for the error.
+echo.
+echo  Look at the "Jarvis UI" window - the error is in there. The usual one is
+echo  "Cannot find module 'vite'", which means the UI packages didn't install.
+echo  Fix it with:
+echo.
+echo      cd /d "%ROOT%frontend"
+echo      npm install --registry=https://registry.npmmirror.com
+echo.
+echo  The backend is still running at http://127.0.0.1:8000 either way.
 goto done
 
 :ready
@@ -29149,193 +30590,77 @@ timeout /t 15
 ```
 
 ################################################################################
-# FILE 163/173: START_JARVIS.bat
+# FILE 166/176: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
-REM ============================================================
-REM  JARVIS - true one-click start (backend + UI + browser)
-REM  Double-click this file. Nothing else needs to be run.
-REM ============================================================
-title Jarvis Launcher
-setlocal EnableDelayedExpansion
+REM This launcher is gone. It was the old V8 one and it pulled the wrong
+REM models, skipped the UI install, and never checked anything.
+REM
+REM There is exactly one launcher now:  START.bat
+title Jarvis
 cd /d "%~dp0"
-set "ROOT=%~dp0"
-
 echo.
-echo  ===============================================
-echo    JARVIS - starting
-echo  ===============================================
+echo   START_JARVIS.bat has been replaced by START.bat.
 echo.
-
-REM ---------- 0. China mirrors ----------
-REM Playwright downloads its browser from a Google-hosted CDN and pip/npm from
-REM hosts that are slow or unreachable behind the GFW. Without these, install
-REM doesn't fail fast - it hangs for minutes and then gives up, which looks
-REM exactly like "the launcher is broken".
-REM Set JARVIS_CN=0 in your environment to use the upstream sources instead.
-if not defined JARVIS_CN set "JARVIS_CN=1"
-if "%JARVIS_CN%"=="1" (
-  set "PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright"
-  set "PIP_INDEX_URL=https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
-  set "PIP_TRUSTED_HOST=mirrors.tuna.tsinghua.edu.cn"
-  set "NPM_CONFIG_REGISTRY=https://registry.npmmirror.com"
-  echo  [ok] China mirrors enabled ^(set JARVIS_CN=0 to disable^)
-)
-
-REM ---------- 0b. Wrong-folder npm damage ----------
-REM `npm init -y` run in the project root (easy mistake - the UI actually lives
-REM in frontend\) creates a package.json here that shadows the real one. Vite
-REM then starts an empty project on 5173 and the real UI is pushed to 5174+.
-if exist "%ROOT%package.json" (
-  echo.
-  echo  [!] There is a package.json in the PROJECT ROOT. That is not the UI -
-  echo      the UI lives in frontend\. It was probably created by running
-  echo      "npm init" here by mistake, and it will start the wrong project.
-  echo.
-  echo      Delete these from %ROOT%
-  echo          del package.json package-lock.json
-  echo          rmdir /s /q node_modules
-  echo.
-  echo      Run DOCTOR.bat for the full picture.
-  echo.
-  pause
-)
-
-REM ---------- 1. Python ----------
-set "PY="
-where py >nul 2>nul && set "PY=py -3"
-if not defined PY ( where python >nul 2>nul && set "PY=python" )
-if not defined PY (
-  echo  [X] Python not found on PATH.
-  echo      Install Python 3.11+ from python.org and TICK "Add Python to PATH".
-  echo.
-  pause & exit /b 1
-)
-echo  [ok] Python: %PY%
-
-REM ---------- 2. Node / npm ----------
-REM npm is npm.cmd - `where npm` can miss it in some shells, so check both.
-set "NPM="
-where npm >nul 2>nul && set "NPM=npm"
-if not defined NPM ( where npm.cmd >nul 2>nul && set "NPM=npm.cmd" )
-if not defined NPM (
-  echo  [X] Node.js / npm not found on PATH.  ^<-- this is why the UI never opened
-  echo      Install Node.js LTS from nodejs.org, then re-run this file.
-  echo.
-  pause & exit /b 1
-)
-echo  [ok] npm found
-
-REM ---------- 3. Ollama ----------
-curl -s http://127.0.0.1:11434/api/tags >nul 2>nul
-if errorlevel 1 (
-  echo  [..] Ollama not responding - starting it
-  start "Ollama" /min cmd /c "ollama serve"
-  timeout /t 4 >nul
-) else (
-  echo  [ok] Ollama already running
-)
-
-REM ---------- 4. Backend deps ----------
-echo  [..] Backend dependencies
-pushd "%ROOT%backend"
-%PY% -m pip install -q -r requirements.txt 2>nul
-if errorlevel 1 (
-  echo       mirror failed - retrying against PyPI directly
-  %PY% -m pip install -q --index-url https://pypi.org/simple -r requirements.txt 2>nul
-)
-popd
-
-REM ---------- 4b. Playwright browser ----------
-REM Every freelance login, job scan and bid submission drives this browser.
-REM It is NOT installed by `pip install playwright` - it is a separate download,
-REM and without it those features fail at runtime with no obvious cause.
-%PY% -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); p.chromium.executable_path; p.stop()" >nul 2>nul
-if errorlevel 1 (
-  echo  [..] Downloading the automation browser ^(first run only^)
-  REM MUST be "chromium", never "chrome". `playwright install chrome` fetches
-  REM the branded Google Chrome MSI from a Google server via a PowerShell
-  REM script that ignores PLAYWRIGHT_DOWNLOAD_HOST entirely, so behind the GFW
-  REM it always dies with "unable to connect to the remote server" no matter
-  REM what mirror is set. Only the chromium download honours the mirror.
-  %PY% -m playwright install chromium
-  if errorlevel 1 (
-    echo  [!] Browser download failed. Freelance automation will not work until it
-    echo      succeeds. Retry manually with:
-    echo          set PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright
-    echo          %PY% -m playwright install chromium
-    echo      Do NOT use "playwright install chrome" - that one cannot use a
-    echo      mirror and will never succeed from here.
-  )
-) else (
-  echo  [ok] Automation browser present
-)
-
-REM ---------- 5. Backend ----------
-echo  [..] Starting backend on http://127.0.0.1:8000
-start "Jarvis Backend" cmd /k "cd /d ""%ROOT%backend"" && %PY% -m uvicorn main:app --port 8000"
-
-REM ---------- 6. Frontend deps ----------
-if not exist "%ROOT%frontend\node_modules" (
-  echo  [..] Installing UI packages ^(first run only, few minutes^)
-  pushd "%ROOT%frontend"
-  call %NPM% install
-  if errorlevel 1 (
-    echo       mirror failed - retrying against the npm registry directly
-    call %NPM% install --registry=https://registry.npmjs.org
-  )
-  popd
-)
-
-REM ---------- 7. Frontend ----------
-echo  [..] Starting UI on http://localhost:5173
-start "Jarvis UI" cmd /k "cd /d ""%ROOT%frontend"" && %NPM% run dev"
-
-REM ---------- 8. Wait for the UI, then open the browser ----------
-echo  [..] Waiting for the UI to come up...
-set /a tries=0
-:waitloop
-timeout /t 2 >nul
-set /a tries+=1
-curl -s http://localhost:5173 >nul 2>nul
-if not errorlevel 1 goto ready
-if %tries% lss 30 goto waitloop
-echo  [!] UI didn't answer on :5173 after 60s. Check the "Jarvis UI" window for errors.
-goto done
-
-:ready
-echo  [ok] UI is up - opening browser
-start "" http://localhost:5173
-
-:done
+echo   Starting START.bat for you now...
 echo.
-echo  ===============================================
-echo    Jarvis is running.
-echo      UI       http://localhost:5173
-echo      Backend  http://127.0.0.1:8000
-echo      Docs     http://127.0.0.1:8000/api/docs
-echo.
-echo    Two windows opened (Backend + UI). Closing
-echo    them stops Jarvis. This window can be closed.
-echo  ===============================================
-echo.
-timeout /t 10
+timeout /t 3 >nul
+call "%~dp0START.bat"
 ```
 
 ################################################################################
-# FILE 164/173: failure_injection_report.txt
+# FILE 167/176: UPDATE.bat
+################################################################################
+```bat
+@echo off
+REM ==============================================================
+REM  Get the newest Jarvis.
+REM
+REM  Works whether or not this folder is a git checkout, and never
+REM  touches your database, your logins or your settings.
+REM ==============================================================
+title Jarvis Update
+cd /d "%~dp0"
+
+set "PY="
+where py >/dev/null 2>/dev/null && set "PY=py -3"
+if not defined PY ( where python >/dev/null 2>/dev/null && set "PY=python" )
+if not defined PY (
+  echo.
+  echo   Python is not installed, or not on PATH.
+  echo   Install Python 3.11 from python.org, tick "Add Python to PATH".
+  echo.
+  pause ^& exit /b 1
+)
+
+%PY% tools\update.py
+echo.
+pause
+```
+
+################################################################################
+# FILE 168/176: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-01T02:02:17.629131
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-01T12:47:43.806877
 platform: linux  python: 3.11.15
-14 passed · 0 failed · 1 skipped
+15 passed · 0 failed · 1 skipped
 
 [PASS] control — Pause / resume / cancel behave
     Pause holds, cancel releases cleanly, clear resets.
     · a paused worker holds at the checkpoint
     · cancel releases a paused worker and raises Cancelled
     · explain() answered with 2 reason(s)
+
+[PASS] simulation — Simulating never executes anything
+    Shows the full plan and its effects, executes nothing.
+    · no desktop action was executed
+    · no plan was published
+    · showed 5 steps with effects and estimates
+    · side effects are labelled, typing flagged as a change
+    · freelance cycle described without scanning or sending
+    · only explicit requests trigger a simulation
 
 [PASS] decompose — Sentences split into steps at the right places
     Clauses split on verbs, queries stop at boundaries, leftovers reported.
@@ -29387,7 +30712,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785549737' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1785588463' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -29400,7 +30725,7 @@ platform: linux  python: 3.11.15
 
 [PASS] model_pressure — keep_alive adapts to memory pressure
     Scaling is correct: big=90s, small=5m.
-    · free RAM 16.1GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
+    · free RAM 16.2GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
     · skipped the live unload (needs --include-destructive)
 
 [PASS] classification — Real errors map to the right cause
@@ -29410,7 +30735,7 @@ platform: linux  python: 3.11.15
 ```
 
 ################################################################################
-# FILE 165/173: legacy_dependency_report.json
+# FILE 169/176: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -29575,7 +30900,7 @@ platform: linux  python: 3.11.15
 ```
 
 ################################################################################
-# FILE 166/173: requirements.txt
+# FILE 170/176: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -29608,50 +30933,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 167/173: start.bat
-################################################################################
-```bat
-@echo off
-title Jarvis OS V8
-echo ============================================================
-echo   JARVIS OS V8 - AUTONOMOUS DESKTOP + FREELANCE AGENT
-echo ============================================================
-echo.
-
-cd /d "%~dp0"
-
-echo [1/5] Installing Python dependencies...
-pip install -r backend\requirements.txt -q --break-system-packages 2>nul || pip install -r backend\requirements.txt -q
-
-echo [2/5] Installing Playwright browsers (Edge + Chromium)...
-python -m playwright install msedge --quiet 2>nul
-python -m playwright install chromium --quiet 2>nul
-
-echo [3/5] Creating browser profile directory...
-if not exist "backend\edge-profile" mkdir backend\edge-profile
-
-echo [4/5] Pulling Ollama models (if not already pulled)...
-echo   Fast model:      ollama pull qwen2.5:0.5b
-echo   Reasoning model: ollama pull deepseek-r1:1.5b
-echo   Vision model:    ollama pull llava:7b  (optional, ~4GB)
-echo   (Pull manually in a separate terminal if not done yet)
-echo.
-
-echo [5/5] Starting Jarvis OS V8 backend...
-echo.
-echo   Backend API: http://127.0.0.1:8000
-echo   API Docs:    http://127.0.0.1:8000/docs
-echo.
-echo   To start frontend: run start_frontend.bat in another window
-echo.
-
-cd backend
-python -m uvicorn main:app --reload --port 8000 --host 127.0.0.1
-pause
-```
-
-################################################################################
-# FILE 168/173: start.sh
+# FILE 171/176: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -29688,22 +30970,7 @@ wait
 ```
 
 ################################################################################
-# FILE 169/173: start_frontend.bat
-################################################################################
-```bat
-@echo off
-title Jarvis OS Frontend
-cd /d "%~dp0\frontend"
-echo Installing frontend dependencies...
-npm install
-echo.
-echo Starting frontend at http://localhost:5173
-npm run dev
-pause
-```
-
-################################################################################
-# FILE 170/173: tools/doctor.py
+# FILE 172/176: tools/doctor.py
 ################################################################################
 ```py
 """
@@ -30030,7 +31297,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 171/173: tools/dump_source.py
+# FILE 173/176: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
@@ -30129,7 +31396,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 172/173: tools/failure_injection.py
+# FILE 174/176: tools/failure_injection.py
 ################################################################################
 ```py
 """
@@ -30888,8 +32155,83 @@ def s_teach_privacy():
     return r.ok("Passwords are never recorded; normal input still is.")
 
 
+def s_simulation():
+    """
+    A simulation must execute NOTHING. This is the whole feature: a dry run with
+    side effects is worse than no dry run, because it gets trusted.
+    """
+    r = Result("simulation", "Simulating never executes anything")
+    from services import simulate, live_plan
+
+    live_plan.clear()
+
+    # Monkey-patch the executor so that ANY execution during a simulation is
+    # caught, rather than hoping it didn't happen.
+    from agents import desktop_agent
+    fired = {"n": 0}
+    real_run, real_chain = desktop_agent._run_action, desktop_agent.execute_chain
+
+    def trap(*a, **k):
+        fired["n"] += 1
+        return {"success": False, "error": "trapped"}
+
+    desktop_agent._run_action = trap
+    desktop_agent.execute_chain = trap
+    try:
+        sim = simulate.task("open notepad and type hello and analyze the page")
+        earn = simulate.earning()
+    finally:
+        desktop_agent._run_action, desktop_agent.execute_chain = real_run, real_chain
+
+    if fired["n"]:
+        return r.bad(f"Simulating ran {fired['n']} real action(s). A dry run with "
+                     f"side effects is the worst possible version of this feature.")
+    r.note("no desktop action was executed")
+
+    if live_plan.snapshot()["status"] != "none":
+        return r.bad("Simulating published a live plan — the UI would show work "
+                     "in progress that isn't happening.")
+    r.note("no plan was published")
+
+    if not sim.get("would"):
+        return r.bad("Task simulation produced no steps to show.")
+    if len(sim["would"]) < 3:
+        return r.bad(f"Only {len(sim['would'])} step(s) — the sentence has three "
+                     f"clauses, so decomposition didn't run.")
+    r.note(f"showed {len(sim['would'])} steps with effects and estimates")
+
+    # Every step must declare what it touches; "unknown" everywhere would make
+    # the risk column decorative.
+    unknown = [w for w in sim["would"] if w["level"] == "unknown"]
+    if unknown:
+        return r.bad(f"{len(unknown)} step(s) don't say what they'd touch: "
+                     + ", ".join(w["action"] for w in unknown))
+    if not any(w["level"] in ("writes", "sensitive") for w in sim["would"]):
+        return r.bad("Typing wasn't flagged as changing anything.")
+    r.note("side effects are labelled, typing flagged as a change")
+
+    if not earn.get("would") or "note" not in earn:
+        return r.bad("Freelance simulation returned nothing usable.")
+    if earn.get("auto_submit") and not any("auto-submit is ON" in w.lower() or
+                                           "auto-submit" in w.lower()
+                                           for w in earn.get("warnings", [])):
+        return r.bad("Auto-submit is on and the simulation didn't warn about it.")
+    r.note("freelance cycle described without scanning or sending")
+
+    # The trigger must be explicit. If a plain command were read as a request to
+    # simulate, the thing the user asked for would silently not happen.
+    if simulate.match("open notepad and type hello") is not None:
+        return r.bad("A normal command was mistaken for a simulation request. "
+                     "The user's actual command would silently not run.")
+    if simulate.match("what would you do if I say open notepad") is None:
+        return r.bad("An explicit simulation request wasn't recognised.")
+    r.note("only explicit requests trigger a simulation")
+    return r.ok("Shows the full plan and its effects, executes nothing.")
+
+
 SCENARIOS = {
     "control":        (s_control, False),
+    "simulation":     (s_simulation, False),
     "decompose":      (s_decompose, False),
     "plan_visibility": (s_plan_visibility, False),
     "selfeval":       (s_selfeval, False),
@@ -30995,7 +32337,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 173/173: tools/setup.py
+# FILE 175/176: tools/setup.py
 ################################################################################
 ```py
 """
@@ -31149,13 +32491,40 @@ def install_browser():
 
 # ── frontend packages ────────────────────────────────────────────────────────
 
+def _frontend_ready():
+    """
+    Is the UI ACTUALLY installable-and-runnable, or does node_modules merely
+    exist?
+
+    "The folder is there" was the check, and it is not the same question. A ZIP
+    extracted over an old copy, or an install interrupted half-way, leaves a
+    node_modules directory with the build tool missing. Setup then reported
+    "already installed", skipped the install, and `npm run dev` died with
+    "Cannot find module 'vite'" - which reads as a broken launcher rather than
+    an incomplete download, and sends you hunting in the wrong place.
+
+    So check for the thing that actually has to be there.
+    """
+    nm = FRONTEND / "node_modules"
+    if not nm.is_dir():
+        return False, "not installed yet"
+    if not (nm / "vite" / "package.json").is_file():
+        return False, "node_modules exists but the build tool (vite) is missing"
+    if not (nm / "@vitejs" / "plugin-react" / "package.json").is_file():
+        return False, "node_modules is incomplete (@vitejs/plugin-react missing)"
+    return True, ""
+
+
 def install_frontend():
     if not (FRONTEND / "package.json").is_file():
         _problems.append("frontend/package.json missing - the download is incomplete")
         return
-    if (FRONTEND / "node_modules").is_dir():
+    ready, why = _frontend_ready()
+    if ready:
         say("      already installed")
         return
+    if (FRONTEND / "node_modules").is_dir():
+        say(f"      {why} - reinstalling")
     npm = shutil.which("npm") or shutil.which("npm.cmd")
     if not npm:
         return
@@ -31300,4 +32669,254 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+```
+
+################################################################################
+# FILE 176/176: tools/update.py
+################################################################################
+```py
+"""
+tools/update.py — get the newest Jarvis without needing git.
+
+Why this exists: the working copy on the target machine is not a git checkout.
+It was unzipped, so `git pull` answers "fatal: not a git repository" forever,
+and the only way to update is to download a ZIP by hand and copy files around —
+which is where a database, a saved login or a .env quietly gets destroyed.
+
+Two paths, chosen automatically:
+
+  * a real checkout  -> git pull
+  * anything else    -> download the branch ZIP and unpack it over the top
+
+The second path is the careful one. It NEVER touches:
+
+    backend/jarvis.db          your history, learned timings, settings
+    backend/browser-profile/   sites you're logged into
+    backend/.env               your keys
+    backend/.jarvis_token      your auth token
+    backend/screenshots/       proof of what was submitted
+
+Those are yours. Everything else is code and gets replaced.
+
+From mainland China, github.com is frequently unreachable — that is exactly the
+failure in the logs, a 21-second timeout to port 443. So several mirrors are
+tried in order, the China-hosted ones first, and each one reports its own
+result rather than the whole thing failing with one opaque message.
+"""
+from __future__ import annotations
+
+import io
+import os
+import shutil
+import subprocess
+import sys
+import time
+import urllib.request
+import zipfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+OWNER, REPO = "musssyibro-svg", "Jarvis-"
+BRANCH = os.getenv("JARVIS_BRANCH", "claude/jarvis-automation-rebuild-37xvhr")
+
+# Anything here is the user's, not ours. Never overwritten, never deleted.
+KEEP = [
+    "backend/jarvis.db",
+    "backend/jarvis.db-wal",
+    "backend/jarvis.db-shm",
+    "backend/.env",
+    "backend/.jarvis_token",
+    "backend/browser-profile",
+    "backend/screenshots",
+    "backend/agents/custom",
+    "frontend/node_modules",
+]
+
+
+def _zip_urls() -> list[str]:
+    """Mirrors first — codeload.github.com is the one that times out from here."""
+    q = BRANCH.replace("/", "%2F")
+    return [
+        f"https://ghproxy.net/https://github.com/{OWNER}/{REPO}/archive/refs/heads/{BRANCH}.zip",
+        f"https://mirror.ghproxy.com/https://github.com/{OWNER}/{REPO}/archive/refs/heads/{BRANCH}.zip",
+        f"https://gh-proxy.com/https://github.com/{OWNER}/{REPO}/archive/refs/heads/{BRANCH}.zip",
+        f"https://codeload.github.com/{OWNER}/{REPO}/zip/refs/heads/{BRANCH}",
+        f"https://github.com/{OWNER}/{REPO}/archive/refs/heads/{q}.zip",
+    ]
+
+
+def say(msg: str = "") -> None:
+    print(msg, flush=True)
+
+
+def _is_git_checkout() -> bool:
+    return (ROOT / ".git").is_dir()
+
+
+def _git_pull() -> bool:
+    say("  This is a git checkout. Pulling.")
+    try:
+        r = subprocess.run(["git", "pull", "origin", BRANCH], cwd=str(ROOT),
+                           capture_output=True, text=True, timeout=300)
+        say("  " + (r.stdout or r.stderr or "").strip().replace("\n", "\n  "))
+        return r.returncode == 0
+    except FileNotFoundError:
+        say("  git isn't installed. Falling back to the ZIP download.")
+        return False
+    except Exception as e:
+        say(f"  git pull failed: {e}")
+        return False
+
+
+def _download() -> bytes | None:
+    last = ""
+    for i, url in enumerate(_zip_urls(), 1):
+        host = url.split("/")[2]
+        say(f"  [{i}/{len(_zip_urls())}] trying {host} ...")
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "jarvis-update"})
+            with urllib.request.urlopen(req, timeout=90) as r:
+                data = r.read()
+            if len(data) < 10_000:
+                last = f"{host} returned only {len(data)} bytes"
+                say(f"        too small, skipping ({last})")
+                continue
+            say(f"        got {len(data) / 1e6:.1f} MB")
+            return data
+        except Exception as e:
+            last = f"{host}: {str(e)[:90]}"
+            say(f"        no ({str(e)[:70]})")
+    say("")
+    say("  Every source failed. The last error was:")
+    say(f"      {last}")
+    say("")
+    say("  Your network can't reach GitHub or any of its mirrors right now.")
+    say("  Try again in a few minutes, or download the ZIP in a browser:")
+    say(f"      https://github.com/{OWNER}/{REPO}/tree/{BRANCH}")
+    say("      Code -> Download ZIP, then extract over this folder.")
+    return None
+
+
+def _protect() -> Path | None:
+    """Move the user's files somewhere safe before we overwrite anything."""
+    stash = ROOT / f".update-keep-{int(time.time())}"
+    moved = []
+    for rel in KEEP:
+        src = ROOT / rel
+        if not src.exists():
+            continue
+        dst = stash / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(src), str(dst))
+        moved.append(rel)
+    if not moved:
+        return None
+    say(f"  Set aside {len(moved)} of your own file(s)/folder(s): "
+        + ", ".join(m.split('/')[-1] for m in moved))
+    return stash
+
+
+def _restore(stash: Path | None) -> None:
+    if not stash or not stash.exists():
+        return
+    for rel in KEEP:
+        src = stash / rel
+        if not src.exists():
+            continue
+        dst = ROOT / rel
+        if dst.exists():
+            shutil.rmtree(dst, ignore_errors=True) if dst.is_dir() else dst.unlink()
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(src), str(dst))
+    shutil.rmtree(stash, ignore_errors=True)
+    say("  Put your data back.")
+
+
+def _unpack(data: bytes) -> bool:
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(data))
+    except Exception as e:
+        say(f"  That download isn't a valid ZIP ({e}). Nothing was changed.")
+        return False
+
+    names = zf.namelist()
+    if not names:
+        say("  The ZIP is empty. Nothing was changed.")
+        return False
+    top = names[0].split("/")[0] + "/"
+
+    # Unpack to a temporary folder FIRST. Extracting straight over the working
+    # copy means a download that dies half-way leaves a half-replaced install,
+    # which is worse than not updating at all.
+    tmp = ROOT / f".update-new-{int(time.time())}"
+    try:
+        zf.extractall(tmp)
+    except Exception as e:
+        shutil.rmtree(tmp, ignore_errors=True)
+        say(f"  Couldn't unpack: {e}. Nothing was changed.")
+        return False
+
+    src_root = tmp / top.rstrip("/")
+    if not src_root.is_dir():
+        shutil.rmtree(tmp, ignore_errors=True)
+        say("  The ZIP has an unexpected shape. Nothing was changed.")
+        return False
+
+    stash = _protect()
+    copied = 0
+    try:
+        for item in src_root.iterdir():
+            dst = ROOT / item.name
+            if item.is_dir():
+                shutil.copytree(item, dst, dirs_exist_ok=True)
+            else:
+                shutil.copy2(item, dst)
+            copied += 1
+    finally:
+        _restore(stash)
+        shutil.rmtree(tmp, ignore_errors=True)
+    say(f"  Replaced {copied} top-level item(s) with the new version.")
+    return True
+
+
+def main() -> int:
+    say()
+    say("=" * 62)
+    say("  JARVIS UPDATE")
+    say("=" * 62)
+    say(f"  Folder: {ROOT}")
+    say(f"  Branch: {BRANCH}")
+    say()
+
+    if _is_git_checkout() and _git_pull():
+        say()
+        say("  Updated. Now run START.bat.")
+        return 0
+
+    if _is_git_checkout():
+        say("  git pull didn't work. Trying the ZIP instead.")
+    else:
+        say("  This folder isn't a git checkout, so there's nothing to pull.")
+        say("  Downloading the current version as a ZIP.")
+    say()
+
+    data = _download()
+    if data is None:
+        return 1
+    say()
+    if not _unpack(data):
+        return 1
+
+    say()
+    say("  Updated. Your database, logins and settings were kept.")
+    say("  Now run START.bat - it will install anything new.")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        say("\n  Cancelled. Nothing was changed.")
+        sys.exit(1)
 ```

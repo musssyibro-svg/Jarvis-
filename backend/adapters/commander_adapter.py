@@ -106,6 +106,21 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         except Exception:
             pass
 
+    # ── "what would you do?" — show the whole plan, run none of it ────────────
+    # Checked before every execution path, because a simulation request that
+    # falls through and EXECUTES is the one bug this feature cannot have.
+    try:
+        from services import simulate
+        sim_req = simulate.match(message)
+    except Exception:
+        sim_req = None
+    if sim_req:
+        from services import simulate
+        sim = (simulate.earning() if sim_req["what"] == "earning"
+               else simulate.task(sim_req["command"]))
+        return {"response": simulate.as_text(sim), "intent": "simulation",
+                "data": sim}
+
     # ── Teach by demonstration: "watch me ..." / "that's it" ──────────────────
     try:
         from services import teach

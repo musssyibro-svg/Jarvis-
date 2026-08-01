@@ -127,6 +127,23 @@ def preview_task(command: str) -> dict:
 
 
 @mcp.tool
+def simulate(command: str = "") -> dict:
+    """
+    Show what WOULD happen, without doing any of it.
+
+    Call this before run_task for anything the user might not want done blindly,
+    and always before find_freelance_jobs — that one can send proposals to real
+    clients under the user's name.
+
+    Pass a command for a task simulation, or nothing for a freelance cycle.
+    Returns every step, what each one touches, a time estimate and any blockers.
+    Executes nothing.
+    """
+    from services import simulate as sim
+    return _j(sim.task, command) if command.strip() else _j(sim.earning)
+
+
+@mcp.tool
 def run_task(command: str) -> dict:
     """
     Do something on the user's PC, described in plain language.
@@ -291,6 +308,46 @@ def teach_by_watching(action: str, name: str = "") -> dict:
 
 # ── serving ──────────────────────────────────────────────────────────────────
 
+def _http_auth():
+    """
+    A token gate for HTTP mode.
+
+    stdio needs none: the client launches this process, owns it, and nothing is
+    listening on a port. HTTP is different — an open port that can type on the
+    user's keyboard and drive a logged-in browser is the exact shape of the
+    problem Microsoft's AutoJack research described, where untrusted web content
+    reached a local agent socket. Loopback is not a trust boundary on its own.
+
+    Returns middleware, or None if this FastMCP build doesn't expose the hook —
+    in which case we say so plainly rather than implying protection that isn't
+    there.
+    """
+    from services import auth
+    token = auth.token()
+
+    try:
+        from starlette.middleware import Middleware
+        from starlette.middleware.base import BaseHTTPMiddleware
+        from starlette.responses import JSONResponse
+    except ImportError:
+        return None, token
+
+    class _Gate(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            supplied = (request.headers.get("x-jarvis-token", "")
+                        or request.headers.get("authorization", "")
+                        .removeprefix("Bearer ").strip())
+            if not auth.token_ok(supplied):
+                return JSONResponse(
+                    {"error": "This Jarvis MCP server needs a token. It's in "
+                              "backend/.jarvis_token — send it as the "
+                              "X-Jarvis-Token header, or as a Bearer token."},
+                    status_code=401)
+            return await call_next(request)
+
+    return [Middleware(_Gate)], token
+
+
 def main() -> None:
     http = "--http" in sys.argv
     if not http:
@@ -301,11 +358,40 @@ def main() -> None:
 
     host = "127.0.0.1"      # not configurable on purpose — see the module docstring
     port = int(os.getenv("JARVIS_MCP_PORT", "8765"))
-    print(f"Jarvis MCP  ->  http://{host}:{port}/mcp   (loopback only)",
+    middleware, token = _http_auth()
+
+    print(f"\nJarvis MCP  ->  http://{host}:{port}/mcp   (loopback only)",
           file=sys.stderr)
-    print("Point Cherry Studio / Claude Desktop / Cline at that URL.",
+    print("Point Cherry Studio / Claude Desktop / Cline at that URL.\n",
           file=sys.stderr)
-    mcp.run(transport="http", host=host, port=port)
+    if middleware:
+        print("This port requires a token. In your client, add the header:",
+              file=sys.stderr)
+        print(f"    X-Jarvis-Token: {token}\n", file=sys.stderr)
+        print("(Also saved in backend/.jarvis_token. Don't paste it into a chat.)\n",
+              file=sys.stderr)
+    else:
+        print("!! This FastMCP build doesn't expose a middleware hook, so the",
+              file=sys.stderr)
+        print("!! port is UNAUTHENTICATED. Any program on this PC can drive",
+              file=sys.stderr)
+        print("!! Jarvis. Use stdio mode instead unless you need multiple",
+              file=sys.stderr)
+        print("!! clients at once.\n", file=sys.stderr)
+
+    try:
+        mcp.run(transport="http", host=host, port=port, middleware=middleware)
+    except TypeError:
+        # Older FastMCP: no middleware parameter. Refuse rather than serve an
+        # open door while having just printed that it's protected.
+        if middleware:
+            print("This FastMCP version can't take the auth middleware.",
+                  file=sys.stderr)
+            print("Upgrade it:   pip install -U fastmcp", file=sys.stderr)
+            print("Or use stdio mode (no --http), which needs no token.",
+                  file=sys.stderr)
+            sys.exit(1)
+        mcp.run(transport="http", host=host, port=port)
 
 
 if __name__ == "__main__":

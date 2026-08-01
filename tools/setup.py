@@ -149,13 +149,40 @@ def install_browser():
 
 # ── frontend packages ────────────────────────────────────────────────────────
 
+def _frontend_ready():
+    """
+    Is the UI ACTUALLY installable-and-runnable, or does node_modules merely
+    exist?
+
+    "The folder is there" was the check, and it is not the same question. A ZIP
+    extracted over an old copy, or an install interrupted half-way, leaves a
+    node_modules directory with the build tool missing. Setup then reported
+    "already installed", skipped the install, and `npm run dev` died with
+    "Cannot find module 'vite'" - which reads as a broken launcher rather than
+    an incomplete download, and sends you hunting in the wrong place.
+
+    So check for the thing that actually has to be there.
+    """
+    nm = FRONTEND / "node_modules"
+    if not nm.is_dir():
+        return False, "not installed yet"
+    if not (nm / "vite" / "package.json").is_file():
+        return False, "node_modules exists but the build tool (vite) is missing"
+    if not (nm / "@vitejs" / "plugin-react" / "package.json").is_file():
+        return False, "node_modules is incomplete (@vitejs/plugin-react missing)"
+    return True, ""
+
+
 def install_frontend():
     if not (FRONTEND / "package.json").is_file():
         _problems.append("frontend/package.json missing - the download is incomplete")
         return
-    if (FRONTEND / "node_modules").is_dir():
+    ready, why = _frontend_ready()
+    if ready:
         say("      already installed")
         return
+    if (FRONTEND / "node_modules").is_dir():
+        say(f"      {why} - reinstalling")
     npm = shutil.which("npm") or shutil.which("npm.cmd")
     if not npm:
         return
