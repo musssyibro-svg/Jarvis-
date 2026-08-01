@@ -92,6 +92,65 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         except Exception:
             pass
 
+    # ── "why?" — the chain of what actually happened ──────────────────────────
+    # Checked early because "why did that fail" contains "fail" and would
+    # otherwise score as a memory lookup and get answered from the wrong place.
+    if low.rstrip("?") in ("why", "why did that happen", "why did you fail",
+                           "why did that fail", "what happened", "what went wrong",
+                           "explain that", "why not", "what are you doing",
+                           "what are you doing now"):
+        try:
+            from services import narrate
+            return {"response": narrate.as_text(), "intent": "why",
+                    "data": narrate.why()}
+        except Exception:
+            pass
+
+    # ── Teach by demonstration: "watch me ..." / "that's it" ──────────────────
+    try:
+        from services import teach
+        cmd = teach.match(message)
+    except Exception:
+        cmd = None
+    if cmd:
+        from services import teach
+        if cmd["command"] == "start":
+            r = teach.start(cmd["name"])
+            if not r.get("ok"):
+                return {"response": f"Can't record: {r.get('error')}"
+                                    + (f"\nFix: {r['fix']}" if r.get("fix") else ""),
+                        "intent": "teach", "data": r}
+            return {"response": (f"Watching. Do \"{cmd['name']}\" now, exactly how you "
+                                 f"want it done, then say \"that's it\".\n\n"
+                                 f"Anything you type into a login or password box is "
+                                 f"NOT recorded — I'll use the vault for those, or ask "
+                                 f"you."),
+                    "intent": "teach", "data": r}
+        r = teach.stop()
+        if not r.get("ok"):
+            return {"response": r.get("error", "Nothing to save."), "intent": "teach",
+                    "data": r}
+        body = "\n".join(f"  {i + 1}. {_step_line(s)}"
+                         for i, s in enumerate(r["steps"][:14]))
+        more = f"\n  … and {len(r['steps']) - 14} more" if len(r["steps"]) > 14 else ""
+        return {"response": (f"Learned \"{r['name']}\" — {r['step_count']} steps from "
+                             f"{r['seconds']}s of watching:\n{body}{more}\n\n"
+                             f"Say \"run my {r['name']}\" and I'll do it."
+                             + (f"\n\n{r['note']}" if r.get("note") else "")),
+                "intent": "teach", "data": r}
+
+    # ── Durable facts about the user ("remember that I live in Shenzhen") ─────
+    try:
+        from services import persona
+        learned = persona.learn_from_text(message)
+    except Exception:
+        learned = []
+    if learned:
+        what = "; ".join(f"{l['field']} = {l['value']}" for l in learned)
+        return {"response": f"Got it — I'll remember that ({what}). It'll be in "
+                            f"context from now on without you repeating it.",
+                "intent": "persona", "data": {"learned": learned}}
+
     # ── Learned workflows: "teach <name>: <steps>" and "run my <name>" ─────────
     taught = _maybe_teach_workflow(message)
     if taught is not None:
@@ -116,16 +175,26 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     if not _is_question(message) and not _re.match(
             r"^\s*(?:plan|new|start|track|create)\s+(?:a\s+)?project\b", message, _re.I):
         try:
-            from services.tool_registry import resolve_steps
-            tool_steps = resolve_steps(message)
-        except Exception:
-            tool_steps = None
-        if tool_steps:
-            trace.step("tool_registry.resolve_steps",
-                       f"{len(tool_steps)} steps: " +
-                       ",".join(s.get("action", "") for s in tool_steps), ok=True)
-            return _run_tool_chain(message, tool_steps)
-        trace.step("tool_registry.resolve_steps", "no deterministic match", ok=None)
+            from services.decompose import decompose
+            plan = decompose(message)
+        except Exception as e:
+            trace.step("decompose", str(e), ok=False)
+            plan = {"ok": False, "steps": [], "plan": [], "unresolved": []}
+        if plan.get("ok"):
+            trace.step(f"decompose[{plan.get('source', '?')}]",
+                       f"{len(plan['clauses'])} clause(s) -> {len(plan['steps'])} steps: "
+                       + ", ".join(plan["plan"])[:200], ok=True)
+            # Part of a sentence understood and part not is the dangerous case:
+            # running half a command and reporting success is exactly the
+            # "it said done and did nothing" complaint. Say what was dropped.
+            note = ""
+            if plan.get("unresolved"):
+                note = ("\n\nI didn't understand: "
+                        + "; ".join(f'"{c}"' for c in plan["unresolved"])
+                        + " — so I skipped that part.")
+            return _run_tool_chain(message, plan["steps"],
+                                   lines=plan.get("plan"), note=note)
+        trace.step("decompose", "no deterministic match", ok=None)
 
     # ── Long-term project planner (V10): "plan project X to ..." / "new project X"
     #    Checked BEFORE keyword-based desktop routing: the explicit "plan
@@ -184,10 +253,20 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     from services.deepseek_service import call_model
     knowledge = _brain_context(message)
     profile = _profile()
-    if knowledge or profile:
+    # Who the user is, where they are, what's on their machine — always present,
+    # so Jarvis stops asking things it already knows and stops recommending
+    # Chrome to someone who doesn't have it.
+    try:
+        from services import persona
+        who = persona.prompt_block()
+    except Exception:
+        who = ""
+    if knowledge or profile or who:
         if knowledge:
             _emit("brain", "Found relevant knowledge in your brain", "info")
         parts = []
+        if who:
+            parts.append(who)
         if profile:
             parts.append(f"Facts about the user:\n{profile}")
         if knowledge:
@@ -199,7 +278,7 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
             # No LLM installed — the brain itself is still useful: answer with
             # the retrieved knowledge instead of a dead error.
             reply = ("(No AI model installed — showing what your brain knows.)\n\n"
-                     + (knowledge or profile))
+                     + (knowledge or profile or who))
         return {"response": reply, "intent": "chat",
                 "data": {"brain_used": bool(knowledge)}}
     reply = call_model(message, fast=True)
@@ -512,20 +591,39 @@ def _maybe_teach_workflow(message: str):
         return {"response": f"Couldn't save that task: {e}", "intent": "workflow"}
 
 
-def _run_tool_chain(message: str, steps: list) -> dict:
+def _step_line(step: dict) -> str:
+    """One readable line for a step, so a demonstration can be checked by eye."""
+    try:
+        from services.decompose import describe
+        return describe(step)
+    except Exception:
+        return (step or {}).get("action", "step").replace("_", " ")
+
+
+def _run_tool_chain(message: str, steps: list, lines: list | None = None,
+                    note: str = "") -> dict:
     """
-    Execute a Tool-Registry chain (open app, wait, screenshot, analyze…) directly
-    and return a chat response. If the chain includes an 'analyze' step, its
-    answer becomes the reply — so "check my qq messages" comes back with the
-    actual summary, not just "done".
+    Execute a decomposed chain (open app, wait, screenshot, analyze…) and return
+    a chat response. If the chain includes an 'analyze' step, its answer becomes
+    the reply — so "check my qq messages" comes back with the actual summary,
+    not just "done".
+
+    The plan is PUBLISHED before the first step runs, so the planner screen shows
+    what is about to happen rather than only what already did.
     """
     from services import trace
     _emit("commander", f"Recognised a direct command — running it (no planning needed)", "info")
-    labels = " → ".join(s.get("action", "").replace("_", " ") for s in steps)
+    # Human wording where decomposition produced it; action names otherwise.
+    labels = " → ".join(lines or [s.get("action", "").replace("_", " ") for s in steps])
+    try:
+        from services import live_plan
+        live_plan.begin(message, steps, lines, source="chat")
+    except Exception:
+        pass
     _emit("executor", labels, "info")
     try:
         from agents.desktop_agent import execute_chain
-        result = execute_chain(steps)
+        result = execute_chain(steps, goal=message)
         for st in result.get("steps", []):
             trace.step(f"desktop.{st.get('action','?')}",
                        st.get("verify_reason") or st.get("error", ""),
@@ -544,15 +642,20 @@ def _run_tool_chain(message: str, steps: list) -> dict:
     if not result.get("success"):
         fa = result.get("failed_at")
         trace.finish(result.get("error", "chain failed"), ok=False)
-        return {"response": f"Ran {fa-1 if fa else 0}/{len(steps)} steps, then hit: "
-                            f"{result.get('error','')}. {answer or ''}".strip(),
+        # The remedy is the useful half of a failure report. Saying what broke
+        # without saying what to do about it is how "Failed" got its reputation.
+        fix = result.get("what_to_do") or ""
+        return {"response": (f"Ran {fa-1 if fa else 0}/{len(steps)} steps, then hit: "
+                             f"{result.get('error','')}. {fix} {answer or ''}"
+                             f"{note}\n\nAsk \"why?\" for the full chain.").strip(),
                 "intent": "executor", "data": result}
     if answer:
         _emit("vision", "Screen read complete", "success")
         trace.finish("screen analysed", ok=True)
-        return {"response": answer, "intent": "vision", "data": result}
+        return {"response": (answer + note).strip(), "intent": "vision", "data": result}
     trace.finish(f"done: {labels}", ok=True)
-    return {"response": f"Done ✓ ({labels})", "intent": "executor", "data": result}
+    return {"response": (f"Done ✓ — {labels}" + note).strip(),
+            "intent": "executor", "data": result}
 
 
 def _route_action(message: str, session_id: str, intent: str) -> dict:

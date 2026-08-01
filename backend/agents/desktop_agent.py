@@ -493,6 +493,37 @@ def wait_for_window(title_contains: str, timeout: float | None = None) -> dict:
             "error": f"Window '{title_contains}' did not appear within {timeout:.0f}s"}
 
 
+def _use_credential(params: dict) -> dict:
+    """
+    Fill a login that was deliberately NOT recorded.
+
+    When a demonstration passes through a password field, teach.py stores a
+    marker instead of the keystrokes. On replay we look for a matching entry in
+    the encrypted vault; if there isn't one, we stop and ask rather than typing
+    a guess into a real login form. Failing here is correct behaviour, so it
+    reports a clear reason and a fix instead of an error.
+    """
+    label = (params.get("for") or params.get("platform") or "").strip()
+    try:
+        from services.vault import get_credential
+        cred = get_credential(label) if label else None
+    except Exception as e:
+        return {"success": False, "error": f"vault unavailable: {e}"}
+    if not cred or not cred.get("password"):
+        return {"success": False,
+                "error": f"no saved login for '{label or 'this window'}'",
+                "what_to_do": "Add it under Settings -> Logins (it's encrypted on "
+                              "this PC), or sign in once by hand — the browser "
+                              "profile keeps the session."}
+    if u := cred.get("username"):
+        type_text_raw(u)
+        press("tab")
+    type_text_raw(cred["password"])
+    # The password itself never appears in the result, the feed or the report.
+    return {"success": True, "action": "credential",
+            "detail": f"filled saved login for {label}"}
+
+
 def _run_action(action: str, params: dict) -> dict:
     """Dispatch a single desktop/vision action by name. Never raises."""
     ACTIONS = {
@@ -506,6 +537,15 @@ def _run_action(action: str, params: dict) -> dict:
         "click":        lambda p: click(p.get("x"), p.get("y"),
                                         p.get("button", "left"), p.get("clicks", 1)),
         "move":         lambda p: move(p.get("x", 0), p.get("y", 0)),
+        # Scroll at the pointer's current position unless told otherwise, which
+        # is what "scroll down" means when a page is already in front of you.
+        "scroll":       lambda p: scroll(
+            p.get("x"), p.get("y"),
+            -abs(int(p.get("clicks", 3))) if str(p.get("direction", "down")).lower()
+            == "down" else abs(int(p.get("clicks", 3)))),
+        # A step recorded where the user typed a password. Never replayed from a
+        # recording — see services/teach.py.
+        "credential":   lambda p: _use_credential(p),
         "wait":         lambda p: ({"success": True, "action": "wait"},
                                    time.sleep(min(float(p.get("seconds", 1)), 15)))[0],
         # timeout is a floor; experience can extend it for slow apps.
@@ -678,7 +718,7 @@ def _learned_wait(app: str) -> float:
         return 8.0
 
 
-def execute_chain(steps: list, max_retries: int = 2) -> dict:
+def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
     """
     Run desktop steps with the full execution loop:
         act → observe → verify → retry(≤max_retries) → record.
@@ -696,9 +736,29 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
     steps = steps or []
     last_opened = None            # the app we most recently opened in this chain
     _INPUT = {"type_text", "compose", "press", "hotkey", "click", "click_text"}
+
+    # Publish the plan so it's watchable while it runs, not only afterwards.
+    # ensure() defers to a caller that already published a better-worded plan.
+    try:
+        from services import live_plan
+        live_plan.ensure(goal or "desktop task", steps, source="executor")
+    except Exception:
+        live_plan = None
+
     for i, s in enumerate(steps):
         action = (s or {}).get("action", "")
         params = (s or {}).get("params", {}) or {}
+
+        # A step you chose to skip is not a step that failed. Recorded as
+        # skipped so the plan and the report both say who decided.
+        if live_plan and live_plan.should_skip(i):
+            results.append({"step": i + 1, "action": action, "skipped": True,
+                            "verified": True, "success": True,
+                            "verify_reason": "you skipped this step"})
+            live_plan.step_end(i, True, detail="skipped by you")
+            continue
+        if live_plan:
+            live_plan.step_start(i)
 
         # Before ANY keyboard/mouse input, the app we opened must be foreground —
         # otherwise the input lands in the wrong window (the "notepad opens but
@@ -724,6 +784,9 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
             control.checkpoint(step=f"{action}")
         except Exception as c:
             if type(c).__name__ == "Cancelled":
+                if live_plan:
+                    live_plan.step_end(i, False, error="stopped before this step")
+                    live_plan.finish(False, "you stopped it")
                 return {"success": False, "steps": results, "cancelled": True,
                         "failed_at": i + 1,
                         "error": "Cancelled — stopped between steps, nothing half-done.",
@@ -798,8 +861,21 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
         except Exception:
             pass
 
+        if live_plan:
+            live_plan.step_end(i, verified,
+                               detail=(reason if verified else ""),
+                               error=("" if verified else (fail or {}).get("cause", reason)),
+                               failure=fail)
+
         if not verified:
             # Report the CAUSE and the FIX, not just the symptom.
+            if live_plan:
+                live_plan.finish(False, fail["cause"])
+            try:
+                from services import selfeval
+                selfeval.evaluate(goal or "desktop task", results, False)
+            except Exception:
+                pass
             return {"success": False, "steps": results, "failed_at": i + 1,
                     "failure": fail,
                     "error": f"{action} failed: {fail['cause']}",
@@ -817,6 +893,15 @@ def execute_chain(steps: list, max_retries: int = 2) -> dict:
         event_bus.publish("desktop.chain_complete",
                           {"steps": len(steps),
                            "actions": ",".join(s.get("action", "") for s in steps)[:80]})
+    except Exception:
+        pass
+    if live_plan:
+        live_plan.finish(True)
+    # Score the run against real evidence and record one concrete adjustment for
+    # next time. Never blocks the reply — see services/selfeval.py.
+    try:
+        from services import selfeval
+        selfeval.evaluate(goal or "desktop task", results, True)
     except Exception:
         pass
     return {"success": True, "steps": results, "count": len(results),

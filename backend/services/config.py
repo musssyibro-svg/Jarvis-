@@ -58,6 +58,24 @@ KNOWN = {
     "your_skills":            ("JARVIS_USER_SKILLS",     ""),
     "monitor_inbox":          ("JARVIS_MONITOR_INBOX",   "false"),
     "typing_speed":           ("JARVIS_TYPING_SPEED",    "0.03"),
+    # Which search engine actually loads from where the user is. Google does not
+    # resolve from mainland China without a VPN, so the default is Bing's China
+    # endpoint rather than the one most code would assume.
+    "search_engine":          ("JARVIS_SEARCH_ENGINE",   "bing-cn"),
+    # Capability overrides. Blank means "use whatever is installed and has been
+    # working" — see services/providers.py.
+    "provider_web_search":    ("JARVIS_BROWSER",         ""),
+    "provider_browse":        ("",                       ""),
+    "provider_message":       ("",                       ""),
+    "provider_edit_text":     ("",                       ""),
+    "provider_terminal":      ("",                       ""),
+    # Tuned automatically by services/selfeval.py when a run shows they're wrong.
+    "type_settle_s":          ("",                       "0.3"),
+    "vision_max_tokens":      ("",                       "320"),
+    # Security. Defaults are safe for a local single-user run; see services/auth.py.
+    "jarvis_require_token":   ("JARVIS_REQUIRE_TOKEN",   "false"),
+    "jarvis_check_origin":    ("JARVIS_CHECK_ORIGIN",    "true"),
+    "desktop_control_enabled": ("DESKTOP_CONTROL_ENABLED", "true"),
     "ask_before_submit":      ("JARVIS_ASK_SUBMIT",      "true"),
 }
 
@@ -135,6 +153,15 @@ def set(key: str, value) -> dict:
     env_name = (KNOWN.get(key) or (None, None))[0]
     if env_name and val:
         os.environ[env_name] = val
+    # Capability choices are cached for five minutes, so without this the UI
+    # would confirm "browser = firefox" while the next command still opened
+    # Edge — the same class of bug this whole module exists to kill.
+    if key.startswith("provider_"):
+        try:
+            from services import providers
+            providers.invalidate()
+        except Exception:
+            pass
     return {"ok": True, "key": key, "value": val, "effective": get(key)}
 
 

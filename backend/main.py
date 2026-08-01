@@ -45,7 +45,43 @@ JARVIS_VERSION = "14.0"
 app = FastAPI(title="Jarvis OS", version=JARVIS_VERSION, docs_url="/api/docs")
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_origin_regex=CORS_LOCALHOST,
-                   allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+                   allow_credentials=True, allow_methods=["*"],
+                   allow_headers=["*", "X-Jarvis-Token"])
+
+
+# ── The gate ─────────────────────────────────────────────────────────────────
+#
+# Jarvis can type on your keyboard and drive a browser already logged into your
+# accounts. CORS does not protect that: it governs whether a page may READ the
+# response, not whether the request is delivered — a POST that starts typing has
+# already done its damage by the time CORS blocks the reply.
+#
+# So every request is checked before it reaches a route. Defaults are chosen so
+# an ordinary local run needs no configuration: see services/auth.py.
+@app.middleware("http")
+async def _gate(request, call_next):
+    from fastapi.responses import JSONResponse
+    from services import auth
+    if request.method == "OPTIONS":
+        return await call_next(request)     # preflight carries no action
+    try:
+        allowed, code, message = auth.authorize(
+            request.url.path, request.method, request.headers)
+    except Exception:
+        allowed = True                       # never lock the user out on a bug
+    if not allowed:
+        logger.warning(f"blocked {request.method} {request.url.path}: {message}")
+        return JSONResponse({"error": message, "blocked_by": "jarvis-auth"},
+                            status_code=code)
+    return await call_next(request)
+
+
+@app.get("/auth/status", tags=["Auth"])
+def auth_status():
+    """What is protecting this instance right now. Never returns the token."""
+    from services import auth
+    return auth.status()
+
 
 from models.db import conn, init_db
 
@@ -140,6 +176,24 @@ def _startup():
             logger.warning(f"Model router: {w}")
     except Exception as e:
         logger.warning(f"Model router init: {e}")
+    try:
+        # Look at the machine BEFORE deciding anything, then record what that
+        # implies about the user. Both run in background threads: a slow WMI
+        # call must not delay the port opening.
+        from services import environment, persona
+        environment.start()
+        persona.start()
+        logger.info("Environment scan started; persona will seed from it.")
+    except Exception as e:
+        logger.warning(f"Environment/persona init: {e}")
+    try:
+        from services import auth
+        st = auth.status()
+        logger.info(f"Security: {st['summary']}")
+        if st["token_required"]:
+            logger.info(f"Token required — it is in {auth.TOKEN_FILE}")
+    except Exception as e:
+        logger.warning(f"Auth init: {e}")
     try:
         from services.brain_core import start as start_brain
         start_brain()           # world model sensing + event-first proactive loop

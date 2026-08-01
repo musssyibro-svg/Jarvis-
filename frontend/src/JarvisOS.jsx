@@ -17,6 +17,7 @@ import { API } from "./config.js";
 import Chat from "./pages/Chat";
 import Agents from "./pages/Agents";
 import Earn from "./pages/Earn";
+import Planner from "./pages/Planner";
 import Settings from "./pages/Settings";
 
 /* ── One visual language ─────────────────────────────────────────────────── */
@@ -38,6 +39,7 @@ const sectionLabel = {
 const SURFACES = [
   { id: "console",   label: "Console",   icon: "◈" },
   { id: "chat",      label: "Chat",      icon: "◉" },
+  { id: "planner",   label: "Planner",   icon: "◫" },
   { id: "computer",  label: "Computer",  icon: "⬒" },
   { id: "freelance", label: "Earn",      icon: "◆" },
   { id: "diag",      label: "Diagnostics", icon: "◇" },
@@ -372,6 +374,7 @@ export default function JarvisOS() {
               {id === "console"   && <Console os={os} onRun={run} reply={reply} busy={busy}
                                               history={history} activity={activityMarks} />}
               {id === "chat"      && <Chat />}
+              {id === "planner"   && <Planner live={feed} />}
               {id === "computer"  && <Agents live={feed} />}
               {id === "freelance" && <Earn live={feed} />}
               {id === "diag"      && <Diagnostics />}

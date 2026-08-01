@@ -526,8 +526,241 @@ def s_control():
     return r.ok("Pause holds, cancel releases cleanly, clear resets.")
 
 
+def s_decompose():
+    """
+    A multi-step sentence must become multiple steps, and a sentence containing
+    the word "and" inside its object must NOT. Getting either wrong is how
+    "search BMW M4 and analyze the page" became a search for that whole string.
+    """
+    r = Result("decompose", "Sentences split into steps at the right places")
+    from services.decompose import split_clauses, decompose
+
+    cases = [
+        ("open browser and search BMW M4 and analyze the page", 3),
+        ("open notepad, then type hello, then save it", 3),
+        ("search for black and decker drill", 1),      # "and" inside the object
+        ("open notepad and type \"open the door and run\"", 2),   # quoted literal
+        ("open browser search bmw m4", 2),             # no connector at all
+    ]
+    for text, want in cases:
+        got = split_clauses(text)
+        if len(got) != want:
+            return r.bad(f"{text!r} split into {len(got)} clause(s), expected "
+                         f"{want}: {got}")
+    r.note(f"{len(cases)} phrasings split correctly")
+
+    d = decompose("open browser and search BMW M4 and analyze the page")
+    urls = [s for s in d["steps"] if s["action"] == "open_url"]
+    if not urls:
+        return r.bad("No navigation step was produced for a search.")
+    q = urls[0]["params"].get("query", "")
+    if q.strip().lower() != "bmw m4":
+        return r.bad(f"Searched for {q!r} — the follow-on clause leaked into the "
+                     f"query. This is the original bug.")
+    r.note("the query stops at the step boundary")
+
+    if not any(s["action"] == "analyze" for s in d["steps"]):
+        return r.bad("The 'analyze the page' clause was silently dropped.")
+
+    # An unparseable clause must be REPORTED, never quietly discarded.
+    d2 = decompose("open notepad and frobnicate the widget")
+    if not d2.get("unresolved"):
+        return r.bad("A clause nobody understood was dropped without a word. "
+                     "Running half a command and reporting success is the worst "
+                     "possible failure mode.")
+    r.note("unparseable clauses are reported, not dropped")
+    return r.ok("Clauses split on verbs, queries stop at boundaries, leftovers reported.")
+
+
+def s_plan_visibility():
+    """
+    The plan must be visible WHILE it runs, and skip/stop must be cooperative.
+    A control that only works between tasks isn't a control.
+    """
+    r = Result("plan_visibility", "Live plan publishes and accepts controls")
+    from services import live_plan
+
+    live_plan.clear()
+    if live_plan.snapshot()["status"] != "none":
+        return r.bad("A cleared planner still reported a plan.")
+
+    steps = [{"action": "open_app", "params": {"name_or_path": "notepad"}},
+             {"action": "type_text", "params": {"text": "hi"}},
+             {"action": "press", "params": {"key": "enter"}}]
+    snap = live_plan.begin("test goal", steps, ["Open notepad", "Type hi", "Press enter"])
+    if snap["total"] != 3 or snap["steps"][0]["text"] != "Open notepad":
+        return r.bad("begin() didn't publish readable steps.")
+    r.note("plan published with human wording before anything ran")
+
+    live_plan.step_start(0)
+    if live_plan.snapshot()["current"] != 0:
+        return r.bad("A running step wasn't reported as current — the UI would "
+                     "show nothing happening while work was in flight.")
+
+    # Skipping the step in flight must be REFUSED, not silently accepted.
+    if live_plan.skip(0).get("ok"):
+        return r.bad("Allowed skipping the step already running. That's the "
+                     "half-typed-sentence bug.")
+    r.note("refuses to skip the step in flight")
+
+    if not live_plan.skip(2).get("ok"):
+        return r.bad("Couldn't skip a pending step.")
+    if not live_plan.should_skip(2):
+        return r.bad("skip() was accepted but the executor wouldn't see it.")
+    r.note("a pending step can be skipped and the executor sees it")
+
+    live_plan.step_end(0, False, error="couldn't find it",
+                       failure={"kind": "app_not_found", "cause": "couldn't find it",
+                                "remedy": "open it once by hand"})
+    live_plan.finish(False, "couldn't find it")
+    s = live_plan.snapshot()
+    if s["status"] != "failed" or s["steps"][0]["status"] != "failed":
+        return r.bad("A failed plan didn't record as failed.")
+
+    # The classification recorded at failure time must survive to the narrative.
+    from services import narrate
+    w = narrate.why()
+    if w.get("kind") != "app_not_found" or not w.get("fix"):
+        return r.bad("The 'why' narrative lost the diagnosis the executor "
+                     "already had — it would say 'I don't know why' about a "
+                     "failure it understood.")
+    r.note("the failure classification survives into the explanation")
+
+    live_plan.clear()
+    return r.ok("Plan is visible live, controls are cooperative, diagnosis survives.")
+
+
+def s_selfeval():
+    """
+    Confidence must come from evidence, and an unverified success must cost more
+    than an honest failure — that's the shape of "it told me it was done".
+    """
+    r = Result("selfeval", "Confidence is earned, not asserted")
+    from services import selfeval
+
+    clean = [{"step": 1, "action": "open_app", "verified": True, "attempts": 1,
+              "duration_s": 1.1},
+             {"step": 2, "action": "type_text", "verified": True, "attempts": 1,
+              "duration_s": 0.4}]
+    good = selfeval.score(clean, True)
+    if good["confidence"] < 90:
+        return r.bad(f"A clean verified run scored only {good['confidence']}%.")
+    r.note(f"clean run scores {good['confidence']}%")
+
+    lying = [{"step": 1, "action": "open_app", "success": True, "verified": False,
+              "attempts": 1, "duration_s": 1.0}]
+    liar = selfeval.score(lying, True)
+    if liar["confidence"] >= good["confidence"]:
+        return r.bad("An unverified 'success' scored as high as a verified one. "
+                     "That's exactly the false-Done problem.")
+    r.note(f"unverified success drops to {liar['confidence']}%")
+
+    # A retried launch must produce a concrete, numeric adjustment.
+    retried = [{"step": 1, "action": "open_app", "verified": True, "attempts": 3,
+                "duration_s": 6.0, "app": "qq"}]
+    adj = selfeval.adjustment(retried, True)
+    if not adj or adj.get("kind") != "wait_longer" or not adj.get("delta_s"):
+        return r.bad(f"No measurable adjustment from a retried launch: {adj}")
+    r.note(f"retried launch -> wait {adj['delta_s']}s longer for {adj['target']}")
+
+    # A clean run must produce NO adjustment — inventing one trains on noise.
+    if selfeval.adjustment(clean, True) is not None:
+        return r.bad("Invented an adjustment for a run with nothing wrong.")
+    r.note("a clean run changes nothing")
+    return r.ok("Confidence tracks evidence; adjustments are numeric and earned.")
+
+
+def s_auth():
+    """
+    A web page you visit must not be able to drive your keyboard. This is the
+    single most important check in this file.
+    """
+    r = Result("auth", "The gate blocks drive-by requests")
+    from services import auth
+
+    blocked, code, msg = auth.authorize(
+        "/agents/desktop/run", "POST",
+        {"origin": "https://evil.example.com", "host": "127.0.0.1:8000"})
+    if blocked:
+        return r.bad("A request from an arbitrary website was ALLOWED to reach "
+                     "desktop control. Any page you open could type on your "
+                     "keyboard.")
+    if code != 403:
+        return r.bad(f"Blocked, but with status {code} instead of 403.")
+    r.note("cross-origin request to desktop control is refused")
+
+    ok, _, _ = auth.authorize("/os/state", "GET",
+                              {"origin": "http://localhost:5173",
+                               "host": "127.0.0.1:8000"})
+    if not ok:
+        return r.bad("The real UI was blocked — the gate is unusable.")
+    r.note("the local UI still works")
+
+    ok, _, _ = auth.authorize("/health", "GET", {})
+    if not ok:
+        return r.bad("Health check requires auth; the launcher would report the "
+                     "backend as down while it's running.")
+    r.note("health stays open so the launcher can see the backend")
+
+    # DNS rebinding: the attacker's name resolves to 127.0.0.1, but the Host
+    # header still carries their domain.
+    blocked2, _, _ = auth.authorize("/agents/desktop/run", "POST",
+                                    {"host": "attacker.example.com"})
+    if blocked2:
+        return r.bad("A rebound host header was accepted.")
+    r.note("DNS-rebinding host header is refused")
+    return r.ok("Websites cannot drive Jarvis; the local UI is unaffected.")
+
+
+def s_teach_privacy():
+    """
+    A demonstration must never capture a password. Recording a login and
+    replaying the keystrokes would put the user's password in a plaintext
+    workflow file.
+    """
+    r = Result("teach_privacy", "Demonstrations never record passwords")
+    from services import teach
+
+    t = time.time()
+    events = [
+        {"t": t, "kind": "key", "char": "h", "app": "notepad", "title": "Untitled"},
+        {"t": t + 0.1, "kind": "key", "char": "i", "app": "notepad", "title": "Untitled"},
+        {"t": t + 3.0, "kind": "secret", "app": "msedge", "title": "Sign in"},
+        {"t": t + 3.1, "kind": "secret", "app": "msedge", "title": "Sign in"},
+        {"t": t + 3.4, "kind": "key", "char": None, "key": "enter",
+         "app": "msedge", "title": "Sign in"},
+    ]
+    steps = teach.distil(events)
+    blob = repr(steps).lower()
+    if "secret" in blob and "credential" not in blob:
+        return r.bad("Raw secret events leaked into the workflow.")
+    creds = [s for s in steps if s["action"] == "credential"]
+    if len(creds) != 1:
+        return r.bad(f"Expected exactly one credential step, got {len(creds)}. "
+                     f"Two would type the password into the username field.")
+    r.note("password keystrokes became one vault lookup")
+
+    if not teach._looks_secret("Sign in - Microsoft"):
+        return r.bad("A login window wasn't recognised as one.")
+    if not teach._looks_secret("密码"):
+        return r.bad("A Chinese password window wasn't recognised — this user "
+                     "runs Windows in Chinese.")
+    r.note("login windows are recognised in English and Chinese")
+
+    if any(s["action"] == "type_text" and "hi" not in s["params"]["text"]
+           for s in steps):
+        return r.bad("Ordinary typing was mangled.")
+    r.note("ordinary typing is still captured normally")
+    return r.ok("Passwords are never recorded; normal input still is.")
+
+
 SCENARIOS = {
     "control":        (s_control, False),
+    "decompose":      (s_decompose, False),
+    "plan_visibility": (s_plan_visibility, False),
+    "selfeval":       (s_selfeval, False),
+    "auth":           (s_auth, False),
+    "teach_privacy":  (s_teach_privacy, False),
     "missing_app":    (s_missing_app, False),
     "clipboard":      (s_clipboard, False),
     "no_model":       (s_no_model, False),

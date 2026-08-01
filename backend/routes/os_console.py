@@ -132,6 +132,142 @@ def os_confidence(plan: _Plan):
     return experience.confidence(plan.steps)
 
 
+@router.get("/environment")
+def os_environment(refresh: bool = False):
+    """
+    What machine is this, really? Browsers, apps, GPU, RAM, language, network,
+    models, disk — plus the constraints those facts impose, so behaviour like
+    "it used Edge" or "vision is slow" has a stated reason rather than looking
+    like a bug.
+    """
+    from services import environment
+    return environment.scan(force=refresh)
+
+
+@router.get("/persona")
+def os_persona():
+    """Everything Jarvis knows about you, where each fact came from, what's missing."""
+    from services import persona
+    return persona.status()
+
+
+class _Fact(BaseModel):
+    field: str
+    value: str
+
+
+@router.post("/persona")
+def os_persona_set(fact: _Fact):
+    """
+    Tell Jarvis something durable. What you state here outranks anything it
+    detected, and a later machine scan will not quietly overwrite it.
+    """
+    from services import persona
+    res = persona.remember(fact.field, fact.value, persona.STATED, "set in Settings")
+    if not res.get("ok") and not res.get("skipped"):
+        raise HTTPException(400, res.get("error", "could not save"))
+    return res
+
+
+@router.delete("/persona/{field}")
+def os_persona_forget(field: str):
+    from services import persona
+    return persona.forget(field)
+
+
+@router.get("/plan")
+def os_plan():
+    """The plan that is running right now, step by step, with live status."""
+    from services import live_plan
+    return live_plan.snapshot()
+
+
+@router.post("/plan/preview")
+def os_plan_preview(body: dict):
+    """
+    Decompose a command WITHOUT running it — "show me the plan first".
+    Also the fastest way to see why a sentence was understood the way it was.
+    """
+    from services import decompose
+    return decompose.preview((body or {}).get("command", ""))
+
+
+@router.post("/plan/{command}")
+def os_plan_control(command: str, body: dict | None = None):
+    """
+    skip / retry / stop, addressed at a step of the live plan.
+
+    Skip and retry take effect between steps; the step in flight always
+    finishes. Stopping a half-typed sentence is worse than finishing it.
+    """
+    from services import live_plan
+    step = int((body or {}).get("step", -1))
+    if command == "stop":
+        return live_plan.stop((body or {}).get("reason", ""))
+    if command not in ("skip", "retry"):
+        raise HTTPException(400, "command must be skip, retry or stop")
+    if step < 0:
+        raise HTTPException(400, "which step? pass {\"step\": <0-based index>}")
+    res = getattr(live_plan, command)(step)
+    if not res.get("ok"):
+        raise HTTPException(409, res.get("error", "could not apply"))
+    return res
+
+
+@router.get("/why")
+def os_why():
+    """
+    "Why did that happen?" as a chain of real observations — the plan, the code
+    path it took, the failure class, and the machine fact behind it. Assembled
+    from records, never narrated by a model.
+    """
+    from services import narrate
+    return narrate.why()
+
+
+@router.get("/why.txt", response_class=PlainTextResponse)
+def os_why_text():
+    from services import narrate
+    return PlainTextResponse(narrate.as_text())
+
+
+@router.get("/selfeval")
+def os_selfeval(limit: int = 10):
+    """
+    How confident was Jarvis in its recent runs, why, and what it changed about
+    itself as a result.
+    """
+    from services import selfeval
+    return selfeval.summary(limit)
+
+
+@router.get("/teach")
+def os_teach_status():
+    from services import teach
+    return teach.status()
+
+
+@router.post("/teach/start")
+def os_teach_start(body: dict):
+    """
+    Start watching. Everything you do is recorded as a workflow until you stop —
+    except anything typed into a login or password window, which is never
+    captured.
+    """
+    from services import teach
+    res = teach.start((body or {}).get("name", ""))
+    if not res.get("ok"):
+        raise HTTPException(409, res.get("error", "could not start recording"))
+    return res
+
+
+@router.post("/teach/stop")
+def os_teach_stop(body: dict | None = None):
+    """Stop watching and save what was demonstrated as a runnable workflow."""
+    from services import teach
+    return teach.stop(save=bool((body or {}).get("save", True)))
+
+
 @router.get("/diagnostics")
 def os_diagnostics():
     """Is the routing itself healthy? Surfaces silent failures instead of hiding them."""
