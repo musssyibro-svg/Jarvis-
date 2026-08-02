@@ -47,6 +47,8 @@ import argparse
 import io
 import os
 import re
+import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -830,6 +832,61 @@ def s_simulation():
     return r.ok("Shows the full plan and its effects, executes nothing.")
 
 
+def s_ui_renders():
+    """
+    The UI must actually put something on the screen.
+
+    `npm run build` passed while the app was completely dead. A circular import
+    (JarvisOS.jsx -> pages/Planner.jsx -> JarvisOS.jsx) threw "Cannot access 'T'
+    before initialization" as soon as the browser evaluated the module graph, so
+    React never mounted: a blank white page, with every file returning HTTP 200
+    because loading was never the problem. Rollup bundles into one scope and
+    hoists, so the cycle resolves at build time and the build is green. Vite's
+    dev server evaluates natively and it is not.
+
+    A passing build is therefore not evidence that the app runs. This loads the
+    real dev server in a real browser and checks that #root has children.
+
+    Needs node, the frontend's packages, and a Chromium. Any of those missing is
+    a SKIP with the command to fix it — not a pass, and not a failure either.
+    """
+    r = Result("ui_renders", "The console actually renders in a browser")
+    root = Path(__file__).resolve().parent.parent
+
+    if not shutil.which("node"):
+        return r.skip("node isn't installed here, so the UI can't be checked. "
+                      "Install Node LTS from nodejs.org.")
+    if not (root / "frontend" / "node_modules" / "vite" / "package.json").is_file():
+        return r.skip("frontend packages aren't installed. Run: "
+                      "cd frontend && npm install")
+
+    try:
+        p = subprocess.run(["node", str(root / "tools" / "check_ui.mjs")],
+                           cwd=str(root), capture_output=True, text=True,
+                           timeout=240)
+    except subprocess.TimeoutExpired:
+        return r.bad("The render check timed out after 4 minutes.")
+    except Exception as e:
+        return r.skip(f"couldn't run the render check: {str(e)[:120]}")
+
+    out = (p.stdout or "") + (p.stderr or "")
+    for line in out.splitlines():
+        s = line.strip()
+        if s.startswith(("mounted elements", "body background", "crashes")):
+            r.note(s)
+
+    if p.returncode == 2:
+        return r.skip("no browser available to look at the page. "
+                      "Run: npx playwright install chromium")
+    if p.returncode != 0:
+        detail = "\n        ".join(l for l in out.splitlines()
+                                   if "FAIL" in l or "exception" in l.lower()
+                                   or "Cannot access" in l)
+        return r.bad("The UI does not render — this is the blank white page.\n        "
+                     + (detail or out[-400:]))
+    return r.ok("React mounts, styles apply, nothing throws.")
+
+
 def s_launchers():
     """
     The .bat files must be valid WINDOWS batch, not shell-flavoured guesswork.
@@ -925,6 +982,7 @@ def s_launchers():
 SCENARIOS = {
     "control":        (s_control, False),
     "launchers":      (s_launchers, False),
+    "ui_renders":     (s_ui_renders, False),
     "simulation":     (s_simulation, False),
     "decompose":      (s_decompose, False),
     "plan_visibility": (s_plan_visibility, False),

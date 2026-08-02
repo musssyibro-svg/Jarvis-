@@ -163,7 +163,7 @@ fails honestly. Run it before claiming anything is finished. Add a scenario for
 each new subsystem; the scenario should describe the *user-visible harm*, not
 the function signature.
 
-Current baseline: 16 passed, 0 failed, 1 skipped (clipboard needs a display).
+Current baseline: 17 passed, 0 failed, 1 skipped (clipboard needs a display).
 
 The `launchers` scenario checks the .bat files mechanically — CRLF, pure ASCII,
 no Unix redirection, no redirect characters inside REM comments, and that every

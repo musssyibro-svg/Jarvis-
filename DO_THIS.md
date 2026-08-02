@@ -269,7 +269,7 @@ drive it even from this machine.
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 16 or 17 passes.
+purpose and checks it fails honestly. You want 17 or 18 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 

@@ -3,7 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JARVIS v3</title>
+    <!--
+      An inline data-URI favicon, so the browser stops auto-requesting
+      /favicon.ico and logging a 404 on every page load. That permanent error
+      sat in the console next to real ones, which is how a real one gets
+      ignored — and it stopped the automated render check from telling "the
+      page is fine" apart from "the page threw".
+    -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23080b11' stroke='%2354d6ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%2354d6ff'/%3E%3C/svg%3E" />
+    <title>Jarvis</title>
   </head>
   <body>
     <div id="root"></div>

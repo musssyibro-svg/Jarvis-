@@ -21,7 +21,7 @@
  */
 import { useState, useEffect, useCallback } from "react";
 import { API } from "../config.js";
-import { T } from "../JarvisOS.jsx";
+import { T } from "../theme.js";
 
 const card = {
   background: "#0d1220", border: `1px solid ${T.line}`, borderRadius: 14,

@@ -22,21 +22,17 @@ import Logs from "./pages/Logs";
 import Memory from "./pages/Memory";
 import Settings from "./pages/Settings";
 
-/* ── One visual language ─────────────────────────────────────────────────── */
-export const T = {
-  bg: "#080b11", panel: "#0d1220", panelSoft: "rgba(255,255,255,0.028)",
-  line: "rgba(255,255,255,0.075)", text: "#e6edf5", dim: "#7d8798",
-  cyan: "#54d6ff", green: "#3ee6a8", amber: "#f5b544",
-  red: "#ff5f6d", violet: "#a98bff",
-};
-
-const card = {
-  background: T.panel, border: `1px solid ${T.line}`, borderRadius: 14,
-};
-const sectionLabel = {
-  fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
-  color: T.dim, marginBottom: 10, fontWeight: 600,
-};
+/* One visual language. Defined in theme.js, which imports nothing.
+ *
+ * These used to be declared HERE and imported back out by the pages, which made
+ * a cycle: JarvisOS -> Planner -> JarvisOS. Vite's dev server evaluates modules
+ * natively, so Planner ran first and hit `T.line` at its top level while `T` was
+ * still in the temporal dead zone. That threw before React mounted, leaving a
+ * blank white page with every file loaded and nothing rendered. `npm run build`
+ * did not catch it, because Rollup bundles into one scope and the cycle resolves
+ * at build time. Shared tokens belong in a leaf module. */
+export { T } from "./theme.js";
+import { T, card, sectionLabel } from "./theme.js";
 
 const SURFACES = [
   { id: "console",   label: "Console",   icon: "◈" },
