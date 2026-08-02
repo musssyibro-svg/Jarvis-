@@ -46,11 +46,13 @@ A report is written to failure_injection_report.txt for sending on.
 import argparse
 import io
 import os
+import re
 import sys
 import threading
 import time
 import traceback
 from datetime import datetime
+from pathlib import Path
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BACKEND = os.path.join(ROOT, "backend")
@@ -828,8 +830,101 @@ def s_simulation():
     return r.ok("Shows the full plan and its effects, executes nothing.")
 
 
+def s_launchers():
+    """
+    The .bat files must be valid WINDOWS batch, not shell-flavoured guesswork.
+
+    This scenario exists because launcher bugs have now cost more user time than
+    any bug in Jarvis itself, and they are invisible from here — this container
+    has no cmd.exe, so a launcher can only be checked by reading it. Twice now a
+    launcher has been shipped that could not possibly work:
+
+      * LF line endings, which made Windows fail in a way that looked like a
+        missing Python;
+      * `>/dev/null`, which is Unix. cmd tries to redirect into a folder called
+        \\dev, the folder doesn't exist, the redirect fails, so the command
+        fails, so the `&&` never runs — and the launcher announced "Python is
+        not installed" on a machine running Python 3.11 perfectly well.
+
+    So the rules are checked mechanically instead of remembered.
+    """
+    import glob
+    r = Result("launchers", "Windows launchers are valid Windows batch")
+    root = Path(__file__).resolve().parent.parent
+    bats = sorted(glob.glob(str(root / "*.bat")))
+    if not bats:
+        return r.bad("No .bat files found at all — the launcher is missing.")
+
+    problems = []
+    for path in bats:
+        name = Path(path).name
+        raw = Path(path).read_bytes()
+
+        # CRLF. An LF batch file fails in ways that look like a broken Python.
+        if b"\r\n" not in raw and b"\n" in raw:
+            problems.append(f"{name}: LF line endings — Windows needs CRLF")
+
+        # Pure ASCII. Em-dashes and smart quotes become mojibake in a GBK console.
+        try:
+            raw.decode("ascii")
+        except UnicodeDecodeError as e:
+            problems.append(f"{name}: non-ASCII byte at offset {e.start} — "
+                            f"this becomes mojibake in a Chinese console")
+
+        text = raw.decode("utf-8", "replace")
+        for i, line in enumerate(text.split("\r\n"), 1):
+            s = line.strip()
+
+            # Unix redirection.
+            if "/dev/null" in s:
+                problems.append(f"{name}:{i}: /dev/null is Unix; cmd needs "
+                                f"'>nul 2>&1'")
+
+            # A REM line is STILL parsed for redirection by cmd: `REM note > x`
+            # creates a file called x. A comment must not contain < > or |.
+            if s.upper().startswith("REM") and re.search(r"[<>|]", s):
+                problems.append(f"{name}:{i}: a REM comment contains a redirect "
+                                f"character — cmd will act on it")
+
+            # `where X >nul` must use 2>&1, not 2>nul on the same line as &&,
+            # and must never redirect to a path.
+            m = re.search(r">\s*([^\s&|]+)", s)
+            if m and m.group(1).lower() not in ("nul", "&1") \
+                    and not m.group(1).startswith('"') \
+                    and "echo" not in s.lower() and not s.upper().startswith("REM"):
+                if "/" in m.group(1) or m.group(1).startswith("\\"):
+                    problems.append(f"{name}:{i}: redirects to a path "
+                                    f"'{m.group(1)}' — did you mean nul?")
+
+        # Every script it calls must actually exist, or the launcher fails at a
+        # point where the user has no idea what went wrong.
+        for called in re.findall(r"%PY%\s+([\w\\/.-]+\.py)", text):
+            target = root / called.replace("\\", "/")
+            if not target.is_file():
+                problems.append(f"{name}: calls {called}, which does not exist")
+
+    if problems:
+        return r.bad("These launchers cannot work on Windows:\n        "
+                     + "\n        ".join(problems))
+
+    r.note(f"{len(bats)} launcher(s) checked: {', '.join(Path(b).name for b in bats)}")
+    r.note("CRLF, pure ASCII, no Unix redirection, no redirects in comments")
+    r.note("every script they call exists")
+
+    # There must be exactly one way to start Jarvis. Seven .bat files is how the
+    # user ended up running the old V8 one that never installed the UI.
+    starters = [Path(b).name for b in bats
+                if "start" in Path(b).name.lower()]
+    if len(starters) > 2:
+        return r.bad(f"{len(starters)} launchers that look like a start button: "
+                     f"{', '.join(starters)}. Pick one.")
+    r.note(f"start buttons: {', '.join(starters) or 'none'}")
+    return r.ok("Launchers are valid Windows batch and there's only one to press.")
+
+
 SCENARIOS = {
     "control":        (s_control, False),
+    "launchers":      (s_launchers, False),
     "simulation":     (s_simulation, False),
     "decompose":      (s_decompose, False),
     "plan_visibility": (s_plan_visibility, False),

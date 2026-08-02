@@ -544,7 +544,12 @@ fails honestly. Run it before claiming anything is finished. Add a scenario for
 each new subsystem; the scenario should describe the *user-visible harm*, not
 the function signature.
 
-Current baseline: 14 passed, 0 failed, 1 skipped (clipboard needs a display).
+Current baseline: 16 passed, 0 failed, 1 skipped (clipboard needs a display).
+
+The `launchers` scenario checks the .bat files mechanically — CRLF, pure ASCII,
+no Unix redirection, no redirect characters inside REM comments, and that every
+script they call exists. This container has no cmd.exe, so a launcher can only
+be read here, and reading it has twice missed a bug that cost the user a day.
 
 ---
 
@@ -996,7 +1001,7 @@ drive it even from this machine.
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 15 or 16 passes.
+purpose and checks it fails honestly. You want 16 or 17 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 
@@ -30015,9 +30020,20 @@ REM ============================================================
 title Jarvis Doctor
 cd /d "%~dp0"
 
+REM Find Python.
+REM
+REM These lines used to use the Unix null device. Windows cmd then tries to
+REM redirect into a folder called \dev, that folder does not exist, so the
+REM redirect fails, so the whole command fails and the && never runs. PY was
+REM therefore never set, and the launcher announced "Python is not installed"
+REM on a machine with a perfectly working Python 3.11.
 set "PY="
-where py >/dev/null 2>/dev/null && set "PY=py -3"
-if not defined PY ( where python >/dev/null 2>/dev/null && set "PY=python" )
+where py >nul 2>&1 && set "PY=py -3"
+if not defined PY ( where python >nul 2>&1 && set "PY=python" )
+if not defined PY ( where python3 >nul 2>&1 && set "PY=python3" )
+REM Last resort: `where` can miss a Python that runs perfectly well (a Store
+REM alias, an odd PATH). Ask Python itself before declaring it missing.
+if not defined PY ( python --version >nul 2>&1 && set "PY=python" )
 if not defined PY (
   echo.
   echo  [STOP] Python is not on PATH.
@@ -30482,9 +30498,20 @@ if "%JARVIS_CN%"=="1" (
   set "NPM_CONFIG_REGISTRY=https://registry.npmmirror.com"
 )
 
+REM Find Python.
+REM
+REM These lines used to use the Unix null device. Windows cmd then tries to
+REM redirect into a folder called \dev, that folder does not exist, so the
+REM redirect fails, so the whole command fails and the && never runs. PY was
+REM therefore never set, and the launcher announced "Python is not installed"
+REM on a machine with a perfectly working Python 3.11.
 set "PY="
-where py >/dev/null 2>/dev/null && set "PY=py -3"
-if not defined PY ( where python >/dev/null 2>/dev/null && set "PY=python" )
+where py >nul 2>&1 && set "PY=py -3"
+if not defined PY ( where python >nul 2>&1 && set "PY=python" )
+if not defined PY ( where python3 >nul 2>&1 && set "PY=python3" )
+REM Last resort: `where` can miss a Python that runs perfectly well (a Store
+REM alias, an odd PATH). Ask Python itself before declaring it missing.
+if not defined PY ( python --version >nul 2>&1 && set "PY=python" )
 if not defined PY (
   echo.
   echo  Python is not installed, or not on PATH.
@@ -30513,7 +30540,7 @@ start "Jarvis Backend" cmd /k "cd /d ""%ROOT%backend"" && %PY% -m uvicorn main:a
 
 REM ---- frontend ----
 set "NPM=npm"
-where npm >/dev/null 2>/dev/null || set "NPM=npm.cmd"
+where npm >nul 2>&1 || set "NPM=npm.cmd"
 
 REM Confirm the build tool is REALLY there before launching the UI window.
 REM "node_modules exists" is not the same question: a ZIP extracted over an old
@@ -30552,9 +30579,9 @@ set /a tries=0
 :wait
 timeout /t 2 >nul
 set /a tries+=1
-curl -s http://localhost:5173 >/dev/null 2>nul
+curl -s http://localhost:5173 >nul 2>&1
 if not errorlevel 1 goto ready
-curl -s http://localhost:5174 >/dev/null 2>nul
+curl -s http://localhost:5174 >nul 2>&1
 if not errorlevel 1 ( set "UIPORT=5174" & goto ready2 )
 if %tries% lss 40 goto wait
 echo.
@@ -30623,9 +30650,20 @@ REM ==============================================================
 title Jarvis Update
 cd /d "%~dp0"
 
+REM Find Python.
+REM
+REM These lines used to use the Unix null device. Windows cmd then tries to
+REM redirect into a folder called \dev, that folder does not exist, so the
+REM redirect fails, so the whole command fails and the && never runs. PY was
+REM therefore never set, and the launcher announced "Python is not installed"
+REM on a machine with a perfectly working Python 3.11.
 set "PY="
-where py >/dev/null 2>/dev/null && set "PY=py -3"
-if not defined PY ( where python >/dev/null 2>/dev/null && set "PY=python" )
+where py >nul 2>&1 && set "PY=py -3"
+if not defined PY ( where python >nul 2>&1 && set "PY=python" )
+if not defined PY ( where python3 >nul 2>&1 && set "PY=python3" )
+REM Last resort: `where` can miss a Python that runs perfectly well (a Store
+REM alias, an odd PATH). Ask Python itself before declaring it missing.
+if not defined PY ( python --version >nul 2>&1 && set "PY=python" )
 if not defined PY (
   echo.
   echo   Python is not installed, or not on PATH.
@@ -30643,15 +30681,22 @@ pause
 # FILE 168/176: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-01T12:47:43.806877
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-02T11:40:32.018094
 platform: linux  python: 3.11.15
-15 passed · 0 failed · 1 skipped
+16 passed · 0 failed · 1 skipped
 
 [PASS] control — Pause / resume / cancel behave
     Pause holds, cancel releases cleanly, clear resets.
     · a paused worker holds at the checkpoint
     · cancel releases a paused worker and raises Cancelled
     · explain() answered with 2 reason(s)
+
+[PASS] launchers — Windows launchers are valid Windows batch
+    Launchers are valid Windows batch and there's only one to press.
+    · 5 launcher(s) checked: DOCTOR.bat, RUN_FAILURE_TEST.bat, START.bat, START_JARVIS.bat, UPDATE.bat
+    · CRLF, pure ASCII, no Unix redirection, no redirects in comments
+    · every script they call exists
+    · start buttons: START.bat, START_JARVIS.bat
 
 [PASS] simulation — Simulating never executes anything
     Shows the full plan and its effects, executes nothing.
@@ -30712,7 +30757,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785588463' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1785670831' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -31447,11 +31492,13 @@ A report is written to failure_injection_report.txt for sending on.
 import argparse
 import io
 import os
+import re
 import sys
 import threading
 import time
 import traceback
 from datetime import datetime
+from pathlib import Path
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BACKEND = os.path.join(ROOT, "backend")
@@ -32229,8 +32276,101 @@ def s_simulation():
     return r.ok("Shows the full plan and its effects, executes nothing.")
 
 
+def s_launchers():
+    """
+    The .bat files must be valid WINDOWS batch, not shell-flavoured guesswork.
+
+    This scenario exists because launcher bugs have now cost more user time than
+    any bug in Jarvis itself, and they are invisible from here — this container
+    has no cmd.exe, so a launcher can only be checked by reading it. Twice now a
+    launcher has been shipped that could not possibly work:
+
+      * LF line endings, which made Windows fail in a way that looked like a
+        missing Python;
+      * `>/dev/null`, which is Unix. cmd tries to redirect into a folder called
+        \\dev, the folder doesn't exist, the redirect fails, so the command
+        fails, so the `&&` never runs — and the launcher announced "Python is
+        not installed" on a machine running Python 3.11 perfectly well.
+
+    So the rules are checked mechanically instead of remembered.
+    """
+    import glob
+    r = Result("launchers", "Windows launchers are valid Windows batch")
+    root = Path(__file__).resolve().parent.parent
+    bats = sorted(glob.glob(str(root / "*.bat")))
+    if not bats:
+        return r.bad("No .bat files found at all — the launcher is missing.")
+
+    problems = []
+    for path in bats:
+        name = Path(path).name
+        raw = Path(path).read_bytes()
+
+        # CRLF. An LF batch file fails in ways that look like a broken Python.
+        if b"\r\n" not in raw and b"\n" in raw:
+            problems.append(f"{name}: LF line endings — Windows needs CRLF")
+
+        # Pure ASCII. Em-dashes and smart quotes become mojibake in a GBK console.
+        try:
+            raw.decode("ascii")
+        except UnicodeDecodeError as e:
+            problems.append(f"{name}: non-ASCII byte at offset {e.start} — "
+                            f"this becomes mojibake in a Chinese console")
+
+        text = raw.decode("utf-8", "replace")
+        for i, line in enumerate(text.split("\r\n"), 1):
+            s = line.strip()
+
+            # Unix redirection.
+            if "/dev/null" in s:
+                problems.append(f"{name}:{i}: /dev/null is Unix; cmd needs "
+                                f"'>nul 2>&1'")
+
+            # A REM line is STILL parsed for redirection by cmd: `REM note > x`
+            # creates a file called x. A comment must not contain < > or |.
+            if s.upper().startswith("REM") and re.search(r"[<>|]", s):
+                problems.append(f"{name}:{i}: a REM comment contains a redirect "
+                                f"character — cmd will act on it")
+
+            # `where X >nul` must use 2>&1, not 2>nul on the same line as &&,
+            # and must never redirect to a path.
+            m = re.search(r">\s*([^\s&|]+)", s)
+            if m and m.group(1).lower() not in ("nul", "&1") \
+                    and not m.group(1).startswith('"') \
+                    and "echo" not in s.lower() and not s.upper().startswith("REM"):
+                if "/" in m.group(1) or m.group(1).startswith("\\"):
+                    problems.append(f"{name}:{i}: redirects to a path "
+                                    f"'{m.group(1)}' — did you mean nul?")
+
+        # Every script it calls must actually exist, or the launcher fails at a
+        # point where the user has no idea what went wrong.
+        for called in re.findall(r"%PY%\s+([\w\\/.-]+\.py)", text):
+            target = root / called.replace("\\", "/")
+            if not target.is_file():
+                problems.append(f"{name}: calls {called}, which does not exist")
+
+    if problems:
+        return r.bad("These launchers cannot work on Windows:\n        "
+                     + "\n        ".join(problems))
+
+    r.note(f"{len(bats)} launcher(s) checked: {', '.join(Path(b).name for b in bats)}")
+    r.note("CRLF, pure ASCII, no Unix redirection, no redirects in comments")
+    r.note("every script they call exists")
+
+    # There must be exactly one way to start Jarvis. Seven .bat files is how the
+    # user ended up running the old V8 one that never installed the UI.
+    starters = [Path(b).name for b in bats
+                if "start" in Path(b).name.lower()]
+    if len(starters) > 2:
+        return r.bad(f"{len(starters)} launchers that look like a start button: "
+                     f"{', '.join(starters)}. Pick one.")
+    r.note(f"start buttons: {', '.join(starters) or 'none'}")
+    return r.ok("Launchers are valid Windows batch and there's only one to press.")
+
+
 SCENARIOS = {
     "control":        (s_control, False),
+    "launchers":      (s_launchers, False),
     "simulation":     (s_simulation, False),
     "decompose":      (s_decompose, False),
     "plan_visibility": (s_plan_visibility, False),

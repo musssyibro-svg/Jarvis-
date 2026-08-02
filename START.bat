@@ -22,9 +22,20 @@ if "%JARVIS_CN%"=="1" (
   set "NPM_CONFIG_REGISTRY=https://registry.npmmirror.com"
 )
 
+REM Find Python.
+REM
+REM These lines used to use the Unix null device. Windows cmd then tries to
+REM redirect into a folder called \dev, that folder does not exist, so the
+REM redirect fails, so the whole command fails and the && never runs. PY was
+REM therefore never set, and the launcher announced "Python is not installed"
+REM on a machine with a perfectly working Python 3.11.
 set "PY="
-where py >/dev/null 2>/dev/null && set "PY=py -3"
-if not defined PY ( where python >/dev/null 2>/dev/null && set "PY=python" )
+where py >nul 2>&1 && set "PY=py -3"
+if not defined PY ( where python >nul 2>&1 && set "PY=python" )
+if not defined PY ( where python3 >nul 2>&1 && set "PY=python3" )
+REM Last resort: `where` can miss a Python that runs perfectly well (a Store
+REM alias, an odd PATH). Ask Python itself before declaring it missing.
+if not defined PY ( python --version >nul 2>&1 && set "PY=python" )
 if not defined PY (
   echo.
   echo  Python is not installed, or not on PATH.
@@ -53,7 +64,7 @@ start "Jarvis Backend" cmd /k "cd /d ""%ROOT%backend"" && %PY% -m uvicorn main:a
 
 REM ---- frontend ----
 set "NPM=npm"
-where npm >/dev/null 2>/dev/null || set "NPM=npm.cmd"
+where npm >nul 2>&1 || set "NPM=npm.cmd"
 
 REM Confirm the build tool is REALLY there before launching the UI window.
 REM "node_modules exists" is not the same question: a ZIP extracted over an old
@@ -92,9 +103,9 @@ set /a tries=0
 :wait
 timeout /t 2 >nul
 set /a tries+=1
-curl -s http://localhost:5173 >/dev/null 2>nul
+curl -s http://localhost:5173 >nul 2>&1
 if not errorlevel 1 goto ready
-curl -s http://localhost:5174 >/dev/null 2>nul
+curl -s http://localhost:5174 >nul 2>&1
 if not errorlevel 1 ( set "UIPORT=5174" & goto ready2 )
 if %tries% lss 40 goto wait
 echo.
