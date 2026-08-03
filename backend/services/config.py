@@ -72,6 +72,42 @@ KNOWN = {
     # Tuned automatically by services/selfeval.py when a run shows they're wrong.
     "type_settle_s":          ("",                       "0.3"),
     "vision_max_tokens":      ("",                       "320"),
+    # Which provider answers which kind of request. Blank means "use the
+    # default", and the default is the local Ollama — Jarvis stays entirely
+    # offline unless a key is deliberately added. See services/ai_router.py.
+    "ai_route_default":       ("JARVIS_AI_PROVIDER",     "ollama"),
+    "ai_route_chat":          ("",                       ""),
+    "ai_route_reasoning":     ("",                       ""),
+    "ai_route_planner":       ("",                       ""),
+    "ai_route_coding":        ("",                       ""),
+    "ai_route_vision":        ("",                       ""),
+    "ai_route_memory":        ("",                       ""),
+    "ai_route_proposal":      ("",                       ""),
+    "ai_route_browser":       ("",                       ""),
+    # Comma-separated providers to try when the first one fails. Ollama is
+    # always tried last regardless, so a dead API key degrades to local rather
+    # than to an error.
+    "ai_fallback":            ("",                       ""),
+    # Cloud endpoints. All optional, all off until a key is set. One shape for
+    # every vendor — see providers/openai_compatible.py.
+    "ai_deepseek_api_key":    ("DEEPSEEK_API_KEY",       ""),
+    "ai_deepseek_model":      ("",                       ""),
+    "ai_glm_api_key":         ("GLM_API_KEY",            ""),
+    "ai_glm_model":           ("",                       ""),
+    "ai_kimi_api_key":        ("MOONSHOT_API_KEY",       ""),
+    "ai_kimi_model":          ("",                       ""),
+    "ai_openrouter_api_key":  ("OPENROUTER_API_KEY",     ""),
+    "ai_openrouter_model":    ("",                       ""),
+    "ai_openai_api_key":      ("OPENAI_API_KEY",         ""),
+    "ai_openai_model":        ("",                       ""),
+    "ai_gemini_api_key":      ("GEMINI_API_KEY",         ""),
+    "ai_gemini_model":        ("",                       ""),
+    "ai_omniroute_base_url":  ("OMNIROUTE_URL",          ""),
+    "ai_omniroute_api_key":   ("OMNIROUTE_KEY",          ""),
+    "ai_omniroute_model":     ("",                       ""),
+    "ai_lmstudio_base_url":   ("",                       ""),
+    "ai_lmstudio_model":      ("",                       ""),
+
     # Security. Defaults are safe for a local single-user run; see services/auth.py.
     "jarvis_require_token":   ("JARVIS_REQUIRE_TOKEN",   "false"),
     "jarvis_check_origin":    ("JARVIS_CHECK_ORIGIN",    "true"),
@@ -162,7 +198,35 @@ def set(key: str, value) -> dict:
             providers.invalidate()
         except Exception:
             pass
+    # Same reason: an AI provider is built once and cached, so without this a
+    # newly pasted API key wouldn't be used until the next restart.
+    if key.startswith("ai_"):
+        try:
+            from services import ai_router
+            ai_router.invalidate()
+        except Exception:
+            pass
     return {"ok": True, "key": key, "value": val, "effective": get(key)}
+
+
+# Settings whose VALUE must never be shown. The Settings screen lists every
+# effective value, and the runtime report embeds the same thing — which is
+# exactly the file the user sends to other people when something breaks. An API
+# key travelling in a debug report is a credential leak with a friendly face.
+_SECRET_HINTS = ("api_key", "apikey", "_key", "token", "secret", "password", "pwd")
+
+
+def is_secret(key: str) -> bool:
+    k = (key or "").lower()
+    return any(h in k for h in _SECRET_HINTS)
+
+
+def _mask(value: str) -> str:
+    """Enough to recognise it, not enough to use it."""
+    v = (value or "").strip()
+    if not v:
+        return ""
+    return f"{v[:3]}…{v[-2:]} ({len(v)} chars)" if len(v) > 8 else "•" * len(v)
 
 
 def effective() -> dict:
@@ -186,7 +250,11 @@ def effective() -> dict:
             src = "built-in default"
         else:
             src = "not set"
-        out[key] = {"value": get(key), "source": src,
-                    "saved": saved or None, "env": env_val or None,
-                    "default": built_in or None}
+        if is_secret(key):
+            out[key] = {"value": _mask(get(key)), "source": src, "secret": True,
+                        "saved": bool(saved), "env": bool(env_val), "default": None}
+        else:
+            out[key] = {"value": get(key), "source": src,
+                        "saved": saved or None, "env": env_val or None,
+                        "default": built_in or None}
     return out

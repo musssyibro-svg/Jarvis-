@@ -126,6 +126,12 @@ There are four now: **Planner**, **Memory**, **Logs**, and a rebuilt
   This is where "why is vision slow" gets answered: no GPU, so it runs on the
   CPU.
 - **Behaviour** — models, search engine, and which app to use for what.
+- **Which AI answers what** — new. Everything still runs on your own PC and
+  nothing is sent anywhere. But if you ever want to paste in a DeepSeek, GLM,
+  Kimi or OpenRouter key, you can now pick which *kind* of thinking uses it —
+  e.g. planning on DeepSeek, everything else local. If a paid one fails or runs
+  out of credit, Jarvis drops back to your local model instead of stopping.
+  Keys are stored on your PC and never appear in the reports you send me.
 - **Security** — what's protecting it right now.
 - **What's actually in effect** — every setting with the value the running
   system is *really* using, and where that value came from. **If you change
@@ -269,7 +275,7 @@ drive it even from this machine.
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 17 or 18 passes.
+purpose and checks it fails honestly. You want 18 or 19 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 

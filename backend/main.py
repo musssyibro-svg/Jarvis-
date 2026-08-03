@@ -407,18 +407,27 @@ def chat_stream(body: ChatIn):
     _save_msg(body.session_id, "user", body.message)
     def _stream() -> Generator[str, None, None]:
         intent = "chat"
+        # Through the router, not straight at Ollama.
+        #
+        # This used to call ollama.chat() directly with a module-level model
+        # name, which meant it ignored the RAM-aware model choice, ignored the
+        # token and context caps that stop a small model rambling for minutes,
+        # and ignored every fallback the rest of Jarvis has. It was also the
+        # one place a provider change would have been silently missed.
         try:
-            import ollama as _ollama
+            from services.ai_router import ask_stream
             from services.deepseek_service import SYSTEM_PROMPT
-            msgs = [{"role":"system","content":SYSTEM_PROMPT},
-                    *history, {"role":"user","content":body.message}]
             full = ""
-            for part in _ollama.chat(model=OLLAMA_MODEL, messages=msgs, stream=True):
-                chunk = part.get("message",{}).get("content","")
-                if chunk: full += chunk; yield _sse(chunk)
+            for chunk in ask_stream(task="chat", prompt=body.message,
+                                    history=history, system_prompt=SYSTEM_PROMPT):
+                if chunk:
+                    full += chunk
+                    yield _sse(chunk)
             _save_msg(body.session_id, "assistant", full)
-        except Exception:
-            reply = call_model(body.message, history)
+        except Exception as e:
+            # Streaming itself broke. Say so rather than going quiet — a stream
+            # that stops with no message is indistinguishable from a hang.
+            reply = f"[Streaming failed: {e}]"
             _save_msg(body.session_id, "assistant", reply)
             yield _sse(reply)
         # FIX 2: exactly ONE final packet per stream, carrying intent.

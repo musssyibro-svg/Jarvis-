@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 177 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 182 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -75,120 +75,125 @@ TABLE OF CONTENTS
  66. backend/platforms/remoteok.py
  67. backend/platforms/wellfound.py
  68. backend/platforms/weworkremotely.py
- 69. backend/requirements.txt
- 70. backend/routes/__init__.py
- 71. backend/routes/agents.py
- 72. backend/routes/analytics.py
- 73. backend/routes/automation.py
- 74. backend/routes/brain.py
- 75. backend/routes/clickworker.py
- 76. backend/routes/fiverr.py
- 77. backend/routes/hubstaff.py
- 78. backend/routes/messages.py
- 79. backend/routes/mind.py
- 80. backend/routes/orchestrator.py
- 81. backend/routes/orchestrator_feed.py
- 82. backend/routes/os_console.py
- 83. backend/routes/planner.py
- 84. backend/routes/proposals.py
- 85. backend/routes/pulse.py
- 86. backend/routes/scraper.py
- 87. backend/routes/sessions.py
- 88. backend/routes/system.py
- 89. backend/routes/workflows.py
- 90. backend/routes/zuodao.py
- 91. backend/services/__init__.py
- 92. backend/services/analytics_service.py
- 93. backend/services/app_resolver.py
- 94. backend/services/auth.py
- 95. backend/services/bid_executor.py
- 96. backend/services/brain_core.py
- 97. backend/services/brain_decision.py
- 98. backend/services/brain_service.py
- 99. backend/services/browser_monitor.py
-100. backend/services/capability_registry.py
-101. backend/services/clickworker_service.py
-102. backend/services/config.py
-103. backend/services/control.py
-104. backend/services/custom_platforms.py
-105. backend/services/decompose.py
-106. backend/services/deepseek_service.py
-107. backend/services/diagnostics.py
-108. backend/services/environment.py
-109. backend/services/event_bus.py
-110. backend/services/experience.py
-111. backend/services/fiverr_service.py
-112. backend/services/freelancer_api.py
-113. backend/services/hubstaff_service.py
-114. backend/services/income_engine.py
-115. backend/services/live_plan.py
-116. backend/services/maintenance.py
-117. backend/services/model_router.py
-118. backend/services/narrate.py
-119. backend/services/ollama_manager.py
-120. backend/services/os_state.py
-121. backend/services/persona.py
-122. backend/services/planner_service.py
-123. backend/services/platform_health.py
-124. backend/services/platform_meta.py
-125. backend/services/profile_service.py
-126. backend/services/providers.py
-127. backend/services/pulse_service.py
-128. backend/services/reflection.py
-129. backend/services/selfeval.py
-130. backend/services/session_manager.py
-131. backend/services/simulate.py
-132. backend/services/teach.py
-133. backend/services/tool_registry.py
-134. backend/services/trace.py
-135. backend/services/vault.py
-136. backend/services/workflow_service.py
-137. backend/services/world_model.py
-138. backend/services/zuodao_service.py
-139. frontend/index.html
-140. frontend/package.json
-141. frontend/src/App.jsx
-142. frontend/src/JarvisOS.jsx
-143. frontend/src/colors.js
-144. frontend/src/components/UI.jsx
-145. frontend/src/config.js
-146. frontend/src/index.css
-147. frontend/src/main.jsx
-148. frontend/src/pages/Agents.jsx
-149. frontend/src/pages/Chat.jsx
-150. frontend/src/pages/Earn.jsx
-151. frontend/src/pages/Logs.jsx
-152. frontend/src/pages/Memory.jsx
-153. frontend/src/pages/Planner.jsx
-154. frontend/src/pages/Settings.jsx
-155. frontend/src/theme.js
-156. frontend/vite.config.js
-157. .gitignore
-158. DOCTOR.bat
-159. FINAL_PROJECT_TREE_backend.txt
-160. FINAL_PROJECT_TREE_frontend.txt
-161. LEGACY_GREP_ARTIFACT.txt
-162. PROJECT_TREE.txt
-163. REQUIREMENTS_SNAPSHOT.txt
-164. RUNTIME_VALIDATION.py
-165. RUN_FAILURE_TEST.bat
-166. START.bat
-167. START_JARVIS.bat
-168. UPDATE.bat
-169. failure_injection_report.txt
-170. legacy_dependency_report.json
-171. requirements.txt
-172. start.sh
-173. tools/doctor.py
-174. tools/dump_source.py
-175. tools/failure_injection.py
-176. tools/setup.py
-177. tools/update.py
+ 69. backend/providers/__init__.py
+ 70. backend/providers/base.py
+ 71. backend/providers/ollama_provider.py
+ 72. backend/providers/openai_compatible.py
+ 73. backend/requirements.txt
+ 74. backend/routes/__init__.py
+ 75. backend/routes/agents.py
+ 76. backend/routes/analytics.py
+ 77. backend/routes/automation.py
+ 78. backend/routes/brain.py
+ 79. backend/routes/clickworker.py
+ 80. backend/routes/fiverr.py
+ 81. backend/routes/hubstaff.py
+ 82. backend/routes/messages.py
+ 83. backend/routes/mind.py
+ 84. backend/routes/orchestrator.py
+ 85. backend/routes/orchestrator_feed.py
+ 86. backend/routes/os_console.py
+ 87. backend/routes/planner.py
+ 88. backend/routes/proposals.py
+ 89. backend/routes/pulse.py
+ 90. backend/routes/scraper.py
+ 91. backend/routes/sessions.py
+ 92. backend/routes/system.py
+ 93. backend/routes/workflows.py
+ 94. backend/routes/zuodao.py
+ 95. backend/services/__init__.py
+ 96. backend/services/ai_router.py
+ 97. backend/services/analytics_service.py
+ 98. backend/services/app_resolver.py
+ 99. backend/services/auth.py
+100. backend/services/bid_executor.py
+101. backend/services/brain_core.py
+102. backend/services/brain_decision.py
+103. backend/services/brain_service.py
+104. backend/services/browser_monitor.py
+105. backend/services/capability_registry.py
+106. backend/services/clickworker_service.py
+107. backend/services/config.py
+108. backend/services/control.py
+109. backend/services/custom_platforms.py
+110. backend/services/decompose.py
+111. backend/services/deepseek_service.py
+112. backend/services/diagnostics.py
+113. backend/services/environment.py
+114. backend/services/event_bus.py
+115. backend/services/experience.py
+116. backend/services/fiverr_service.py
+117. backend/services/freelancer_api.py
+118. backend/services/hubstaff_service.py
+119. backend/services/income_engine.py
+120. backend/services/live_plan.py
+121. backend/services/maintenance.py
+122. backend/services/model_router.py
+123. backend/services/narrate.py
+124. backend/services/ollama_manager.py
+125. backend/services/os_state.py
+126. backend/services/persona.py
+127. backend/services/planner_service.py
+128. backend/services/platform_health.py
+129. backend/services/platform_meta.py
+130. backend/services/profile_service.py
+131. backend/services/providers.py
+132. backend/services/pulse_service.py
+133. backend/services/reflection.py
+134. backend/services/selfeval.py
+135. backend/services/session_manager.py
+136. backend/services/simulate.py
+137. backend/services/teach.py
+138. backend/services/tool_registry.py
+139. backend/services/trace.py
+140. backend/services/vault.py
+141. backend/services/workflow_service.py
+142. backend/services/world_model.py
+143. backend/services/zuodao_service.py
+144. frontend/index.html
+145. frontend/package.json
+146. frontend/src/App.jsx
+147. frontend/src/JarvisOS.jsx
+148. frontend/src/colors.js
+149. frontend/src/components/UI.jsx
+150. frontend/src/config.js
+151. frontend/src/index.css
+152. frontend/src/main.jsx
+153. frontend/src/pages/Agents.jsx
+154. frontend/src/pages/Chat.jsx
+155. frontend/src/pages/Earn.jsx
+156. frontend/src/pages/Logs.jsx
+157. frontend/src/pages/Memory.jsx
+158. frontend/src/pages/Planner.jsx
+159. frontend/src/pages/Settings.jsx
+160. frontend/src/theme.js
+161. frontend/vite.config.js
+162. .gitignore
+163. DOCTOR.bat
+164. FINAL_PROJECT_TREE_backend.txt
+165. FINAL_PROJECT_TREE_frontend.txt
+166. LEGACY_GREP_ARTIFACT.txt
+167. PROJECT_TREE.txt
+168. REQUIREMENTS_SNAPSHOT.txt
+169. RUNTIME_VALIDATION.py
+170. RUN_FAILURE_TEST.bat
+171. START.bat
+172. START_JARVIS.bat
+173. UPDATE.bat
+174. failure_injection_report.txt
+175. legacy_dependency_report.json
+176. requirements.txt
+177. start.sh
+178. tools/doctor.py
+179. tools/dump_source.py
+180. tools/failure_injection.py
+181. tools/setup.py
+182. tools/update.py
 
 
 
 ################################################################################
-# FILE 1/177: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 1/182: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -254,7 +259,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 2/177: ARCHITECTURE.md
+# FILE 2/182: ARCHITECTURE.md
 ################################################################################
 ```md
 # Jarvis architecture (foundational layer)
@@ -321,7 +326,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 3/177: BRAIN_GUIDE.md
+# FILE 3/182: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -377,7 +382,7 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/177: CLAUDE.md
+# FILE 4/182: CLAUDE.md
 ################################################################################
 ```md
 # Jarvis — how to work on this repo
@@ -496,6 +501,14 @@ their accounts. Treat that as the authority it is.
 
 ## Architecture rules
 
+- **One door to the AI.** Every model call goes through `services/ai_router.py`.
+  Nothing imports `ollama` or a vendor SDK outside `providers/`. Two routers
+  exist and they answer different questions: `ai_router` picks the PROVIDER,
+  `model_router` picks the MODEL that fits in free RAM. Neither replaces the
+  other.
+- **Local by default, always.** No cloud provider is enabled without a key the
+  user deliberately added, and the local model is always the last fallback, so
+  an expired key degrades instead of stopping work.
 - **One orchestrator.** `agents/orchestrator_core.py` owns the state machine.
   `agents/orchestrator.py` is the shared event bus (`STATE`) and nothing else.
 - **Deterministic before generative.** `tool_registry` and `decompose` resolve
@@ -545,7 +558,7 @@ fails honestly. Run it before claiming anything is finished. Add a scenario for
 each new subsystem; the scenario should describe the *user-visible harm*, not
 the function signature.
 
-Current baseline: 17 passed, 0 failed, 1 skipped (clipboard needs a display).
+Current baseline: 18 passed, 0 failed, 1 skipped (clipboard needs a display).
 
 The `launchers` scenario checks the .bat files mechanically — CRLF, pure ASCII,
 no Unix redirection, no redirect characters inside REM comments, and that every
@@ -594,7 +607,7 @@ be believed when it says what it did — that is the goal.
 ```
 
 ################################################################################
-# FILE 5/177: CONTROL_FLOW_REPORT.md
+# FILE 5/182: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -649,7 +662,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 6/177: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 6/182: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -728,7 +741,7 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 7/177: DO_THIS.md
+# FILE 7/182: DO_THIS.md
 ################################################################################
 ```md
 # Do this
@@ -859,6 +872,12 @@ There are four now: **Planner**, **Memory**, **Logs**, and a rebuilt
   This is where "why is vision slow" gets answered: no GPU, so it runs on the
   CPU.
 - **Behaviour** — models, search engine, and which app to use for what.
+- **Which AI answers what** — new. Everything still runs on your own PC and
+  nothing is sent anywhere. But if you ever want to paste in a DeepSeek, GLM,
+  Kimi or OpenRouter key, you can now pick which *kind* of thinking uses it —
+  e.g. planning on DeepSeek, everything else local. If a paid one fails or runs
+  out of credit, Jarvis drops back to your local model instead of stopping.
+  Keys are stored on your PC and never appear in the reports you send me.
 - **Security** — what's protecting it right now.
 - **What's actually in effect** — every setting with the value the running
   system is *really* using, and where that value came from. **If you change
@@ -1002,7 +1021,7 @@ drive it even from this machine.
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 17 or 18 passes.
+purpose and checks it fails honestly. You want 18 or 19 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 
@@ -1023,7 +1042,7 @@ DESKTOP_CONTROL_ENABLED=0
 ```
 
 ################################################################################
-# FILE 8/177: FIX_MY_INSTALL.md
+# FILE 8/182: FIX_MY_INSTALL.md
 ################################################################################
 ```md
 # It won't start — do this
@@ -1201,7 +1220,7 @@ of whatever fails.
 ```
 
 ################################################################################
-# FILE 9/177: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 9/182: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -1320,7 +1339,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 10/177: HIDDEN_RUNTIME_AUDIT.md
+# FILE 10/182: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -1473,7 +1492,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 11/177: MIGRATION_CHANGELOG.md
+# FILE 11/182: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -1520,7 +1539,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 12/177: PLANNER_AND_DOCTOR.md
+# FILE 12/182: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -1577,7 +1596,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 13/177: PRE_RELEASE_AUDIT.md
+# FILE 13/182: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1762,7 +1781,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 14/177: QA_VERIFICATION_REPORT.md
+# FILE 14/182: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -1856,7 +1875,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 15/177: README.md
+# FILE 15/182: README.md
 ################################################################################
 ```md
 # Jarvis OS — autonomous desktop assistant + freelance income engine
@@ -1998,7 +2017,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 16/177: README_START_HERE.md
+# FILE 16/182: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -2053,7 +2072,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 17/177: REAL_MACHINE_FIXES.md
+# FILE 17/182: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -2154,7 +2173,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 18/177: RESEARCH_UPGRADE_2026-07.md
+# FILE 18/182: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -2243,7 +2262,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 19/177: RUNTIME_VALIDATION_README.md
+# FILE 19/182: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -2281,7 +2300,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 20/177: STAGE2_CHANGELOG.md
+# FILE 20/182: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -2318,7 +2337,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 21/177: START_HERE.md
+# FILE 21/182: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -2469,7 +2488,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 22/177: TESTING_STAGES.md
+# FILE 22/182: TESTING_STAGES.md
 ################################################################################
 ```md
 # Proving Jarvis actually works — in the right order
@@ -2567,7 +2586,7 @@ Everything else has been tested. This hasn't, and can't be.
 ```
 
 ################################################################################
-# FILE 23/177: V8_PHASE1_REPORT.md
+# FILE 23/182: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -2623,7 +2642,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 24/177: V9_FINAL_README.md
+# FILE 24/182: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -2685,7 +2704,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 25/177: V9_STAGE1_MIGRATION.md
+# FILE 25/182: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -2749,7 +2768,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 26/177: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 26/182: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -2821,7 +2840,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 27/177: WINDOWS_DEPLOYMENT.md
+# FILE 27/182: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -2859,7 +2878,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 28/177: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 28/182: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -2949,7 +2968,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 29/177: backend/README.md
+# FILE 29/182: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -3085,14 +3104,14 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 30/177: backend/adapters/__init__.py
+# FILE 30/182: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 31/177: backend/adapters/commander_adapter.py
+# FILE 31/182: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -3872,14 +3891,14 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 ```
 
 ################################################################################
-# FILE 32/177: backend/agents/__init__.py
+# FILE 32/182: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 33/177: backend/agents/base_agent.py
+# FILE 33/182: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -3902,7 +3921,7 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 34/177: backend/agents/browser_agent.py
+# FILE 34/182: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
@@ -4199,7 +4218,7 @@ class BrowserAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 35/177: backend/agents/commander.py
+# FILE 35/182: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -4336,14 +4355,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 36/177: backend/agents/custom/__init__.py
+# FILE 36/182: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 37/177: backend/agents/desktop_agent.py
+# FILE 37/182: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -5860,7 +5879,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 38/177: backend/agents/executor_agent.py
+# FILE 38/182: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -6334,7 +6353,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 39/177: backend/agents/memory_agent.py
+# FILE 39/182: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -6492,7 +6511,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 40/177: backend/agents/orchestrator.py
+# FILE 40/182: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -6611,7 +6630,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 41/177: backend/agents/orchestrator_core.py
+# FILE 41/182: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -7077,7 +7096,7 @@ core = get_core()
 ```
 
 ################################################################################
-# FILE 42/177: backend/agents/perception_agent.py
+# FILE 42/182: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -7287,7 +7306,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 43/177: backend/agents/proposal_agent.py
+# FILE 43/182: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -7445,7 +7464,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 44/177: backend/agents/registry.py
+# FILE 44/182: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -7765,7 +7784,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 45/177: backend/agents/scheduler.py
+# FILE 45/182: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -7869,7 +7888,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 46/177: backend/agents/score_agent.py
+# FILE 46/182: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -8070,7 +8089,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 47/177: backend/agents/scout_agent.py
+# FILE 47/182: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -8190,7 +8209,7 @@ class ScoutAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 48/177: backend/agents/v9_models.py
+# FILE 48/182: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -8248,7 +8267,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 49/177: backend/agents/vision_agent.py
+# FILE 49/182: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -8858,14 +8877,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 50/177: backend/core/__init__.py
+# FILE 50/182: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 51/177: backend/core/browser_lock.py
+# FILE 51/182: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
@@ -9008,7 +9027,7 @@ class browser_session:
 ```
 
 ################################################################################
-# FILE 52/177: backend/main.py
+# FILE 52/182: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -9420,18 +9439,27 @@ def chat_stream(body: ChatIn):
     _save_msg(body.session_id, "user", body.message)
     def _stream() -> Generator[str, None, None]:
         intent = "chat"
+        # Through the router, not straight at Ollama.
+        #
+        # This used to call ollama.chat() directly with a module-level model
+        # name, which meant it ignored the RAM-aware model choice, ignored the
+        # token and context caps that stop a small model rambling for minutes,
+        # and ignored every fallback the rest of Jarvis has. It was also the
+        # one place a provider change would have been silently missed.
         try:
-            import ollama as _ollama
+            from services.ai_router import ask_stream
             from services.deepseek_service import SYSTEM_PROMPT
-            msgs = [{"role":"system","content":SYSTEM_PROMPT},
-                    *history, {"role":"user","content":body.message}]
             full = ""
-            for part in _ollama.chat(model=OLLAMA_MODEL, messages=msgs, stream=True):
-                chunk = part.get("message",{}).get("content","")
-                if chunk: full += chunk; yield _sse(chunk)
+            for chunk in ask_stream(task="chat", prompt=body.message,
+                                    history=history, system_prompt=SYSTEM_PROMPT):
+                if chunk:
+                    full += chunk
+                    yield _sse(chunk)
             _save_msg(body.session_id, "assistant", full)
-        except Exception:
-            reply = call_model(body.message, history)
+        except Exception as e:
+            # Streaming itself broke. Say so rather than going quiet — a stream
+            # that stops with no message is indistinguishable from a hang.
+            reply = f"[Streaming failed: {e}]"
             _save_msg(body.session_id, "assistant", reply)
             yield _sse(reply)
         # FIX 2: exactly ONE final packet per stream, carrying intent.
@@ -9569,7 +9597,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 53/177: backend/mcp_server.py
+# FILE 53/182: backend/mcp_server.py
 ################################################################################
 ```py
 """
@@ -9973,14 +10001,14 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 54/177: backend/models/__init__.py
+# FILE 54/182: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import conn, init_db, DB_PATH
 ```
 
 ################################################################################
-# FILE 55/177: backend/models/clickworker.py
+# FILE 55/182: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -10006,7 +10034,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 56/177: backend/models/db.py
+# FILE 56/182: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -10225,7 +10253,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 57/177: backend/models/fiverr.py
+# FILE 57/182: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -10272,7 +10300,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 58/177: backend/models/hubstaff.py
+# FILE 58/182: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -10316,7 +10344,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 59/177: backend/models/zuodao.py
+# FILE 59/182: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -10342,14 +10370,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 60/177: backend/platforms/__init__.py
+# FILE 60/182: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 61/177: backend/platforms/base.py
+# FILE 61/182: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -10394,7 +10422,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 62/177: backend/platforms/contra.py
+# FILE 62/182: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -10479,7 +10507,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 63/177: backend/platforms/hubstaff.py
+# FILE 63/182: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -10679,7 +10707,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 64/177: backend/platforms/peopleperhour.py
+# FILE 64/182: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -10764,7 +10792,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 65/177: backend/platforms/remoteco.py
+# FILE 65/182: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -10863,7 +10891,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 66/177: backend/platforms/remoteok.py
+# FILE 66/182: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -10905,7 +10933,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 67/177: backend/platforms/wellfound.py
+# FILE 67/182: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -11023,7 +11051,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 68/177: backend/platforms/weworkremotely.py
+# FILE 68/182: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -11067,7 +11095,473 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 69/177: backend/requirements.txt
+# FILE 69/182: backend/providers/__init__.py
+################################################################################
+```py
+
+```
+
+################################################################################
+# FILE 70/182: backend/providers/base.py
+################################################################################
+```py
+"""
+providers/base.py — what every AI provider must be able to do.
+
+The router talks to providers only through this interface, so adding Gemini or
+swapping Ollama for something else never touches a single line of Jarvis's
+actual behaviour. Four methods, deliberately: anything richer would leak a
+particular provider's shape into the router and defeat the point.
+
+TWO RULES FOR IMPLEMENTORS
+
+  1. NEVER RAISE for an expected failure. A missing key, an unreachable host, a
+     model that isn't pulled — all of those return a readable string beginning
+     with "[". Callers all over Jarvis pass this straight to the user, and an
+     exception escaping here turns "the model isn't installed" into a 500.
+
+  2. SAY WHY in health(). "ok: false" on its own sends someone hunting. The
+     reason is what makes it fixable.
+"""
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Generator
+
+
+class Provider(ABC):
+    """One place Jarvis can send a prompt."""
+
+    name: str = "abstract"
+
+    @abstractmethod
+    def chat(self, messages: list[dict], model: str | None = None,
+             temperature: float = 0.7, max_tokens: int | None = None,
+             task: str = "", timeout: float | None = None, **kwargs) -> str:
+        """One complete answer as a string. Errors come back as '[...]' text."""
+
+    @abstractmethod
+    def stream(self, messages: list[dict], model: str | None = None,
+               temperature: float = 0.7, max_tokens: int | None = None,
+               task: str = "", timeout: float | None = None,
+               **kwargs) -> Generator[str, None, None]:
+        """Yield text chunks as they arrive."""
+
+    @abstractmethod
+    def health(self) -> dict:
+        """{ok, reason, models} — reason is required when ok is False."""
+
+    @abstractmethod
+    def list_models(self) -> list[str]:
+        """What this provider can run right now."""
+
+    def select_model(self, task: str = "", fast: bool = False) -> str | None:
+        """
+        Which model for this task. Overridden by providers that have real
+        choices to make; the default is 'whatever there is'.
+        """
+        models = self.list_models()
+        return models[0] if models else None
+
+    def configured(self) -> bool:
+        """Is this worth trying at all? Skipped in the chain when False."""
+        return True
+```
+
+################################################################################
+# FILE 71/182: backend/providers/ollama_provider.py
+################################################################################
+```py
+"""
+providers/ollama_provider.py — the local models, behind the provider interface.
+
+This WRAPS services/ollama_manager.py and services/model_router.py rather than
+replacing them, and that is the whole design decision. Those two modules carry
+a lot of hard-won, machine-specific knowledge:
+
+    ollama_manager   per-kind token/context/timeout caps (an unbounded call
+                     once produced a 288-second screenshot analysis), model
+                     validation, keep_alive tuned for a 16 GB machine
+    model_router     picks the strongest model that FITS IN FREE RAM right now,
+                     which is why a 0.5B model correctly wins on a machine at
+                     87% memory even with a 3B one installed
+
+A "clean" rewrite would throw all of that away and rediscover it the hard way.
+The provider's job is only to be the standard shape the router can talk to.
+
+Division of labour, to keep it straight:
+
+    ai_router      chooses the PROVIDER   (local? cloud? which cloud?)
+    this provider  chooses the MODEL      (via model_router, RAM-aware)
+"""
+from __future__ import annotations
+
+from typing import Generator
+
+from providers.base import Provider
+
+
+class OllamaProvider(Provider):
+    name = "ollama"
+
+    # Jarvis's task names -> the three roles ollama_manager understands.
+    # Anything unlisted gets "fast", which is the right default on a machine
+    # where the alternative is swapping.
+    _KIND = {
+        "vision": "vision",
+        "reasoning": "reasoning",
+        "planner": "reasoning",
+        "coding": "reasoning",
+        "proposal": "fast",
+        "chat": "fast",
+        "memory": "fast",
+        "browser": "fast",
+    }
+
+    # ...and to the model_router's task vocabulary, which knows the minimum
+    # quality each job actually needs.
+    _ROUTER_TASK = {
+        "chat": "chat", "proposal": "proposal", "memory": "summary",
+        "reasoning": "reasoning", "planner": "planning", "coding": "reasoning",
+        "vision": "vision", "browser": "chat",
+    }
+
+    def _client(self):
+        try:
+            import ollama
+            return ollama
+        except Exception:
+            return None
+
+    def configured(self) -> bool:
+        return self._client() is not None
+
+    def select_model(self, task: str = "", fast: bool = False) -> str | None:
+        """
+        Ask model_router, which weighs quality against the RAM that is free at
+        this instant. Falling back to the configured name would reintroduce the
+        exact bug that made Jarvis pick a model too big to run.
+        """
+        try:
+            from services import model_router
+            chosen = model_router.pick(self._ROUTER_TASK.get(task, "chat"))
+            if chosen.get("model"):
+                return chosen["model"]
+        except Exception:
+            pass
+        # model_router unavailable: fall back to the configured role name.
+        try:
+            from services import ollama_manager
+            kind = self._KIND.get(task, "fast")
+            return {"fast": ollama_manager.fast_model,
+                    "reasoning": ollama_manager.reasoning_model,
+                    "vision": ollama_manager.vision_model}[kind]()
+        except Exception:
+            return None
+
+    def _kind(self, task: str) -> str:
+        return self._KIND.get(task, "fast")
+
+    def chat(self, messages, model=None, temperature=0.7, max_tokens=None,
+             task="", timeout=None, **kwargs) -> str:
+        client = self._client()
+        if client is None:
+            return ("[Ollama isn't installed. Install it from ollama.com, then "
+                    "run: ollama pull qwen2.5:3b]")
+        model = model or self.select_model(task)
+        if not model:
+            return "[No Ollama model is available. Run: ollama pull qwen2.5:3b]"
+
+        # Bounds come from ollama_manager, which knows what this machine can
+        # take. Unbounded generation is not a theoretical risk here — it has
+        # already cost this project a 288-second screen analysis.
+        try:
+            from services.ollama_manager import LIMITS, keep_alive_for
+            cap_tokens, cap_ctx, cap_timeout = LIMITS.get(
+                self._kind(task), LIMITS["fast"])
+            keep = keep_alive_for(model)
+        except Exception:
+            cap_tokens, cap_ctx, cap_timeout, keep = 400, 4096, 60, "5m"
+
+        try:
+            resp = client.chat(
+                model=model, messages=messages, keep_alive=keep,
+                options={"num_predict": min(max_tokens or cap_tokens, cap_tokens),
+                         "num_ctx": cap_ctx, "temperature": temperature},
+            )
+            text = (resp.get("message", {}) or {}).get("content", "") or ""
+            return text.strip() or "[The model returned nothing.]"
+        except Exception as e:
+            return f"[Ollama error: {e}]"
+
+    def stream(self, messages, model=None, temperature=0.7, max_tokens=None,
+               task="", timeout=None, **kwargs) -> Generator[str, None, None]:
+        client = self._client()
+        if client is None:
+            yield "[Ollama isn't installed. Install it from ollama.com.]"
+            return
+        model = model or self.select_model(task)
+        if not model:
+            yield "[No Ollama model is available. Run: ollama pull qwen2.5:3b]"
+            return
+        try:
+            from services.ollama_manager import LIMITS, keep_alive_for
+            cap_tokens, cap_ctx, _ = LIMITS.get(self._kind(task), LIMITS["fast"])
+            keep = keep_alive_for(model)
+        except Exception:
+            cap_tokens, cap_ctx, keep = 400, 4096, "5m"
+        try:
+            for part in client.chat(
+                    model=model, messages=messages, stream=True, keep_alive=keep,
+                    options={"num_predict": min(max_tokens or cap_tokens, cap_tokens),
+                             "num_ctx": cap_ctx, "temperature": temperature}):
+                chunk = (part.get("message", {}) or {}).get("content", "")
+                if chunk:
+                    yield chunk
+        except Exception as e:
+            yield f"[Ollama error: {e}]"
+
+    def health(self) -> dict:
+        client = self._client()
+        if client is None:
+            return {"ok": False, "reason": "the ollama python package isn't installed",
+                    "models": []}
+        try:
+            models = self.list_models()
+        except Exception as e:
+            return {"ok": False,
+                    "reason": f"Ollama isn't answering ({str(e)[:80]}). "
+                              f"Start it with: ollama serve",
+                    "models": []}
+        if not models:
+            return {"ok": False, "reason": "running, but no models are pulled. "
+                                           "Run: ollama pull qwen2.5:3b",
+                    "models": []}
+        return {"ok": True, "reason": "", "models": models}
+
+    def list_models(self) -> list[str]:
+        client = self._client()
+        if client is None:
+            return []
+        data = client.list()
+        return [m.get("model") or m.get("name") or ""
+                for m in (data.get("models") or [])
+                if (m.get("model") or m.get("name"))]
+
+
+Provider = OllamaProvider          # what the router looks for
+```
+
+################################################################################
+# FILE 72/182: backend/providers/openai_compatible.py
+################################################################################
+```py
+"""
+providers/openai_compatible.py — one provider for every cloud model worth using.
+
+ONE FILE, NOT SIX. The obvious plan is a separate plugin per vendor —
+deepseek_provider.py, glm_provider.py, kimi_provider.py, openrouter_provider.py,
+omniroute_provider.py, together_provider.py. Every one of those would be the
+same eighty lines with a different base URL, and six copies of the same code is
+six places for the same bug to survive a fix.
+
+They all speak the OpenAI chat-completions protocol:
+
+    DeepSeek      https://api.deepseek.com/v1
+    Zhipu / GLM   https://open.bigmodel.cn/api/paas/v4
+    Moonshot/Kimi https://api.moonshot.cn/v1
+    OpenRouter    https://openrouter.ai/api/v1
+    Together      https://api.together.xyz/v1
+    Google Gemini https://generativelanguage.googleapis.com/v1beta/openai
+    OpenAI        https://api.openai.com/v1
+    LM Studio     http://127.0.0.1:1234/v1
+    vLLM / llama.cpp / OmniRoute — same shape
+
+So this is one implementation parameterised by base URL, key and model. Adding a
+vendor is three settings, not a file.
+
+Built on `requests`, which Jarvis already depends on, rather than the `openai`
+SDK — a whole package to POST one JSON body would be a dependency that earns
+nothing, and every one of these endpoints is reachable from China except
+OpenAI's, which is the one the user can't use anyway.
+
+Nothing here is enabled by default. With no key configured the provider reports
+itself unconfigured and the router skips it, so Jarvis stays fully local unless
+the user deliberately says otherwise.
+"""
+from __future__ import annotations
+
+import json
+from typing import Generator
+
+from providers.base import Provider
+
+# Vendors worth naming, so the UI can offer them and the user doesn't have to
+# go and find the URL. Anything not listed still works — set the base URL.
+PRESETS: dict[str, dict] = {
+    "deepseek":   {"base_url": "https://api.deepseek.com/v1",
+                   "model": "deepseek-chat", "label": "DeepSeek"},
+    "glm":        {"base_url": "https://open.bigmodel.cn/api/paas/v4",
+                   "model": "glm-4-flash", "label": "Zhipu GLM"},
+    "kimi":       {"base_url": "https://api.moonshot.cn/v1",
+                   "model": "moonshot-v1-8k", "label": "Moonshot / Kimi"},
+    "openrouter": {"base_url": "https://openrouter.ai/api/v1",
+                   "model": "", "label": "OpenRouter (many models)"},
+    "omniroute":  {"base_url": "", "model": "", "label": "OmniRoute"},
+    "openai":     {"base_url": "https://api.openai.com/v1",
+                   "model": "gpt-4o-mini", "label": "OpenAI"},
+    "gemini":     {"base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+                   "model": "gemini-2.0-flash", "label": "Google Gemini"},
+    "lmstudio":   {"base_url": "http://127.0.0.1:1234/v1",
+                   "model": "", "label": "LM Studio (local)"},
+}
+
+
+def _setting(key: str, default: str = "") -> str:
+    try:
+        from services import config
+        return (config.get(key, default) or "").strip()
+    except Exception:
+        return default
+
+
+class OpenAICompatible(Provider):
+    """
+    One configured endpoint. Reads three settings:
+
+        ai_<name>_base_url    where to POST      (preset supplies a default)
+        ai_<name>_api_key     the key            (no key -> not configured)
+        ai_<name>_model       which model
+    """
+
+    def __init__(self, name: str = "openai"):
+        self.name = name
+        preset = PRESETS.get(name, {})
+        self.base_url = (_setting(f"ai_{name}_base_url")
+                         or preset.get("base_url", "")).rstrip("/")
+        self.api_key = _setting(f"ai_{name}_api_key")
+        self.model = _setting(f"ai_{name}_model") or preset.get("model", "")
+        self.label = preset.get("label", name)
+
+    # ── availability ─────────────────────────────────────────────────────────
+
+    def configured(self) -> bool:
+        if not self.base_url:
+            return False
+        # A local endpoint (LM Studio, vLLM) legitimately has no key.
+        local = any(h in self.base_url for h in ("127.0.0.1", "localhost", "::1"))
+        return bool(self.api_key or local)
+
+    def health(self) -> dict:
+        if not self.base_url:
+            return {"ok": False, "models": [],
+                    "reason": f"no address set — put one in ai_{self.name}_base_url"}
+        if not self.configured():
+            return {"ok": False, "models": [],
+                    "reason": f"no API key — put one in ai_{self.name}_api_key"}
+        try:
+            models = self.list_models()
+        except Exception as e:
+            return {"ok": False, "models": [],
+                    "reason": f"{self.base_url} didn't answer: {str(e)[:90]}"}
+        return {"ok": True, "reason": "", "models": models[:20]}
+
+    # ── talking to it ────────────────────────────────────────────────────────
+
+    def _headers(self) -> dict:
+        h = {"Content-Type": "application/json"}
+        if self.api_key:
+            h["Authorization"] = f"Bearer {self.api_key}"
+        return h
+
+    def chat(self, messages, model=None, temperature=0.7, max_tokens=None,
+             task="", timeout=None, **kwargs) -> str:
+        if not self.configured():
+            return f"[{self.label} isn't set up — no API key]"
+        import requests
+        model = model or self.model
+        if not model:
+            return (f"[{self.label}: no model chosen. Set ai_{self.name}_model "
+                    f"in Settings.]")
+        try:
+            r = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers=self._headers(),
+                json={"model": model, "messages": messages,
+                      "temperature": temperature,
+                      "max_tokens": max_tokens or 800},
+                timeout=timeout or 90,
+            )
+        except Exception as e:
+            return f"[{self.label} unreachable: {str(e)[:120]}]"
+        if r.status_code == 401:
+            return f"[{self.label} rejected the API key. Check ai_{self.name}_api_key.]"
+        if r.status_code == 429:
+            return f"[{self.label} is rate-limiting or out of credit.]"
+        if r.status_code >= 400:
+            return f"[{self.label} error {r.status_code}: {r.text[:160]}]"
+        try:
+            data = r.json()
+            return (data["choices"][0]["message"]["content"] or "").strip() \
+                or f"[{self.label} returned nothing.]"
+        except Exception as e:
+            return f"[{self.label} sent something unexpected: {str(e)[:100]}]"
+
+    def stream(self, messages, model=None, temperature=0.7, max_tokens=None,
+               task="", timeout=None, **kwargs) -> Generator[str, None, None]:
+        if not self.configured():
+            yield f"[{self.label} isn't set up — no API key]"
+            return
+        import requests
+        model = model or self.model
+        if not model:
+            yield f"[{self.label}: no model chosen.]"
+            return
+        try:
+            with requests.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=self._headers(),
+                    json={"model": model, "messages": messages, "stream": True,
+                          "temperature": temperature,
+                          "max_tokens": max_tokens or 800},
+                    timeout=timeout or 90, stream=True) as r:
+                if r.status_code >= 400:
+                    yield f"[{self.label} error {r.status_code}]"
+                    return
+                for raw in r.iter_lines(decode_unicode=True):
+                    if not raw or not raw.startswith("data:"):
+                        continue
+                    payload = raw[5:].strip()
+                    if payload == "[DONE]":
+                        return
+                    try:
+                        delta = json.loads(payload)["choices"][0].get("delta", {})
+                    except Exception:
+                        continue          # keep-alive or a partial frame
+                    chunk = delta.get("content")
+                    if chunk:
+                        yield chunk
+        except Exception as e:
+            yield f"[{self.label} unreachable: {str(e)[:120]}]"
+
+    def list_models(self) -> list[str]:
+        if not self.configured():
+            return []
+        import requests
+        r = requests.get(f"{self.base_url}/models", headers=self._headers(),
+                         timeout=20)
+        r.raise_for_status()
+        return [m.get("id", "") for m in (r.json().get("data") or []) if m.get("id")]
+
+    def select_model(self, task: str = "", fast: bool = False) -> str | None:
+        return self.model or None
+
+
+Provider = OpenAICompatible
+```
+
+################################################################################
+# FILE 73/182: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -11116,7 +11610,7 @@ pynput>=1.7.6
 ```
 
 ################################################################################
-# FILE 70/177: backend/routes/__init__.py
+# FILE 74/182: backend/routes/__init__.py
 ################################################################################
 ```py
 from .proposals   import router as proposals_router
@@ -11132,7 +11626,7 @@ from .orchestrator import router as orchestrator_router
 ```
 
 ################################################################################
-# FILE 71/177: backend/routes/agents.py
+# FILE 75/182: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -11629,7 +12123,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 72/177: backend/routes/analytics.py
+# FILE 76/182: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -11648,7 +12142,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 73/177: backend/routes/automation.py
+# FILE 77/182: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -11987,7 +12481,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 74/177: backend/routes/brain.py
+# FILE 78/182: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -12084,7 +12578,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 75/177: backend/routes/clickworker.py
+# FILE 79/182: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -12182,7 +12676,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 76/177: backend/routes/fiverr.py
+# FILE 80/182: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -12360,7 +12854,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 77/177: backend/routes/hubstaff.py
+# FILE 81/182: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -12541,7 +13035,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 78/177: backend/routes/messages.py
+# FILE 82/182: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -12636,7 +13130,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 79/177: backend/routes/mind.py
+# FILE 83/182: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -12737,7 +13231,7 @@ def freelance_resume(platform: str):
 ```
 
 ################################################################################
-# FILE 80/177: backend/routes/orchestrator.py
+# FILE 84/182: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -12907,7 +13401,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 81/177: backend/routes/orchestrator_feed.py
+# FILE 85/182: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -12963,7 +13457,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 82/177: backend/routes/os_console.py
+# FILE 86/182: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -13080,6 +13574,16 @@ def providers_status():
     """
     from services import providers
     return providers.status()
+
+
+@router.get("/ai")
+def ai_status():
+    """
+    Which AI answers what, whether each provider is usable, and why not when
+    it isn't. Everything here is local-only until a key is deliberately added.
+    """
+    from services import ai_router
+    return ai_router.status()
 
 
 @router.get("/experience")
@@ -13264,7 +13768,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 83/177: backend/routes/planner.py
+# FILE 87/182: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -13389,7 +13893,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 84/177: backend/routes/proposals.py
+# FILE 88/182: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -13595,7 +14099,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 85/177: backend/routes/pulse.py
+# FILE 89/182: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -13629,7 +14133,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 86/177: backend/routes/scraper.py
+# FILE 90/182: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -13773,7 +14277,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 87/177: backend/routes/sessions.py
+# FILE 91/182: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -13888,7 +14392,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 88/177: backend/routes/system.py
+# FILE 92/182: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -14087,7 +14591,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 89/177: backend/routes/workflows.py
+# FILE 93/182: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -14153,7 +14657,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 90/177: backend/routes/zuodao.py
+# FILE 94/182: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -14248,7 +14752,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 91/177: backend/services/__init__.py
+# FILE 95/182: backend/services/__init__.py
 ################################################################################
 ```py
 from .deepseek_service import call_model, generate_proposal, generate_reply_draft, auto_work_job
@@ -14256,7 +14760,302 @@ from .analytics_service import get_analytics
 ```
 
 ################################################################################
-# FILE 92/177: backend/services/analytics_service.py
+# FILE 96/182: backend/services/ai_router.py
+################################################################################
+```py
+"""
+services/ai_router.py — one door for every AI call in Jarvis.
+
+WHAT IT REPLACES
+
+`call_model` is imported in about thirty files, and `ollama.chat()` is called
+directly in two more. Changing model provider therefore meant editing thirty
+files and hoping none were missed — and one of the direct calls in main.py
+bypassed every cap and fallback the rest of the system had.
+
+Now there is one function:
+
+    ai_router.ask(task="planner", prompt=...)
+
+and the provider is a setting, not a code edit.
+
+TWO ROUTERS, DIFFERENT QUESTIONS — this trips people up
+
+    ai_router      WHICH PROVIDER   local Ollama? DeepSeek? OpenRouter?
+    model_router   WHICH MODEL      the strongest one that fits in free RAM
+
+They are not duplicates and neither replaces the other. model_router carries
+the machine-specific knowledge that makes Jarvis usable on 16 GB — it is why a
+0.5B model correctly wins when memory is at 87%. ai_router sits above it and
+never looks at model names at all.
+
+CONFIGURED FROM THE SETTINGS TABLE, NOT A YAML FILE
+
+The proposal that prompted this suggested config/providers.yaml. That would add
+a dependency (PyYAML), and — worse — a second source of truth: the Settings
+screen already writes to SQLite, so a YAML file means exporting, reloading, and
+two places to disagree. Everything here reads services/config.py, which is the
+same store the UI edits and which is already read at call time.
+
+    ai_route_<task>     which provider for this task    (blank = ai_route_default)
+    ai_route_default    the fallback for everything     (default: ollama)
+    ai_fallback         comma-separated chain to try if the first fails
+
+FULLY LOCAL UNLESS YOU SAY OTHERWISE. Nothing cloud is enabled by default; a
+provider with no key reports itself unconfigured and is skipped, so Jarvis
+behaves exactly as before until the user deliberately adds one.
+"""
+from __future__ import annotations
+
+import threading
+from typing import Generator
+
+_lock = threading.Lock()
+_instances: dict[str, object] = {}
+
+# What kind of thinking a caller can ask for. Kept small and intention-shaped:
+# these are jobs, not model tiers, so the mapping to an actual model stays a
+# provider's business.
+TASKS = ("chat", "reasoning", "planner", "coding", "vision",
+         "memory", "proposal", "browser")
+
+BUILTIN = "ollama"
+
+
+def _setting(key: str, default: str = "") -> str:
+    try:
+        from services import config
+        return (config.get(key, default) or "").strip()
+    except Exception:
+        return default
+
+
+def _provider(name: str):
+    """
+    Build (and cache) a provider. Cached because constructing one reads
+    settings, and this is on the path of every AI call in the system.
+    """
+    name = (name or "").strip().lower()
+    if not name:
+        return None
+    with _lock:
+        if name in _instances:
+            return _instances[name]
+    inst = None
+    try:
+        if name == "ollama":
+            from providers.ollama_provider import OllamaProvider
+            inst = OllamaProvider()
+        else:
+            # Everything else is an OpenAI-compatible endpoint. See
+            # providers/openai_compatible.py for why that's one file, not six.
+            from providers.openai_compatible import OpenAICompatible
+            inst = OpenAICompatible(name)
+    except Exception:
+        inst = None
+    with _lock:
+        _instances[name] = inst
+    return inst
+
+
+def invalidate() -> None:
+    """Drop cached providers so a settings change applies to the next call."""
+    with _lock:
+        _instances.clear()
+
+
+def route_for(task: str) -> str:
+    """Which provider handles this task."""
+    return (_setting(f"ai_route_{task}")
+            or _setting("ai_route_default", BUILTIN)
+            or BUILTIN)
+
+
+def chain_for(task: str) -> list[str]:
+    """
+    Provider order for this task: the chosen one, then the fallbacks.
+
+    Ollama is always appended last. A cloud provider can be rate-limited, out of
+    credit, or simply unreachable from behind the GFW, and when that happens the
+    right answer is the local model rather than an error — Jarvis is supposed to
+    work without the internet.
+    """
+    out, seen = [], set()
+    for name in [route_for(task),
+                 *[p.strip() for p in _setting("ai_fallback").split(",")],
+                 BUILTIN]:
+        n = (name or "").strip().lower()
+        if n and n not in seen:
+            seen.add(n)
+            out.append(n)
+    return out
+
+
+def _messages(prompt: str, history: list | None, system: str | None) -> list[dict]:
+    msgs: list[dict] = []
+    if system:
+        msgs.append({"role": "system", "content": system})
+    for h in (history or []):
+        role, content = h.get("role"), h.get("content")
+        if role in ("user", "assistant", "system") and content:
+            msgs.append({"role": role, "content": content})
+    msgs.append({"role": "user", "content": prompt})
+    return msgs
+
+
+def _is_error(text: str) -> bool:
+    """
+    Providers report expected failures as '[...]' rather than raising. That's
+    what lets a caller print the result straight to the user — but the router
+    has to notice, or a fallback would never fire.
+    """
+    t = (text or "").strip()
+    return t.startswith("[") and t.endswith("]") and len(t) < 400
+
+
+def ask(task: str = "chat", prompt: str = "", history: list | None = None,
+        fast: bool = False, temperature: float = 0.7,
+        max_tokens: int | None = None, system_prompt: str | None = None,
+        **kwargs) -> str:
+    """
+    Ask for one answer. Always returns a string, never raises.
+
+    Tries each provider in the chain and moves on when one reports a failure,
+    so an expired API key degrades to the local model instead of stopping work.
+    """
+    if not prompt or not prompt.strip():
+        return "[Nothing to ask.]"
+    msgs = _messages(prompt, history, system_prompt)
+    tried, last = [], ""
+
+    for name in chain_for(task):
+        prov = _provider(name)
+        if prov is None:
+            tried.append(f"{name}: not available")
+            continue
+        if not prov.configured():
+            tried.append(f"{name}: not set up")
+            continue
+        try:
+            out = prov.chat(msgs, temperature=temperature, max_tokens=max_tokens,
+                            task=task, **kwargs)
+        except Exception as e:                 # a provider that breaks its own contract
+            tried.append(f"{name}: {str(e)[:80]}")
+            continue
+        if out and not _is_error(out):
+            _note(task, name, ok=True)
+            return out
+        last = out or ""
+        tried.append(f"{name}: {last[:80]}")
+
+    _note(task, "none", ok=False)
+    # Every provider failed. Say what was tried — "[AI error]" with no detail is
+    # the kind of message that costs an evening.
+    if last:
+        return last if len(tried) == 1 else \
+            f"{last}\n(Also tried: {'; '.join(tried[:-1])})"
+    return f"[No AI provider could answer. Tried: {'; '.join(tried) or 'nothing'}]"
+
+
+def ask_stream(task: str = "chat", prompt: str = "", history: list | None = None,
+               temperature: float = 0.7, max_tokens: int | None = None,
+               system_prompt: str | None = None,
+               **kwargs) -> Generator[str, None, None]:
+    """
+    Stream an answer chunk by chunk.
+
+    Falls back only BEFORE the first chunk. Once text has reached the user,
+    switching providers mid-answer would splice two different replies together,
+    which is worse than an honest truncation.
+    """
+    if not prompt or not prompt.strip():
+        yield "[Nothing to ask.]"
+        return
+    msgs = _messages(prompt, history, system_prompt)
+    tried = []
+
+    for name in chain_for(task):
+        prov = _provider(name)
+        if prov is None or not prov.configured():
+            tried.append(name)
+            continue
+        started = False
+        try:
+            for chunk in prov.stream(msgs, temperature=temperature,
+                                     max_tokens=max_tokens, task=task, **kwargs):
+                if not started and _is_error(chunk):
+                    break                      # this provider can't; try the next
+                started = True
+                yield chunk
+        except Exception:
+            if started:
+                return                         # partial answer already delivered
+            tried.append(name)
+            continue
+        if started:
+            _note(task, name, ok=True)
+            return
+        tried.append(name)
+
+    yield f"[No AI provider could answer. Tried: {', '.join(tried) or 'nothing'}]"
+
+
+def _note(task: str, provider: str, ok: bool) -> None:
+    """Record which provider served a task, so `status()` isn't guesswork."""
+    try:
+        from services import event_bus
+        event_bus.publish("ai.used", {"task": task, "provider": provider, "ok": ok})
+    except Exception:
+        pass
+    with _lock:
+        _last_used[task] = {"provider": provider, "ok": ok}
+
+
+_last_used: dict[str, dict] = {}
+
+
+def status() -> dict:
+    """
+    Every provider, whether it's usable, and what would answer each kind of
+    request. This is what the Settings screen shows.
+    """
+    from providers.openai_compatible import PRESETS
+
+    names, seen = [], set()
+    for n in [BUILTIN, *PRESETS.keys(),
+              *[p.strip().lower() for p in _setting("ai_fallback").split(",")],
+              *[route_for(t) for t in TASKS]]:
+        if n and n not in seen:
+            seen.add(n)
+            names.append(n)
+
+    providers = {}
+    for n in names:
+        prov = _provider(n)
+        if prov is None:
+            providers[n] = {"ok": False, "reason": "couldn't load", "configured": False}
+            continue
+        try:
+            h = prov.health()
+        except Exception as e:
+            h = {"ok": False, "reason": str(e)[:120], "models": []}
+        h["configured"] = prov.configured()
+        h["label"] = getattr(prov, "label", n)
+        providers[n] = h
+
+    return {
+        "routing": {t: route_for(t) for t in TASKS},
+        "fallback": _setting("ai_fallback") or f"(then {BUILTIN})",
+        "default": _setting("ai_route_default", BUILTIN),
+        "providers": providers,
+        "last_used": dict(_last_used),
+        "note": ("Jarvis runs entirely on the local Ollama unless you add a key "
+                 "for something else. Any provider without one is skipped."),
+    }
+```
+
+################################################################################
+# FILE 97/182: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -14358,7 +15157,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 93/177: backend/services/app_resolver.py
+# FILE 98/182: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -14576,7 +15375,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 94/177: backend/services/auth.py
+# FILE 99/182: backend/services/auth.py
 ################################################################################
 ```py
 """
@@ -14843,7 +15642,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 95/177: backend/services/bid_executor.py
+# FILE 100/182: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -15250,7 +16049,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 96/177: backend/services/brain_core.py
+# FILE 101/182: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -15357,7 +16156,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 97/177: backend/services/brain_decision.py
+# FILE 102/182: backend/services/brain_decision.py
 ################################################################################
 ```py
 """
@@ -15615,7 +16414,7 @@ def explain(goal_type: str = "background", objective: str = "") -> dict:
 ```
 
 ################################################################################
-# FILE 98/177: backend/services/brain_service.py
+# FILE 103/182: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -16053,7 +16852,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 99/177: backend/services/browser_monitor.py
+# FILE 104/182: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -16207,7 +17006,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 100/177: backend/services/capability_registry.py
+# FILE 105/182: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -16396,7 +17195,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 101/177: backend/services/clickworker_service.py
+# FILE 106/182: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -16544,7 +17343,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 102/177: backend/services/config.py
+# FILE 107/182: backend/services/config.py
 ################################################################################
 ```py
 """
@@ -16621,6 +17420,42 @@ KNOWN = {
     # Tuned automatically by services/selfeval.py when a run shows they're wrong.
     "type_settle_s":          ("",                       "0.3"),
     "vision_max_tokens":      ("",                       "320"),
+    # Which provider answers which kind of request. Blank means "use the
+    # default", and the default is the local Ollama — Jarvis stays entirely
+    # offline unless a key is deliberately added. See services/ai_router.py.
+    "ai_route_default":       ("JARVIS_AI_PROVIDER",     "ollama"),
+    "ai_route_chat":          ("",                       ""),
+    "ai_route_reasoning":     ("",                       ""),
+    "ai_route_planner":       ("",                       ""),
+    "ai_route_coding":        ("",                       ""),
+    "ai_route_vision":        ("",                       ""),
+    "ai_route_memory":        ("",                       ""),
+    "ai_route_proposal":      ("",                       ""),
+    "ai_route_browser":       ("",                       ""),
+    # Comma-separated providers to try when the first one fails. Ollama is
+    # always tried last regardless, so a dead API key degrades to local rather
+    # than to an error.
+    "ai_fallback":            ("",                       ""),
+    # Cloud endpoints. All optional, all off until a key is set. One shape for
+    # every vendor — see providers/openai_compatible.py.
+    "ai_deepseek_api_key":    ("DEEPSEEK_API_KEY",       ""),
+    "ai_deepseek_model":      ("",                       ""),
+    "ai_glm_api_key":         ("GLM_API_KEY",            ""),
+    "ai_glm_model":           ("",                       ""),
+    "ai_kimi_api_key":        ("MOONSHOT_API_KEY",       ""),
+    "ai_kimi_model":          ("",                       ""),
+    "ai_openrouter_api_key":  ("OPENROUTER_API_KEY",     ""),
+    "ai_openrouter_model":    ("",                       ""),
+    "ai_openai_api_key":      ("OPENAI_API_KEY",         ""),
+    "ai_openai_model":        ("",                       ""),
+    "ai_gemini_api_key":      ("GEMINI_API_KEY",         ""),
+    "ai_gemini_model":        ("",                       ""),
+    "ai_omniroute_base_url":  ("OMNIROUTE_URL",          ""),
+    "ai_omniroute_api_key":   ("OMNIROUTE_KEY",          ""),
+    "ai_omniroute_model":     ("",                       ""),
+    "ai_lmstudio_base_url":   ("",                       ""),
+    "ai_lmstudio_model":      ("",                       ""),
+
     # Security. Defaults are safe for a local single-user run; see services/auth.py.
     "jarvis_require_token":   ("JARVIS_REQUIRE_TOKEN",   "false"),
     "jarvis_check_origin":    ("JARVIS_CHECK_ORIGIN",    "true"),
@@ -16711,7 +17546,35 @@ def set(key: str, value) -> dict:
             providers.invalidate()
         except Exception:
             pass
+    # Same reason: an AI provider is built once and cached, so without this a
+    # newly pasted API key wouldn't be used until the next restart.
+    if key.startswith("ai_"):
+        try:
+            from services import ai_router
+            ai_router.invalidate()
+        except Exception:
+            pass
     return {"ok": True, "key": key, "value": val, "effective": get(key)}
+
+
+# Settings whose VALUE must never be shown. The Settings screen lists every
+# effective value, and the runtime report embeds the same thing — which is
+# exactly the file the user sends to other people when something breaks. An API
+# key travelling in a debug report is a credential leak with a friendly face.
+_SECRET_HINTS = ("api_key", "apikey", "_key", "token", "secret", "password", "pwd")
+
+
+def is_secret(key: str) -> bool:
+    k = (key or "").lower()
+    return any(h in k for h in _SECRET_HINTS)
+
+
+def _mask(value: str) -> str:
+    """Enough to recognise it, not enough to use it."""
+    v = (value or "").strip()
+    if not v:
+        return ""
+    return f"{v[:3]}…{v[-2:]} ({len(v)} chars)" if len(v) > 8 else "•" * len(v)
 
 
 def effective() -> dict:
@@ -16735,14 +17598,18 @@ def effective() -> dict:
             src = "built-in default"
         else:
             src = "not set"
-        out[key] = {"value": get(key), "source": src,
-                    "saved": saved or None, "env": env_val or None,
-                    "default": built_in or None}
+        if is_secret(key):
+            out[key] = {"value": _mask(get(key)), "source": src, "secret": True,
+                        "saved": bool(saved), "env": bool(env_val), "default": None}
+        else:
+            out[key] = {"value": get(key), "source": src,
+                        "saved": saved or None, "env": env_val or None,
+                        "default": built_in or None}
     return out
 ```
 
 ################################################################################
-# FILE 103/177: backend/services/control.py
+# FILE 108/182: backend/services/control.py
 ################################################################################
 ```py
 """
@@ -16950,7 +17817,7 @@ def explain(limit: int = 6) -> dict:
 ```
 
 ################################################################################
-# FILE 104/177: backend/services/custom_platforms.py
+# FILE 109/182: backend/services/custom_platforms.py
 ################################################################################
 ```py
 """
@@ -17147,7 +18014,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 105/177: backend/services/decompose.py
+# FILE 110/182: backend/services/decompose.py
 ################################################################################
 ```py
 """
@@ -17663,7 +18530,7 @@ def preview(text: str) -> dict:
 ```
 
 ################################################################################
-# FILE 106/177: backend/services/deepseek_service.py
+# FILE 111/182: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -17738,76 +18605,45 @@ def _resolve_chat_model(fast: bool, task: str | None = None) -> str:
     return preferred
 
 
+# How a caller's (fast, task) pair maps to a router task. `fast` is a legacy
+# way of saying "this doesn't need deep thought", which is what "chat" means.
+_ROUTER_TASK = {
+    "planning": "planner", "planner": "planner",
+    "reasoning": "reasoning", "coding": "coding",
+    "proposal": "proposal", "summary": "memory", "memory": "memory",
+    "vision": "vision", "chat": "chat", "routing": "chat",
+}
+
+
 def call_model(prompt: str, history: list | None = None, fast: bool = False,
                task: str | None = None) -> str:
     """
-    Call the AI model. fast=True prefers the lighter model.
-    Auto-detects installed Ollama models; never hardcodes an unpulled name.
-    Returns string response. Never raises — returns error message on failure.
+    Ask the AI. Kept as the name ~30 modules already import.
+
+    THE BODY NOW DELEGATES to services/ai_router.ask(). It used to call
+    ollama.chat() directly, which made this file a provider as well as a
+    service — and made "which provider does Jarvis use?" a question with thirty
+    possible answers.
+
+    Rewriting all thirty call sites at once was the alternative. This is better:
+    one change routes every existing caller through the gate immediately, with
+    no chance of missing one and no thirty-file diff to review. Callers can move
+    to ai_router.ask() at their own pace; nothing forces a flag day.
+
+    Still never raises. Errors come back as readable '[...]' text, because
+    callers all over Jarvis show this string to the user directly.
     """
-    history = history or []
-    model   = _resolve_chat_model(fast, task)
+    routed = _ROUTER_TASK.get((task or "").lower(), "chat" if fast else "reasoning")
+    try:
+        from services.ai_router import ask
+    except Exception as e:
+        return f"[AI router unavailable: {e}]"
 
-    # ── Ollama ────────────────────────────────────────────────────────────────
-    if _ollama:
-        try:
-            msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
-            msgs += [{"role": m["role"], "content": m["content"]} for m in history[-10:]]
-            msgs.append({"role": "user", "content": prompt})
-            print(f"[deepseek_service] using model: {model}")
-            # Bound the work. Without num_predict a small model can ramble for
-            # thousands of tokens; on a RAM-pressured machine that turned single
-            # requests into multi-minute stalls. num_ctx keeps the prompt window
-            # sane. keep_alive is no longer a flat "5m" — it scales with the
-            # model's size and the RAM actually free, so a 5GB model doesn't sit
-            # pinned while Chrome needs the memory.
-            try:
-                from services import model_router
-                ka = model_router.keep_alive_for(model)
-            except Exception:
-                ka = "60s"
-            resp = _ollama.chat(model=model, messages=msgs, keep_alive=ka,
-                                options={"num_predict": 400, "num_ctx": 4096,
-                                         "temperature": 0.7})
-            text = resp["message"]["content"]
-            text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
-            return text
-        except Exception as exc:
-            traceback.print_exc()
-            # Fallback: try ANY installed model before giving up
-            try:
-                from services.ollama_manager import _list_installed
-                for alt in _list_installed():
-                    if alt == model:
-                        continue
-                    try:
-                        resp = _ollama.chat(model=alt,
-                                            messages=[{"role":"user","content":prompt}])
-                        print(f"[deepseek_service] fell back to: {alt}")
-                        return re.sub(r"<think>.*?</think>", "",
-                                      resp["message"]["content"], flags=re.DOTALL).strip()
-                    except Exception:
-                        continue
-            except Exception:
-                pass
-            return (f"[Ollama error: {exc}. Models installed but none responded. "
-                    f"Try: ollama pull qwen2.5:0.5b]")
-
-    # ── Anthropic fallback ────────────────────────────────────────────────────
-    if ANTHROPIC_API_KEY and _Anthropic:
-        try:
-            client   = _Anthropic(api_key=ANTHROPIC_API_KEY)
-            response = client.messages.create(
-                model="claude-haiku-4-5",
-                max_tokens=1024,
-                system=SYSTEM_PROMPT,
-                messages=history + [{"role": "user", "content": prompt}],
-            )
-            return "".join(b.text for b in response.content if getattr(b, "type", "") == "text")
-        except Exception as exc:
-            return f"[Claude error: {exc}]"
-
-    return "[No AI available. Run: ollama serve && ollama pull deepseek-r1:latest]"
+    text = ask(task=routed, prompt=prompt, history=(history or [])[-10:],
+               fast=fast, system_prompt=SYSTEM_PROMPT)
+    # Reasoning models emit their scratchpad in <think> tags. Showing that to
+    # the user is noise, and pasting it into a client proposal would be worse.
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
 
 def generate_proposal(
@@ -17888,7 +18724,7 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 107/177: backend/services/diagnostics.py
+# FILE 112/182: backend/services/diagnostics.py
 ################################################################################
 ```py
 """
@@ -18307,7 +19143,7 @@ def build_report() -> str:
 ```
 
 ################################################################################
-# FILE 108/177: backend/services/environment.py
+# FILE 113/182: backend/services/environment.py
 ################################################################################
 ```py
 """
@@ -18748,7 +19584,7 @@ def start() -> None:
 ```
 
 ################################################################################
-# FILE 109/177: backend/services/event_bus.py
+# FILE 114/182: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -18841,7 +19677,7 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 110/177: backend/services/experience.py
+# FILE 115/182: backend/services/experience.py
 ################################################################################
 ```py
 """
@@ -19266,7 +20102,7 @@ def summary(limit: int = 8) -> dict:
 ```
 
 ################################################################################
-# FILE 111/177: backend/services/fiverr_service.py
+# FILE 116/182: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -19448,7 +20284,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 112/177: backend/services/freelancer_api.py
+# FILE 117/182: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -19663,7 +20499,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 113/177: backend/services/hubstaff_service.py
+# FILE 118/182: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -19863,7 +20699,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 114/177: backend/services/income_engine.py
+# FILE 119/182: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -20134,7 +20970,7 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 115/177: backend/services/live_plan.py
+# FILE 120/182: backend/services/live_plan.py
 ################################################################################
 ```py
 """
@@ -20433,7 +21269,7 @@ def _publish(topic: str, payload: dict) -> None:
 ```
 
 ################################################################################
-# FILE 116/177: backend/services/maintenance.py
+# FILE 121/182: backend/services/maintenance.py
 ################################################################################
 ```py
 """
@@ -20726,7 +21562,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 117/177: backend/services/model_router.py
+# FILE 122/182: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -20958,7 +21794,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 118/177: backend/services/narrate.py
+# FILE 123/182: backend/services/narrate.py
 ################################################################################
 ```py
 """
@@ -21158,7 +21994,7 @@ def as_text() -> str:
 ```
 
 ################################################################################
-# FILE 119/177: backend/services/ollama_manager.py
+# FILE 124/182: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -21526,7 +22362,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 120/177: backend/services/os_state.py
+# FILE 125/182: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -21776,7 +22612,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 121/177: backend/services/persona.py
+# FILE 126/182: backend/services/persona.py
 ################################################################################
 ```py
 """
@@ -22085,7 +22921,7 @@ def _quiet_sync():
 ```
 
 ################################################################################
-# FILE 122/177: backend/services/planner_service.py
+# FILE 127/182: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -22665,7 +23501,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 123/177: backend/services/platform_health.py
+# FILE 128/182: backend/services/platform_health.py
 ################################################################################
 ```py
 """
@@ -22824,7 +23660,7 @@ def _announce_pause(platform: str, error: str) -> None:
 ```
 
 ################################################################################
-# FILE 124/177: backend/services/platform_meta.py
+# FILE 129/182: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -22906,7 +23742,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 125/177: backend/services/profile_service.py
+# FILE 130/182: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -22981,7 +23817,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 126/177: backend/services/providers.py
+# FILE 131/182: backend/services/providers.py
 ################################################################################
 ```py
 """
@@ -23194,7 +24030,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 127/177: backend/services/pulse_service.py
+# FILE 132/182: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -23471,7 +24307,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 128/177: backend/services/reflection.py
+# FILE 133/182: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -23572,7 +24408,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 129/177: backend/services/selfeval.py
+# FILE 134/182: backend/services/selfeval.py
 ################################################################################
 ```py
 """
@@ -23838,7 +24674,7 @@ def summary(limit: int = 10) -> dict:
 ```
 
 ################################################################################
-# FILE 130/177: backend/services/session_manager.py
+# FILE 135/182: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -24209,7 +25045,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 131/177: backend/services/simulate.py
+# FILE 136/182: backend/services/simulate.py
 ################################################################################
 ```py
 """
@@ -24636,7 +25472,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 132/177: backend/services/teach.py
+# FILE 137/182: backend/services/teach.py
 ################################################################################
 ```py
 """
@@ -25043,7 +25879,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 133/177: backend/services/tool_registry.py
+# FILE 138/182: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -25407,7 +26243,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 134/177: backend/services/trace.py
+# FILE 139/182: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -25540,7 +26376,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 135/177: backend/services/vault.py
+# FILE 140/182: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -25673,7 +26509,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 136/177: backend/services/workflow_service.py
+# FILE 141/182: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -25911,7 +26747,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 137/177: backend/services/world_model.py
+# FILE 142/182: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -26100,7 +26936,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 138/177: backend/services/zuodao_service.py
+# FILE 143/182: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -26217,7 +27053,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 139/177: frontend/index.html
+# FILE 144/182: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -26243,7 +27079,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 140/177: frontend/package.json
+# FILE 145/182: frontend/package.json
 ################################################################################
 ```json
 {
@@ -26267,7 +27103,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 141/177: frontend/src/App.jsx
+# FILE 146/182: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -26285,7 +27121,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 142/177: frontend/src/JarvisOS.jsx
+# FILE 147/182: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -27159,7 +27995,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 143/177: frontend/src/colors.js
+# FILE 148/182: frontend/src/colors.js
 ################################################################################
 ```js
 /**
@@ -27249,7 +28085,7 @@ export function btn(color = '#00d4ff', opts = {}) {
 ```
 
 ################################################################################
-# FILE 144/177: frontend/src/components/UI.jsx
+# FILE 149/182: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -27372,7 +28208,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 145/177: frontend/src/config.js
+# FILE 150/182: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -27397,7 +28233,7 @@ export const apiPatch = (url, body) => apiFetch(url, {
 ```
 
 ################################################################################
-# FILE 146/177: frontend/src/index.css
+# FILE 151/182: frontend/src/index.css
 ################################################################################
 ```css
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27461,7 +28297,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !i
 ```
 
 ################################################################################
-# FILE 147/177: frontend/src/main.jsx
+# FILE 152/182: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from 'react'
@@ -27474,7 +28310,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 ################################################################################
-# FILE 148/177: frontend/src/pages/Agents.jsx
+# FILE 153/182: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -28187,7 +29023,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 149/177: frontend/src/pages/Chat.jsx
+# FILE 154/182: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useState, useRef, useEffect } from 'react'
@@ -28320,7 +29156,7 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 150/177: frontend/src/pages/Earn.jsx
+# FILE 155/182: frontend/src/pages/Earn.jsx
 ################################################################################
 ```jsx
 /**
@@ -28784,7 +29620,7 @@ export default function Earn() {
 ```
 
 ################################################################################
-# FILE 151/177: frontend/src/pages/Logs.jsx
+# FILE 156/182: frontend/src/pages/Logs.jsx
 ################################################################################
 ```jsx
 /**
@@ -29040,7 +29876,7 @@ function Empty({ children }) {
 ```
 
 ################################################################################
-# FILE 152/177: frontend/src/pages/Memory.jsx
+# FILE 157/182: frontend/src/pages/Memory.jsx
 ################################################################################
 ```jsx
 /**
@@ -29298,7 +30134,7 @@ export default function Memory() {
 ```
 
 ################################################################################
-# FILE 153/177: frontend/src/pages/Planner.jsx
+# FILE 158/182: frontend/src/pages/Planner.jsx
 ################################################################################
 ```jsx
 /**
@@ -29810,7 +30646,7 @@ export default function Planner({ live = [] }) {
 ```
 
 ################################################################################
-# FILE 154/177: frontend/src/pages/Settings.jsx
+# FILE 159/182: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 /**
@@ -29873,6 +30709,7 @@ export default function Settings() {
   const [env, setEnv] = useState(null);
   const [sec, setSec] = useState(null);
   const [providers, setProviders] = useState(null);
+  const [ai, setAi] = useState(null);
   const [saved, setSaved] = useState("");
   const [newFact, setNewFact] = useState({ field: "", value: "" });
 
@@ -29893,6 +30730,7 @@ export default function Settings() {
     grab("/os/environment", setEnv);
     grab("/auth/status", setSec);
     grab("/os/providers", setProviders);
+    grab("/os/ai", setAi);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -30065,6 +30903,67 @@ export default function Settings() {
         {saved && <span style={{ color: T.green, fontSize: 12, marginLeft: 12 }}>{saved}</span>}
       </section>
 
+      {/* ── Which AI answers what ──────────────────────────────────────── */}
+      <section style={card}>
+        <div style={label}>Which AI answers what</div>
+        <div style={{ fontSize: 12, color: T.dim, marginBottom: 14, lineHeight: 1.5 }}>
+          Everything runs on your own PC unless you add a key below. Nothing is
+          sent anywhere by default. If a paid one fails or runs out of credit,
+          Jarvis falls back to the local model rather than stopping.
+        </div>
+
+        {ai && Object.entries(ai.routing || {}).map(([task, provider]) => (
+          <div key={task} style={{ display: "flex", gap: 10, alignItems: "center",
+                                   marginBottom: 8 }}>
+            <div style={{ width: 96, fontSize: 11.5, color: T.dim }}>{task}</div>
+            <select value={cfg[`ai_route_${task}`] || ""} style={{ ...input, flex: 1 }}
+                    onChange={(e) => set(`ai_route_${task}`)(e.target.value)}>
+              <option value="">auto ({provider})</option>
+              {Object.entries(ai.providers || {}).map(([name, p]) => (
+                <option key={name} value={name} disabled={!p.configured}>
+                  {p.label || name}{p.configured ? "" : " — no key yet"}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
+
+        <div style={{ ...label, marginTop: 18, marginBottom: 8 }}>Add a paid AI (optional)</div>
+        <div style={{ fontSize: 12, color: T.dim, marginBottom: 12, lineHeight: 1.5 }}>
+          Paste a key and that provider becomes selectable above. Keys are stored
+          on this PC and are never shown in reports — only the first and last few
+          characters are ever displayed back.
+        </div>
+        {["deepseek", "glm", "kimi", "openrouter", "gemini", "openai"].map((p) => {
+          const info = ai?.providers?.[p] || {};
+          return (
+            <div key={p} style={{ display: "flex", gap: 8, alignItems: "center",
+                                  marginBottom: 8 }}>
+              <div style={{ width: 96, fontSize: 11.5,
+                            color: info.configured ? T.green : T.dim }}>
+                {info.label || p}
+              </div>
+              <input type="password" placeholder="API key (leave blank to keep off)"
+                     value={cfg[`ai_${p}_api_key`] || ""} style={{ ...input, flex: 1 }}
+                     onChange={(e) => set(`ai_${p}_api_key`)(e.target.value)} />
+              <input placeholder="model (optional)" value={cfg[`ai_${p}_model`] || ""}
+                     style={{ ...input, width: 170 }}
+                     onChange={(e) => set(`ai_${p}_model`)(e.target.value)} />
+            </div>
+          );
+        })}
+
+        {ai?.last_used && Object.keys(ai.last_used).length > 0 && (
+          <div style={{ marginTop: 14, fontSize: 11.5, color: T.dim }}>
+            Last used —{" "}
+            {Object.entries(ai.last_used)
+              .map(([t, u]) => `${t}: ${u.provider}`).join(" · ")}
+          </div>
+        )}
+
+        <button style={{ ...btn(T.green), marginTop: 12 }} onClick={save}>Save</button>
+      </section>
+
       {/* ── Security ───────────────────────────────────────────────────── */}
       <section style={card}>
         <div style={label}>Security</div>
@@ -30133,7 +31032,7 @@ function Row({ s }) {
 ```
 
 ################################################################################
-# FILE 155/177: frontend/src/theme.js
+# FILE 160/182: frontend/src/theme.js
 ################################################################################
 ```js
 /**
@@ -30205,7 +31104,7 @@ export const LEVEL_COLOR = {
 ```
 
 ################################################################################
-# FILE 156/177: frontend/vite.config.js
+# FILE 161/182: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -30217,7 +31116,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 157/177: .gitignore
+# FILE 162/182: .gitignore
 ################################################################################
 ```
 # Python
@@ -30262,7 +31161,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 158/177: DOCTOR.bat
+# FILE 163/182: DOCTOR.bat
 ################################################################################
 ```bat
 @echo off
@@ -30307,7 +31206,7 @@ pause
 ```
 
 ################################################################################
-# FILE 159/177: FINAL_PROJECT_TREE_backend.txt
+# FILE 164/182: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -30390,7 +31289,7 @@ pause
 ```
 
 ################################################################################
-# FILE 160/177: FINAL_PROJECT_TREE_frontend.txt
+# FILE 165/182: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -30414,7 +31313,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 161/177: LEGACY_GREP_ARTIFACT.txt
+# FILE 166/182: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -30436,7 +31335,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 162/177: PROJECT_TREE.txt
+# FILE 167/182: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -30554,7 +31453,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 163/177: REQUIREMENTS_SNAPSHOT.txt
+# FILE 168/182: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -30584,7 +31483,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 164/177: RUNTIME_VALIDATION.py
+# FILE 169/182: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -30685,7 +31584,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 165/177: RUN_FAILURE_TEST.bat
+# FILE 170/182: RUN_FAILURE_TEST.bat
 ################################################################################
 ```bat
 @echo off
@@ -30733,7 +31632,7 @@ pause
 ```
 
 ################################################################################
-# FILE 166/177: START.bat
+# FILE 171/182: START.bat
 ################################################################################
 ```bat
 @echo off
@@ -30883,7 +31782,7 @@ timeout /t 15
 ```
 
 ################################################################################
-# FILE 167/177: START_JARVIS.bat
+# FILE 172/182: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
@@ -30903,7 +31802,7 @@ call "%~dp0START.bat"
 ```
 
 ################################################################################
-# FILE 168/177: UPDATE.bat
+# FILE 173/182: UPDATE.bat
 ################################################################################
 ```bat
 @echo off
@@ -30948,18 +31847,27 @@ pause
 ```
 
 ################################################################################
-# FILE 169/177: failure_injection_report.txt
+# FILE 174/182: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-03T11:33:53.372848
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-03T15:32:41.078427
 platform: linux  python: 3.11.15
-17 passed · 0 failed · 1 skipped
+18 passed · 0 failed · 1 skipped
 
 [PASS] control — Pause / resume / cancel behave
     Pause holds, cancel releases cleanly, clear resets.
     · a paused worker holds at the checkpoint
     · cancel releases a paused worker and raises Cancelled
     · explain() answered with 2 reason(s)
+
+[PASS] ai_router — One gate for AI; local by default; keys stay secret
+    One gate, local by default, degrades to local, keys stay secret.
+    · all 8 task types default to local ollama
+    · local ollama is always the last resort
+    · ask() returns a string even with no provider available
+    · a broken provider falls through: ['deepseek', 'ollama']
+    · keys are masked in settings and absent from status
+    · call_model (imported in ~30 files) routes through ai_router
 
 [PASS] launchers — Windows launchers are valid Windows batch
     Launchers are valid Windows batch and there's only one to press.
@@ -31033,7 +31941,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785756833' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1785771161' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -31056,7 +31964,7 @@ platform: linux  python: 3.11.15
 ```
 
 ################################################################################
-# FILE 170/177: legacy_dependency_report.json
+# FILE 175/182: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -31221,7 +32129,7 @@ platform: linux  python: 3.11.15
 ```
 
 ################################################################################
-# FILE 171/177: requirements.txt
+# FILE 176/182: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -31254,7 +32162,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 172/177: start.sh
+# FILE 177/182: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -31291,7 +32199,7 @@ wait
 ```
 
 ################################################################################
-# FILE 173/177: tools/doctor.py
+# FILE 178/182: tools/doctor.py
 ################################################################################
 ```py
 """
@@ -31618,7 +32526,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 174/177: tools/dump_source.py
+# FILE 179/182: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
@@ -31717,7 +32625,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 175/177: tools/failure_injection.py
+# FILE 180/182: tools/failure_injection.py
 ################################################################################
 ```py
 """
@@ -32609,6 +33517,89 @@ def s_ui_renders():
     return r.ok("React mounts, styles apply, nothing throws.")
 
 
+def s_ai_router():
+    """
+    Every AI call goes through one gate, that gate never raises, it stays local
+    unless told otherwise, and it never prints an API key.
+    """
+    r = Result("ai_router", "One gate for AI; local by default; keys stay secret")
+    from services import ai_router, config
+
+    # Default posture: entirely local. Adding a router must not quietly start
+    # sending this user's screen contents and job descriptions to a cloud.
+    routing = ai_router.status()["routing"]
+    off_local = {t: p for t, p in routing.items() if p != "ollama"}
+    if off_local:
+        return r.bad(f"Out of the box, these don't use the local model: {off_local}. "
+                     f"Jarvis must work offline until the user says otherwise.")
+    r.note(f"all {len(routing)} task types default to local ollama")
+
+    # Ollama is always last in the chain, so a dead cloud key degrades to local
+    # rather than to an error.
+    if ai_router.chain_for("chat")[-1] != "ollama":
+        return r.bad("Local ollama isn't the final fallback — a cloud outage "
+                     "would stop Jarvis working at all.")
+    r.note("local ollama is always the last resort")
+
+    # Never raises, whatever the state of the machine.
+    try:
+        out = ai_router.ask("chat", "test")
+    except Exception as e:
+        return r.bad(f"ask() raised {type(e).__name__}: {e}. Thirty call sites "
+                     f"pass this result straight to the user.")
+    if not isinstance(out, str) or not out:
+        return r.bad(f"ask() returned {type(out).__name__}, not a string.")
+    r.note("ask() returns a string even with no provider available")
+
+    # A misconfigured provider must be TRIED and then fallen past, and the
+    # reason must survive into the message.
+    saved = config.get("ai_route_chat", "")
+    try:
+        config.set("ai_deepseek_api_key", "sk-not-real")
+        config.set("ai_route_chat", "deepseek")
+        ai_router.invalidate()
+        chain = ai_router.chain_for("chat")
+        if chain[0] != "deepseek" or "ollama" not in chain:
+            return r.bad(f"Chain didn't honour the setting: {chain}")
+        msg = ai_router.ask("chat", "test")
+        if not isinstance(msg, str):
+            return r.bad("ask() stopped returning a string once a provider failed.")
+        r.note(f"a broken provider falls through: {chain}")
+    finally:
+        config.set("ai_route_chat", saved)
+        config.set("ai_deepseek_api_key", "")
+        ai_router.invalidate()
+
+    # Keys must never reach the Settings screen or the runtime report — that
+    # report is the file the user sends to other people when something breaks.
+    secret = "sk-LEAKCANARY-0987654321"
+    try:
+        config.set("ai_openai_api_key", secret)
+        eff = str(config.effective())
+        if secret in eff:
+            return r.bad("An API key appears in /settings/effective, which is "
+                         "shown in Settings and embedded in every runtime "
+                         "report the user sends out.")
+        st = str(ai_router.status())
+        if secret in st:
+            return r.bad("An API key appears in the AI status endpoint.")
+        r.note("keys are masked in settings and absent from status")
+    finally:
+        config.set("ai_openai_api_key", "")
+        ai_router.invalidate()
+
+    # The legacy name ~30 modules import must now go through the gate, or the
+    # whole exercise achieved nothing.
+    import inspect
+    from services import deepseek_service
+    src = inspect.getsource(deepseek_service.call_model)
+    if "ai_router" not in src:
+        return r.bad("deepseek_service.call_model doesn't route through "
+                     "ai_router — most of Jarvis would still bypass the gate.")
+    r.note("call_model (imported in ~30 files) routes through ai_router")
+    return r.ok("One gate, local by default, degrades to local, keys stay secret.")
+
+
 def s_launchers():
     """
     The .bat files must be valid WINDOWS batch, not shell-flavoured guesswork.
@@ -32713,6 +33704,7 @@ def s_launchers():
 
 SCENARIOS = {
     "control":        (s_control, False),
+    "ai_router":      (s_ai_router, False),
     "launchers":      (s_launchers, False),
     "ui_renders":     (s_ui_renders, False),
     "simulation":     (s_simulation, False),
@@ -32821,7 +33813,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 176/177: tools/setup.py
+# FILE 181/182: tools/setup.py
 ################################################################################
 ```py
 """
@@ -33156,7 +34148,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 177/177: tools/update.py
+# FILE 182/182: tools/update.py
 ################################################################################
 ```py
 """

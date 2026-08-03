@@ -58,6 +58,7 @@ export default function Settings() {
   const [env, setEnv] = useState(null);
   const [sec, setSec] = useState(null);
   const [providers, setProviders] = useState(null);
+  const [ai, setAi] = useState(null);
   const [saved, setSaved] = useState("");
   const [newFact, setNewFact] = useState({ field: "", value: "" });
 
@@ -78,6 +79,7 @@ export default function Settings() {
     grab("/os/environment", setEnv);
     grab("/auth/status", setSec);
     grab("/os/providers", setProviders);
+    grab("/os/ai", setAi);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -248,6 +250,67 @@ export default function Settings() {
 
         <button style={{ ...btn(T.green), marginTop: 8 }} onClick={save}>Save</button>
         {saved && <span style={{ color: T.green, fontSize: 12, marginLeft: 12 }}>{saved}</span>}
+      </section>
+
+      {/* ── Which AI answers what ──────────────────────────────────────── */}
+      <section style={card}>
+        <div style={label}>Which AI answers what</div>
+        <div style={{ fontSize: 12, color: T.dim, marginBottom: 14, lineHeight: 1.5 }}>
+          Everything runs on your own PC unless you add a key below. Nothing is
+          sent anywhere by default. If a paid one fails or runs out of credit,
+          Jarvis falls back to the local model rather than stopping.
+        </div>
+
+        {ai && Object.entries(ai.routing || {}).map(([task, provider]) => (
+          <div key={task} style={{ display: "flex", gap: 10, alignItems: "center",
+                                   marginBottom: 8 }}>
+            <div style={{ width: 96, fontSize: 11.5, color: T.dim }}>{task}</div>
+            <select value={cfg[`ai_route_${task}`] || ""} style={{ ...input, flex: 1 }}
+                    onChange={(e) => set(`ai_route_${task}`)(e.target.value)}>
+              <option value="">auto ({provider})</option>
+              {Object.entries(ai.providers || {}).map(([name, p]) => (
+                <option key={name} value={name} disabled={!p.configured}>
+                  {p.label || name}{p.configured ? "" : " — no key yet"}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
+
+        <div style={{ ...label, marginTop: 18, marginBottom: 8 }}>Add a paid AI (optional)</div>
+        <div style={{ fontSize: 12, color: T.dim, marginBottom: 12, lineHeight: 1.5 }}>
+          Paste a key and that provider becomes selectable above. Keys are stored
+          on this PC and are never shown in reports — only the first and last few
+          characters are ever displayed back.
+        </div>
+        {["deepseek", "glm", "kimi", "openrouter", "gemini", "openai"].map((p) => {
+          const info = ai?.providers?.[p] || {};
+          return (
+            <div key={p} style={{ display: "flex", gap: 8, alignItems: "center",
+                                  marginBottom: 8 }}>
+              <div style={{ width: 96, fontSize: 11.5,
+                            color: info.configured ? T.green : T.dim }}>
+                {info.label || p}
+              </div>
+              <input type="password" placeholder="API key (leave blank to keep off)"
+                     value={cfg[`ai_${p}_api_key`] || ""} style={{ ...input, flex: 1 }}
+                     onChange={(e) => set(`ai_${p}_api_key`)(e.target.value)} />
+              <input placeholder="model (optional)" value={cfg[`ai_${p}_model`] || ""}
+                     style={{ ...input, width: 170 }}
+                     onChange={(e) => set(`ai_${p}_model`)(e.target.value)} />
+            </div>
+          );
+        })}
+
+        {ai?.last_used && Object.keys(ai.last_used).length > 0 && (
+          <div style={{ marginTop: 14, fontSize: 11.5, color: T.dim }}>
+            Last used —{" "}
+            {Object.entries(ai.last_used)
+              .map(([t, u]) => `${t}: ${u.provider}`).join(" · ")}
+          </div>
+        )}
+
+        <button style={{ ...btn(T.green), marginTop: 12 }} onClick={save}>Save</button>
       </section>
 
       {/* ── Security ───────────────────────────────────────────────────── */}

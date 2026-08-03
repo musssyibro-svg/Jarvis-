@@ -114,6 +114,16 @@ def providers_status():
     return providers.status()
 
 
+@router.get("/ai")
+def ai_status():
+    """
+    Which AI answers what, whether each provider is usable, and why not when
+    it isn't. Everything here is local-only until a key is deliberately added.
+    """
+    from services import ai_router
+    return ai_router.status()
+
+
 @router.get("/experience")
 def os_experience(limit: int = 8):
     """

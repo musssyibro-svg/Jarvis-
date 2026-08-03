@@ -70,76 +70,45 @@ def _resolve_chat_model(fast: bool, task: str | None = None) -> str:
     return preferred
 
 
+# How a caller's (fast, task) pair maps to a router task. `fast` is a legacy
+# way of saying "this doesn't need deep thought", which is what "chat" means.
+_ROUTER_TASK = {
+    "planning": "planner", "planner": "planner",
+    "reasoning": "reasoning", "coding": "coding",
+    "proposal": "proposal", "summary": "memory", "memory": "memory",
+    "vision": "vision", "chat": "chat", "routing": "chat",
+}
+
+
 def call_model(prompt: str, history: list | None = None, fast: bool = False,
                task: str | None = None) -> str:
     """
-    Call the AI model. fast=True prefers the lighter model.
-    Auto-detects installed Ollama models; never hardcodes an unpulled name.
-    Returns string response. Never raises — returns error message on failure.
+    Ask the AI. Kept as the name ~30 modules already import.
+
+    THE BODY NOW DELEGATES to services/ai_router.ask(). It used to call
+    ollama.chat() directly, which made this file a provider as well as a
+    service — and made "which provider does Jarvis use?" a question with thirty
+    possible answers.
+
+    Rewriting all thirty call sites at once was the alternative. This is better:
+    one change routes every existing caller through the gate immediately, with
+    no chance of missing one and no thirty-file diff to review. Callers can move
+    to ai_router.ask() at their own pace; nothing forces a flag day.
+
+    Still never raises. Errors come back as readable '[...]' text, because
+    callers all over Jarvis show this string to the user directly.
     """
-    history = history or []
-    model   = _resolve_chat_model(fast, task)
+    routed = _ROUTER_TASK.get((task or "").lower(), "chat" if fast else "reasoning")
+    try:
+        from services.ai_router import ask
+    except Exception as e:
+        return f"[AI router unavailable: {e}]"
 
-    # ── Ollama ────────────────────────────────────────────────────────────────
-    if _ollama:
-        try:
-            msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
-            msgs += [{"role": m["role"], "content": m["content"]} for m in history[-10:]]
-            msgs.append({"role": "user", "content": prompt})
-            print(f"[deepseek_service] using model: {model}")
-            # Bound the work. Without num_predict a small model can ramble for
-            # thousands of tokens; on a RAM-pressured machine that turned single
-            # requests into multi-minute stalls. num_ctx keeps the prompt window
-            # sane. keep_alive is no longer a flat "5m" — it scales with the
-            # model's size and the RAM actually free, so a 5GB model doesn't sit
-            # pinned while Chrome needs the memory.
-            try:
-                from services import model_router
-                ka = model_router.keep_alive_for(model)
-            except Exception:
-                ka = "60s"
-            resp = _ollama.chat(model=model, messages=msgs, keep_alive=ka,
-                                options={"num_predict": 400, "num_ctx": 4096,
-                                         "temperature": 0.7})
-            text = resp["message"]["content"]
-            text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
-            return text
-        except Exception as exc:
-            traceback.print_exc()
-            # Fallback: try ANY installed model before giving up
-            try:
-                from services.ollama_manager import _list_installed
-                for alt in _list_installed():
-                    if alt == model:
-                        continue
-                    try:
-                        resp = _ollama.chat(model=alt,
-                                            messages=[{"role":"user","content":prompt}])
-                        print(f"[deepseek_service] fell back to: {alt}")
-                        return re.sub(r"<think>.*?</think>", "",
-                                      resp["message"]["content"], flags=re.DOTALL).strip()
-                    except Exception:
-                        continue
-            except Exception:
-                pass
-            return (f"[Ollama error: {exc}. Models installed but none responded. "
-                    f"Try: ollama pull qwen2.5:0.5b]")
-
-    # ── Anthropic fallback ────────────────────────────────────────────────────
-    if ANTHROPIC_API_KEY and _Anthropic:
-        try:
-            client   = _Anthropic(api_key=ANTHROPIC_API_KEY)
-            response = client.messages.create(
-                model="claude-haiku-4-5",
-                max_tokens=1024,
-                system=SYSTEM_PROMPT,
-                messages=history + [{"role": "user", "content": prompt}],
-            )
-            return "".join(b.text for b in response.content if getattr(b, "type", "") == "text")
-        except Exception as exc:
-            return f"[Claude error: {exc}]"
-
-    return "[No AI available. Run: ollama serve && ollama pull deepseek-r1:latest]"
+    text = ask(task=routed, prompt=prompt, history=(history or [])[-10:],
+               fast=fast, system_prompt=SYSTEM_PROMPT)
+    # Reasoning models emit their scratchpad in <think> tags. Showing that to
+    # the user is noise, and pasting it into a client proposal would be worse.
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
 
 def generate_proposal(

@@ -887,6 +887,89 @@ def s_ui_renders():
     return r.ok("React mounts, styles apply, nothing throws.")
 
 
+def s_ai_router():
+    """
+    Every AI call goes through one gate, that gate never raises, it stays local
+    unless told otherwise, and it never prints an API key.
+    """
+    r = Result("ai_router", "One gate for AI; local by default; keys stay secret")
+    from services import ai_router, config
+
+    # Default posture: entirely local. Adding a router must not quietly start
+    # sending this user's screen contents and job descriptions to a cloud.
+    routing = ai_router.status()["routing"]
+    off_local = {t: p for t, p in routing.items() if p != "ollama"}
+    if off_local:
+        return r.bad(f"Out of the box, these don't use the local model: {off_local}. "
+                     f"Jarvis must work offline until the user says otherwise.")
+    r.note(f"all {len(routing)} task types default to local ollama")
+
+    # Ollama is always last in the chain, so a dead cloud key degrades to local
+    # rather than to an error.
+    if ai_router.chain_for("chat")[-1] != "ollama":
+        return r.bad("Local ollama isn't the final fallback — a cloud outage "
+                     "would stop Jarvis working at all.")
+    r.note("local ollama is always the last resort")
+
+    # Never raises, whatever the state of the machine.
+    try:
+        out = ai_router.ask("chat", "test")
+    except Exception as e:
+        return r.bad(f"ask() raised {type(e).__name__}: {e}. Thirty call sites "
+                     f"pass this result straight to the user.")
+    if not isinstance(out, str) or not out:
+        return r.bad(f"ask() returned {type(out).__name__}, not a string.")
+    r.note("ask() returns a string even with no provider available")
+
+    # A misconfigured provider must be TRIED and then fallen past, and the
+    # reason must survive into the message.
+    saved = config.get("ai_route_chat", "")
+    try:
+        config.set("ai_deepseek_api_key", "sk-not-real")
+        config.set("ai_route_chat", "deepseek")
+        ai_router.invalidate()
+        chain = ai_router.chain_for("chat")
+        if chain[0] != "deepseek" or "ollama" not in chain:
+            return r.bad(f"Chain didn't honour the setting: {chain}")
+        msg = ai_router.ask("chat", "test")
+        if not isinstance(msg, str):
+            return r.bad("ask() stopped returning a string once a provider failed.")
+        r.note(f"a broken provider falls through: {chain}")
+    finally:
+        config.set("ai_route_chat", saved)
+        config.set("ai_deepseek_api_key", "")
+        ai_router.invalidate()
+
+    # Keys must never reach the Settings screen or the runtime report — that
+    # report is the file the user sends to other people when something breaks.
+    secret = "sk-LEAKCANARY-0987654321"
+    try:
+        config.set("ai_openai_api_key", secret)
+        eff = str(config.effective())
+        if secret in eff:
+            return r.bad("An API key appears in /settings/effective, which is "
+                         "shown in Settings and embedded in every runtime "
+                         "report the user sends out.")
+        st = str(ai_router.status())
+        if secret in st:
+            return r.bad("An API key appears in the AI status endpoint.")
+        r.note("keys are masked in settings and absent from status")
+    finally:
+        config.set("ai_openai_api_key", "")
+        ai_router.invalidate()
+
+    # The legacy name ~30 modules import must now go through the gate, or the
+    # whole exercise achieved nothing.
+    import inspect
+    from services import deepseek_service
+    src = inspect.getsource(deepseek_service.call_model)
+    if "ai_router" not in src:
+        return r.bad("deepseek_service.call_model doesn't route through "
+                     "ai_router — most of Jarvis would still bypass the gate.")
+    r.note("call_model (imported in ~30 files) routes through ai_router")
+    return r.ok("One gate, local by default, degrades to local, keys stay secret.")
+
+
 def s_launchers():
     """
     The .bat files must be valid WINDOWS batch, not shell-flavoured guesswork.
@@ -991,6 +1074,7 @@ def s_launchers():
 
 SCENARIOS = {
     "control":        (s_control, False),
+    "ai_router":      (s_ai_router, False),
     "launchers":      (s_launchers, False),
     "ui_renders":     (s_ui_renders, False),
     "simulation":     (s_simulation, False),

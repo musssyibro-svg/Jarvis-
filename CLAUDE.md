@@ -114,6 +114,14 @@ their accounts. Treat that as the authority it is.
 
 ## Architecture rules
 
+- **One door to the AI.** Every model call goes through `services/ai_router.py`.
+  Nothing imports `ollama` or a vendor SDK outside `providers/`. Two routers
+  exist and they answer different questions: `ai_router` picks the PROVIDER,
+  `model_router` picks the MODEL that fits in free RAM. Neither replaces the
+  other.
+- **Local by default, always.** No cloud provider is enabled without a key the
+  user deliberately added, and the local model is always the last fallback, so
+  an expired key degrades instead of stopping work.
 - **One orchestrator.** `agents/orchestrator_core.py` owns the state machine.
   `agents/orchestrator.py` is the shared event bus (`STATE`) and nothing else.
 - **Deterministic before generative.** `tool_registry` and `decompose` resolve
@@ -163,7 +171,7 @@ fails honestly. Run it before claiming anything is finished. Add a scenario for
 each new subsystem; the scenario should describe the *user-visible harm*, not
 the function signature.
 
-Current baseline: 17 passed, 0 failed, 1 skipped (clipboard needs a display).
+Current baseline: 18 passed, 0 failed, 1 skipped (clipboard needs a display).
 
 The `launchers` scenario checks the .bat files mechanically — CRLF, pure ASCII,
 no Unix redirection, no redirect characters inside REM comments, and that every
