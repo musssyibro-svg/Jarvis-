@@ -39,6 +39,7 @@ class OllamaProvider(Provider):
         "planner": "reasoning",
         "coding": "reasoning",
         "proposal": "fast",
+        "batch": "batch",          # several answers in one call — see LIMITS
         "chat": "fast",
         "memory": "fast",
         "browser": "fast",
@@ -49,7 +50,7 @@ class OllamaProvider(Provider):
     _ROUTER_TASK = {
         "chat": "chat", "proposal": "proposal", "memory": "summary",
         "reasoning": "reasoning", "planner": "planning", "coding": "reasoning",
-        "vision": "vision", "browser": "chat",
+        "vision": "vision", "browser": "chat", "batch": "proposal",
     }
 
     def _client(self):

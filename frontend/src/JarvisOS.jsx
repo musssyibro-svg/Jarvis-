@@ -90,7 +90,28 @@ export default function JarvisOS() {
   /* Why we can't see the backend, when we can't. null = fine.
      "Offline" on its own is a guess; this records what actually came back. */
   const [link, setLink] = useState(null);
+  /* RAM. The single number that explains a slow Jarvis on this machine, and
+     the one that used to be invisible while the user watched a spinner. */
+  const [ram, setRam] = useState(null);
+  const [freeing, setFreeing] = useState(false);
+
+  const freeRam = useCallback(async () => {
+    setFreeing(true);
+    try {
+      const r = await fetch(`${API}/os/memory-pressure/free`, { method: "POST" });
+      const j = await r.json();
+      setRam((m) => ({ ...(m || {}), justFreed: j }));
+      setTimeout(async () => {
+        try { setRam(await fetch(`${API}/os/memory-pressure`).then((x) => x.json())); }
+        catch { /* the poll will catch up */ }
+      }, 1500);
+    } catch { /* nothing to do but leave the banner as it was */ }
+    setFreeing(false);
+  }, []);
   const sseRef = useRef(null);
+  // The poll closure is built once; reading `os` directly inside it would
+  // capture the first render's value forever. A ref stays current.
+  const osRef = useRef(null);
 
   /* Pause / Resume / Cancel. Optimistic so the button responds immediately,
      then reconciled from the server — a control that lags feels broken, and a
@@ -156,6 +177,7 @@ export default function JarvisOS() {
           const d = await r.json();
           setLink(null);
           setOs(d);
+          osRef.current = d;
           // keep a rolling window of real samples for the vitals graph
           setHistory((h) => [...h, { cpu: d.system?.cpu ?? 0, ram: d.system?.ram ?? 0,
                                      t: Date.now() }].slice(-30));
@@ -163,6 +185,8 @@ export default function JarvisOS() {
           // console opens blank until the next live event, which reads as
           // "nothing is running" even when Jarvis has been working for hours.
           fetch(`${API}/os/control`).then((x) => x.json()).then(setCtrl).catch(() => {});
+          fetch(`${API}/os/memory-pressure`).then((x) => x.json())
+            .then(setRam).catch(() => {});
           setFeed((f) => (f.length ? f : (d.timeline || []).map((e) => ({
             ...e, _t: eventTime(e), _k: `seed_${e.at || e.ts}_${Math.random()}`,
           }))));
@@ -181,8 +205,35 @@ export default function JarvisOS() {
       }
     };
     load();
-    const t = setInterval(load, 6000);
-    return () => { alive = false; clearInterval(t); };
+
+    /* Poll at a rate that matches what's happening.
+     *
+     * A flat 6-second poll was wrong in both directions: too slow to feel live
+     * while a task runs, and pure waste when the window is in the background —
+     * and every poll makes the backend enumerate processes and windows, which
+     * on a memory-starved machine is exactly the wrong thing to be doing.
+     *
+     * Hidden tab: 30s. Working: 2.5s. Idle: 10s. */
+    let t = null;
+    const delay = () => (document.hidden ? 30000
+                       : (osRef.current?.status?.running ? 2500 : 10000));
+    const tick = () => {
+      load();
+      t = setTimeout(tick, delay());
+    };
+    t = setTimeout(tick, delay());
+
+    // Come back immediately when the window is looked at again, rather than
+    // showing stale numbers until the next scheduled poll.
+    const onVisible = () => {
+      if (!document.hidden) { load(); }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   /* Live activity via SSE — the timeline updates the instant something happens. */
@@ -323,6 +374,47 @@ export default function JarvisOS() {
           <span style={{ color: T.text }}> · {link.detail}</span>
           {link.fix && (
             <div style={{ color: T.dim, marginTop: 4 }}>{link.fix}</div>
+          )}
+        </div>
+      )}
+
+      {/*
+        RAM pressure, stated plainly.
+
+        At 92% used this machine pages to disk: Ollama's first answer takes a
+        minute, the router falls back to a 0.5B model, and vision stops working.
+        Three symptoms, one cause — and nothing on screen said so, so it read as
+        "Jarvis is broken" rather than "the PC is out of memory".
+      */}
+      {ram && ram.level && ram.level !== "ok" && (
+        <div style={{ flexShrink: 0, padding: "10px 18px", fontSize: 12.5,
+                      background: ram.level === "critical" ? "rgba(255,95,109,0.10)"
+                                                           : "rgba(245,181,68,0.09)",
+                      borderBottom: `1px solid ${ram.level === "critical"
+                        ? "rgba(255,95,109,0.3)" : "rgba(245,181,68,0.3)"}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12,
+                        flexWrap: "wrap" }}>
+            <span style={{ color: ram.level === "critical" ? T.red : T.amber,
+                           fontWeight: 600 }}>
+              {ram.headline}
+            </span>
+            <div style={{ flex: 1 }} />
+            <button onClick={freeRam} disabled={freeing}
+                    style={{ background: `${T.cyan}1f`, border: `1px solid ${T.cyan}55`,
+                             color: T.cyan, borderRadius: 8, padding: "5px 12px",
+                             fontSize: 11.5, fontWeight: 600,
+                             cursor: freeing ? "default" : "pointer" }}>
+              {freeing ? "Freeing…" : "Free up memory"}
+            </button>
+          </div>
+          {(ram.effects || []).map((e, i) => (
+            <div key={i} style={{ color: T.text, marginTop: 4 }}>· {e}</div>
+          ))}
+          {(ram.advice || []).map((a, i) => (
+            <div key={i} style={{ color: T.dim, marginTop: 4 }}>{a}</div>
+          ))}
+          {ram.justFreed && (
+            <div style={{ color: T.green, marginTop: 6 }}>{ram.justFreed.note}</div>
           )}
         </div>
       )}

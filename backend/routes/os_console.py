@@ -114,6 +114,34 @@ def providers_status():
     return providers.status()
 
 
+@router.get("/memory-pressure")
+def memory_pressure():
+    """
+    How much RAM is free, what that costs you, and what to do about it.
+
+    This is the single most useful number on a 16 GB machine and it was buried.
+    At 92% used, Ollama takes a minute to answer its first call because Windows
+    is paging, and the model router correctly falls back to a 0.5B model — so
+    Jarvis looks broken and stupid at the same time, for one reason, with no
+    hint of what it is.
+    """
+    from services import memory_pressure as mp
+    return mp.status()
+
+
+@router.post("/memory-pressure/free")
+def free_memory():
+    """
+    Unload every model Ollama is holding, right now.
+
+    Ollama releases models on its own schedule; this is the "I need that RAM
+    back this second" button. Nothing is deleted — the next request reloads
+    whatever it needs.
+    """
+    from services import memory_pressure as mp
+    return mp.free_now()
+
+
 @router.get("/ai")
 def ai_status():
     """

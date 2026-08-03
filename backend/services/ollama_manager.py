@@ -228,6 +228,12 @@ LIMITS = {
     "vision":       (320,         2048,     90),
     "fast":         (400,         4096,     60),
     "reasoning":    (700,         8192,    120),
+    # Several proposals in ONE call. The point of these caps is to stop
+    # UNBOUNDED generation, which once produced a 288-second screenshot
+    # analysis — not to stop a deliberate, counted request. Writing four
+    # proposals in one call is far cheaper than four calls that each reload
+    # the model on a memory-starved machine.
+    "batch":        (1400,        8192,    180),
 }
 
 

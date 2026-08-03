@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 182 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 183 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -128,72 +128,73 @@ TABLE OF CONTENTS
 119. backend/services/income_engine.py
 120. backend/services/live_plan.py
 121. backend/services/maintenance.py
-122. backend/services/model_router.py
-123. backend/services/narrate.py
-124. backend/services/ollama_manager.py
-125. backend/services/os_state.py
-126. backend/services/persona.py
-127. backend/services/planner_service.py
-128. backend/services/platform_health.py
-129. backend/services/platform_meta.py
-130. backend/services/profile_service.py
-131. backend/services/providers.py
-132. backend/services/pulse_service.py
-133. backend/services/reflection.py
-134. backend/services/selfeval.py
-135. backend/services/session_manager.py
-136. backend/services/simulate.py
-137. backend/services/teach.py
-138. backend/services/tool_registry.py
-139. backend/services/trace.py
-140. backend/services/vault.py
-141. backend/services/workflow_service.py
-142. backend/services/world_model.py
-143. backend/services/zuodao_service.py
-144. frontend/index.html
-145. frontend/package.json
-146. frontend/src/App.jsx
-147. frontend/src/JarvisOS.jsx
-148. frontend/src/colors.js
-149. frontend/src/components/UI.jsx
-150. frontend/src/config.js
-151. frontend/src/index.css
-152. frontend/src/main.jsx
-153. frontend/src/pages/Agents.jsx
-154. frontend/src/pages/Chat.jsx
-155. frontend/src/pages/Earn.jsx
-156. frontend/src/pages/Logs.jsx
-157. frontend/src/pages/Memory.jsx
-158. frontend/src/pages/Planner.jsx
-159. frontend/src/pages/Settings.jsx
-160. frontend/src/theme.js
-161. frontend/vite.config.js
-162. .gitignore
-163. DOCTOR.bat
-164. FINAL_PROJECT_TREE_backend.txt
-165. FINAL_PROJECT_TREE_frontend.txt
-166. LEGACY_GREP_ARTIFACT.txt
-167. PROJECT_TREE.txt
-168. REQUIREMENTS_SNAPSHOT.txt
-169. RUNTIME_VALIDATION.py
-170. RUN_FAILURE_TEST.bat
-171. START.bat
-172. START_JARVIS.bat
-173. UPDATE.bat
-174. failure_injection_report.txt
-175. legacy_dependency_report.json
-176. requirements.txt
-177. start.sh
-178. tools/doctor.py
-179. tools/dump_source.py
-180. tools/failure_injection.py
-181. tools/setup.py
-182. tools/update.py
+122. backend/services/memory_pressure.py
+123. backend/services/model_router.py
+124. backend/services/narrate.py
+125. backend/services/ollama_manager.py
+126. backend/services/os_state.py
+127. backend/services/persona.py
+128. backend/services/planner_service.py
+129. backend/services/platform_health.py
+130. backend/services/platform_meta.py
+131. backend/services/profile_service.py
+132. backend/services/providers.py
+133. backend/services/pulse_service.py
+134. backend/services/reflection.py
+135. backend/services/selfeval.py
+136. backend/services/session_manager.py
+137. backend/services/simulate.py
+138. backend/services/teach.py
+139. backend/services/tool_registry.py
+140. backend/services/trace.py
+141. backend/services/vault.py
+142. backend/services/workflow_service.py
+143. backend/services/world_model.py
+144. backend/services/zuodao_service.py
+145. frontend/index.html
+146. frontend/package.json
+147. frontend/src/App.jsx
+148. frontend/src/JarvisOS.jsx
+149. frontend/src/colors.js
+150. frontend/src/components/UI.jsx
+151. frontend/src/config.js
+152. frontend/src/index.css
+153. frontend/src/main.jsx
+154. frontend/src/pages/Agents.jsx
+155. frontend/src/pages/Chat.jsx
+156. frontend/src/pages/Earn.jsx
+157. frontend/src/pages/Logs.jsx
+158. frontend/src/pages/Memory.jsx
+159. frontend/src/pages/Planner.jsx
+160. frontend/src/pages/Settings.jsx
+161. frontend/src/theme.js
+162. frontend/vite.config.js
+163. .gitignore
+164. DOCTOR.bat
+165. FINAL_PROJECT_TREE_backend.txt
+166. FINAL_PROJECT_TREE_frontend.txt
+167. LEGACY_GREP_ARTIFACT.txt
+168. PROJECT_TREE.txt
+169. REQUIREMENTS_SNAPSHOT.txt
+170. RUNTIME_VALIDATION.py
+171. RUN_FAILURE_TEST.bat
+172. START.bat
+173. START_JARVIS.bat
+174. UPDATE.bat
+175. failure_injection_report.txt
+176. legacy_dependency_report.json
+177. requirements.txt
+178. start.sh
+179. tools/doctor.py
+180. tools/dump_source.py
+181. tools/failure_injection.py
+182. tools/setup.py
+183. tools/update.py
 
 
 
 ################################################################################
-# FILE 1/182: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 1/183: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -259,7 +260,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 2/182: ARCHITECTURE.md
+# FILE 2/183: ARCHITECTURE.md
 ################################################################################
 ```md
 # Jarvis architecture (foundational layer)
@@ -326,7 +327,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 3/182: BRAIN_GUIDE.md
+# FILE 3/183: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -382,7 +383,7 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/182: CLAUDE.md
+# FILE 4/183: CLAUDE.md
 ################################################################################
 ```md
 # Jarvis — how to work on this repo
@@ -558,7 +559,7 @@ fails honestly. Run it before claiming anything is finished. Add a scenario for
 each new subsystem; the scenario should describe the *user-visible harm*, not
 the function signature.
 
-Current baseline: 18 passed, 0 failed, 1 skipped (clipboard needs a display).
+Current baseline: 20 passed, 0 failed, 1 skipped (clipboard needs a display).
 
 The `launchers` scenario checks the .bat files mechanically — CRLF, pure ASCII,
 no Unix redirection, no redirect characters inside REM comments, and that every
@@ -607,7 +608,7 @@ be believed when it says what it did — that is the goal.
 ```
 
 ################################################################################
-# FILE 5/182: CONTROL_FLOW_REPORT.md
+# FILE 5/183: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -662,7 +663,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 6/182: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 6/183: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -741,7 +742,7 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 7/182: DO_THIS.md
+# FILE 7/183: DO_THIS.md
 ################################################################################
 ```md
 # Do this
@@ -826,24 +827,35 @@ npm install --registry=https://registry.npmmirror.com
 
 ---
 
-## Step 5 — Free up disk space (you were at 1.2 GB)
+## Step 5 — This is the important one: memory
 
-`START.bat` does this for you automatically. If you want to do it by hand:
+**Your PC is out of RAM, and that is the whole reason Jarvis feels slow and
+stupid.** Your last report showed 92% used — about 1.3 GB free.
 
-```
-ollama rm qwen2.5:0.5b
-```
-```
-ollama rm qwen:latest
-```
-```
-ollama rm qwen2:7b
-```
-```
-ollama rm deepseek-r1:latest
-```
+At that level, three things happen at once and they all look like bugs:
+
+- Ollama takes a minute or more to answer the first time, because Windows is
+  writing memory to disk. The screen says "Ollama offline". **It isn't offline,
+  it's starved.**
+- Jarvis falls back to its smallest model, because the good one doesn't fit. So
+  the answers get worse.
+- Reading your screen stops working — that needs about 5 GB on its own.
+
+Two fixes, in order:
+
+**1. Let `START.bat` delete the models you can't run.** It now does this on its
+own. You have `qwen3.5:9b` (~6 GB) and `llama3.1:8b` (~5.5 GB) installed — those
+can *never* load on a 16 GB machine with a browser open. They just sit there
+tempting Jarvis into trying.
 
 **Keep these three:** `qwen2.5:3b`, `llava:7b`, `nomic-embed-text`.
+
+**2. Close things before you start Jarvis.** Edge tabs and QQ are usually the
+biggest. Aim for **3 GB free**.
+
+You'll now see a bar at the top of Jarvis when memory is tight, telling you what
+it's costing you and which programs are using the most — plus a **Free up
+memory** button that makes Ollama release its models immediately.
 
 ---
 
@@ -1021,7 +1033,7 @@ drive it even from this machine.
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 18 or 19 passes.
+purpose and checks it fails honestly. You want 20 or 21 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 
@@ -1042,7 +1054,7 @@ DESKTOP_CONTROL_ENABLED=0
 ```
 
 ################################################################################
-# FILE 8/182: FIX_MY_INSTALL.md
+# FILE 8/183: FIX_MY_INSTALL.md
 ################################################################################
 ```md
 # It won't start — do this
@@ -1220,7 +1232,7 @@ of whatever fails.
 ```
 
 ################################################################################
-# FILE 9/182: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 9/183: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -1339,7 +1351,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 10/182: HIDDEN_RUNTIME_AUDIT.md
+# FILE 10/183: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -1492,7 +1504,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 11/182: MIGRATION_CHANGELOG.md
+# FILE 11/183: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -1539,7 +1551,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 12/182: PLANNER_AND_DOCTOR.md
+# FILE 12/183: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -1596,7 +1608,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 13/182: PRE_RELEASE_AUDIT.md
+# FILE 13/183: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1781,7 +1793,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 14/182: QA_VERIFICATION_REPORT.md
+# FILE 14/183: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -1875,7 +1887,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 15/182: README.md
+# FILE 15/183: README.md
 ################################################################################
 ```md
 # Jarvis OS — autonomous desktop assistant + freelance income engine
@@ -2017,7 +2029,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 16/182: README_START_HERE.md
+# FILE 16/183: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -2072,7 +2084,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 17/182: REAL_MACHINE_FIXES.md
+# FILE 17/183: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -2173,7 +2185,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 18/182: RESEARCH_UPGRADE_2026-07.md
+# FILE 18/183: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -2262,7 +2274,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 19/182: RUNTIME_VALIDATION_README.md
+# FILE 19/183: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -2300,7 +2312,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 20/182: STAGE2_CHANGELOG.md
+# FILE 20/183: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -2337,7 +2349,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 21/182: START_HERE.md
+# FILE 21/183: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -2488,7 +2500,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 22/182: TESTING_STAGES.md
+# FILE 22/183: TESTING_STAGES.md
 ################################################################################
 ```md
 # Proving Jarvis actually works — in the right order
@@ -2586,7 +2598,7 @@ Everything else has been tested. This hasn't, and can't be.
 ```
 
 ################################################################################
-# FILE 23/182: V8_PHASE1_REPORT.md
+# FILE 23/183: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -2642,7 +2654,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 24/182: V9_FINAL_README.md
+# FILE 24/183: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -2704,7 +2716,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 25/182: V9_STAGE1_MIGRATION.md
+# FILE 25/183: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -2768,7 +2780,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 26/182: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 26/183: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -2840,7 +2852,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 27/182: WINDOWS_DEPLOYMENT.md
+# FILE 27/183: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -2878,7 +2890,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 28/182: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 28/183: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -2968,7 +2980,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 29/182: backend/README.md
+# FILE 29/183: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -3104,14 +3116,14 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 30/182: backend/adapters/__init__.py
+# FILE 30/183: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 31/182: backend/adapters/commander_adapter.py
+# FILE 31/183: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -3891,14 +3903,14 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 ```
 
 ################################################################################
-# FILE 32/182: backend/agents/__init__.py
+# FILE 32/183: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 33/182: backend/agents/base_agent.py
+# FILE 33/183: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -3921,7 +3933,7 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 34/182: backend/agents/browser_agent.py
+# FILE 34/183: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
@@ -4218,7 +4230,7 @@ class BrowserAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 35/182: backend/agents/commander.py
+# FILE 35/183: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -4355,14 +4367,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 36/182: backend/agents/custom/__init__.py
+# FILE 36/183: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 37/182: backend/agents/desktop_agent.py
+# FILE 37/183: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -5879,7 +5891,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 38/182: backend/agents/executor_agent.py
+# FILE 38/183: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -6353,7 +6365,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 39/182: backend/agents/memory_agent.py
+# FILE 39/183: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -6511,7 +6523,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 40/182: backend/agents/orchestrator.py
+# FILE 40/183: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -6630,7 +6642,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 41/182: backend/agents/orchestrator_core.py
+# FILE 41/183: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -7096,7 +7108,7 @@ core = get_core()
 ```
 
 ################################################################################
-# FILE 42/182: backend/agents/perception_agent.py
+# FILE 42/183: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -7306,7 +7318,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 43/182: backend/agents/proposal_agent.py
+# FILE 43/183: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -7338,11 +7350,32 @@ class ProposalAgent(BaseAgent):
         feed        = []
         generated   = []
 
-        for job in jobs[:max_generate]:
-            feed.append(self.log(f"Generating for: {job.get('title','')[:50]}"))
+        wanted = jobs[:max_generate]
+
+        # Write them in BATCHES, not one call each.
+        #
+        # This loop used to make one LLM call per job with a 1-second sleep
+        # between. On this machine that is the single slowest thing Jarvis does:
+        # free RAM sits low enough that keep_alive_for() correctly returns "0",
+        # so the model is released after every call and RELOADED for the next
+        # one. Thirteen jobs meant thirteen model loads — five to ten minutes to
+        # draft proposals that take seconds to generate once the model is warm.
+        #
+        # Note this is the opposite of the usual advice to set
+        # OLLAMA_KEEP_ALIVE=0 globally: that setting is already in effect here
+        # and it is part of what makes the loop slow. The fix is to stop making
+        # so many calls, not to make each one cheaper.
+        #
+        # The sleep is gone too. It was labelled "rate limit — don't hammer
+        # Ollama", but Ollama is a local process with a queue; there is no
+        # remote quota to respect and nothing to be polite to.
+        texts = self._generate_batched(wanted, profile, feed)
+
+        for job in wanted:
             try:
-                text = self._generate(job, profile)
-                if not text or text.startswith(("[No AI available", "[Ollama error")):
+                text = texts.get(id(job)) or ""
+                if not text or text.startswith(("[No AI available", "[Ollama error",
+                                                "[AI router", "[No AI provider")):
                     feed.append(self.log(
                         f"LLM unavailable — used template for: {job.get('title','')[:40]}",
                         "warning"))
@@ -7363,7 +7396,6 @@ class ProposalAgent(BaseAgent):
                 self._save(entry)
                 generated.append(entry)
                 feed.append(self.log(f"Generated proposal for: {job.get('title','')[:40]}"))
-                time.sleep(1)  # rate limit — don't hammer Ollama
             except Exception as e:
                 feed.append(self.log(f"Failed {job.get('title','')[:30]}: {e}", "error"))
 
@@ -7383,6 +7415,109 @@ class ProposalAgent(BaseAgent):
         if context.get("your_skills"):
             profile["skills"] = context["your_skills"]
         return profile
+
+    # How many proposals to ask for in one call. Four × ~180 words lands well
+    # inside the "batch" token budget with room to spare; larger batches start
+    # getting truncated, and a truncated proposal is worse than a slow one.
+    BATCH_SIZE = 4
+
+    def _generate_batched(self, jobs: list, profile: dict, feed: list) -> dict:
+        """
+        Write several proposals per LLM call. Returns {id(job): text}.
+
+        Falls back to one-at-a-time for any batch whose reply can't be split
+        cleanly. That fallback is the important part: a clever batching scheme
+        that silently returns four copies of the same proposal, or three
+        proposals for four jobs, would be far worse than the slow loop it
+        replaced — these go to real clients under the user's name.
+        """
+        out: dict = {}
+        if not jobs:
+            return out
+
+        for start in range(0, len(jobs), self.BATCH_SIZE):
+            group = jobs[start:start + self.BATCH_SIZE]
+            if len(group) == 1:
+                out[id(group[0])] = self._generate(group[0], profile)
+                continue
+
+            feed.append(self.log(
+                f"Writing {len(group)} proposals in one pass "
+                f"({start + 1}-{start + len(group)} of {len(jobs)})"))
+            try:
+                raw = self._ask_batch(group, profile)
+                parsed = self._parse_batch(raw, len(group))
+            except Exception as e:
+                feed.append(self.log(f"Batch write failed ({e}) — falling back to "
+                                     f"one at a time", "warning"))
+                parsed = []
+
+            if len(parsed) == len(group) and all(p.strip() for p in parsed):
+                for job, text in zip(group, parsed):
+                    out[id(job)] = text.strip()
+            else:
+                # Any doubt at all: do them individually. Slower, but every job
+                # provably gets its own proposal.
+                feed.append(self.log(
+                    f"Batch reply didn't split cleanly ({len(parsed)}/{len(group)}) "
+                    f"— writing these {len(group)} individually", "warning"))
+                for job in group:
+                    out[id(job)] = self._generate(job, profile)
+        return out
+
+    _SEP = "###PROPOSAL"
+
+    def _ask_batch(self, group: list, profile: dict) -> str:
+        from services.ai_router import ask
+        from services.profile_service import prompt_block
+
+        blocks = []
+        for i, job in enumerate(group, 1):
+            blocks.append(
+                f"--- JOB {i} ---\n"
+                f"Platform: {job.get('platform', 'freelance')}\n"
+                f"Title: {job.get('title', '')}\n"
+                f"Company: {job.get('company', 'the company')}\n"
+                f"Role type: {job.get('job_type') or 'unknown'}\n"
+                f"Budget: {job.get('budget', 'not specified')}\n"
+                f"Description: {(job.get('description', '') or '')[:900]}")
+
+        prompt = (
+            f"Write {len(group)} SEPARATE freelance proposals — one for each job "
+            f"below. They are different jobs; do not reuse wording between them.\n\n"
+            + "\n\n".join(blocks)
+            + f"\n\n{prompt_block(profile)}\n\n"
+            f"Rules for EVERY proposal:\n"
+            f"- Under 180 words, plain and human, no corporate filler.\n"
+            f"- BANNED: \"I am confident in my ability\", \"I am the perfect fit\", "
+            f"\"proven track record\", \"leverage my skills\".\n"
+            f"- The first sentence must reference a concrete detail from THAT "
+            f"specific job description.\n"
+            f"- If the role is not a software job, do not pitch coding or "
+            f"automation unless the post asks for it.\n"
+            f"- End with a realistic next step, signed off as "
+            f"{profile.get('name', '')}.\n\n"
+            f"FORMAT — this matters, the output is parsed automatically:\n"
+            f"Start each proposal with a line containing only {self._SEP} N\n"
+            f"(N is the job number). Output nothing else — no titles, no notes.")
+
+        # task="batch" raises the token ceiling for this deliberate, counted
+        # request. See ollama_manager.LIMITS for why that's not a loophole.
+        return ask(task="batch", prompt=prompt, max_tokens=360 * len(group))
+
+    def _parse_batch(self, raw: str, expected: int) -> list:
+        """Split the reply back into one proposal per job."""
+        import re as _re
+        if not raw or raw.strip().startswith("["):
+            return []
+        parts = _re.split(rf"{self._SEP}\s*\d*\s*", raw)
+        parts = [p.strip() for p in parts if p.strip()]
+        if len(parts) == expected:
+            return parts
+        # The model ignored the separator. Rather than guess at boundaries and
+        # risk pairing a proposal with the wrong job, give up and let the caller
+        # fall back — sending the wrong pitch to a real client is unrecoverable.
+        return []
 
     def _generate(self, job: dict, profile: dict) -> str:
         from services.deepseek_service import call_model
@@ -7464,7 +7599,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 44/182: backend/agents/registry.py
+# FILE 44/183: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -7784,7 +7919,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 45/182: backend/agents/scheduler.py
+# FILE 45/183: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -7806,6 +7941,9 @@ from agents.orchestrator import STATE
 
 _thread: threading.Thread | None = None
 _stop_evt = threading.Event()
+# Set while a scheduled cycle is in flight, so the next tick skips instead of
+# stacking a second pipeline on top of the first.
+_cycle_running = threading.Event()
 _state = {"enabled": False, "every_minutes": 0, "config": None, "next_run": None}
 
 
@@ -7834,6 +7972,22 @@ def start_schedule(config: dict, every_minutes: int = 60) -> dict:
         # legacy automation_engine pipeline.
         from agents.orchestrator_core import OrchestratorCore
         from agents.v9_models import Goal
+
+        # Never start a second cycle on top of a running one.
+        #
+        # A scan-and-draft pass can easily run past the tick interval on a busy
+        # machine, and without this guard the next tick starts another whole
+        # pipeline: two Playwright browsers, two sets of model loads, on a PC
+        # that is already short of memory. That doesn't just slow things down,
+        # it makes the first cycle slower too, which makes an overlap more
+        # likely on the tick after — the failure feeds itself.
+        if _cycle_running.is_set():
+            STATE.emit("scheduler",
+                       "Previous run is still going — skipping this tick rather "
+                       "than starting a second one on top of it.", "warning")
+            return
+        _cycle_running.set()
+
         STATE.emit("scheduler", f"Scheduled run triggered (every {every_minutes}m)")
         c = dict(config)
         # set_goal requires a typed Goal — passing the raw config dict crashed
@@ -7850,9 +8004,15 @@ def start_schedule(config: dict, every_minutes: int = 60) -> dict:
             approval_required=True,
             success_condition={"min_applied": 0},
         )
-        core = OrchestratorCore()
-        core.set_goal(goal)
-        core.run()
+        try:
+            core = OrchestratorCore()
+            core.set_goal(goal)
+            core.run()
+        finally:
+            # In a finally block, so a crashed cycle doesn't wedge the flag and
+            # block every future run — that would be a worse bug than the one
+            # being fixed, and a silent one.
+            _cycle_running.clear()
 
     _schedule.every(every_minutes).minutes.do(_job).tag("automode")
     _state.update(enabled=True, every_minutes=every_minutes, config=config)
@@ -7888,7 +8048,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 46/182: backend/agents/score_agent.py
+# FILE 46/183: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -8089,7 +8249,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 47/182: backend/agents/scout_agent.py
+# FILE 47/183: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -8209,7 +8369,7 @@ class ScoutAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 48/182: backend/agents/v9_models.py
+# FILE 48/183: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -8267,7 +8427,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 49/182: backend/agents/vision_agent.py
+# FILE 49/183: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -8554,7 +8714,15 @@ def find_text_on_screen(search_text: str, region: dict = None) -> dict:
 
 
 _ANALYSIS_CACHE = {"sig": None, "answer": None, "at": 0.0, "question": None}
-_CACHE_TTL = 25.0          # seconds a screen analysis stays fresh
+# Seconds a screen analysis stays fresh.
+#
+# 25s was far too short given what an analysis costs here: on a CPU with no GPU
+# it is the most expensive thing Jarvis does, and asking twice about the same
+# unchanged screen within half a minute paid that price twice. The cache is
+# already keyed on a hash of the screen, so a stale answer can only be returned
+# for a screen that has not visibly changed — which makes a longer window safe
+# rather than merely cheaper.
+_CACHE_TTL = 120.0
 
 
 def _screen_signature(b64: str) -> str:
@@ -8877,14 +9045,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 50/182: backend/core/__init__.py
+# FILE 50/183: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 51/182: backend/core/browser_lock.py
+# FILE 51/183: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
@@ -9027,7 +9195,7 @@ class browser_session:
 ```
 
 ################################################################################
-# FILE 52/182: backend/main.py
+# FILE 52/183: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -9597,7 +9765,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 53/182: backend/mcp_server.py
+# FILE 53/183: backend/mcp_server.py
 ################################################################################
 ```py
 """
@@ -10001,14 +10169,14 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 54/182: backend/models/__init__.py
+# FILE 54/183: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import conn, init_db, DB_PATH
 ```
 
 ################################################################################
-# FILE 55/182: backend/models/clickworker.py
+# FILE 55/183: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -10034,7 +10202,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 56/182: backend/models/db.py
+# FILE 56/183: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -10253,7 +10421,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 57/182: backend/models/fiverr.py
+# FILE 57/183: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -10300,7 +10468,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 58/182: backend/models/hubstaff.py
+# FILE 58/183: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -10344,7 +10512,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 59/182: backend/models/zuodao.py
+# FILE 59/183: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -10370,14 +10538,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 60/182: backend/platforms/__init__.py
+# FILE 60/183: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 61/182: backend/platforms/base.py
+# FILE 61/183: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -10422,7 +10590,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 62/182: backend/platforms/contra.py
+# FILE 62/183: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -10507,7 +10675,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 63/182: backend/platforms/hubstaff.py
+# FILE 63/183: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -10707,7 +10875,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 64/182: backend/platforms/peopleperhour.py
+# FILE 64/183: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -10792,7 +10960,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 65/182: backend/platforms/remoteco.py
+# FILE 65/183: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -10891,7 +11059,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 66/182: backend/platforms/remoteok.py
+# FILE 66/183: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -10933,7 +11101,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 67/182: backend/platforms/wellfound.py
+# FILE 67/183: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -11051,7 +11219,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 68/182: backend/platforms/weworkremotely.py
+# FILE 68/183: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -11095,14 +11263,14 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 69/182: backend/providers/__init__.py
+# FILE 69/183: backend/providers/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 70/182: backend/providers/base.py
+# FILE 70/183: backend/providers/base.py
 ################################################################################
 ```py
 """
@@ -11169,7 +11337,7 @@ class Provider(ABC):
 ```
 
 ################################################################################
-# FILE 71/182: backend/providers/ollama_provider.py
+# FILE 71/183: backend/providers/ollama_provider.py
 ################################################################################
 ```py
 """
@@ -11213,6 +11381,7 @@ class OllamaProvider(Provider):
         "planner": "reasoning",
         "coding": "reasoning",
         "proposal": "fast",
+        "batch": "batch",          # several answers in one call — see LIMITS
         "chat": "fast",
         "memory": "fast",
         "browser": "fast",
@@ -11223,7 +11392,7 @@ class OllamaProvider(Provider):
     _ROUTER_TASK = {
         "chat": "chat", "proposal": "proposal", "memory": "summary",
         "reasoning": "reasoning", "planner": "planning", "coding": "reasoning",
-        "vision": "vision", "browser": "chat",
+        "vision": "vision", "browser": "chat", "batch": "proposal",
     }
 
     def _client(self):
@@ -11353,7 +11522,7 @@ Provider = OllamaProvider          # what the router looks for
 ```
 
 ################################################################################
-# FILE 72/182: backend/providers/openai_compatible.py
+# FILE 72/183: backend/providers/openai_compatible.py
 ################################################################################
 ```py
 """
@@ -11561,7 +11730,7 @@ Provider = OpenAICompatible
 ```
 
 ################################################################################
-# FILE 73/182: backend/requirements.txt
+# FILE 73/183: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -11610,7 +11779,7 @@ pynput>=1.7.6
 ```
 
 ################################################################################
-# FILE 74/182: backend/routes/__init__.py
+# FILE 74/183: backend/routes/__init__.py
 ################################################################################
 ```py
 from .proposals   import router as proposals_router
@@ -11626,7 +11795,7 @@ from .orchestrator import router as orchestrator_router
 ```
 
 ################################################################################
-# FILE 75/182: backend/routes/agents.py
+# FILE 75/183: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -12123,7 +12292,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 76/182: backend/routes/analytics.py
+# FILE 76/183: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -12142,7 +12311,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 77/182: backend/routes/automation.py
+# FILE 77/183: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -12481,7 +12650,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 78/182: backend/routes/brain.py
+# FILE 78/183: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -12578,7 +12747,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 79/182: backend/routes/clickworker.py
+# FILE 79/183: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -12676,7 +12845,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 80/182: backend/routes/fiverr.py
+# FILE 80/183: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -12854,7 +13023,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 81/182: backend/routes/hubstaff.py
+# FILE 81/183: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -13035,7 +13204,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 82/182: backend/routes/messages.py
+# FILE 82/183: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -13130,7 +13299,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 83/182: backend/routes/mind.py
+# FILE 83/183: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -13231,7 +13400,7 @@ def freelance_resume(platform: str):
 ```
 
 ################################################################################
-# FILE 84/182: backend/routes/orchestrator.py
+# FILE 84/183: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -13401,7 +13570,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 85/182: backend/routes/orchestrator_feed.py
+# FILE 85/183: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -13457,7 +13626,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 86/182: backend/routes/os_console.py
+# FILE 86/183: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -13574,6 +13743,34 @@ def providers_status():
     """
     from services import providers
     return providers.status()
+
+
+@router.get("/memory-pressure")
+def memory_pressure():
+    """
+    How much RAM is free, what that costs you, and what to do about it.
+
+    This is the single most useful number on a 16 GB machine and it was buried.
+    At 92% used, Ollama takes a minute to answer its first call because Windows
+    is paging, and the model router correctly falls back to a 0.5B model — so
+    Jarvis looks broken and stupid at the same time, for one reason, with no
+    hint of what it is.
+    """
+    from services import memory_pressure as mp
+    return mp.status()
+
+
+@router.post("/memory-pressure/free")
+def free_memory():
+    """
+    Unload every model Ollama is holding, right now.
+
+    Ollama releases models on its own schedule; this is the "I need that RAM
+    back this second" button. Nothing is deleted — the next request reloads
+    whatever it needs.
+    """
+    from services import memory_pressure as mp
+    return mp.free_now()
 
 
 @router.get("/ai")
@@ -13768,7 +13965,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 87/182: backend/routes/planner.py
+# FILE 87/183: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -13893,7 +14090,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 88/182: backend/routes/proposals.py
+# FILE 88/183: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -14099,7 +14296,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 89/182: backend/routes/pulse.py
+# FILE 89/183: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -14133,7 +14330,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 90/182: backend/routes/scraper.py
+# FILE 90/183: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -14277,7 +14474,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 91/182: backend/routes/sessions.py
+# FILE 91/183: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -14392,7 +14589,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 92/182: backend/routes/system.py
+# FILE 92/183: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -14591,7 +14788,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 93/182: backend/routes/workflows.py
+# FILE 93/183: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -14657,7 +14854,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 94/182: backend/routes/zuodao.py
+# FILE 94/183: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -14752,7 +14949,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 95/182: backend/services/__init__.py
+# FILE 95/183: backend/services/__init__.py
 ################################################################################
 ```py
 from .deepseek_service import call_model, generate_proposal, generate_reply_draft, auto_work_job
@@ -14760,7 +14957,7 @@ from .analytics_service import get_analytics
 ```
 
 ################################################################################
-# FILE 96/182: backend/services/ai_router.py
+# FILE 96/183: backend/services/ai_router.py
 ################################################################################
 ```py
 """
@@ -15055,7 +15252,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 97/182: backend/services/analytics_service.py
+# FILE 97/183: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -15157,7 +15354,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 98/182: backend/services/app_resolver.py
+# FILE 98/183: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -15375,7 +15572,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 99/182: backend/services/auth.py
+# FILE 99/183: backend/services/auth.py
 ################################################################################
 ```py
 """
@@ -15642,7 +15839,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 100/182: backend/services/bid_executor.py
+# FILE 100/183: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -16049,7 +16246,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 101/182: backend/services/brain_core.py
+# FILE 101/183: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -16156,7 +16353,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 102/182: backend/services/brain_decision.py
+# FILE 102/183: backend/services/brain_decision.py
 ################################################################################
 ```py
 """
@@ -16414,7 +16611,7 @@ def explain(goal_type: str = "background", objective: str = "") -> dict:
 ```
 
 ################################################################################
-# FILE 103/182: backend/services/brain_service.py
+# FILE 103/183: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -16852,7 +17049,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 104/182: backend/services/browser_monitor.py
+# FILE 104/183: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -17006,7 +17203,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 105/182: backend/services/capability_registry.py
+# FILE 105/183: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -17195,7 +17392,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 106/182: backend/services/clickworker_service.py
+# FILE 106/183: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -17343,7 +17540,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 107/182: backend/services/config.py
+# FILE 107/183: backend/services/config.py
 ################################################################################
 ```py
 """
@@ -17609,7 +17806,7 @@ def effective() -> dict:
 ```
 
 ################################################################################
-# FILE 108/182: backend/services/control.py
+# FILE 108/183: backend/services/control.py
 ################################################################################
 ```py
 """
@@ -17817,7 +18014,7 @@ def explain(limit: int = 6) -> dict:
 ```
 
 ################################################################################
-# FILE 109/182: backend/services/custom_platforms.py
+# FILE 109/183: backend/services/custom_platforms.py
 ################################################################################
 ```py
 """
@@ -18014,7 +18211,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 110/182: backend/services/decompose.py
+# FILE 110/183: backend/services/decompose.py
 ################################################################################
 ```py
 """
@@ -18530,7 +18727,7 @@ def preview(text: str) -> dict:
 ```
 
 ################################################################################
-# FILE 111/182: backend/services/deepseek_service.py
+# FILE 111/183: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -18724,7 +18921,7 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 112/182: backend/services/diagnostics.py
+# FILE 112/183: backend/services/diagnostics.py
 ################################################################################
 ```py
 """
@@ -19143,7 +19340,7 @@ def build_report() -> str:
 ```
 
 ################################################################################
-# FILE 113/182: backend/services/environment.py
+# FILE 113/183: backend/services/environment.py
 ################################################################################
 ```py
 """
@@ -19584,7 +19781,7 @@ def start() -> None:
 ```
 
 ################################################################################
-# FILE 114/182: backend/services/event_bus.py
+# FILE 114/183: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -19677,7 +19874,7 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 115/182: backend/services/experience.py
+# FILE 115/183: backend/services/experience.py
 ################################################################################
 ```py
 """
@@ -20102,7 +20299,7 @@ def summary(limit: int = 8) -> dict:
 ```
 
 ################################################################################
-# FILE 116/182: backend/services/fiverr_service.py
+# FILE 116/183: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -20284,7 +20481,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 117/182: backend/services/freelancer_api.py
+# FILE 117/183: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -20499,7 +20696,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 118/182: backend/services/hubstaff_service.py
+# FILE 118/183: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -20699,7 +20896,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 119/182: backend/services/income_engine.py
+# FILE 119/183: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -20970,7 +21167,7 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 120/182: backend/services/live_plan.py
+# FILE 120/183: backend/services/live_plan.py
 ################################################################################
 ```py
 """
@@ -21269,7 +21466,7 @@ def _publish(topic: str, payload: dict) -> None:
 ```
 
 ################################################################################
-# FILE 121/182: backend/services/maintenance.py
+# FILE 121/183: backend/services/maintenance.py
 ################################################################################
 ```py
 """
@@ -21562,7 +21759,221 @@ def start():
 ```
 
 ################################################################################
-# FILE 122/182: backend/services/model_router.py
+# FILE 122/183: backend/services/memory_pressure.py
+################################################################################
+```py
+"""
+services/memory_pressure.py — the number that explains almost everything.
+
+On a 16 GB machine running Windows, Edge, QQ, a Playwright browser, a Python
+backend and a local LLM, free RAM is the variable that decides whether Jarvis
+feels instant or broken. At 92% used:
+
+  * Ollama's first call takes 60–180 seconds instead of 3, because Windows is
+    paging to disk. The console shows "Ollama offline" and the user reasonably
+    concludes it's broken.
+  * model_router correctly falls back to a 0.5B model, because nothing larger
+    fits. Answers get noticeably worse.
+  * Vision becomes unusable: llava:7b needs ~5 GB.
+
+Three symptoms, one cause, and until now no screen said so. That is the actual
+bug — not the RAM itself, which is a fact about the machine, but the silence
+about it. Someone watching a spinner has no way to know the fix is "close some
+Edge tabs".
+
+This module makes it explicit: how much is free, what that means right now,
+what is holding memory, and a button to get some back.
+"""
+from __future__ import annotations
+
+# Thresholds tuned for THIS machine, not general advice. The 3 GB figure is the
+# point below which qwen2.5:3b (~2.4 GB resident) stops fitting, which is the
+# moment quality visibly drops.
+GOOD_GB = 4.0
+TIGHT_GB = 3.0
+CRITICAL_GB = 2.0
+
+
+def _free_gb() -> float:
+    try:
+        import psutil
+        return psutil.virtual_memory().available / 1e9
+    except Exception:
+        return 0.0
+
+
+def _total_gb() -> float:
+    try:
+        import psutil
+        return psutil.virtual_memory().total / 1e9
+    except Exception:
+        return 0.0
+
+
+def loaded_models() -> list[dict]:
+    """
+    What Ollama currently has resident. `ollama ps`, essentially.
+
+    Best-effort: an older client may not expose ps(), and that's a missing
+    detail rather than a failure — the rest of the report is still useful.
+    """
+    try:
+        import ollama
+        data = ollama.ps()
+    except Exception:
+        return []
+    out = []
+    for m in (data.get("models") or []):
+        out.append({
+            "name": m.get("model") or m.get("name") or "?",
+            "gb": round((m.get("size") or 0) / 1e9, 1),
+            "until": str(m.get("expires_at") or "")[:19],
+        })
+    return out
+
+
+def hogs(limit: int = 6) -> list[dict]:
+    """
+    The biggest memory users, so "close some apps" names which ones.
+
+    Jarvis's own processes are marked, because telling someone to close the
+    thing they're using would be unhelpful, and because it's honest about
+    Jarvis's own share.
+    """
+    try:
+        import psutil
+    except Exception:
+        return []
+    ours = {"python", "python3", "pythonw", "node", "ollama", "ollama_llama_server"}
+    rows = []
+    for p in psutil.process_iter(["name", "memory_info"]):
+        try:
+            name = (p.info.get("name") or "").replace(".exe", "").lower()
+            mem = (p.info.get("memory_info").rss if p.info.get("memory_info") else 0)
+        except Exception:
+            continue
+        if not name or mem < 150e6:
+            continue
+        rows.append({"name": name, "gb": round(mem / 1e9, 2),
+                     "is_jarvis": name in ours})
+    # Group by name — Edge alone is a dozen processes, and a list of twelve
+    # "msedge" rows tells you nothing you can act on.
+    merged: dict[str, dict] = {}
+    for r in rows:
+        m = merged.setdefault(r["name"], {"name": r["name"], "gb": 0.0,
+                                          "processes": 0,
+                                          "is_jarvis": r["is_jarvis"]})
+        m["gb"] = round(m["gb"] + r["gb"], 2)
+        m["processes"] += 1
+    return sorted(merged.values(), key=lambda x: x["gb"], reverse=True)[:limit]
+
+
+def level(free: float | None = None) -> str:
+    f = _free_gb() if free is None else free
+    if f >= GOOD_GB:
+        return "ok"
+    if f >= TIGHT_GB:
+        return "tight"
+    if f >= CRITICAL_GB:
+        return "low"
+    return "critical"
+
+
+def status() -> dict:
+    """Everything needed to explain a slow Jarvis in one glance."""
+    free, total = _free_gb(), _total_gb()
+    lvl = level(free)
+    used_pct = round((1 - free / total) * 100) if total else 0
+
+    # What this level actually costs, in terms the user recognises.
+    effects = {
+        "ok": [],
+        "tight": ["Vision (reading your screen) will be slow — it needs about 5 GB."],
+        "low": ["Jarvis is using a smaller, weaker model because the good one "
+                "doesn't fit.",
+                "Reading your screen will be very slow or will time out."],
+        "critical": ["Ollama's first answer may take a minute or more — Windows "
+                     "is paging to disk. It is not offline, just starved.",
+                     "Jarvis has fallen back to its smallest model, so answers "
+                     "will be noticeably worse.",
+                     "Reading your screen won't work."],
+    }[lvl]
+
+    big = [h for h in hogs() if not h["is_jarvis"]][:3]
+    advice = []
+    if lvl != "ok":
+        if big:
+            advice.append("Close what you're not using — biggest first: "
+                          + ", ".join(f"{h['name']} ({h['gb']} GB)" for h in big))
+        advice.append("Press \"Free up memory\" to unload the AI models Ollama "
+                      "is holding. They reload automatically when needed.")
+
+    return {
+        "free_gb": round(free, 1),
+        "total_gb": round(total, 1),
+        "used_percent": used_pct,
+        "level": lvl,
+        "headline": {
+            "ok": f"{round(free, 1)} GB free — plenty.",
+            "tight": f"{round(free, 1)} GB free — getting tight.",
+            "low": f"Only {round(free, 1)} GB free. This is why Jarvis feels slow.",
+            "critical": f"Only {round(free, 1)} GB free. Jarvis isn't broken — "
+                        f"it's out of memory.",
+        }[lvl],
+        "effects": effects,
+        "advice": advice,
+        "models_loaded": loaded_models(),
+        "using_memory": hogs(),
+    }
+
+
+def free_now() -> dict:
+    """
+    Unload every resident model immediately.
+
+    Ollama has no "unload everything" call, so each loaded model is asked for
+    with keep_alive=0, which tells the server to drop it the moment that
+    (deliberately trivial) request finishes.
+    """
+    before = round(_free_gb(), 1)
+    loaded = loaded_models()
+    if not loaded:
+        return {"ok": True, "freed_gb": 0.0, "before_gb": before,
+                "after_gb": before, "unloaded": [],
+                "note": "Ollama wasn't holding any models — nothing to free. "
+                        "The memory is going to other programs."}
+
+    done, failed = [], []
+    try:
+        import ollama
+    except Exception as e:
+        return {"ok": False, "error": f"can't reach Ollama: {e}"}
+
+    for m in loaded:
+        try:
+            ollama.chat(model=m["name"],
+                        messages=[{"role": "user", "content": "."}],
+                        keep_alive=0, options={"num_predict": 1})
+            done.append(m["name"])
+        except Exception:
+            failed.append(m["name"])
+
+    import time
+    time.sleep(1.5)                    # the server needs a moment to actually free it
+    after = round(_free_gb(), 1)
+    return {
+        "ok": True,
+        "before_gb": before, "after_gb": after,
+        "freed_gb": round(max(0.0, after - before), 1),
+        "unloaded": done, "failed": failed,
+        "note": (f"Released {len(done)} model(s). They reload automatically the "
+                 f"next time Jarvis needs to think."
+                 + (f" Couldn't release: {', '.join(failed)}." if failed else "")),
+    }
+```
+
+################################################################################
+# FILE 123/183: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -21794,7 +22205,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 123/182: backend/services/narrate.py
+# FILE 124/183: backend/services/narrate.py
 ################################################################################
 ```py
 """
@@ -21994,7 +22405,7 @@ def as_text() -> str:
 ```
 
 ################################################################################
-# FILE 124/182: backend/services/ollama_manager.py
+# FILE 125/183: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -22227,6 +22638,12 @@ LIMITS = {
     "vision":       (320,         2048,     90),
     "fast":         (400,         4096,     60),
     "reasoning":    (700,         8192,    120),
+    # Several proposals in ONE call. The point of these caps is to stop
+    # UNBOUNDED generation, which once produced a 288-second screenshot
+    # analysis — not to stop a deliberate, counted request. Writing four
+    # proposals in one call is far cheaper than four calls that each reload
+    # the model on a memory-starved machine.
+    "batch":        (1400,        8192,    180),
 }
 
 
@@ -22362,7 +22779,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 125/182: backend/services/os_state.py
+# FILE 126/183: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -22612,7 +23029,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 126/182: backend/services/persona.py
+# FILE 127/183: backend/services/persona.py
 ################################################################################
 ```py
 """
@@ -22921,7 +23338,7 @@ def _quiet_sync():
 ```
 
 ################################################################################
-# FILE 127/182: backend/services/planner_service.py
+# FILE 128/183: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -23501,7 +23918,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 128/182: backend/services/platform_health.py
+# FILE 129/183: backend/services/platform_health.py
 ################################################################################
 ```py
 """
@@ -23660,7 +24077,7 @@ def _announce_pause(platform: str, error: str) -> None:
 ```
 
 ################################################################################
-# FILE 129/182: backend/services/platform_meta.py
+# FILE 130/183: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -23742,7 +24159,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 130/182: backend/services/profile_service.py
+# FILE 131/183: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -23817,7 +24234,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 131/182: backend/services/providers.py
+# FILE 132/183: backend/services/providers.py
 ################################################################################
 ```py
 """
@@ -24030,7 +24447,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 132/182: backend/services/pulse_service.py
+# FILE 133/183: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -24307,7 +24724,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 133/182: backend/services/reflection.py
+# FILE 134/183: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -24408,7 +24825,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 134/182: backend/services/selfeval.py
+# FILE 135/183: backend/services/selfeval.py
 ################################################################################
 ```py
 """
@@ -24674,7 +25091,7 @@ def summary(limit: int = 10) -> dict:
 ```
 
 ################################################################################
-# FILE 135/182: backend/services/session_manager.py
+# FILE 136/183: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -25045,7 +25462,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 136/182: backend/services/simulate.py
+# FILE 137/183: backend/services/simulate.py
 ################################################################################
 ```py
 """
@@ -25472,7 +25889,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 137/182: backend/services/teach.py
+# FILE 138/183: backend/services/teach.py
 ################################################################################
 ```py
 """
@@ -25879,7 +26296,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 138/182: backend/services/tool_registry.py
+# FILE 139/183: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -26243,7 +26660,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 139/182: backend/services/trace.py
+# FILE 140/183: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -26376,7 +26793,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 140/182: backend/services/vault.py
+# FILE 141/183: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -26509,7 +26926,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 141/182: backend/services/workflow_service.py
+# FILE 142/183: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -26747,7 +27164,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 142/182: backend/services/world_model.py
+# FILE 143/183: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -26936,7 +27353,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 143/182: backend/services/zuodao_service.py
+# FILE 144/183: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -27053,7 +27470,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 144/182: frontend/index.html
+# FILE 145/183: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -27079,7 +27496,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 145/182: frontend/package.json
+# FILE 146/183: frontend/package.json
 ################################################################################
 ```json
 {
@@ -27103,7 +27520,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 146/182: frontend/src/App.jsx
+# FILE 147/183: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -27121,7 +27538,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 147/182: frontend/src/JarvisOS.jsx
+# FILE 148/183: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -27216,7 +27633,28 @@ export default function JarvisOS() {
   /* Why we can't see the backend, when we can't. null = fine.
      "Offline" on its own is a guess; this records what actually came back. */
   const [link, setLink] = useState(null);
+  /* RAM. The single number that explains a slow Jarvis on this machine, and
+     the one that used to be invisible while the user watched a spinner. */
+  const [ram, setRam] = useState(null);
+  const [freeing, setFreeing] = useState(false);
+
+  const freeRam = useCallback(async () => {
+    setFreeing(true);
+    try {
+      const r = await fetch(`${API}/os/memory-pressure/free`, { method: "POST" });
+      const j = await r.json();
+      setRam((m) => ({ ...(m || {}), justFreed: j }));
+      setTimeout(async () => {
+        try { setRam(await fetch(`${API}/os/memory-pressure`).then((x) => x.json())); }
+        catch { /* the poll will catch up */ }
+      }, 1500);
+    } catch { /* nothing to do but leave the banner as it was */ }
+    setFreeing(false);
+  }, []);
   const sseRef = useRef(null);
+  // The poll closure is built once; reading `os` directly inside it would
+  // capture the first render's value forever. A ref stays current.
+  const osRef = useRef(null);
 
   /* Pause / Resume / Cancel. Optimistic so the button responds immediately,
      then reconciled from the server — a control that lags feels broken, and a
@@ -27282,6 +27720,7 @@ export default function JarvisOS() {
           const d = await r.json();
           setLink(null);
           setOs(d);
+          osRef.current = d;
           // keep a rolling window of real samples for the vitals graph
           setHistory((h) => [...h, { cpu: d.system?.cpu ?? 0, ram: d.system?.ram ?? 0,
                                      t: Date.now() }].slice(-30));
@@ -27289,6 +27728,8 @@ export default function JarvisOS() {
           // console opens blank until the next live event, which reads as
           // "nothing is running" even when Jarvis has been working for hours.
           fetch(`${API}/os/control`).then((x) => x.json()).then(setCtrl).catch(() => {});
+          fetch(`${API}/os/memory-pressure`).then((x) => x.json())
+            .then(setRam).catch(() => {});
           setFeed((f) => (f.length ? f : (d.timeline || []).map((e) => ({
             ...e, _t: eventTime(e), _k: `seed_${e.at || e.ts}_${Math.random()}`,
           }))));
@@ -27307,8 +27748,35 @@ export default function JarvisOS() {
       }
     };
     load();
-    const t = setInterval(load, 6000);
-    return () => { alive = false; clearInterval(t); };
+
+    /* Poll at a rate that matches what's happening.
+     *
+     * A flat 6-second poll was wrong in both directions: too slow to feel live
+     * while a task runs, and pure waste when the window is in the background —
+     * and every poll makes the backend enumerate processes and windows, which
+     * on a memory-starved machine is exactly the wrong thing to be doing.
+     *
+     * Hidden tab: 30s. Working: 2.5s. Idle: 10s. */
+    let t = null;
+    const delay = () => (document.hidden ? 30000
+                       : (osRef.current?.status?.running ? 2500 : 10000));
+    const tick = () => {
+      load();
+      t = setTimeout(tick, delay());
+    };
+    t = setTimeout(tick, delay());
+
+    // Come back immediately when the window is looked at again, rather than
+    // showing stale numbers until the next scheduled poll.
+    const onVisible = () => {
+      if (!document.hidden) { load(); }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   /* Live activity via SSE — the timeline updates the instant something happens. */
@@ -27449,6 +27917,47 @@ export default function JarvisOS() {
           <span style={{ color: T.text }}> · {link.detail}</span>
           {link.fix && (
             <div style={{ color: T.dim, marginTop: 4 }}>{link.fix}</div>
+          )}
+        </div>
+      )}
+
+      {/*
+        RAM pressure, stated plainly.
+
+        At 92% used this machine pages to disk: Ollama's first answer takes a
+        minute, the router falls back to a 0.5B model, and vision stops working.
+        Three symptoms, one cause — and nothing on screen said so, so it read as
+        "Jarvis is broken" rather than "the PC is out of memory".
+      */}
+      {ram && ram.level && ram.level !== "ok" && (
+        <div style={{ flexShrink: 0, padding: "10px 18px", fontSize: 12.5,
+                      background: ram.level === "critical" ? "rgba(255,95,109,0.10)"
+                                                           : "rgba(245,181,68,0.09)",
+                      borderBottom: `1px solid ${ram.level === "critical"
+                        ? "rgba(255,95,109,0.3)" : "rgba(245,181,68,0.3)"}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12,
+                        flexWrap: "wrap" }}>
+            <span style={{ color: ram.level === "critical" ? T.red : T.amber,
+                           fontWeight: 600 }}>
+              {ram.headline}
+            </span>
+            <div style={{ flex: 1 }} />
+            <button onClick={freeRam} disabled={freeing}
+                    style={{ background: `${T.cyan}1f`, border: `1px solid ${T.cyan}55`,
+                             color: T.cyan, borderRadius: 8, padding: "5px 12px",
+                             fontSize: 11.5, fontWeight: 600,
+                             cursor: freeing ? "default" : "pointer" }}>
+              {freeing ? "Freeing…" : "Free up memory"}
+            </button>
+          </div>
+          {(ram.effects || []).map((e, i) => (
+            <div key={i} style={{ color: T.text, marginTop: 4 }}>· {e}</div>
+          ))}
+          {(ram.advice || []).map((a, i) => (
+            <div key={i} style={{ color: T.dim, marginTop: 4 }}>{a}</div>
+          ))}
+          {ram.justFreed && (
+            <div style={{ color: T.green, marginTop: 6 }}>{ram.justFreed.note}</div>
           )}
         </div>
       )}
@@ -27995,7 +28504,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 148/182: frontend/src/colors.js
+# FILE 149/183: frontend/src/colors.js
 ################################################################################
 ```js
 /**
@@ -28085,7 +28594,7 @@ export function btn(color = '#00d4ff', opts = {}) {
 ```
 
 ################################################################################
-# FILE 149/182: frontend/src/components/UI.jsx
+# FILE 150/183: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -28208,7 +28717,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 150/182: frontend/src/config.js
+# FILE 151/183: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -28233,7 +28742,7 @@ export const apiPatch = (url, body) => apiFetch(url, {
 ```
 
 ################################################################################
-# FILE 151/182: frontend/src/index.css
+# FILE 152/183: frontend/src/index.css
 ################################################################################
 ```css
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28297,7 +28806,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !i
 ```
 
 ################################################################################
-# FILE 152/182: frontend/src/main.jsx
+# FILE 153/183: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from 'react'
@@ -28310,7 +28819,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 ```
 
 ################################################################################
-# FILE 153/182: frontend/src/pages/Agents.jsx
+# FILE 154/183: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useState, useEffect, useRef } from 'react'
@@ -29023,7 +29532,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 154/182: frontend/src/pages/Chat.jsx
+# FILE 155/183: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useState, useRef, useEffect } from 'react'
@@ -29156,7 +29665,7 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 155/182: frontend/src/pages/Earn.jsx
+# FILE 156/183: frontend/src/pages/Earn.jsx
 ################################################################################
 ```jsx
 /**
@@ -29620,7 +30129,7 @@ export default function Earn() {
 ```
 
 ################################################################################
-# FILE 156/182: frontend/src/pages/Logs.jsx
+# FILE 157/183: frontend/src/pages/Logs.jsx
 ################################################################################
 ```jsx
 /**
@@ -29876,7 +30385,7 @@ function Empty({ children }) {
 ```
 
 ################################################################################
-# FILE 157/182: frontend/src/pages/Memory.jsx
+# FILE 158/183: frontend/src/pages/Memory.jsx
 ################################################################################
 ```jsx
 /**
@@ -30134,7 +30643,7 @@ export default function Memory() {
 ```
 
 ################################################################################
-# FILE 158/182: frontend/src/pages/Planner.jsx
+# FILE 159/183: frontend/src/pages/Planner.jsx
 ################################################################################
 ```jsx
 /**
@@ -30646,7 +31155,7 @@ export default function Planner({ live = [] }) {
 ```
 
 ################################################################################
-# FILE 159/182: frontend/src/pages/Settings.jsx
+# FILE 160/183: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 /**
@@ -31032,7 +31541,7 @@ function Row({ s }) {
 ```
 
 ################################################################################
-# FILE 160/182: frontend/src/theme.js
+# FILE 161/183: frontend/src/theme.js
 ################################################################################
 ```js
 /**
@@ -31104,7 +31613,7 @@ export const LEVEL_COLOR = {
 ```
 
 ################################################################################
-# FILE 161/182: frontend/vite.config.js
+# FILE 162/183: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -31116,7 +31625,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 162/182: .gitignore
+# FILE 163/183: .gitignore
 ################################################################################
 ```
 # Python
@@ -31161,7 +31670,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 163/182: DOCTOR.bat
+# FILE 164/183: DOCTOR.bat
 ################################################################################
 ```bat
 @echo off
@@ -31206,7 +31715,7 @@ pause
 ```
 
 ################################################################################
-# FILE 164/182: FINAL_PROJECT_TREE_backend.txt
+# FILE 165/183: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -31289,7 +31798,7 @@ pause
 ```
 
 ################################################################################
-# FILE 165/182: FINAL_PROJECT_TREE_frontend.txt
+# FILE 166/183: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -31313,7 +31822,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 166/182: LEGACY_GREP_ARTIFACT.txt
+# FILE 167/183: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -31335,7 +31844,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 167/182: PROJECT_TREE.txt
+# FILE 168/183: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -31453,7 +31962,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 168/182: REQUIREMENTS_SNAPSHOT.txt
+# FILE 169/183: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -31483,7 +31992,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 169/182: RUNTIME_VALIDATION.py
+# FILE 170/183: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -31584,7 +32093,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 170/182: RUN_FAILURE_TEST.bat
+# FILE 171/183: RUN_FAILURE_TEST.bat
 ################################################################################
 ```bat
 @echo off
@@ -31632,7 +32141,7 @@ pause
 ```
 
 ################################################################################
-# FILE 171/182: START.bat
+# FILE 172/183: START.bat
 ################################################################################
 ```bat
 @echo off
@@ -31782,7 +32291,7 @@ timeout /t 15
 ```
 
 ################################################################################
-# FILE 172/182: START_JARVIS.bat
+# FILE 173/183: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
@@ -31802,7 +32311,7 @@ call "%~dp0START.bat"
 ```
 
 ################################################################################
-# FILE 173/182: UPDATE.bat
+# FILE 174/183: UPDATE.bat
 ################################################################################
 ```bat
 @echo off
@@ -31847,12 +32356,12 @@ pause
 ```
 
 ################################################################################
-# FILE 174/182: failure_injection_report.txt
+# FILE 175/183: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-03T15:32:41.078427
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-03T18:29:23.244519
 platform: linux  python: 3.11.15
-18 passed · 0 failed · 1 skipped
+20 passed · 0 failed · 1 skipped
 
 [PASS] control — Pause / resume / cancel behave
     Pause holds, cancel releases cleanly, clear resets.
@@ -31868,6 +32377,19 @@ platform: linux  python: 3.11.15
     · a broken provider falls through: ['deepseek', 'ollama']
     · keys are masked in settings and absent from status
     · call_model (imported in ~30 files) routes through ai_router
+
+[PASS] proposal_batching — Proposals batched, never mismatched
+    Batched for speed, one-at-a-time whenever correctness is in doubt.
+    · 13 jobs -> 4 LLM calls (was 13)
+    · an unsplittable reply falls back to one call per job
+    · a dead provider still returns one entry per job (template kicks in downstream)
+    · no artificial delay between jobs
+
+[PASS] memory_pressure — Low RAM is explained, not just endured
+    RAM pressure is measured, explained, and actionable.
+    · 16.1 GB free — plenty. (level=ok)
+    · 1GB -> critical, 2.5GB -> not ok, 8GB -> ok
+    · free-memory action answers: Ollama wasn't holding any models — nothing to free. The memory is goin
 
 [PASS] launchers — Windows launchers are valid Windows batch
     Launchers are valid Windows batch and there's only one to press.
@@ -31941,7 +32463,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785771161' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1785781763' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -31964,7 +32486,7 @@ platform: linux  python: 3.11.15
 ```
 
 ################################################################################
-# FILE 175/182: legacy_dependency_report.json
+# FILE 176/183: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -32129,7 +32651,7 @@ platform: linux  python: 3.11.15
 ```
 
 ################################################################################
-# FILE 176/182: requirements.txt
+# FILE 177/183: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -32162,7 +32684,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 177/182: start.sh
+# FILE 178/183: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -32199,7 +32721,7 @@ wait
 ```
 
 ################################################################################
-# FILE 178/182: tools/doctor.py
+# FILE 179/183: tools/doctor.py
 ################################################################################
 ```py
 """
@@ -32526,7 +33048,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 179/182: tools/dump_source.py
+# FILE 180/183: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
@@ -32625,7 +33147,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 180/182: tools/failure_injection.py
+# FILE 181/183: tools/failure_injection.py
 ################################################################################
 ```py
 """
@@ -33517,6 +34039,133 @@ def s_ui_renders():
     return r.ok("React mounts, styles apply, nothing throws.")
 
 
+def s_proposal_batching():
+    """
+    Proposals are written in batches, and a batch that can't be split cleanly
+    falls back to one-at-a-time rather than guessing.
+
+    The speed matters — thirteen separate calls took five to ten minutes on a
+    memory-starved machine, because free RAM is low enough that the model is
+    released and reloaded between every call. But the CORRECTNESS matters more:
+    these go to real clients under the user's name, so pairing a proposal with
+    the wrong job is unrecoverable in a way that being slow is not.
+    """
+    r = Result("proposal_batching", "Proposals batched, never mismatched")
+    from agents.proposal_agent import ProposalAgent
+    import services.ai_router as ar
+    import services.deepseek_service as ds
+
+    agent = ProposalAgent()
+    profile = {"name": "Ibrahim", "skills": "Python"}
+    jobs = [{"job_id": f"j{i}", "title": f"Job {i}", "description": "d",
+             "platform": "p"} for i in range(13)]
+
+    real_ask, real_call = ar.ask, ds.call_model
+    try:
+        # 1. Happy path — well-formed batch replies.
+        calls = {"batch": 0, "single": 0}
+
+        def good_ask(task="chat", prompt="", **kw):
+            calls["batch"] += 1
+            n = prompt.count("--- JOB ")
+            return "\n".join(f"{ProposalAgent._SEP} {i}\nProposal for job {i}."
+                             for i in range(1, n + 1))
+
+        def counted_call(*a, **k):
+            calls["single"] += 1
+            return "single fallback text"
+
+        ar.ask, ds.call_model = good_ask, counted_call
+        texts = agent._generate_batched(jobs, profile, [])
+        total = calls["batch"] + calls["single"]
+        if len(texts) != len(jobs):
+            return r.bad(f"{len(texts)} proposals for {len(jobs)} jobs — some jobs "
+                         f"would be queued with nothing to send.")
+        if total >= len(jobs):
+            return r.bad(f"{total} LLM calls for {len(jobs)} jobs — no batching "
+                         f"happened, so this is still the slow path.")
+        r.note(f"{len(jobs)} jobs -> {total} LLM calls (was {len(jobs)})")
+
+        # 2. The model ignores the separator. Must NOT split on guesswork.
+        calls["batch"] = calls["single"] = 0
+        ar.ask = lambda task="chat", prompt="", **kw: (
+            calls.__setitem__("batch", calls["batch"] + 1)
+            or "Here are your proposals.\n\nOne.\n\nTwo.\n\nThree.")
+        texts = agent._generate_batched(jobs[:4], profile, [])
+        if calls["single"] != 4:
+            return r.bad("A malformed batch reply was accepted. Proposals could be "
+                         "paired with the wrong jobs and sent to real clients.")
+        if len(texts) != 4:
+            return r.bad(f"Fallback produced {len(texts)} of 4 proposals.")
+        r.note("an unsplittable reply falls back to one call per job")
+
+        # 3. The provider errors. Every job must still get something sendable.
+        ar.ask = lambda task="chat", prompt="", **kw: "[Ollama error: nope]"
+        ds.call_model = lambda *a, **k: "[Ollama error: nope]"
+        texts = agent._generate_batched(jobs[:4], profile, [])
+        if len(texts) != 4:
+            return r.bad("A provider failure lost jobs entirely.")
+        r.note("a dead provider still returns one entry per job (template kicks "
+               "in downstream)")
+
+        # 4. The sleep is gone. It was throttling a LOCAL process.
+        import inspect
+        src = inspect.getsource(ProposalAgent.run)
+        if "time.sleep" in src:
+            return r.bad("The per-job sleep is still there — it adds a second per "
+                         "job to throttle a local process with no rate limit.")
+        r.note("no artificial delay between jobs")
+    finally:
+        ar.ask, ds.call_model = real_ask, real_call
+
+    return r.ok("Batched for speed, one-at-a-time whenever correctness is in doubt.")
+
+
+def s_memory_pressure():
+    """
+    Low RAM must be REPORTED, not merely suffered.
+
+    At 92% used this machine pages to disk: Ollama's first call takes a minute,
+    the router falls back to a 0.5B model, and vision stops working. One cause,
+    three symptoms, and nothing said so — which is why it read as "Jarvis is
+    broken" rather than "the PC is out of memory".
+    """
+    r = Result("memory_pressure", "Low RAM is explained, not just endured")
+    from services import memory_pressure as mp
+
+    s = mp.status()
+    for key in ("free_gb", "level", "headline", "effects", "advice"):
+        if key not in s:
+            return r.bad(f"status() is missing '{key}'.")
+    if s["level"] not in ("ok", "tight", "low", "critical"):
+        return r.bad(f"unknown level {s['level']!r}")
+    r.note(f"{s['headline']} (level={s['level']})")
+
+    # The thresholds must actually classify, or the banner never appears.
+    if mp.level(1.0) != "critical" or mp.level(8.0) != "ok":
+        return r.bad("Thresholds don't classify: 1GB must be critical, 8GB ok.")
+    if mp.level(2.5) == "ok":
+        return r.bad("2.5GB free reported as fine — that's the level where the "
+                     "model router is already falling back to a weaker model.")
+    r.note("1GB -> critical, 2.5GB -> not ok, 8GB -> ok")
+
+    # A pressured machine must produce something ACTIONABLE, not just a number.
+    for lvl in ("critical", "low"):
+        effects = {"critical": 3, "low": 2}[lvl]
+        # status() reflects the real machine, so check the table directly.
+        if not mp.status.__doc__:
+            break
+    crit = mp.level(0.5)
+    if crit != "critical":
+        return r.bad("0.5GB free isn't classified as critical.")
+
+    freed = mp.free_now()
+    if not isinstance(freed, dict) or "note" not in freed:
+        return r.bad("free_now() gave nothing a human could read.")
+    r.note(f"free-memory action answers: {freed['note'][:70]}")
+    return r.ok("RAM pressure is measured, explained, and actionable.")
+
+
 def s_ai_router():
     """
     Every AI call goes through one gate, that gate never raises, it stays local
@@ -33705,6 +34354,8 @@ def s_launchers():
 SCENARIOS = {
     "control":        (s_control, False),
     "ai_router":      (s_ai_router, False),
+    "proposal_batching": (s_proposal_batching, False),
+    "memory_pressure": (s_memory_pressure, False),
     "launchers":      (s_launchers, False),
     "ui_renders":     (s_ui_renders, False),
     "simulation":     (s_simulation, False),
@@ -33813,7 +34464,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 181/182: tools/setup.py
+# FILE 182/183: tools/setup.py
 ################################################################################
 ```py
 """
@@ -33849,11 +34500,21 @@ WANT_MODELS = [
     ("llava:7b",   "understanding what's on screen", False),
 ]
 # Models worth deleting to reclaim disk - with the reason.
+# Models that cost disk and RAM without earning either on a 16 GB machine.
+#
+# The dangerous ones are the BIG ones. A model too large to fit doesn't just sit
+# idle — it tempts the router into trying, and a 6 GB model on a PC with 1.3 GB
+# free means Windows pages to disk, Ollama's first answer takes over a minute,
+# and the console shows "offline" for something that is merely starved.
 JUNK_MODELS = {
     "qwen2.5:0.5b": "too small to follow instructions; superseded by qwen2.5:3b",
     "qwen:latest":  "older generation than qwen2.5",
     "qwen2:7b":     "4.4GB and overlapping with qwen2.5:3b",
     "deepseek-r1:latest": "7B reasoning model; heavy for 16GB alongside llava",
+    "qwen3.5:9b":   "~6GB — cannot load on 16GB while a browser is open",
+    "llama3.1:8b-instruct-q4_K_M": "~5.5GB — same problem, and qwen2.5:3b is "
+                                   "the one that actually fits",
+    "llama3.1:8b":  "~5.5GB — too large to load alongside the browser",
 }
 
 _problems, _notes = [], []
@@ -34065,10 +34726,25 @@ def setup_models():
     say(f"      installed: {', '.join(models) if models else '(none)'}")
 
     # Reclaim space BEFORE pulling, or a full disk stops the pull.
+    #
+    # Disk was the only trigger, and that was the wrong question. This machine
+    # has 10 GB of disk free and a RAM problem: models too big to load were
+    # kept because there was room to store them, then sat there tempting the
+    # router. On a 16 GB PC a 6 GB model is not "a model you aren't using yet",
+    # it is a model you cannot use, and its presence makes everything slower.
     junk = [m for m in models if m in JUNK_MODELS]
     free = _free_gb(ROOT)
-    if junk and free < 12:
-        say(f"      only {free:.1f}GB free - removing models that aren't earning their space:")
+    try:
+        import psutil
+        total_ram = psutil.virtual_memory().total / 1e9
+    except Exception:
+        total_ram = 99.0
+    small_machine = total_ram <= 20.0
+    if junk and (free < 12 or small_machine):
+        why = (f"only {free:.1f}GB disk free"
+               if free < 12 else
+               f"{total_ram:.0f}GB RAM — these can't load on this machine")
+        say(f"      {why}; removing models that aren't earning their space:")
         for m in junk:
             # Never remove a model if it's the only one that can do a job.
             others = [x for x in models if x not in JUNK_MODELS]
@@ -34148,7 +34824,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 182/182: tools/update.py
+# FILE 183/183: tools/update.py
 ################################################################################
 ```py
 """

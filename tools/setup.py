@@ -31,11 +31,21 @@ WANT_MODELS = [
     ("llava:7b",   "understanding what's on screen", False),
 ]
 # Models worth deleting to reclaim disk - with the reason.
+# Models that cost disk and RAM without earning either on a 16 GB machine.
+#
+# The dangerous ones are the BIG ones. A model too large to fit doesn't just sit
+# idle — it tempts the router into trying, and a 6 GB model on a PC with 1.3 GB
+# free means Windows pages to disk, Ollama's first answer takes over a minute,
+# and the console shows "offline" for something that is merely starved.
 JUNK_MODELS = {
     "qwen2.5:0.5b": "too small to follow instructions; superseded by qwen2.5:3b",
     "qwen:latest":  "older generation than qwen2.5",
     "qwen2:7b":     "4.4GB and overlapping with qwen2.5:3b",
     "deepseek-r1:latest": "7B reasoning model; heavy for 16GB alongside llava",
+    "qwen3.5:9b":   "~6GB — cannot load on 16GB while a browser is open",
+    "llama3.1:8b-instruct-q4_K_M": "~5.5GB — same problem, and qwen2.5:3b is "
+                                   "the one that actually fits",
+    "llama3.1:8b":  "~5.5GB — too large to load alongside the browser",
 }
 
 _problems, _notes = [], []
@@ -247,10 +257,25 @@ def setup_models():
     say(f"      installed: {', '.join(models) if models else '(none)'}")
 
     # Reclaim space BEFORE pulling, or a full disk stops the pull.
+    #
+    # Disk was the only trigger, and that was the wrong question. This machine
+    # has 10 GB of disk free and a RAM problem: models too big to load were
+    # kept because there was room to store them, then sat there tempting the
+    # router. On a 16 GB PC a 6 GB model is not "a model you aren't using yet",
+    # it is a model you cannot use, and its presence makes everything slower.
     junk = [m for m in models if m in JUNK_MODELS]
     free = _free_gb(ROOT)
-    if junk and free < 12:
-        say(f"      only {free:.1f}GB free - removing models that aren't earning their space:")
+    try:
+        import psutil
+        total_ram = psutil.virtual_memory().total / 1e9
+    except Exception:
+        total_ram = 99.0
+    small_machine = total_ram <= 20.0
+    if junk and (free < 12 or small_machine):
+        why = (f"only {free:.1f}GB disk free"
+               if free < 12 else
+               f"{total_ram:.0f}GB RAM — these can't load on this machine")
+        say(f"      {why}; removing models that aren't earning their space:")
         for m in junk:
             # Never remove a model if it's the only one that can do a job.
             others = [x for x in models if x not in JUNK_MODELS]

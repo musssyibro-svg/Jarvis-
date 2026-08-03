@@ -80,24 +80,35 @@ npm install --registry=https://registry.npmmirror.com
 
 ---
 
-## Step 5 — Free up disk space (you were at 1.2 GB)
+## Step 5 — This is the important one: memory
 
-`START.bat` does this for you automatically. If you want to do it by hand:
+**Your PC is out of RAM, and that is the whole reason Jarvis feels slow and
+stupid.** Your last report showed 92% used — about 1.3 GB free.
 
-```
-ollama rm qwen2.5:0.5b
-```
-```
-ollama rm qwen:latest
-```
-```
-ollama rm qwen2:7b
-```
-```
-ollama rm deepseek-r1:latest
-```
+At that level, three things happen at once and they all look like bugs:
+
+- Ollama takes a minute or more to answer the first time, because Windows is
+  writing memory to disk. The screen says "Ollama offline". **It isn't offline,
+  it's starved.**
+- Jarvis falls back to its smallest model, because the good one doesn't fit. So
+  the answers get worse.
+- Reading your screen stops working — that needs about 5 GB on its own.
+
+Two fixes, in order:
+
+**1. Let `START.bat` delete the models you can't run.** It now does this on its
+own. You have `qwen3.5:9b` (~6 GB) and `llama3.1:8b` (~5.5 GB) installed — those
+can *never* load on a 16 GB machine with a browser open. They just sit there
+tempting Jarvis into trying.
 
 **Keep these three:** `qwen2.5:3b`, `llava:7b`, `nomic-embed-text`.
+
+**2. Close things before you start Jarvis.** Edge tabs and QQ are usually the
+biggest. Aim for **3 GB free**.
+
+You'll now see a bar at the top of Jarvis when memory is tight, telling you what
+it's costing you and which programs are using the most — plus a **Free up
+memory** button that makes Ollama release its models immediately.
 
 ---
 
@@ -275,7 +286,7 @@ drive it even from this machine.
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 18 or 19 passes.
+purpose and checks it fails honestly. You want 20 or 21 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 

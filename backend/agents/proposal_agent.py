@@ -27,11 +27,32 @@ class ProposalAgent(BaseAgent):
         feed        = []
         generated   = []
 
-        for job in jobs[:max_generate]:
-            feed.append(self.log(f"Generating for: {job.get('title','')[:50]}"))
+        wanted = jobs[:max_generate]
+
+        # Write them in BATCHES, not one call each.
+        #
+        # This loop used to make one LLM call per job with a 1-second sleep
+        # between. On this machine that is the single slowest thing Jarvis does:
+        # free RAM sits low enough that keep_alive_for() correctly returns "0",
+        # so the model is released after every call and RELOADED for the next
+        # one. Thirteen jobs meant thirteen model loads — five to ten minutes to
+        # draft proposals that take seconds to generate once the model is warm.
+        #
+        # Note this is the opposite of the usual advice to set
+        # OLLAMA_KEEP_ALIVE=0 globally: that setting is already in effect here
+        # and it is part of what makes the loop slow. The fix is to stop making
+        # so many calls, not to make each one cheaper.
+        #
+        # The sleep is gone too. It was labelled "rate limit — don't hammer
+        # Ollama", but Ollama is a local process with a queue; there is no
+        # remote quota to respect and nothing to be polite to.
+        texts = self._generate_batched(wanted, profile, feed)
+
+        for job in wanted:
             try:
-                text = self._generate(job, profile)
-                if not text or text.startswith(("[No AI available", "[Ollama error")):
+                text = texts.get(id(job)) or ""
+                if not text or text.startswith(("[No AI available", "[Ollama error",
+                                                "[AI router", "[No AI provider")):
                     feed.append(self.log(
                         f"LLM unavailable — used template for: {job.get('title','')[:40]}",
                         "warning"))
@@ -52,7 +73,6 @@ class ProposalAgent(BaseAgent):
                 self._save(entry)
                 generated.append(entry)
                 feed.append(self.log(f"Generated proposal for: {job.get('title','')[:40]}"))
-                time.sleep(1)  # rate limit — don't hammer Ollama
             except Exception as e:
                 feed.append(self.log(f"Failed {job.get('title','')[:30]}: {e}", "error"))
 
@@ -72,6 +92,109 @@ class ProposalAgent(BaseAgent):
         if context.get("your_skills"):
             profile["skills"] = context["your_skills"]
         return profile
+
+    # How many proposals to ask for in one call. Four × ~180 words lands well
+    # inside the "batch" token budget with room to spare; larger batches start
+    # getting truncated, and a truncated proposal is worse than a slow one.
+    BATCH_SIZE = 4
+
+    def _generate_batched(self, jobs: list, profile: dict, feed: list) -> dict:
+        """
+        Write several proposals per LLM call. Returns {id(job): text}.
+
+        Falls back to one-at-a-time for any batch whose reply can't be split
+        cleanly. That fallback is the important part: a clever batching scheme
+        that silently returns four copies of the same proposal, or three
+        proposals for four jobs, would be far worse than the slow loop it
+        replaced — these go to real clients under the user's name.
+        """
+        out: dict = {}
+        if not jobs:
+            return out
+
+        for start in range(0, len(jobs), self.BATCH_SIZE):
+            group = jobs[start:start + self.BATCH_SIZE]
+            if len(group) == 1:
+                out[id(group[0])] = self._generate(group[0], profile)
+                continue
+
+            feed.append(self.log(
+                f"Writing {len(group)} proposals in one pass "
+                f"({start + 1}-{start + len(group)} of {len(jobs)})"))
+            try:
+                raw = self._ask_batch(group, profile)
+                parsed = self._parse_batch(raw, len(group))
+            except Exception as e:
+                feed.append(self.log(f"Batch write failed ({e}) — falling back to "
+                                     f"one at a time", "warning"))
+                parsed = []
+
+            if len(parsed) == len(group) and all(p.strip() for p in parsed):
+                for job, text in zip(group, parsed):
+                    out[id(job)] = text.strip()
+            else:
+                # Any doubt at all: do them individually. Slower, but every job
+                # provably gets its own proposal.
+                feed.append(self.log(
+                    f"Batch reply didn't split cleanly ({len(parsed)}/{len(group)}) "
+                    f"— writing these {len(group)} individually", "warning"))
+                for job in group:
+                    out[id(job)] = self._generate(job, profile)
+        return out
+
+    _SEP = "###PROPOSAL"
+
+    def _ask_batch(self, group: list, profile: dict) -> str:
+        from services.ai_router import ask
+        from services.profile_service import prompt_block
+
+        blocks = []
+        for i, job in enumerate(group, 1):
+            blocks.append(
+                f"--- JOB {i} ---\n"
+                f"Platform: {job.get('platform', 'freelance')}\n"
+                f"Title: {job.get('title', '')}\n"
+                f"Company: {job.get('company', 'the company')}\n"
+                f"Role type: {job.get('job_type') or 'unknown'}\n"
+                f"Budget: {job.get('budget', 'not specified')}\n"
+                f"Description: {(job.get('description', '') or '')[:900]}")
+
+        prompt = (
+            f"Write {len(group)} SEPARATE freelance proposals — one for each job "
+            f"below. They are different jobs; do not reuse wording between them.\n\n"
+            + "\n\n".join(blocks)
+            + f"\n\n{prompt_block(profile)}\n\n"
+            f"Rules for EVERY proposal:\n"
+            f"- Under 180 words, plain and human, no corporate filler.\n"
+            f"- BANNED: \"I am confident in my ability\", \"I am the perfect fit\", "
+            f"\"proven track record\", \"leverage my skills\".\n"
+            f"- The first sentence must reference a concrete detail from THAT "
+            f"specific job description.\n"
+            f"- If the role is not a software job, do not pitch coding or "
+            f"automation unless the post asks for it.\n"
+            f"- End with a realistic next step, signed off as "
+            f"{profile.get('name', '')}.\n\n"
+            f"FORMAT — this matters, the output is parsed automatically:\n"
+            f"Start each proposal with a line containing only {self._SEP} N\n"
+            f"(N is the job number). Output nothing else — no titles, no notes.")
+
+        # task="batch" raises the token ceiling for this deliberate, counted
+        # request. See ollama_manager.LIMITS for why that's not a loophole.
+        return ask(task="batch", prompt=prompt, max_tokens=360 * len(group))
+
+    def _parse_batch(self, raw: str, expected: int) -> list:
+        """Split the reply back into one proposal per job."""
+        import re as _re
+        if not raw or raw.strip().startswith("["):
+            return []
+        parts = _re.split(rf"{self._SEP}\s*\d*\s*", raw)
+        parts = [p.strip() for p in parts if p.strip()]
+        if len(parts) == expected:
+            return parts
+        # The model ignored the separator. Rather than guess at boundaries and
+        # risk pairing a proposal with the wrong job, give up and let the caller
+        # fall back — sending the wrong pitch to a real client is unrecoverable.
+        return []
 
     def _generate(self, job: dict, profile: dict) -> str:
         from services.deepseek_service import call_model

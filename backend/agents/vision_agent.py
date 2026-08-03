@@ -282,7 +282,15 @@ def find_text_on_screen(search_text: str, region: dict = None) -> dict:
 
 
 _ANALYSIS_CACHE = {"sig": None, "answer": None, "at": 0.0, "question": None}
-_CACHE_TTL = 25.0          # seconds a screen analysis stays fresh
+# Seconds a screen analysis stays fresh.
+#
+# 25s was far too short given what an analysis costs here: on a CPU with no GPU
+# it is the most expensive thing Jarvis does, and asking twice about the same
+# unchanged screen within half a minute paid that price twice. The cache is
+# already keyed on a hash of the screen, so a stale answer can only be returned
+# for a screen that has not visibly changed — which makes a longer window safe
+# rather than merely cheaper.
+_CACHE_TTL = 120.0
 
 
 def _screen_signature(b64: str) -> str:

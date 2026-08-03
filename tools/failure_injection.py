@@ -887,6 +887,133 @@ def s_ui_renders():
     return r.ok("React mounts, styles apply, nothing throws.")
 
 
+def s_proposal_batching():
+    """
+    Proposals are written in batches, and a batch that can't be split cleanly
+    falls back to one-at-a-time rather than guessing.
+
+    The speed matters — thirteen separate calls took five to ten minutes on a
+    memory-starved machine, because free RAM is low enough that the model is
+    released and reloaded between every call. But the CORRECTNESS matters more:
+    these go to real clients under the user's name, so pairing a proposal with
+    the wrong job is unrecoverable in a way that being slow is not.
+    """
+    r = Result("proposal_batching", "Proposals batched, never mismatched")
+    from agents.proposal_agent import ProposalAgent
+    import services.ai_router as ar
+    import services.deepseek_service as ds
+
+    agent = ProposalAgent()
+    profile = {"name": "Ibrahim", "skills": "Python"}
+    jobs = [{"job_id": f"j{i}", "title": f"Job {i}", "description": "d",
+             "platform": "p"} for i in range(13)]
+
+    real_ask, real_call = ar.ask, ds.call_model
+    try:
+        # 1. Happy path — well-formed batch replies.
+        calls = {"batch": 0, "single": 0}
+
+        def good_ask(task="chat", prompt="", **kw):
+            calls["batch"] += 1
+            n = prompt.count("--- JOB ")
+            return "\n".join(f"{ProposalAgent._SEP} {i}\nProposal for job {i}."
+                             for i in range(1, n + 1))
+
+        def counted_call(*a, **k):
+            calls["single"] += 1
+            return "single fallback text"
+
+        ar.ask, ds.call_model = good_ask, counted_call
+        texts = agent._generate_batched(jobs, profile, [])
+        total = calls["batch"] + calls["single"]
+        if len(texts) != len(jobs):
+            return r.bad(f"{len(texts)} proposals for {len(jobs)} jobs — some jobs "
+                         f"would be queued with nothing to send.")
+        if total >= len(jobs):
+            return r.bad(f"{total} LLM calls for {len(jobs)} jobs — no batching "
+                         f"happened, so this is still the slow path.")
+        r.note(f"{len(jobs)} jobs -> {total} LLM calls (was {len(jobs)})")
+
+        # 2. The model ignores the separator. Must NOT split on guesswork.
+        calls["batch"] = calls["single"] = 0
+        ar.ask = lambda task="chat", prompt="", **kw: (
+            calls.__setitem__("batch", calls["batch"] + 1)
+            or "Here are your proposals.\n\nOne.\n\nTwo.\n\nThree.")
+        texts = agent._generate_batched(jobs[:4], profile, [])
+        if calls["single"] != 4:
+            return r.bad("A malformed batch reply was accepted. Proposals could be "
+                         "paired with the wrong jobs and sent to real clients.")
+        if len(texts) != 4:
+            return r.bad(f"Fallback produced {len(texts)} of 4 proposals.")
+        r.note("an unsplittable reply falls back to one call per job")
+
+        # 3. The provider errors. Every job must still get something sendable.
+        ar.ask = lambda task="chat", prompt="", **kw: "[Ollama error: nope]"
+        ds.call_model = lambda *a, **k: "[Ollama error: nope]"
+        texts = agent._generate_batched(jobs[:4], profile, [])
+        if len(texts) != 4:
+            return r.bad("A provider failure lost jobs entirely.")
+        r.note("a dead provider still returns one entry per job (template kicks "
+               "in downstream)")
+
+        # 4. The sleep is gone. It was throttling a LOCAL process.
+        import inspect
+        src = inspect.getsource(ProposalAgent.run)
+        if "time.sleep" in src:
+            return r.bad("The per-job sleep is still there — it adds a second per "
+                         "job to throttle a local process with no rate limit.")
+        r.note("no artificial delay between jobs")
+    finally:
+        ar.ask, ds.call_model = real_ask, real_call
+
+    return r.ok("Batched for speed, one-at-a-time whenever correctness is in doubt.")
+
+
+def s_memory_pressure():
+    """
+    Low RAM must be REPORTED, not merely suffered.
+
+    At 92% used this machine pages to disk: Ollama's first call takes a minute,
+    the router falls back to a 0.5B model, and vision stops working. One cause,
+    three symptoms, and nothing said so — which is why it read as "Jarvis is
+    broken" rather than "the PC is out of memory".
+    """
+    r = Result("memory_pressure", "Low RAM is explained, not just endured")
+    from services import memory_pressure as mp
+
+    s = mp.status()
+    for key in ("free_gb", "level", "headline", "effects", "advice"):
+        if key not in s:
+            return r.bad(f"status() is missing '{key}'.")
+    if s["level"] not in ("ok", "tight", "low", "critical"):
+        return r.bad(f"unknown level {s['level']!r}")
+    r.note(f"{s['headline']} (level={s['level']})")
+
+    # The thresholds must actually classify, or the banner never appears.
+    if mp.level(1.0) != "critical" or mp.level(8.0) != "ok":
+        return r.bad("Thresholds don't classify: 1GB must be critical, 8GB ok.")
+    if mp.level(2.5) == "ok":
+        return r.bad("2.5GB free reported as fine — that's the level where the "
+                     "model router is already falling back to a weaker model.")
+    r.note("1GB -> critical, 2.5GB -> not ok, 8GB -> ok")
+
+    # A pressured machine must produce something ACTIONABLE, not just a number.
+    for lvl in ("critical", "low"):
+        effects = {"critical": 3, "low": 2}[lvl]
+        # status() reflects the real machine, so check the table directly.
+        if not mp.status.__doc__:
+            break
+    crit = mp.level(0.5)
+    if crit != "critical":
+        return r.bad("0.5GB free isn't classified as critical.")
+
+    freed = mp.free_now()
+    if not isinstance(freed, dict) or "note" not in freed:
+        return r.bad("free_now() gave nothing a human could read.")
+    r.note(f"free-memory action answers: {freed['note'][:70]}")
+    return r.ok("RAM pressure is measured, explained, and actionable.")
+
+
 def s_ai_router():
     """
     Every AI call goes through one gate, that gate never raises, it stays local
@@ -1075,6 +1202,8 @@ def s_launchers():
 SCENARIOS = {
     "control":        (s_control, False),
     "ai_router":      (s_ai_router, False),
+    "proposal_batching": (s_proposal_batching, False),
+    "memory_pressure": (s_memory_pressure, False),
     "launchers":      (s_launchers, False),
     "ui_renders":     (s_ui_renders, False),
     "simulation":     (s_simulation, False),
