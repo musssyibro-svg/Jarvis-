@@ -58,22 +58,56 @@ app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
 #
 # So every request is checked before it reaches a route. Defaults are chosen so
 # an ordinary local run needs no configuration: see services/auth.py.
-@app.middleware("http")
-async def _gate(request, call_next):
-    from fastapi.responses import JSONResponse
-    from services import auth
-    if request.method == "OPTIONS":
-        return await call_next(request)     # preflight carries no action
-    try:
-        allowed, code, message = auth.authorize(
-            request.url.path, request.method, request.headers)
-    except Exception:
-        allowed = True                       # never lock the user out on a bug
-    if not allowed:
-        logger.warning(f"blocked {request.method} {request.url.path}: {message}")
-        return JSONResponse({"error": message, "blocked_by": "jarvis-auth"},
-                            status_code=code)
-    return await call_next(request)
+#
+# WRITTEN AS RAW ASGI, DELIBERATELY.
+#
+# The obvious version is @app.middleware("http"), which is Starlette's
+# BaseHTTPMiddleware. That wrapper consumes the response body through an
+# anyio task pair, and it is a long-standing trap for STREAMING responses:
+# /orchestrator/feed is an SSE stream that never ends, and the console
+# reconnects to it every few seconds. Each of those connections would sit
+# inside a middleware task for as long as it lived, and reconnect churn piles
+# them up until ordinary requests start to stall — which the UI then reports
+# as "Backend offline" while the backend is demonstrably up and working.
+#
+# Raw ASGI middleware forwards send/receive untouched, so a stream is a stream.
+class _Gate:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)   # websockets, lifespan
+        if scope.get("method") == "OPTIONS":
+            return await self.app(scope, receive, send)   # preflight acts on nothing
+
+        headers = {k.decode("latin-1").lower(): v.decode("latin-1")
+                   for k, v in scope.get("headers", [])}
+        try:
+            from services import auth
+            allowed, code, message = auth.authorize(
+                scope.get("path", ""), scope.get("method", "GET"), headers)
+        except Exception:
+            allowed = True          # never lock the user out because of a bug here
+
+        if allowed:
+            return await self.app(scope, receive, send)
+
+        logger.warning(f"blocked {scope.get('method')} {scope.get('path')}: {message}")
+        body = json.dumps({"error": message, "blocked_by": "jarvis-auth"}).encode()
+        # CORS headers by hand: this response never reaches CORSMiddleware, and
+        # without them the browser reports an opaque CORS failure instead of the
+        # explanation above — hiding the very message that says what to do.
+        origin = headers.get("origin", "")
+        out = [(b"content-type", b"application/json")]
+        if origin:
+            out += [(b"access-control-allow-origin", origin.encode()),
+                    (b"access-control-allow-credentials", b"true")]
+        await send({"type": "http.response.start", "status": code, "headers": out})
+        await send({"type": "http.response.body", "body": body})
+
+
+app.add_middleware(_Gate)
 
 
 @app.get("/auth/status", tags=["Auth"])

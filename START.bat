@@ -29,13 +29,17 @@ REM redirect into a folder called \dev, that folder does not exist, so the
 REM redirect fails, so the whole command fails and the && never runs. PY was
 REM therefore never set, and the launcher announced "Python is not installed"
 REM on a machine with a perfectly working Python 3.11.
+REM Every candidate is tested by RUNNING it, never by asking whether the
+REM command exists. "where py" succeeds whenever the Python launcher is
+REM installed, but the launcher can point at an interpreter that is gone:
+REM on this machine "py -3" resolved to C:\Python314\python.exe and died
+REM with "Unable to create process", while plain "python" was a healthy
+REM 3.11.9 sitting right there on PATH. Existence is not the question.
 set "PY="
-where py >nul 2>&1 && set "PY=py -3"
-if not defined PY ( where python >nul 2>&1 && set "PY=python" )
-if not defined PY ( where python3 >nul 2>&1 && set "PY=python3" )
-REM Last resort: `where` can miss a Python that runs perfectly well (a Store
-REM alias, an odd PATH). Ask Python itself before declaring it missing.
-if not defined PY ( python --version >nul 2>&1 && set "PY=python" )
+python --version >nul 2>&1 && set "PY=python"
+if not defined PY ( py -3 --version >nul 2>&1 && set "PY=py -3" )
+if not defined PY ( python3 --version >nul 2>&1 && set "PY=python3" )
+if not defined PY ( py --version >nul 2>&1 && set "PY=py" )
 if not defined PY (
   echo.
   echo  Python is not installed, or not on PATH.

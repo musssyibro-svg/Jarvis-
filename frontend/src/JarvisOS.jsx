@@ -87,6 +87,9 @@ export default function JarvisOS() {
   const [history, setHistory] = useState([]);   // rolling CPU/RAM samples
   const [ctrl, setCtrl] = useState(null);       // pause/resume/cancel state
   const [why, setWhy] = useState(null);         // "why are you doing this?"
+  /* Why we can't see the backend, when we can't. null = fine.
+     "Offline" on its own is a guess; this records what actually came back. */
+  const [link, setLink] = useState(null);
   const sseRef = useRef(null);
 
   /* Pause / Resume / Cancel. Optimistic so the button responds immediately,
@@ -127,8 +130,31 @@ export default function JarvisOS() {
     const load = async () => {
       try {
         const r = await fetch(`${API}/os/state?timeline=40`);
+        if (!r.ok && alive) {
+          // A non-200 is NOT "offline". The backend answered — it refused.
+          // Saying "Offline" here sent a whole debugging session after a
+          // backend that was demonstrably running, scanning job boards and
+          // drafting proposals at the time. Report what actually happened.
+          const body = await r.json().catch(() => ({}));
+          setLink({
+            state: r.status === 403 ? "blocked"
+                 : r.status === 401 ? "needs-token"
+                 : r.status >= 500 ? "erroring" : "refused",
+            code: r.status,
+            detail: body.error || body.detail || `HTTP ${r.status}`,
+            fix: r.status === 403
+              ? `Open the UI at http://localhost:5173 or http://127.0.0.1:5173. `
+                + `A different address is blocked on purpose so a web page can't `
+                + `drive your keyboard.`
+              : r.status === 401
+              ? "This Jarvis wants a token. It's in backend/.jarvis_token."
+              : "Look at the backend window for the error.",
+          });
+          return;
+        }
         if (r.ok && alive) {
           const d = await r.json();
+          setLink(null);
           setOs(d);
           // keep a rolling window of real samples for the vitals graph
           setHistory((h) => [...h, { cpu: d.system?.cpu ?? 0, ram: d.system?.ram ?? 0,
@@ -141,7 +167,18 @@ export default function JarvisOS() {
             ...e, _t: eventTime(e), _k: `seed_${e.at || e.ts}_${Math.random()}`,
           }))));
         }
-      } catch { /* backend down — the strip shows it */ }
+      } catch (e) {
+        // Genuinely unreachable: nothing listening, or the browser blocked it
+        // before it left. Those are different problems with different fixes.
+        if (alive) setLink({
+          state: "unreachable",
+          detail: String(e?.message || e),
+          fix: `Nothing answered at ${API}. Check the "Jarvis Backend" window is `
+             + `still open, then reload. If it is open and this persists, the `
+             + `browser is blocking the request — open the UI from localhost, `
+             + `not from a network address.`,
+        });
+      }
     };
     load();
     const t = setInterval(load, 6000);
@@ -227,7 +264,16 @@ export default function JarvisOS() {
 
   const online = !!os;
   const working = !!os?.status?.running || busy;
-  const statusLabel = busy ? "Thinking" : (os?.status?.label || (online ? "Ready" : "Offline"));
+  // Name the actual problem. "Offline" for a backend that answered with 403 is
+  // a false statement, and it cost a long debugging session chasing a backend
+  // that was up and drafting proposals the whole time.
+  const LINK_LABEL = {
+    blocked: "Blocked", "needs-token": "Needs token",
+    erroring: "Backend error", refused: "Refused", unreachable: "Offline",
+  };
+  const statusLabel = busy ? "Thinking"
+    : (os?.status?.label || (online ? "Ready"
+       : (LINK_LABEL[link?.state] || "Connecting…")));
   const statusColor = !online ? T.red : working ? T.amber : T.green;
 
   return (
@@ -259,6 +305,27 @@ export default function JarvisOS() {
             : <span style={{ color: T.red }}>ollama offline</span>}
         </div>
       </header>
+
+      {/*
+        When the console can't see the backend, say exactly what happened and
+        what to do about it. A red dot labelled "Offline" is a diagnosis, and it
+        was the wrong one: the backend was up, logged into five freelance sites
+        and drafting proposals, while this said it was offline.
+      */}
+      {!online && link && (
+        <div style={{ flexShrink: 0, padding: "10px 18px", fontSize: 12.5,
+                      background: "rgba(255,95,109,0.09)",
+                      borderBottom: `1px solid rgba(255,95,109,0.3)` }}>
+          <span style={{ color: T.red, fontWeight: 600 }}>
+            Can't reach the backend
+            {link.code ? ` — it answered ${link.code}` : ""}
+          </span>
+          <span style={{ color: T.text }}> · {link.detail}</span>
+          {link.fix && (
+            <div style={{ color: T.dim, marginTop: 4 }}>{link.fix}</div>
+          )}
+        </div>
+      )}
 
       {/*
         "What is it doing RIGHT NOW?" — the single most requested thing.

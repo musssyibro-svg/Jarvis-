@@ -142,8 +142,13 @@ async function main() {
     }
   });
 
-  await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
-  await page.waitForTimeout(2500);
+  // NOT networkidle. The console holds an SSE connection to /orchestrator/feed
+  // that never closes, so the network is never idle while the backend is up —
+  // waiting for that meant this check only worked when the backend was DOWN,
+  // which is the least interesting case. Load the document, then give React a
+  // moment to mount.
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await page.waitForTimeout(3000);
 
   const mounted = await page.evaluate(
     () => document.getElementById("root")?.children.length ?? -1);

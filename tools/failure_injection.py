@@ -932,6 +932,16 @@ def s_launchers():
         for i, line in enumerate(text.split("\r\n"), 1):
             s = line.strip()
 
+            # Choosing an interpreter because the COMMAND EXISTS is not the
+            # same as choosing one that WORKS. "where py" succeeds whenever the
+            # Python launcher is installed, but on the user's machine "py -3"
+            # pointed at a C:\Python314 that was gone and died with "Unable to
+            # create process" — while plain "python" was a healthy 3.11 on PATH.
+            if re.search(r'^where\s+\S+\s+.*&&\s*set\s+"?PY=', s, re.I):
+                problems.append(f"{name}:{i}: picks Python from `where` alone. "
+                                f"Test it by running it: "
+                                f"`python --version >nul 2>&1 && set \"PY=python\"`")
+
             # Unix redirection.
             if "/dev/null" in s:
                 problems.append(f"{name}:{i}: /dev/null is Unix; cmd needs "

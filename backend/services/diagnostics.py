@@ -156,22 +156,60 @@ def _check_ollama_models() -> list[dict]:
         # Is the model actually in use big enough to be useful? A 0.5B model
         # cannot reliably follow multi-constraint prompts — it's the single
         # biggest reason Jarvis "feels dumb" even when the plumbing is correct.
+        # Ask the ROUTER, which is what actually answers requests, not the
+        # configured preference. These two disagreed in a real report — the
+        # diagnosis said "in use: qwen2.5:3b" while the live state said the
+        # fast model was qwen2.5:0.5b — and a report that contradicts itself
+        # is worse than one that admits it doesn't know.
+        active, free_ram, why_small = "", None, ""
         try:
-            from services.ollama_manager import resolve_models
-            active = (resolve_models().get("resolved") or {}).get("fast") or ""
+            from services import model_router
+            chosen = model_router.pick("chat")
+            active = chosen.get("model") or ""
+            free_ram = chosen.get("free_ram_gb")
+            why_small = chosen.get("warning") or ""
         except Exception:
-            active = ""
+            try:
+                from services.ollama_manager import resolve_models
+                active = (resolve_models().get("resolved") or {}).get("fast") or ""
+            except Exception:
+                active = ""
         size = _param_size(active)
         too_small = size is not None and size < 1.0
+
+        # Is something better already installed? If so, RAM is the problem, not
+        # a missing download, and the fix is completely different.
+        better = ""
+        if too_small:
+            try:
+                from services.os_state import _better_installed
+                better = _better_installed(models)
+            except Exception:
+                pass
+
+        if not too_small:
+            detail = active or "unknown"
+            fix = None
+        elif better:
+            detail = (f"{active} (~{size}B) is answering, even though {better} is "
+                      f"installed — only {free_ram}GB of RAM is free, and the "
+                      f"bigger model doesn't fit.")
+            fix = "close some apps to free RAM; Jarvis switches back on its own"
+        else:
+            detail = (f"{active} — about {size}B parameters. Too small to follow "
+                      f"detailed instructions reliably.")
+            fix = "ollama pull qwen2.5:3b"
+
         out.append({
-            "group": "Ollama", "name": "Model size (in use)", "ok": not too_small,
-            "detail": (f"{active} — about {size}B parameters. Too small to follow "
-                       f"detailed instructions reliably." if too_small
-                       else (active or "unknown")),
+            "group": "Ollama", "name": "Model actually answering", "ok": not too_small,
+            "detail": detail,
             "why": "how smart Jarvis's answers and proposals are",
-            "fix": None if not too_small else
-                   "ollama pull qwen2.5:3b   (then set OLLAMA_FAST_MODEL=qwen2.5:3b)",
+            "fix": fix,
         })
+        if why_small and too_small:
+            out.append({"group": "Ollama", "name": "Why that model",
+                        "ok": True, "detail": why_small,
+                        "why": "the router picks what fits in free RAM", "fix": None})
     except Exception as e:
         out.append({"group": "Ollama", "name": "Ollama server", "ok": False,
                     "detail": f"not reachable ({type(e).__name__})",

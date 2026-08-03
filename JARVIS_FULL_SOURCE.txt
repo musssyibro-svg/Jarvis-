@@ -9071,22 +9071,56 @@ app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
 #
 # So every request is checked before it reaches a route. Defaults are chosen so
 # an ordinary local run needs no configuration: see services/auth.py.
-@app.middleware("http")
-async def _gate(request, call_next):
-    from fastapi.responses import JSONResponse
-    from services import auth
-    if request.method == "OPTIONS":
-        return await call_next(request)     # preflight carries no action
-    try:
-        allowed, code, message = auth.authorize(
-            request.url.path, request.method, request.headers)
-    except Exception:
-        allowed = True                       # never lock the user out on a bug
-    if not allowed:
-        logger.warning(f"blocked {request.method} {request.url.path}: {message}")
-        return JSONResponse({"error": message, "blocked_by": "jarvis-auth"},
-                            status_code=code)
-    return await call_next(request)
+#
+# WRITTEN AS RAW ASGI, DELIBERATELY.
+#
+# The obvious version is @app.middleware("http"), which is Starlette's
+# BaseHTTPMiddleware. That wrapper consumes the response body through an
+# anyio task pair, and it is a long-standing trap for STREAMING responses:
+# /orchestrator/feed is an SSE stream that never ends, and the console
+# reconnects to it every few seconds. Each of those connections would sit
+# inside a middleware task for as long as it lived, and reconnect churn piles
+# them up until ordinary requests start to stall — which the UI then reports
+# as "Backend offline" while the backend is demonstrably up and working.
+#
+# Raw ASGI middleware forwards send/receive untouched, so a stream is a stream.
+class _Gate:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)   # websockets, lifespan
+        if scope.get("method") == "OPTIONS":
+            return await self.app(scope, receive, send)   # preflight acts on nothing
+
+        headers = {k.decode("latin-1").lower(): v.decode("latin-1")
+                   for k, v in scope.get("headers", [])}
+        try:
+            from services import auth
+            allowed, code, message = auth.authorize(
+                scope.get("path", ""), scope.get("method", "GET"), headers)
+        except Exception:
+            allowed = True          # never lock the user out because of a bug here
+
+        if allowed:
+            return await self.app(scope, receive, send)
+
+        logger.warning(f"blocked {scope.get('method')} {scope.get('path')}: {message}")
+        body = json.dumps({"error": message, "blocked_by": "jarvis-auth"}).encode()
+        # CORS headers by hand: this response never reaches CORSMiddleware, and
+        # without them the browser reports an opaque CORS failure instead of the
+        # explanation above — hiding the very message that says what to do.
+        origin = headers.get("origin", "")
+        out = [(b"content-type", b"application/json")]
+        if origin:
+            out += [(b"access-control-allow-origin", origin.encode()),
+                    (b"access-control-allow-credentials", b"true")]
+        await send({"type": "http.response.start", "status": code, "headers": out})
+        await send({"type": "http.response.body", "body": body})
+
+
+app.add_middleware(_Gate)
 
 
 @app.get("/auth/status", tags=["Auth"])
@@ -18015,22 +18049,60 @@ def _check_ollama_models() -> list[dict]:
         # Is the model actually in use big enough to be useful? A 0.5B model
         # cannot reliably follow multi-constraint prompts — it's the single
         # biggest reason Jarvis "feels dumb" even when the plumbing is correct.
+        # Ask the ROUTER, which is what actually answers requests, not the
+        # configured preference. These two disagreed in a real report — the
+        # diagnosis said "in use: qwen2.5:3b" while the live state said the
+        # fast model was qwen2.5:0.5b — and a report that contradicts itself
+        # is worse than one that admits it doesn't know.
+        active, free_ram, why_small = "", None, ""
         try:
-            from services.ollama_manager import resolve_models
-            active = (resolve_models().get("resolved") or {}).get("fast") or ""
+            from services import model_router
+            chosen = model_router.pick("chat")
+            active = chosen.get("model") or ""
+            free_ram = chosen.get("free_ram_gb")
+            why_small = chosen.get("warning") or ""
         except Exception:
-            active = ""
+            try:
+                from services.ollama_manager import resolve_models
+                active = (resolve_models().get("resolved") or {}).get("fast") or ""
+            except Exception:
+                active = ""
         size = _param_size(active)
         too_small = size is not None and size < 1.0
+
+        # Is something better already installed? If so, RAM is the problem, not
+        # a missing download, and the fix is completely different.
+        better = ""
+        if too_small:
+            try:
+                from services.os_state import _better_installed
+                better = _better_installed(models)
+            except Exception:
+                pass
+
+        if not too_small:
+            detail = active or "unknown"
+            fix = None
+        elif better:
+            detail = (f"{active} (~{size}B) is answering, even though {better} is "
+                      f"installed — only {free_ram}GB of RAM is free, and the "
+                      f"bigger model doesn't fit.")
+            fix = "close some apps to free RAM; Jarvis switches back on its own"
+        else:
+            detail = (f"{active} — about {size}B parameters. Too small to follow "
+                      f"detailed instructions reliably.")
+            fix = "ollama pull qwen2.5:3b"
+
         out.append({
-            "group": "Ollama", "name": "Model size (in use)", "ok": not too_small,
-            "detail": (f"{active} — about {size}B parameters. Too small to follow "
-                       f"detailed instructions reliably." if too_small
-                       else (active or "unknown")),
+            "group": "Ollama", "name": "Model actually answering", "ok": not too_small,
+            "detail": detail,
             "why": "how smart Jarvis's answers and proposals are",
-            "fix": None if not too_small else
-                   "ollama pull qwen2.5:3b   (then set OLLAMA_FAST_MODEL=qwen2.5:3b)",
+            "fix": fix,
         })
+        if why_small and too_small:
+            out.append({"group": "Ollama", "name": "Why that model",
+                        "ok": True, "detail": why_small,
+                        "why": "the router picks what fits in free RAM", "fix": None})
     except Exception as e:
         out.append({"group": "Ollama", "name": "Ollama server", "ok": False,
                     "detail": f"not reachable ({type(e).__name__})",
@@ -21645,10 +21717,48 @@ def _model_subsystem(ollama: dict) -> dict:
     except Exception:
         size = None
     if size is not None and size < 1.0:
+        # Say WHY it's using the small one. Telling someone to `ollama pull
+        # qwen2.5:3b` when qwen2.5:3b is already sitting on their disk is worse
+        # than saying nothing: it sends them off to fix a problem they don't
+        # have, and hides the one they do. The router only fell back to a 0.5B
+        # model because nothing bigger fits in the free RAM right now.
+        better = _better_installed(ollama.get("models") or [])
+        try:
+            from services.model_router import free_ram_gb
+            free = round(free_ram_gb(), 1)
+        except Exception:
+            free = None
+        if better and free is not None:
+            return {"state": "starved", "ok": False,
+                    "detail": f"Using {name} (~{size}B) because only {free}GB of RAM "
+                              f"is free. You already have {better} — close some apps "
+                              f"and Jarvis will pick it up automatically.",
+                    "fix": "close a few apps, or restart Jarvis after closing them"}
+        if better:
+            return {"state": "starved", "ok": False,
+                    "detail": f"Using {name} (~{size}B) although {better} is "
+                              f"installed — not enough free RAM for the bigger one."}
         return {"state": "too small", "ok": False,
                 "detail": f"{name} — only ~{size}B parameters. Run "
                           f"'ollama pull qwen2.5:3b' for noticeably smarter replies."}
     return {"state": "online", "detail": name, "ok": True}
+
+
+def _better_installed(models: list) -> str:
+    """The best model already on disk that would beat the one in use."""
+    try:
+        from services.model_router import _profile
+    except Exception:
+        return ""
+    best, best_q = "", 3.0        # only mention something meaningfully better
+    for m in models:
+        try:
+            _gb, q = _profile(m)
+        except Exception:
+            continue
+        if q > best_q:
+            best, best_q = m, q
+    return best
 
 
 _STAGE_LABELS = {
@@ -26267,6 +26377,9 @@ export default function JarvisOS() {
   const [history, setHistory] = useState([]);   // rolling CPU/RAM samples
   const [ctrl, setCtrl] = useState(null);       // pause/resume/cancel state
   const [why, setWhy] = useState(null);         // "why are you doing this?"
+  /* Why we can't see the backend, when we can't. null = fine.
+     "Offline" on its own is a guess; this records what actually came back. */
+  const [link, setLink] = useState(null);
   const sseRef = useRef(null);
 
   /* Pause / Resume / Cancel. Optimistic so the button responds immediately,
@@ -26307,8 +26420,31 @@ export default function JarvisOS() {
     const load = async () => {
       try {
         const r = await fetch(`${API}/os/state?timeline=40`);
+        if (!r.ok && alive) {
+          // A non-200 is NOT "offline". The backend answered — it refused.
+          // Saying "Offline" here sent a whole debugging session after a
+          // backend that was demonstrably running, scanning job boards and
+          // drafting proposals at the time. Report what actually happened.
+          const body = await r.json().catch(() => ({}));
+          setLink({
+            state: r.status === 403 ? "blocked"
+                 : r.status === 401 ? "needs-token"
+                 : r.status >= 500 ? "erroring" : "refused",
+            code: r.status,
+            detail: body.error || body.detail || `HTTP ${r.status}`,
+            fix: r.status === 403
+              ? `Open the UI at http://localhost:5173 or http://127.0.0.1:5173. `
+                + `A different address is blocked on purpose so a web page can't `
+                + `drive your keyboard.`
+              : r.status === 401
+              ? "This Jarvis wants a token. It's in backend/.jarvis_token."
+              : "Look at the backend window for the error.",
+          });
+          return;
+        }
         if (r.ok && alive) {
           const d = await r.json();
+          setLink(null);
           setOs(d);
           // keep a rolling window of real samples for the vitals graph
           setHistory((h) => [...h, { cpu: d.system?.cpu ?? 0, ram: d.system?.ram ?? 0,
@@ -26321,7 +26457,18 @@ export default function JarvisOS() {
             ...e, _t: eventTime(e), _k: `seed_${e.at || e.ts}_${Math.random()}`,
           }))));
         }
-      } catch { /* backend down — the strip shows it */ }
+      } catch (e) {
+        // Genuinely unreachable: nothing listening, or the browser blocked it
+        // before it left. Those are different problems with different fixes.
+        if (alive) setLink({
+          state: "unreachable",
+          detail: String(e?.message || e),
+          fix: `Nothing answered at ${API}. Check the "Jarvis Backend" window is `
+             + `still open, then reload. If it is open and this persists, the `
+             + `browser is blocking the request — open the UI from localhost, `
+             + `not from a network address.`,
+        });
+      }
     };
     load();
     const t = setInterval(load, 6000);
@@ -26407,7 +26554,16 @@ export default function JarvisOS() {
 
   const online = !!os;
   const working = !!os?.status?.running || busy;
-  const statusLabel = busy ? "Thinking" : (os?.status?.label || (online ? "Ready" : "Offline"));
+  // Name the actual problem. "Offline" for a backend that answered with 403 is
+  // a false statement, and it cost a long debugging session chasing a backend
+  // that was up and drafting proposals the whole time.
+  const LINK_LABEL = {
+    blocked: "Blocked", "needs-token": "Needs token",
+    erroring: "Backend error", refused: "Refused", unreachable: "Offline",
+  };
+  const statusLabel = busy ? "Thinking"
+    : (os?.status?.label || (online ? "Ready"
+       : (LINK_LABEL[link?.state] || "Connecting…")));
   const statusColor = !online ? T.red : working ? T.amber : T.green;
 
   return (
@@ -26439,6 +26595,27 @@ export default function JarvisOS() {
             : <span style={{ color: T.red }}>ollama offline</span>}
         </div>
       </header>
+
+      {/*
+        When the console can't see the backend, say exactly what happened and
+        what to do about it. A red dot labelled "Offline" is a diagnosis, and it
+        was the wrong one: the backend was up, logged into five freelance sites
+        and drafting proposals, while this said it was offline.
+      */}
+      {!online && link && (
+        <div style={{ flexShrink: 0, padding: "10px 18px", fontSize: 12.5,
+                      background: "rgba(255,95,109,0.09)",
+                      borderBottom: `1px solid rgba(255,95,109,0.3)` }}>
+          <span style={{ color: T.red, fontWeight: 600 }}>
+            Can't reach the backend
+            {link.code ? ` — it answered ${link.code}` : ""}
+          </span>
+          <span style={{ color: T.text }}> · {link.detail}</span>
+          {link.fix && (
+            <div style={{ color: T.dim, marginTop: 4 }}>{link.fix}</div>
+          )}
+        </div>
+      )}
 
       {/*
         "What is it doing RIGHT NOW?" — the single most requested thing.
@@ -30104,13 +30281,17 @@ REM redirect into a folder called \dev, that folder does not exist, so the
 REM redirect fails, so the whole command fails and the && never runs. PY was
 REM therefore never set, and the launcher announced "Python is not installed"
 REM on a machine with a perfectly working Python 3.11.
+REM Every candidate is tested by RUNNING it, never by asking whether the
+REM command exists. "where py" succeeds whenever the Python launcher is
+REM installed, but the launcher can point at an interpreter that is gone:
+REM on this machine "py -3" resolved to C:\Python314\python.exe and died
+REM with "Unable to create process", while plain "python" was a healthy
+REM 3.11.9 sitting right there on PATH. Existence is not the question.
 set "PY="
-where py >nul 2>&1 && set "PY=py -3"
-if not defined PY ( where python >nul 2>&1 && set "PY=python" )
-if not defined PY ( where python3 >nul 2>&1 && set "PY=python3" )
-REM Last resort: `where` can miss a Python that runs perfectly well (a Store
-REM alias, an odd PATH). Ask Python itself before declaring it missing.
-if not defined PY ( python --version >nul 2>&1 && set "PY=python" )
+python --version >nul 2>&1 && set "PY=python"
+if not defined PY ( py -3 --version >nul 2>&1 && set "PY=py -3" )
+if not defined PY ( python3 --version >nul 2>&1 && set "PY=python3" )
+if not defined PY ( py --version >nul 2>&1 && set "PY=py" )
 if not defined PY (
   echo.
   echo  [STOP] Python is not on PATH.
@@ -30521,9 +30702,13 @@ REM ============================================================
 title Jarvis - Failure Injection
 cd /d "%~dp0"
 
+REM Test each candidate by RUNNING it. "where py" succeeds whenever the
+REM Python launcher is installed, even when it points at an interpreter
+REM that has been uninstalled.
 set "PY="
-where py >nul 2>nul && set "PY=py -3"
-if not defined PY ( where python >nul 2>nul && set "PY=python" )
+python --version >nul 2>&1 && set "PY=python"
+if not defined PY ( py -3 --version >nul 2>&1 && set "PY=py -3" )
+if not defined PY ( python3 --version >nul 2>&1 && set "PY=python3" )
 if not defined PY (
   echo  [X] Python not found on PATH.
   pause & exit /b 1
@@ -30582,13 +30767,17 @@ REM redirect into a folder called \dev, that folder does not exist, so the
 REM redirect fails, so the whole command fails and the && never runs. PY was
 REM therefore never set, and the launcher announced "Python is not installed"
 REM on a machine with a perfectly working Python 3.11.
+REM Every candidate is tested by RUNNING it, never by asking whether the
+REM command exists. "where py" succeeds whenever the Python launcher is
+REM installed, but the launcher can point at an interpreter that is gone:
+REM on this machine "py -3" resolved to C:\Python314\python.exe and died
+REM with "Unable to create process", while plain "python" was a healthy
+REM 3.11.9 sitting right there on PATH. Existence is not the question.
 set "PY="
-where py >nul 2>&1 && set "PY=py -3"
-if not defined PY ( where python >nul 2>&1 && set "PY=python" )
-if not defined PY ( where python3 >nul 2>&1 && set "PY=python3" )
-REM Last resort: `where` can miss a Python that runs perfectly well (a Store
-REM alias, an odd PATH). Ask Python itself before declaring it missing.
-if not defined PY ( python --version >nul 2>&1 && set "PY=python" )
+python --version >nul 2>&1 && set "PY=python"
+if not defined PY ( py -3 --version >nul 2>&1 && set "PY=py -3" )
+if not defined PY ( python3 --version >nul 2>&1 && set "PY=python3" )
+if not defined PY ( py --version >nul 2>&1 && set "PY=py" )
 if not defined PY (
   echo.
   echo  Python is not installed, or not on PATH.
@@ -30734,13 +30923,17 @@ REM redirect into a folder called \dev, that folder does not exist, so the
 REM redirect fails, so the whole command fails and the && never runs. PY was
 REM therefore never set, and the launcher announced "Python is not installed"
 REM on a machine with a perfectly working Python 3.11.
+REM Every candidate is tested by RUNNING it, never by asking whether the
+REM command exists. "where py" succeeds whenever the Python launcher is
+REM installed, but the launcher can point at an interpreter that is gone:
+REM on this machine "py -3" resolved to C:\Python314\python.exe and died
+REM with "Unable to create process", while plain "python" was a healthy
+REM 3.11.9 sitting right there on PATH. Existence is not the question.
 set "PY="
-where py >nul 2>&1 && set "PY=py -3"
-if not defined PY ( where python >nul 2>&1 && set "PY=python" )
-if not defined PY ( where python3 >nul 2>&1 && set "PY=python3" )
-REM Last resort: `where` can miss a Python that runs perfectly well (a Store
-REM alias, an odd PATH). Ask Python itself before declaring it missing.
-if not defined PY ( python --version >nul 2>&1 && set "PY=python" )
+python --version >nul 2>&1 && set "PY=python"
+if not defined PY ( py -3 --version >nul 2>&1 && set "PY=py -3" )
+if not defined PY ( python3 --version >nul 2>&1 && set "PY=python3" )
+if not defined PY ( py --version >nul 2>&1 && set "PY=py" )
 if not defined PY (
   echo.
   echo   Python is not installed, or not on PATH.
@@ -30758,7 +30951,7 @@ pause
 # FILE 169/177: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-02T19:21:41.373199
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-03T11:33:53.372848
 platform: linux  python: 3.11.15
 17 passed · 0 failed · 1 skipped
 
@@ -30840,7 +31033,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785698501' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1785756833' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -32460,6 +32653,16 @@ def s_launchers():
         text = raw.decode("utf-8", "replace")
         for i, line in enumerate(text.split("\r\n"), 1):
             s = line.strip()
+
+            # Choosing an interpreter because the COMMAND EXISTS is not the
+            # same as choosing one that WORKS. "where py" succeeds whenever the
+            # Python launcher is installed, but on the user's machine "py -3"
+            # pointed at a C:\Python314 that was gone and died with "Unable to
+            # create process" — while plain "python" was a healthy 3.11 on PATH.
+            if re.search(r'^where\s+\S+\s+.*&&\s*set\s+"?PY=', s, re.I):
+                problems.append(f"{name}:{i}: picks Python from `where` alone. "
+                                f"Test it by running it: "
+                                f"`python --version >nul 2>&1 && set \"PY=python\"`")
 
             # Unix redirection.
             if "/dev/null" in s:

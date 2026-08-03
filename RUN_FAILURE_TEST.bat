@@ -12,9 +12,13 @@ REM ============================================================
 title Jarvis - Failure Injection
 cd /d "%~dp0"
 
+REM Test each candidate by RUNNING it. "where py" succeeds whenever the
+REM Python launcher is installed, even when it points at an interpreter
+REM that has been uninstalled.
 set "PY="
-where py >nul 2>nul && set "PY=py -3"
-if not defined PY ( where python >nul 2>nul && set "PY=python" )
+python --version >nul 2>&1 && set "PY=python"
+if not defined PY ( py -3 --version >nul 2>&1 && set "PY=py -3" )
+if not defined PY ( python3 --version >nul 2>&1 && set "PY=python3" )
 if not defined PY (
   echo  [X] Python not found on PATH.
   pause & exit /b 1

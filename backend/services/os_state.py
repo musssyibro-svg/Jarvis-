@@ -186,10 +186,48 @@ def _model_subsystem(ollama: dict) -> dict:
     except Exception:
         size = None
     if size is not None and size < 1.0:
+        # Say WHY it's using the small one. Telling someone to `ollama pull
+        # qwen2.5:3b` when qwen2.5:3b is already sitting on their disk is worse
+        # than saying nothing: it sends them off to fix a problem they don't
+        # have, and hides the one they do. The router only fell back to a 0.5B
+        # model because nothing bigger fits in the free RAM right now.
+        better = _better_installed(ollama.get("models") or [])
+        try:
+            from services.model_router import free_ram_gb
+            free = round(free_ram_gb(), 1)
+        except Exception:
+            free = None
+        if better and free is not None:
+            return {"state": "starved", "ok": False,
+                    "detail": f"Using {name} (~{size}B) because only {free}GB of RAM "
+                              f"is free. You already have {better} — close some apps "
+                              f"and Jarvis will pick it up automatically.",
+                    "fix": "close a few apps, or restart Jarvis after closing them"}
+        if better:
+            return {"state": "starved", "ok": False,
+                    "detail": f"Using {name} (~{size}B) although {better} is "
+                              f"installed — not enough free RAM for the bigger one."}
         return {"state": "too small", "ok": False,
                 "detail": f"{name} — only ~{size}B parameters. Run "
                           f"'ollama pull qwen2.5:3b' for noticeably smarter replies."}
     return {"state": "online", "detail": name, "ok": True}
+
+
+def _better_installed(models: list) -> str:
+    """The best model already on disk that would beat the one in use."""
+    try:
+        from services.model_router import _profile
+    except Exception:
+        return ""
+    best, best_q = "", 3.0        # only mention something meaningfully better
+    for m in models:
+        try:
+            _gb, q = _profile(m)
+        except Exception:
+            continue
+        if q > best_q:
+            best, best_q = m, q
+    return best
 
 
 _STAGE_LABELS = {
