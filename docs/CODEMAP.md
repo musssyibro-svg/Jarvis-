@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-159 source files · 579 public symbols
+162 source files · 597 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -52,7 +52,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/agents/base_agent.py`
 
 **`browser_agent.py`** — persistent browser sessions, login-once, reuse forever.
-  <br>`navigate`, `current_page_text`, `reap`, `close_domain`, `status`, `BrowserAgent`
+  <br>`classify_browser_error`, `with_retry`, `navigate`, `current_page_text`, `reap`, `close_domain`, `status`, `BrowserAgent`
   <br>`backend/agents/browser_agent.py`
 
 **`commander.py`** — CommanderAgent: the single entry point for ALL Jarvis actions.
@@ -503,6 +503,14 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`pytest_configure`
   <br>`backend/tests/conftest.py`
 
+**`test_app_detection.py`** — "It opened QQ the first time but never again."
+  <br>`test_a_window_title_alone_is_not_evidence`, `test_already_running_actually_raises_the_window`, `test_unraisable_window_is_reported_not_hidden`
+  <br>`backend/tests/test_app_detection.py`
+
+**`test_click_verification.py`** — A click "succeeds" the moment pyautogui returns — which means the mouse moved,
+  <br>`test_a_click_that_changes_nothing_is_not_verified`, `test_a_click_that_changes_the_screen_is_verified`, `test_a_click_that_opens_a_window_is_verified_even_if_pixels_match`, `test_no_eyes_is_reported_as_doubt_not_as_failure`, `test_an_observed_dead_click_does_fail_the_step`, `test_the_comparison_needs_a_real_difference`
+  <br>`backend/tests/test_click_verification.py`
+
 **`test_config_store.py`** — Settings must save on a database that has never been initialised.
   <br>`test_set_succeeds_on_an_uninitialised_database`, `test_the_value_is_actually_readable_afterwards`, `test_get_still_falls_back_when_nothing_is_stored`, `test_a_failed_write_reports_it_rather_than_pretending`
   <br>`backend/tests/test_config_store.py`
@@ -526,6 +534,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`test_security.py`** — Regression tests for the things that make Jarvis dangerous if they slip.
   <br>`test_dns_rebinding_host_is_refused`, `test_health_is_open_so_the_launcher_can_wait_for_it`, `test_anything_that_types_is_a_control_path`, `test_effective_settings_never_expose_a_key`, `test_a_masked_value_is_still_recognisable`, `test_demonstration_emits_a_placeholder_not_the_keystrokes`, `test_simulating_a_task_executes_nothing`
   <br>`backend/tests/test_security.py`
+
+**`test_submission_confirmation.py`** — "I press approve all but I don't know if it sent it."
+  <br>`FakePage`, `verdict`, `test_a_click_that_did_nothing_is_never_called_submitted`, `test_form_closing_and_navigating_counts_as_sent_without_words`, `test_refusal_wins_over_a_success_word_in_the_same_page`, `test_a_submission_is_never_retried`, `test_the_unchanged_verdict_reaches_the_user_as_a_failure`
+  <br>`backend/tests/test_submission_confirmation.py`
 
 ## `frontend/`
 

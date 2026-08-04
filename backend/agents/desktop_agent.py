@@ -146,6 +146,56 @@ def _clipboard_restore(saved) -> None:
         pass
 
 
+# ── Did anything actually happen? ────────────────────────────────────────────
+#
+# A click "succeeds" the moment pyautogui returns, which tells you the mouse
+# moved — not that anything responded. Clicking a disabled button, a stale
+# coordinate, or a window that closed half a second ago all return success.
+# Everything downstream then proceeds as if the UI had changed.
+#
+# So: look at a small patch of screen around the click, before and after. If
+# NOTHING changed, the click landed on nothing. Cheap on purpose — a 240px box
+# downscaled to a thumbnail, not a full screengrab: this runs after every click
+# on a 16 GB machine, and a full-screen capture per click is how vision once
+# cost 288 seconds.
+
+_OBSERVE_BOX = 240          # pixels around the point we watch
+_OBSERVE_THUMB = 24         # downscale to this before comparing
+_OBSERVE_CHANGED = 6        # mean per-pixel delta that counts as "something moved"
+
+
+def _peek(x: int | None, y: int | None):
+    """A tiny fingerprint of the screen near (x, y). None if we can't look."""
+    from agents.vision_agent import HAS_MSS, HAS_PIL
+    if not (HAS_MSS and HAS_PIL):
+        return None
+    try:
+        import mss
+        from PIL import Image
+        with mss.mss() as sct:
+            mon = sct.monitors[0]
+            if x is None or y is None:
+                box = mon
+            else:
+                half = _OBSERVE_BOX // 2
+                box = {"left": max(mon["left"], int(x) - half),
+                       "top": max(mon["top"], int(y) - half),
+                       "width": _OBSERVE_BOX, "height": _OBSERVE_BOX}
+            raw = sct.grab(box)
+        img = Image.frombytes("RGB", raw.size, raw.rgb).convert("L")
+        return img.resize((_OBSERVE_THUMB, _OBSERVE_THUMB)).tobytes()
+    except Exception:
+        return None
+
+
+def _changed(before, after) -> bool | None:
+    """True/False if we could compare, None if we couldn't see."""
+    if before is None or after is None or len(before) != len(after):
+        return None
+    delta = sum(abs(a - b) for a, b in zip(before, after, strict=True)) / len(before)
+    return delta >= _OBSERVE_CHANGED
+
+
 # ── Mouse ─────────────────────────────────────────────────────────────────────
 
 def move(x: int, y: int, duration: float = 0.3) -> dict:
@@ -156,15 +206,68 @@ def move(x: int, y: int, duration: float = 0.3) -> dict:
     return {"success": True, "action": "move", "x": x, "y": y}
 
 
-def click(x: int = None, y: int = None, button: str = "left", clicks: int = 1) -> dict:
+def click(x: int = None, y: int = None, button: str = "left", clicks: int = 1,
+          verify: bool = True) -> dict:
+    """
+    Click, then check whether the screen responded.
+
+    `success` means the click was issued. `verified` means something on screen
+    actually changed underneath it. They are different facts and are reported
+    separately — a click that hit a dead pixel is still `success: True`, and
+    saying so is the honest answer.
+    """
     err = _require("pyautogui")
     if err: return err
+
+    before = _peek(x, y) if verify else None
+    fg_before = _foreground_id()
     with _lock:
         if x is not None and y is not None:
             pyautogui.click(x, y, button=button, clicks=clicks)
         else:
             pyautogui.click(button=button, clicks=clicks)
-    return {"success": True, "action": "click", "x": x, "y": y, "button": button}
+
+    out = {"success": True, "action": "click", "x": x, "y": y, "button": button}
+    if not verify:
+        return out
+
+    time.sleep(0.25)        # let the UI redraw before judging it
+    moved = _changed(before, _peek(x, y))
+    fg_after = _foreground_id()
+
+    if moved is None and fg_before == fg_after:
+        # No eyes. Don't claim, and don't pretend the claim is a small thing.
+        out.update(verified=False, verify_reason=(
+            "Clicked, but Jarvis can't see the screen here (no mss/Pillow), so "
+            "it cannot tell whether anything responded."))
+    elif moved or fg_before != fg_after:
+        out.update(verified=True, verify_reason=(
+            "the window changed" if fg_before != fg_after
+            else "the screen under the cursor changed"))
+    else:
+        out.update(verified=False, verify_reason=(
+            f"Nothing on screen changed after clicking ({x}, {y}). The click "
+            f"probably landed on nothing — the element may have moved, or the "
+            f"window may not have been in front."))
+    return out
+
+
+def _foreground_id() -> str:
+    """A cheap identifier for 'which window is in front', or '' if unknown."""
+    if os.name != "nt":
+        return ""
+    try:
+        import ctypes
+        u32 = ctypes.windll.user32
+        hwnd = u32.GetForegroundWindow()
+        if not hwnd:
+            return ""
+        n = u32.GetWindowTextLengthW(hwnd)
+        buf = ctypes.create_unicode_buffer(n + 1)
+        u32.GetWindowTextW(hwnd, buf, n + 1)
+        return f"{hwnd}:{buf.value}"
+    except Exception:
+        return ""
 
 
 def double_click(x: int, y: int) -> dict:
@@ -230,20 +333,51 @@ def type_text_raw(text: str) -> dict:
         _clipboard_restore(saved)
 
 
+def _observe_keys(fn, out: dict) -> dict:
+    """
+    Run a keystroke and note whether the screen reacted.
+
+    Same reasoning as click(): pyautogui returning means the key was sent to
+    the OS, not that anything received it. Ctrl+S into a window that lost focus
+    "succeeds" and saves nothing.
+
+    The whole screen is watched here rather than a box, because a keystroke's
+    effect can appear anywhere — a save dialog, a menu, a sent message.
+    """
+    before = _peek(None, None)
+    fg_before = _foreground_id()
+    with _lock:                 # `with`, not manual acquire/release — an
+        fn()                    # exception inside fn() must not strand the lock
+    time.sleep(0.25)
+    moved = _changed(before, _peek(None, None))
+    fg_after = _foreground_id()
+
+    if moved is None and fg_before == fg_after:
+        out.update(verified=False, verify_reason=(
+            "Key sent, but Jarvis can't see the screen here (no mss/Pillow), "
+            "so it cannot tell whether anything received it."))
+    elif moved or fg_before != fg_after:
+        out.update(verified=True, verify_reason=(
+            "the window changed" if fg_before != fg_after else "the screen changed"))
+    else:
+        out.update(verified=False, verify_reason=(
+            "Nothing on screen changed. The keystroke probably went to a "
+            "window that wasn't listening."))
+    return out
+
+
 def hotkey(*keys) -> dict:
     err = _require("pyautogui")
     if err: return err
-    with _lock:
-        pyautogui.hotkey(*keys)
-    return {"success": True, "action": "hotkey", "keys": list(keys)}
+    return _observe_keys(lambda: pyautogui.hotkey(*keys),
+                         {"success": True, "action": "hotkey", "keys": list(keys)})
 
 
 def press(key: str) -> dict:
     err = _require("pyautogui")
     if err: return err
-    with _lock:
-        pyautogui.press(key)
-    return {"success": True, "action": "press", "key": key}
+    return _observe_keys(lambda: pyautogui.press(key),
+                         {"success": True, "action": "press", "key": key})
 
 
 # ── Applications ──────────────────────────────────────────────────────────────
@@ -371,9 +505,24 @@ def open_app(name_or_path: str) -> dict:
         "paint":      ["mspaint.exe"],
         "snipping":   ["snippingtool.exe"],
     }
-    if _app_visible(name_or_path):
+    # Already running? Then RAISE IT, and report what actually happened.
+    #
+    # This branch used to return {"method": "focus", "verified": True} without
+    # focusing anything and without verifying anything. Both were false. It is
+    # the second half of the QQ bug: QQ was already running, this returned
+    # "verified", nothing came to the front, and the screenshot that followed
+    # captured a different window entirely.
+    running = _running_process_for(name_or_path)
+    if running:
+        raised = focus_window(name_or_path).get("success", False)
         return {"success": True, "action": "open_app", "app": name_or_path,
-                "resolved": "already open", "method": "focus", "verified": True}
+                "resolved": f"already running as {running}",
+                "method": "focus", "verified": bool(raised),
+                "foreground": bool(raised),
+                **({} if raised else {
+                    "warning": f"{name_or_path} is already running as {running}, "
+                               f"but it could not be brought to the front. Anything "
+                               f"that follows may act on the wrong window."})}
 
     key = name_or_path.lower().replace(" ", "")
     cmd = KNOWN.get(key, None)
@@ -439,26 +588,62 @@ def open_app(name_or_path: str) -> dict:
             "resolved": cmd[0], "method": "direct", "verified": vis}
 
 
-def _app_visible(name: str) -> bool:
-    """Best-effort check that an app is actually up: window title or process."""
-    n = (name or "").lower().strip()
+def _running_process_for(name: str) -> str | None:
+    """
+    The EXACT process this app is running as, or None.
+
+    This replaces a substring match that was wrong in both directions and is
+    the root of "it opened QQ the first time but never again":
+
+        _app_visible("notepad")  matched  notepad++.exe
+        _app_visible("qq")       matched  qqbrowser.exe
+        _app_visible("code")     matched  codemeter.exe
+        _app_visible("qq")       matched  an Edge tab titled "QQ音乐下载 - Edge"
+
+    open_app() returns "already open" the moment this says yes — so a browser
+    tab that merely MENTIONS the app was enough to make Jarvis skip the launch
+    entirely, report success, and then screenshot whatever was in front. The
+    user saw "no unread messages" from a window that was never QQ.
+
+    Matching is now exact against _process_names_for(), which is alias-aware
+    and knows what app_resolver actually launched. One matcher, not two that
+    disagree.
+    """
+    n = (name or "").strip().lower()
     if not n:
-        return False
+        return None
+    wanted = _process_names_for(n)
+    if not wanted:
+        return None
     try:
-        if HAS_WINDOWS:
-            for t in gw.getAllTitles():
-                if t and n in t.lower():
-                    return True
-    except Exception:
-        pass
-    try:
-        compact = n.replace(" ", "")
         for p in psutil.process_iter(["name"]):
             pn = (p.info.get("name") or "").lower()
-            if pn and (compact[:12] in pn or pn.replace(".exe", "") in compact):
-                return True
+            if pn and pn in wanted:
+                return pn
     except Exception:
         pass
+    return None
+
+
+def _app_visible(name: str) -> bool:
+    """
+    Is this app actually running?
+
+    Process-based, because window titles are localised (Notepad is 记事本 here)
+    AND because a title is not evidence of the app — anyone can open a web page
+    called "Microsoft Word Tutorial".
+
+    Titles are still consulted on non-Windows, where there is no reliable
+    process mapping, but only as a last resort.
+    """
+    if _running_process_for(name):
+        return True
+    if os.name != "nt" and HAS_WINDOWS:
+        n = (name or "").strip().lower()
+        try:
+            return any(t and n in t.lower() for t in gw.getAllTitles())
+        except Exception:
+            return False
     return False
 
 
@@ -636,6 +821,24 @@ def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
 
     if action == "click_text":
         return bool(result.get("found", True)), result.get("error", "")
+
+    if action in ("click", "press", "hotkey"):
+        # click() and the key actions now LOOK at the screen afterwards, so use
+        # what they saw rather than assuming the call returning means it worked.
+        #
+        # "Couldn't see" is not "didn't work". Reporting an unobservable click
+        # as a failure would abort chains that were fine, on any machine
+        # without mss/Pillow — so it passes with the doubt stated, and the
+        # reason travels into the log and the report. Only a POSITIVE
+        # observation of nothing changing is a failure.
+        if result.get("verified") is True:
+            return True, result.get("verify_reason", "screen responded")
+        reason = result.get("verify_reason", "")
+        if "can't see" in reason or "cannot tell" in reason:
+            return True, reason          # honest pass: unverifiable, not failed
+        if reason:
+            return False, reason         # we looked, and nothing happened
+        return True, "issued (not observed)"
 
     if action == "compose":
         # The model may have failed before a single key was pressed. That's a

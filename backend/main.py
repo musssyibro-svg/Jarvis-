@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
+import time
 from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
@@ -321,33 +323,64 @@ def _sse(chunk="", done=False):
 @app.get("/")
 def root(): return {"app": "Jarvis OS", "version": JARVIS_VERSION, "running": True, "docs": "/api/docs"}
 
-@app.get("/health")
-def health():
-    # Through ollama_manager, not the SDK directly. Same probe, one door — and
-    # ollama_manager already knows the host, the approved model set, and how to
-    # turn a failure into a reason a human can act on. Found by
-    # .semgrep/jarvis.yml (jarvis-ollama-outside-providers).
-    #
-    # Two things about this endpoint are still wrong and are NOT changed here,
-    # because they alter what it reports; see docs/CODE_HEALTH.md:
-    #   * "model" comes from a module-level env constant, so it can disagree
-    #     with the model the router actually picked.
-    #   * the probe has no timeout, and START.bat polls /health to decide
-    #     whether the backend is up — a slow Ollama can make a working backend
-    #     look offline.
-    ollama_ok = False
+# /health answers "is the BACKEND up?" — nothing else. START.bat polls it to
+# decide whether to open the browser, so it must return fast, always.
+#
+# It used to probe Ollama inline, with no timeout. When Ollama is paging a model
+# back in on a 16 GB machine, that probe takes tens of seconds; the launcher
+# gave up waiting and told the user "Backend Offline" while the backend was
+# running perfectly and answering nothing else. The backend's health does not
+# depend on Ollama's, and pretending otherwise is what produced a false report.
+#
+# So the Ollama probe runs on a background thread and /health reports the LAST
+# KNOWN answer, with how old it is. Never "unknown" dressed up as "offline".
+_ollama_probe = {"ok": None, "at": 0.0, "reason": "not checked yet"}
+_ollama_probe_lock = threading.Lock()
+_OLLAMA_PROBE_TTL = 20.0        # seconds a probe result stays fresh
+
+
+def _refresh_ollama_probe() -> None:
+    """Ask Ollama how it is, off the request path. Never raises."""
     try:
         from services.ollama_manager import health as _ollama_health
-        ollama_ok = bool(_ollama_health().get("ok"))
+        h = _ollama_health()
+        ok, reason = bool(h.get("ok")), h.get("reason", "")
+    except Exception as e:
+        ok, reason = False, f"probe failed: {str(e)[:80]}"
+    with _ollama_probe_lock:
+        _ollama_probe.update(ok=ok, at=time.time(), reason=reason)
+
+
+@app.get("/health")
+def health():
+    with _ollama_probe_lock:
+        snap = dict(_ollama_probe)
+    age = time.time() - snap["at"] if snap["at"] else None
+    if age is None or age > _OLLAMA_PROBE_TTL:
+        # Kick a refresh for NEXT time and answer now with what we have.
+        threading.Thread(target=_refresh_ollama_probe, daemon=True).start()
+
+    # The model the router would ACTUALLY pick, not a module-level env constant
+    # read once at import. Those disagreed, which is the same bug already fixed
+    # in Diagnostics and os_state; /health was the one that got missed.
+    model = OLLAMA_MODEL
+    try:
+        from services import model_router
+        model = model_router.pick("chat").get("model") or OLLAMA_MODEL
     except Exception:
-        pass    # a health endpoint must answer even when the probe itself breaks
+        pass
+
     return {
-        "status":    "online",
+        "status":    "online",          # the backend answered — that IS the health
         "version":   JARVIS_VERSION,
         "provider":  LLM_PROVIDER,
-        "ollama":    ollama_ok,
-        "ollama_ok": ollama_ok,
-        "model":     OLLAMA_MODEL,
+        # None means "haven't looked yet", which is not the same as False.
+        # The UI must not draw "offline" for a question nobody has asked.
+        "ollama":    snap["ok"],
+        "ollama_ok": snap["ok"],
+        "ollama_checked_s_ago": round(age, 1) if age is not None else None,
+        "ollama_reason": snap["reason"],
+        "model":     model,
     }
 
 @app.get("/stats")

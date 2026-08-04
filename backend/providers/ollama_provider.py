@@ -22,6 +22,8 @@ Division of labour, to keep it straight:
 """
 from __future__ import annotations
 
+import os
+import time
 from collections.abc import Generator
 
 from providers.base import Provider
@@ -53,12 +55,34 @@ class OllamaProvider(Provider):
         "vision": "vision", "browser": "chat", "batch": "proposal",
     }
 
-    def _client(self):
+    def _client(self, timeout: float | None = None):
+        """
+        A client with a WALL-CLOCK TIMEOUT, not the bare ollama module.
+
+        This used to return the module, whose top-level chat() has no timeout at
+        all. LIMITS carries three bounds — tokens, context, and time — and only
+        the first two were ever applied. So a model that RAMBLES was bounded and
+        a model that STALLS was not, which on a 16 GB machine under memory
+        pressure is the more likely of the two: Ollama pages the weights back in
+        and the call simply never returns.
+
+        ollama.Client passes **kwargs to httpx, so `timeout=` is honoured.
+        Falls back to the module if this build of the library doesn't accept it
+        — an unbounded call is still better than no AI at all, and status()
+        reports which one is in use.
+        """
         try:
             import ollama
-            return ollama
         except Exception:
             return None
+        if timeout is None:
+            return ollama
+        try:
+            return ollama.Client(host=os.getenv("OLLAMA_HOST",
+                                                "http://127.0.0.1:11434"),
+                                 timeout=float(timeout))
+        except Exception:
+            return ollama
 
     def configured(self) -> bool:
         return self._client() is not None
@@ -91,7 +115,23 @@ class OllamaProvider(Provider):
 
     def chat(self, messages, model=None, temperature=0.7, max_tokens=None,
              task="", timeout=None, **kwargs) -> str:
-        client = self._client()
+        # Bounds come from ollama_manager, which knows what this machine can
+        # take. Unbounded generation is not a theoretical risk here — it has
+        # already cost this project a 288-second screen analysis.
+        #
+        # ALL THREE bounds are applied now: tokens, context, and wall-clock.
+        # The third was computed and dropped for a long time, which meant a
+        # model that RAMBLED was bounded and a model that STALLED was not.
+        try:
+            from services.ollama_manager import LIMITS, keep_alive_for
+            cap_tokens, cap_ctx, cap_seconds = LIMITS.get(
+                self._kind(task), LIMITS["fast"])
+            keep = keep_alive_for(model)
+        except Exception:
+            cap_tokens, cap_ctx, cap_seconds, keep = 400, 4096, 60, "5m"
+        deadline = float(timeout or cap_seconds)
+
+        client = self._client(timeout=deadline)
         if client is None:
             return ("[Ollama isn't installed. Install it from ollama.com, then "
                     "run: ollama pull qwen2.5:3b]")
@@ -99,25 +139,7 @@ class OllamaProvider(Provider):
         if not model:
             return "[No Ollama model is available. Run: ollama pull qwen2.5:3b]"
 
-        # Bounds come from ollama_manager, which knows what this machine can
-        # take. Unbounded generation is not a theoretical risk here — it has
-        # already cost this project a 288-second screen analysis.
-        #
-        # KNOWN GAP — LIMITS carries a third bound, a wall-clock timeout, and it
-        # is NOT applied. _client() returns the ollama MODULE, whose top-level
-        # chat() has no timeout; enforcing one needs ollama.Client(timeout=...).
-        # Tokens and context are capped, wall-clock is not, so a model that
-        # stalls rather than rambles still hangs. Unpacked to `_` rather than
-        # dropped from the tuple so the missing bound stays visible here.
-        # Tracked in docs/CODE_HEALTH.md.
-        try:
-            from services.ollama_manager import LIMITS, keep_alive_for
-            cap_tokens, cap_ctx, _wall_clock_cap_unused = LIMITS.get(
-                self._kind(task), LIMITS["fast"])
-            keep = keep_alive_for(model)
-        except Exception:
-            cap_tokens, cap_ctx, keep = 400, 4096, "5m"
-
+        started = time.monotonic()
         try:
             resp = client.chat(
                 model=model, messages=messages, keep_alive=keep,
@@ -127,11 +149,30 @@ class OllamaProvider(Provider):
             text = (resp.get("message", {}) or {}).get("content", "") or ""
             return text.strip() or "[The model returned nothing.]"
         except Exception as e:
+            took = time.monotonic() - started
+            # Name the cause. "Ollama error: ReadTimeout" tells the user nothing
+            # they can act on; "it ran out of time, and here is why that
+            # happens on this machine" does.
+            if took >= deadline * 0.9 or "timeout" in str(e).lower():
+                return (f"[{model} ran out of time after {deadline:.0f}s. On a "
+                        f"16GB machine this usually means Windows is paging the "
+                        f"model back in — close some tabs, or pick a smaller "
+                        f"model in Settings.]")
             return f"[Ollama error: {e}]"
 
     def stream(self, messages, model=None, temperature=0.7, max_tokens=None,
                task="", timeout=None, **kwargs) -> Generator[str, None, None]:
-        client = self._client()
+        try:
+            from services.ollama_manager import LIMITS, keep_alive_for
+            cap_tokens, cap_ctx, cap_seconds = LIMITS.get(self._kind(task),
+                                                          LIMITS["fast"])
+            keep = keep_alive_for(model)
+        except Exception:
+            cap_tokens, cap_ctx, cap_seconds, keep = 400, 4096, 60, "5m"
+        # Streaming gets a longer deadline than a single call: the bound that
+        # matters here is "the FIRST token never arrives", not total length, and
+        # a long answer streaming steadily is working correctly.
+        client = self._client(timeout=float(timeout or cap_seconds) * 2)
         if client is None:
             yield "[Ollama isn't installed. Install it from ollama.com.]"
             return
@@ -139,12 +180,6 @@ class OllamaProvider(Provider):
         if not model:
             yield "[No Ollama model is available. Run: ollama pull qwen2.5:3b]"
             return
-        try:
-            from services.ollama_manager import LIMITS, keep_alive_for
-            cap_tokens, cap_ctx, _ = LIMITS.get(self._kind(task), LIMITS["fast"])
-            keep = keep_alive_for(model)
-        except Exception:
-            cap_tokens, cap_ctx, keep = 400, 4096, "5m"
         try:
             for part in client.chat(
                     model=model, messages=messages, stream=True, keep_alive=keep,

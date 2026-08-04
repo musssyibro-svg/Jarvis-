@@ -26,6 +26,7 @@ import asyncio
 import os
 import sys
 import threading
+import time
 from pathlib import Path
 
 from agents.base_agent import BaseAgent
@@ -107,6 +108,108 @@ def _run(coro, timeout: float = 90):
             pass
 
 
+# ── Retrying, and the one place it must never happen ─────────────────────────
+#
+# From mainland China a page load fails constantly and TRANSIENTLY: a DNS
+# hiccup, a reset connection, a Cloudflare interstitial that clears on the
+# second try. Giving up on the first error makes the freelance engine look
+# broken when the network merely blinked.
+#
+# But retrying is not always safe. Re-trying a SUBMISSION after a timeout can
+# put a second proposal in front of a real client under the user's name — the
+# request may well have arrived and only the response was lost. So retry is
+# opt-in per call site, and bid_executor deliberately does not use it; it
+# re-reads the page state instead. See docs/FREELANCER.md.
+
+# Errors worth another attempt: the network, not the page.
+_TRANSIENT = (
+    "timeout", "timed out", "econnreset", "connection reset", "connection refused",
+    "err_network", "err_connection", "err_internet_disconnected", "socket hang up",
+    "net::err_", "temporarily unavailable", "502", "503", "504",
+    "target closed", "browser has been closed", "page crashed",
+)
+# Errors where another attempt is pure delay — the answer will not change.
+_PERMANENT = (
+    "not logged in", "not_logged_in", "404", "no such element", "invalid url",
+    "err_name_not_resolved", "err_cert", "access denied", "403",
+)
+
+
+def classify_browser_error(err: str) -> dict:
+    """
+    {retryable, kind, cause, remedy} for a browser failure.
+
+    Permanent wins over transient when both match: "403 timeout" is a refusal
+    with a slow response, and retrying a refusal just makes the user wait.
+    """
+    e = (err or "").lower()
+    if any(p in e for p in _PERMANENT):
+        # Both spellings: the executor emits NOT_LOGGED_IN with underscores, so
+        # matching only "logged in" filed a login failure as "page not found"
+        # and told the user to check the link instead of to log in.
+        if ("logged in" in e or "logged_in" in e
+                or "403" in e or "access denied" in e):
+            return {"retryable": False, "kind": "auth",
+                    "cause": "the site refused the request",
+                    "remedy": "Log in once by hand via Platform Logins; Jarvis "
+                              "reuses that session afterwards."}
+        return {"retryable": False, "kind": "not_found",
+                "cause": "the page or element isn't there",
+                "remedy": "The site's layout may have changed — check the link."}
+    if any(t in e for t in _TRANSIENT):
+        return {"retryable": True, "kind": "network",
+                "cause": "the connection failed part-way",
+                "remedy": "Usually the network blinking. Jarvis retries this "
+                          "automatically."}
+    return {"retryable": False, "kind": "unknown", "cause": err or "unknown failure",
+            "remedy": "See the execution log on the Logs screen."}
+
+
+def with_retry(fn, attempts: int = 3, base_delay: float = 1.5, label: str = ""):
+    """
+    Run a browser call, retrying only TRANSIENT failures, with backoff.
+
+    NOT for anything that submits. Every attempt is recorded so the log shows
+    "succeeded on attempt 2" rather than a silent success that hides a flaky
+    site — a site that needs two tries every time is information.
+    """
+    tried = []
+    for attempt in range(1, max(1, attempts) + 1):
+        try:
+            res = fn()
+        except Exception as e:                       # a raise is a failure too
+            res = {"success": False, "error": str(e)[:200]}
+        if res.get("success"):
+            if attempt > 1:
+                res["attempts"] = attempt
+                res["note"] = f"succeeded on attempt {attempt} of {attempts}"
+                _emit_retry(label, f"{label or 'browser'}: worked on attempt {attempt}")
+            return res
+
+        info = classify_browser_error(res.get("error", ""))
+        tried.append({"attempt": attempt, "error": res.get("error", "")[:120],
+                      "kind": info["kind"]})
+        if not info["retryable"] or attempt >= attempts:
+            res.update(attempts=attempt, tried=tried,
+                       cause=info["cause"], what_to_do=info["remedy"],
+                       retryable=info["retryable"])
+            return res
+        delay = base_delay * (2 ** (attempt - 1))    # 1.5s, 3s, 6s
+        _emit_retry(label, f"{label or 'browser'} failed ({info['kind']}); "
+                           f"retrying in {delay:.0f}s — attempt {attempt + 1} of {attempts}")
+        time.sleep(delay)
+    return {"success": False, "error": "retries exhausted", "tried": tried}
+
+
+def _emit_retry(label: str, msg: str) -> None:
+    """Say it out loud — a silent retry looks like a hang."""
+    try:
+        from agents.orchestrator import STATE
+        STATE.emit("browser", msg, "warning")
+    except Exception:
+        pass
+
+
 # ── The function that was missing ─────────────────────────────────────────────
 
 def navigate(url: str, domain: str = "research", headless: bool = False,
@@ -127,8 +230,10 @@ def navigate(url: str, domain: str = "research", headless: bool = False,
         await asyncio.sleep(1.0)
         return {"success": True, "url": page.url, "title": (await page.title())[:120]}
 
-    try:
-        res = _run(_go())
+    # Loading a page is idempotent, so it is safe to retry — and from China it
+    # needs to be. A single failed goto() used to abandon the whole step.
+    res = with_retry(lambda: _run(_go()), attempts=3, label=f"open {url[:40]}")
+    if res.get("success"):
         try:
             from services import event_bus
             event_bus.publish("browser.navigated",
@@ -136,9 +241,9 @@ def navigate(url: str, domain: str = "research", headless: bool = False,
                                "title": res.get("title", "")[:60]})
         except Exception:
             pass
-        return res
-    except Exception as e:
-        return {"success": False, "url": url, "error": str(e)[:200]}
+    else:
+        res.setdefault("url", url)
+    return res
 
 
 def current_page_text(domain: str = "research", limit: int = 4000) -> dict:

@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 212 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 215 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -164,66 +164,69 @@ TABLE OF CONTENTS
 155. backend/services/world_model.py
 156. backend/services/zuodao_service.py
 157. backend/tests/conftest.py
-158. backend/tests/test_config_store.py
-159. backend/tests/test_conftest_guard.py
-160. backend/tests/test_control.py
-161. backend/tests/test_decompose.py
-162. backend/tests/test_headless.py
-163. backend/tests/test_security.py
-164. frontend/index.html
-165. frontend/package.json
-166. frontend/src/App.jsx
-167. frontend/src/JarvisOS.jsx
-168. frontend/src/colors.js
-169. frontend/src/components/UI.jsx
-170. frontend/src/config.js
-171. frontend/src/index.css
-172. frontend/src/main.jsx
-173. frontend/src/pages/Agents.jsx
-174. frontend/src/pages/Chat.jsx
-175. frontend/src/pages/Earn.jsx
-176. frontend/src/pages/Logs.jsx
-177. frontend/src/pages/Memory.jsx
-178. frontend/src/pages/Planner.jsx
-179. frontend/src/pages/Settings.jsx
-180. frontend/src/theme.js
-181. frontend/vite.config.js
-182. .github/workflows/ci.yml
-183. .gitignore
-184. .mcp.json
-185. .pytest_cache/.gitignore
-186. .ruff_cache/.gitignore
-187. .semgrep/jarvis.yml
-188. .serena/.gitignore
-189. .serena/project.local.yml
-190. .serena/project.yml
-191. DOCTOR.bat
-192. FINAL_PROJECT_TREE_backend.txt
-193. FINAL_PROJECT_TREE_frontend.txt
-194. LEGACY_GREP_ARTIFACT.txt
-195. PROJECT_TREE.txt
-196. REQUIREMENTS_SNAPSHOT.txt
-197. RUNTIME_VALIDATION.py
-198. RUN_FAILURE_TEST.bat
-199. START.bat
-200. START_JARVIS.bat
-201. UPDATE.bat
-202. failure_injection_report.txt
-203. legacy_dependency_report.json
-204. requirements-dev.txt
-205. requirements.txt
-206. start.sh
-207. tools/codemap.py
-208. tools/doctor.py
-209. tools/dump_source.py
-210. tools/failure_injection.py
-211. tools/setup.py
-212. tools/update.py
+158. backend/tests/test_app_detection.py
+159. backend/tests/test_click_verification.py
+160. backend/tests/test_config_store.py
+161. backend/tests/test_conftest_guard.py
+162. backend/tests/test_control.py
+163. backend/tests/test_decompose.py
+164. backend/tests/test_headless.py
+165. backend/tests/test_security.py
+166. backend/tests/test_submission_confirmation.py
+167. frontend/index.html
+168. frontend/package.json
+169. frontend/src/App.jsx
+170. frontend/src/JarvisOS.jsx
+171. frontend/src/colors.js
+172. frontend/src/components/UI.jsx
+173. frontend/src/config.js
+174. frontend/src/index.css
+175. frontend/src/main.jsx
+176. frontend/src/pages/Agents.jsx
+177. frontend/src/pages/Chat.jsx
+178. frontend/src/pages/Earn.jsx
+179. frontend/src/pages/Logs.jsx
+180. frontend/src/pages/Memory.jsx
+181. frontend/src/pages/Planner.jsx
+182. frontend/src/pages/Settings.jsx
+183. frontend/src/theme.js
+184. frontend/vite.config.js
+185. .github/workflows/ci.yml
+186. .gitignore
+187. .mcp.json
+188. .pytest_cache/.gitignore
+189. .ruff_cache/.gitignore
+190. .semgrep/jarvis.yml
+191. .serena/.gitignore
+192. .serena/project.local.yml
+193. .serena/project.yml
+194. DOCTOR.bat
+195. FINAL_PROJECT_TREE_backend.txt
+196. FINAL_PROJECT_TREE_frontend.txt
+197. LEGACY_GREP_ARTIFACT.txt
+198. PROJECT_TREE.txt
+199. REQUIREMENTS_SNAPSHOT.txt
+200. RUNTIME_VALIDATION.py
+201. RUN_FAILURE_TEST.bat
+202. START.bat
+203. START_JARVIS.bat
+204. UPDATE.bat
+205. failure_injection_report.txt
+206. legacy_dependency_report.json
+207. requirements-dev.txt
+208. requirements.txt
+209. start.sh
+210. tools/codemap.py
+211. tools/doctor.py
+212. tools/dump_source.py
+213. tools/failure_injection.py
+214. tools/setup.py
+215. tools/update.py
 
 
 
 ################################################################################
-# FILE 1/212: .pytest_cache/README.md
+# FILE 1/215: .pytest_cache/README.md
 ################################################################################
 ```md
 # pytest cache directory #
@@ -237,7 +240,7 @@ See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more inf
 ```
 
 ################################################################################
-# FILE 2/212: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 2/215: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -303,7 +306,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 3/212: BRAIN_GUIDE.md
+# FILE 3/215: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -359,7 +362,7 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/212: CLAUDE.md
+# FILE 4/215: CLAUDE.md
 ################################################################################
 ```md
 # Jarvis — how to work on this repo
@@ -703,7 +706,7 @@ be believed when it says what it did — that is the goal.
 ```
 
 ################################################################################
-# FILE 5/212: CONTROL_FLOW_REPORT.md
+# FILE 5/215: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -758,7 +761,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 6/212: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 6/215: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -837,7 +840,7 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 7/212: DO_THIS.md
+# FILE 7/215: DO_THIS.md
 ################################################################################
 ```md
 # Do this
@@ -1193,7 +1196,7 @@ DESKTOP_CONTROL_ENABLED=0
 ```
 
 ################################################################################
-# FILE 8/212: FIX_MY_INSTALL.md
+# FILE 8/215: FIX_MY_INSTALL.md
 ################################################################################
 ```md
 # It won't start — do this
@@ -1371,7 +1374,7 @@ of whatever fails.
 ```
 
 ################################################################################
-# FILE 9/212: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 9/215: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -1490,7 +1493,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 10/212: HIDDEN_RUNTIME_AUDIT.md
+# FILE 10/215: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -1643,7 +1646,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 11/212: MIGRATION_CHANGELOG.md
+# FILE 11/215: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -1690,7 +1693,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 12/212: PLANNER_AND_DOCTOR.md
+# FILE 12/215: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -1747,7 +1750,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 13/212: PRE_RELEASE_AUDIT.md
+# FILE 13/215: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1932,7 +1935,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 14/212: QA_VERIFICATION_REPORT.md
+# FILE 14/215: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -2026,7 +2029,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 15/212: README.md
+# FILE 15/215: README.md
 ################################################################################
 ```md
 # Jarvis OS — autonomous desktop assistant + freelance income engine
@@ -2168,7 +2171,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 16/212: README_START_HERE.md
+# FILE 16/215: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -2223,7 +2226,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 17/212: REAL_MACHINE_FIXES.md
+# FILE 17/215: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -2324,7 +2327,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 18/212: RESEARCH_UPGRADE_2026-07.md
+# FILE 18/215: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -2413,7 +2416,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 19/212: RUNTIME_VALIDATION_README.md
+# FILE 19/215: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -2451,7 +2454,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 20/212: STAGE2_CHANGELOG.md
+# FILE 20/215: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -2488,7 +2491,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 21/212: START_HERE.md
+# FILE 21/215: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -2639,7 +2642,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 22/212: TESTING_STAGES.md
+# FILE 22/215: TESTING_STAGES.md
 ################################################################################
 ```md
 # Proving Jarvis actually works — in the right order
@@ -2737,7 +2740,7 @@ Everything else has been tested. This hasn't, and can't be.
 ```
 
 ################################################################################
-# FILE 23/212: V8_PHASE1_REPORT.md
+# FILE 23/215: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -2793,7 +2796,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 24/212: V9_FINAL_README.md
+# FILE 24/215: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -2855,7 +2858,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 25/212: V9_STAGE1_MIGRATION.md
+# FILE 25/215: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -2919,7 +2922,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 26/212: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 26/215: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -2991,7 +2994,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 27/212: WINDOWS_DEPLOYMENT.md
+# FILE 27/215: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -3029,7 +3032,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 28/212: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 28/215: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -3119,7 +3122,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 29/212: backend/README.md
+# FILE 29/215: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -3255,7 +3258,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 30/212: docs/AI_ROUTER.md
+# FILE 30/215: docs/AI_ROUTER.md
 ################################################################################
 ```md
 # AI Router
@@ -3393,7 +3396,7 @@ missing optional key is a skip, not a failure.
 ```
 
 ################################################################################
-# FILE 31/212: docs/ARCHITECTURE.md
+# FILE 31/215: docs/ARCHITECTURE.md
 ################################################################################
 ```md
 # Architecture
@@ -3608,7 +3611,7 @@ look like a missing Python. Em-dashes become mojibake in a GBK console.
 ```
 
 ################################################################################
-# FILE 32/212: docs/BRAIN_LAYER.md
+# FILE 32/215: docs/BRAIN_LAYER.md
 ################################################################################
 ```md
 # The brain layer
@@ -3680,7 +3683,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 33/212: docs/BROWSER_AGENT.md
+# FILE 33/215: docs/BROWSER_AGENT.md
 ################################################################################
 ```md
 # Browser Agent
@@ -3804,7 +3807,7 @@ rather than after every cleanup, because a VACUUM on every operation is how a
 ```
 
 ################################################################################
-# FILE 34/212: docs/CODEMAP.md
+# FILE 34/215: docs/CODEMAP.md
 ################################################################################
 ```md
 # Code map
@@ -3816,7 +3819,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-159 source files · 579 public symbols
+162 source files · 597 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -3861,7 +3864,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/agents/base_agent.py`
 
 **`browser_agent.py`** — persistent browser sessions, login-once, reuse forever.
-  <br>`navigate`, `current_page_text`, `reap`, `close_domain`, `status`, `BrowserAgent`
+  <br>`classify_browser_error`, `with_retry`, `navigate`, `current_page_text`, `reap`, `close_domain`, `status`, `BrowserAgent`
   <br>`backend/agents/browser_agent.py`
 
 **`commander.py`** — CommanderAgent: the single entry point for ALL Jarvis actions.
@@ -4312,6 +4315,14 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`pytest_configure`
   <br>`backend/tests/conftest.py`
 
+**`test_app_detection.py`** — "It opened QQ the first time but never again."
+  <br>`test_a_window_title_alone_is_not_evidence`, `test_already_running_actually_raises_the_window`, `test_unraisable_window_is_reported_not_hidden`
+  <br>`backend/tests/test_app_detection.py`
+
+**`test_click_verification.py`** — A click "succeeds" the moment pyautogui returns — which means the mouse moved,
+  <br>`test_a_click_that_changes_nothing_is_not_verified`, `test_a_click_that_changes_the_screen_is_verified`, `test_a_click_that_opens_a_window_is_verified_even_if_pixels_match`, `test_no_eyes_is_reported_as_doubt_not_as_failure`, `test_an_observed_dead_click_does_fail_the_step`, `test_the_comparison_needs_a_real_difference`
+  <br>`backend/tests/test_click_verification.py`
+
 **`test_config_store.py`** — Settings must save on a database that has never been initialised.
   <br>`test_set_succeeds_on_an_uninitialised_database`, `test_the_value_is_actually_readable_afterwards`, `test_get_still_falls_back_when_nothing_is_stored`, `test_a_failed_write_reports_it_rather_than_pretending`
   <br>`backend/tests/test_config_store.py`
@@ -4335,6 +4346,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`test_security.py`** — Regression tests for the things that make Jarvis dangerous if they slip.
   <br>`test_dns_rebinding_host_is_refused`, `test_health_is_open_so_the_launcher_can_wait_for_it`, `test_anything_that_types_is_a_control_path`, `test_effective_settings_never_expose_a_key`, `test_a_masked_value_is_still_recognisable`, `test_demonstration_emits_a_placeholder_not_the_keystrokes`, `test_simulating_a_task_executes_nothing`
   <br>`backend/tests/test_security.py`
+
+**`test_submission_confirmation.py`** — "I press approve all but I don't know if it sent it."
+  <br>`FakePage`, `verdict`, `test_a_click_that_did_nothing_is_never_called_submitted`, `test_form_closing_and_navigating_counts_as_sent_without_words`, `test_refusal_wins_over_a_success_word_in_the_same_page`, `test_a_submission_is_never_retried`, `test_the_unchanged_verdict_reaches_the_user_as_a_failure`
+  <br>`backend/tests/test_submission_confirmation.py`
 
 ## `frontend/`
 
@@ -4504,7 +4519,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 ```
 
 ################################################################################
-# FILE 35/212: docs/CODE_HEALTH.md
+# FILE 35/215: docs/CODE_HEALTH.md
 ################################################################################
 ```md
 # Code health
@@ -4724,7 +4739,7 @@ is that the tool was run again afterwards and its output was read.
 ```
 
 ################################################################################
-# FILE 36/212: docs/DESKTOP_AGENT.md
+# FILE 36/215: docs/DESKTOP_AGENT.md
 ################################################################################
 ```md
 # Desktop Agent
@@ -4872,7 +4887,7 @@ Cancels are skipped: you pressing Stop is not a lesson about the task.
 ```
 
 ################################################################################
-# FILE 37/212: docs/FREELANCER.md
+# FILE 37/215: docs/FREELANCER.md
 ################################################################################
 ```md
 # Freelance income engine
@@ -5011,7 +5026,7 @@ write, whether it would submit. Scans nothing, sends nothing. In chat:
 ```
 
 ################################################################################
-# FILE 38/212: docs/MCP.md
+# FILE 38/215: docs/MCP.md
 ################################################################################
 ```md
 # MCP
@@ -5109,7 +5124,7 @@ failure.
 ```
 
 ################################################################################
-# FILE 39/212: docs/MEMORY.md
+# FILE 39/215: docs/MEMORY.md
 ################################################################################
 ```md
 # Memory
@@ -5241,7 +5256,7 @@ every operation is how a 24/7 process spends its day doing nothing useful.
 ```
 
 ################################################################################
-# FILE 40/212: docs/PLANNER.md
+# FILE 40/215: docs/PLANNER.md
 ################################################################################
 ```md
 # Planner
@@ -5384,7 +5399,7 @@ the feature still produces a usable checklist offline.
 ```
 
 ################################################################################
-# FILE 41/212: docs/README.md
+# FILE 41/215: docs/README.md
 ################################################################################
 ```md
 # Jarvis docs
@@ -5444,14 +5459,14 @@ A stale doc is worse than none: it sends you to a module that moved.
 ```
 
 ################################################################################
-# FILE 42/212: backend/adapters/__init__.py
+# FILE 42/215: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 43/212: backend/adapters/commander_adapter.py
+# FILE 43/215: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -6246,14 +6261,14 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 ```
 
 ################################################################################
-# FILE 44/212: backend/agents/__init__.py
+# FILE 44/215: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 45/212: backend/agents/base_agent.py
+# FILE 45/215: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -6276,7 +6291,7 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 46/212: backend/agents/browser_agent.py
+# FILE 46/215: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
@@ -6307,6 +6322,7 @@ import asyncio
 import os
 import sys
 import threading
+import time
 from pathlib import Path
 
 from agents.base_agent import BaseAgent
@@ -6388,6 +6404,108 @@ def _run(coro, timeout: float = 90):
             pass
 
 
+# ── Retrying, and the one place it must never happen ─────────────────────────
+#
+# From mainland China a page load fails constantly and TRANSIENTLY: a DNS
+# hiccup, a reset connection, a Cloudflare interstitial that clears on the
+# second try. Giving up on the first error makes the freelance engine look
+# broken when the network merely blinked.
+#
+# But retrying is not always safe. Re-trying a SUBMISSION after a timeout can
+# put a second proposal in front of a real client under the user's name — the
+# request may well have arrived and only the response was lost. So retry is
+# opt-in per call site, and bid_executor deliberately does not use it; it
+# re-reads the page state instead. See docs/FREELANCER.md.
+
+# Errors worth another attempt: the network, not the page.
+_TRANSIENT = (
+    "timeout", "timed out", "econnreset", "connection reset", "connection refused",
+    "err_network", "err_connection", "err_internet_disconnected", "socket hang up",
+    "net::err_", "temporarily unavailable", "502", "503", "504",
+    "target closed", "browser has been closed", "page crashed",
+)
+# Errors where another attempt is pure delay — the answer will not change.
+_PERMANENT = (
+    "not logged in", "not_logged_in", "404", "no such element", "invalid url",
+    "err_name_not_resolved", "err_cert", "access denied", "403",
+)
+
+
+def classify_browser_error(err: str) -> dict:
+    """
+    {retryable, kind, cause, remedy} for a browser failure.
+
+    Permanent wins over transient when both match: "403 timeout" is a refusal
+    with a slow response, and retrying a refusal just makes the user wait.
+    """
+    e = (err or "").lower()
+    if any(p in e for p in _PERMANENT):
+        # Both spellings: the executor emits NOT_LOGGED_IN with underscores, so
+        # matching only "logged in" filed a login failure as "page not found"
+        # and told the user to check the link instead of to log in.
+        if ("logged in" in e or "logged_in" in e
+                or "403" in e or "access denied" in e):
+            return {"retryable": False, "kind": "auth",
+                    "cause": "the site refused the request",
+                    "remedy": "Log in once by hand via Platform Logins; Jarvis "
+                              "reuses that session afterwards."}
+        return {"retryable": False, "kind": "not_found",
+                "cause": "the page or element isn't there",
+                "remedy": "The site's layout may have changed — check the link."}
+    if any(t in e for t in _TRANSIENT):
+        return {"retryable": True, "kind": "network",
+                "cause": "the connection failed part-way",
+                "remedy": "Usually the network blinking. Jarvis retries this "
+                          "automatically."}
+    return {"retryable": False, "kind": "unknown", "cause": err or "unknown failure",
+            "remedy": "See the execution log on the Logs screen."}
+
+
+def with_retry(fn, attempts: int = 3, base_delay: float = 1.5, label: str = ""):
+    """
+    Run a browser call, retrying only TRANSIENT failures, with backoff.
+
+    NOT for anything that submits. Every attempt is recorded so the log shows
+    "succeeded on attempt 2" rather than a silent success that hides a flaky
+    site — a site that needs two tries every time is information.
+    """
+    tried = []
+    for attempt in range(1, max(1, attempts) + 1):
+        try:
+            res = fn()
+        except Exception as e:                       # a raise is a failure too
+            res = {"success": False, "error": str(e)[:200]}
+        if res.get("success"):
+            if attempt > 1:
+                res["attempts"] = attempt
+                res["note"] = f"succeeded on attempt {attempt} of {attempts}"
+                _emit_retry(label, f"{label or 'browser'}: worked on attempt {attempt}")
+            return res
+
+        info = classify_browser_error(res.get("error", ""))
+        tried.append({"attempt": attempt, "error": res.get("error", "")[:120],
+                      "kind": info["kind"]})
+        if not info["retryable"] or attempt >= attempts:
+            res.update(attempts=attempt, tried=tried,
+                       cause=info["cause"], what_to_do=info["remedy"],
+                       retryable=info["retryable"])
+            return res
+        delay = base_delay * (2 ** (attempt - 1))    # 1.5s, 3s, 6s
+        _emit_retry(label, f"{label or 'browser'} failed ({info['kind']}); "
+                           f"retrying in {delay:.0f}s — attempt {attempt + 1} of {attempts}")
+        time.sleep(delay)
+    return {"success": False, "error": "retries exhausted", "tried": tried}
+
+
+def _emit_retry(label: str, msg: str) -> None:
+    """Say it out loud — a silent retry looks like a hang."""
+    try:
+        from agents.orchestrator import STATE
+        STATE.emit("browser", msg, "warning")
+    except Exception:
+        pass
+
+
 # ── The function that was missing ─────────────────────────────────────────────
 
 def navigate(url: str, domain: str = "research", headless: bool = False,
@@ -6408,8 +6526,10 @@ def navigate(url: str, domain: str = "research", headless: bool = False,
         await asyncio.sleep(1.0)
         return {"success": True, "url": page.url, "title": (await page.title())[:120]}
 
-    try:
-        res = _run(_go())
+    # Loading a page is idempotent, so it is safe to retry — and from China it
+    # needs to be. A single failed goto() used to abandon the whole step.
+    res = with_retry(lambda: _run(_go()), attempts=3, label=f"open {url[:40]}")
+    if res.get("success"):
         try:
             from services import event_bus
             event_bus.publish("browser.navigated",
@@ -6417,9 +6537,9 @@ def navigate(url: str, domain: str = "research", headless: bool = False,
                                "title": res.get("title", "")[:60]})
         except Exception:
             pass
-        return res
-    except Exception as e:
-        return {"success": False, "url": url, "error": str(e)[:200]}
+    else:
+        res.setdefault("url", url)
+    return res
 
 
 def current_page_text(domain: str = "research", limit: int = 4000) -> dict:
@@ -6572,7 +6692,7 @@ class BrowserAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 47/212: backend/agents/commander.py
+# FILE 47/215: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -6717,14 +6837,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 48/212: backend/agents/custom/__init__.py
+# FILE 48/215: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 49/212: backend/agents/desktop_agent.py
+# FILE 49/215: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -6875,6 +6995,56 @@ def _clipboard_restore(saved) -> None:
         pass
 
 
+# ── Did anything actually happen? ────────────────────────────────────────────
+#
+# A click "succeeds" the moment pyautogui returns, which tells you the mouse
+# moved — not that anything responded. Clicking a disabled button, a stale
+# coordinate, or a window that closed half a second ago all return success.
+# Everything downstream then proceeds as if the UI had changed.
+#
+# So: look at a small patch of screen around the click, before and after. If
+# NOTHING changed, the click landed on nothing. Cheap on purpose — a 240px box
+# downscaled to a thumbnail, not a full screengrab: this runs after every click
+# on a 16 GB machine, and a full-screen capture per click is how vision once
+# cost 288 seconds.
+
+_OBSERVE_BOX = 240          # pixels around the point we watch
+_OBSERVE_THUMB = 24         # downscale to this before comparing
+_OBSERVE_CHANGED = 6        # mean per-pixel delta that counts as "something moved"
+
+
+def _peek(x: int | None, y: int | None):
+    """A tiny fingerprint of the screen near (x, y). None if we can't look."""
+    from agents.vision_agent import HAS_MSS, HAS_PIL
+    if not (HAS_MSS and HAS_PIL):
+        return None
+    try:
+        import mss
+        from PIL import Image
+        with mss.mss() as sct:
+            mon = sct.monitors[0]
+            if x is None or y is None:
+                box = mon
+            else:
+                half = _OBSERVE_BOX // 2
+                box = {"left": max(mon["left"], int(x) - half),
+                       "top": max(mon["top"], int(y) - half),
+                       "width": _OBSERVE_BOX, "height": _OBSERVE_BOX}
+            raw = sct.grab(box)
+        img = Image.frombytes("RGB", raw.size, raw.rgb).convert("L")
+        return img.resize((_OBSERVE_THUMB, _OBSERVE_THUMB)).tobytes()
+    except Exception:
+        return None
+
+
+def _changed(before, after) -> bool | None:
+    """True/False if we could compare, None if we couldn't see."""
+    if before is None or after is None or len(before) != len(after):
+        return None
+    delta = sum(abs(a - b) for a, b in zip(before, after, strict=True)) / len(before)
+    return delta >= _OBSERVE_CHANGED
+
+
 # ── Mouse ─────────────────────────────────────────────────────────────────────
 
 def move(x: int, y: int, duration: float = 0.3) -> dict:
@@ -6885,15 +7055,68 @@ def move(x: int, y: int, duration: float = 0.3) -> dict:
     return {"success": True, "action": "move", "x": x, "y": y}
 
 
-def click(x: int = None, y: int = None, button: str = "left", clicks: int = 1) -> dict:
+def click(x: int = None, y: int = None, button: str = "left", clicks: int = 1,
+          verify: bool = True) -> dict:
+    """
+    Click, then check whether the screen responded.
+
+    `success` means the click was issued. `verified` means something on screen
+    actually changed underneath it. They are different facts and are reported
+    separately — a click that hit a dead pixel is still `success: True`, and
+    saying so is the honest answer.
+    """
     err = _require("pyautogui")
     if err: return err
+
+    before = _peek(x, y) if verify else None
+    fg_before = _foreground_id()
     with _lock:
         if x is not None and y is not None:
             pyautogui.click(x, y, button=button, clicks=clicks)
         else:
             pyautogui.click(button=button, clicks=clicks)
-    return {"success": True, "action": "click", "x": x, "y": y, "button": button}
+
+    out = {"success": True, "action": "click", "x": x, "y": y, "button": button}
+    if not verify:
+        return out
+
+    time.sleep(0.25)        # let the UI redraw before judging it
+    moved = _changed(before, _peek(x, y))
+    fg_after = _foreground_id()
+
+    if moved is None and fg_before == fg_after:
+        # No eyes. Don't claim, and don't pretend the claim is a small thing.
+        out.update(verified=False, verify_reason=(
+            "Clicked, but Jarvis can't see the screen here (no mss/Pillow), so "
+            "it cannot tell whether anything responded."))
+    elif moved or fg_before != fg_after:
+        out.update(verified=True, verify_reason=(
+            "the window changed" if fg_before != fg_after
+            else "the screen under the cursor changed"))
+    else:
+        out.update(verified=False, verify_reason=(
+            f"Nothing on screen changed after clicking ({x}, {y}). The click "
+            f"probably landed on nothing — the element may have moved, or the "
+            f"window may not have been in front."))
+    return out
+
+
+def _foreground_id() -> str:
+    """A cheap identifier for 'which window is in front', or '' if unknown."""
+    if os.name != "nt":
+        return ""
+    try:
+        import ctypes
+        u32 = ctypes.windll.user32
+        hwnd = u32.GetForegroundWindow()
+        if not hwnd:
+            return ""
+        n = u32.GetWindowTextLengthW(hwnd)
+        buf = ctypes.create_unicode_buffer(n + 1)
+        u32.GetWindowTextW(hwnd, buf, n + 1)
+        return f"{hwnd}:{buf.value}"
+    except Exception:
+        return ""
 
 
 def double_click(x: int, y: int) -> dict:
@@ -6959,20 +7182,51 @@ def type_text_raw(text: str) -> dict:
         _clipboard_restore(saved)
 
 
+def _observe_keys(fn, out: dict) -> dict:
+    """
+    Run a keystroke and note whether the screen reacted.
+
+    Same reasoning as click(): pyautogui returning means the key was sent to
+    the OS, not that anything received it. Ctrl+S into a window that lost focus
+    "succeeds" and saves nothing.
+
+    The whole screen is watched here rather than a box, because a keystroke's
+    effect can appear anywhere — a save dialog, a menu, a sent message.
+    """
+    before = _peek(None, None)
+    fg_before = _foreground_id()
+    with _lock:                 # `with`, not manual acquire/release — an
+        fn()                    # exception inside fn() must not strand the lock
+    time.sleep(0.25)
+    moved = _changed(before, _peek(None, None))
+    fg_after = _foreground_id()
+
+    if moved is None and fg_before == fg_after:
+        out.update(verified=False, verify_reason=(
+            "Key sent, but Jarvis can't see the screen here (no mss/Pillow), "
+            "so it cannot tell whether anything received it."))
+    elif moved or fg_before != fg_after:
+        out.update(verified=True, verify_reason=(
+            "the window changed" if fg_before != fg_after else "the screen changed"))
+    else:
+        out.update(verified=False, verify_reason=(
+            "Nothing on screen changed. The keystroke probably went to a "
+            "window that wasn't listening."))
+    return out
+
+
 def hotkey(*keys) -> dict:
     err = _require("pyautogui")
     if err: return err
-    with _lock:
-        pyautogui.hotkey(*keys)
-    return {"success": True, "action": "hotkey", "keys": list(keys)}
+    return _observe_keys(lambda: pyautogui.hotkey(*keys),
+                         {"success": True, "action": "hotkey", "keys": list(keys)})
 
 
 def press(key: str) -> dict:
     err = _require("pyautogui")
     if err: return err
-    with _lock:
-        pyautogui.press(key)
-    return {"success": True, "action": "press", "key": key}
+    return _observe_keys(lambda: pyautogui.press(key),
+                         {"success": True, "action": "press", "key": key})
 
 
 # ── Applications ──────────────────────────────────────────────────────────────
@@ -7100,9 +7354,24 @@ def open_app(name_or_path: str) -> dict:
         "paint":      ["mspaint.exe"],
         "snipping":   ["snippingtool.exe"],
     }
-    if _app_visible(name_or_path):
+    # Already running? Then RAISE IT, and report what actually happened.
+    #
+    # This branch used to return {"method": "focus", "verified": True} without
+    # focusing anything and without verifying anything. Both were false. It is
+    # the second half of the QQ bug: QQ was already running, this returned
+    # "verified", nothing came to the front, and the screenshot that followed
+    # captured a different window entirely.
+    running = _running_process_for(name_or_path)
+    if running:
+        raised = focus_window(name_or_path).get("success", False)
         return {"success": True, "action": "open_app", "app": name_or_path,
-                "resolved": "already open", "method": "focus", "verified": True}
+                "resolved": f"already running as {running}",
+                "method": "focus", "verified": bool(raised),
+                "foreground": bool(raised),
+                **({} if raised else {
+                    "warning": f"{name_or_path} is already running as {running}, "
+                               f"but it could not be brought to the front. Anything "
+                               f"that follows may act on the wrong window."})}
 
     key = name_or_path.lower().replace(" ", "")
     cmd = KNOWN.get(key, None)
@@ -7168,26 +7437,62 @@ def open_app(name_or_path: str) -> dict:
             "resolved": cmd[0], "method": "direct", "verified": vis}
 
 
-def _app_visible(name: str) -> bool:
-    """Best-effort check that an app is actually up: window title or process."""
-    n = (name or "").lower().strip()
+def _running_process_for(name: str) -> str | None:
+    """
+    The EXACT process this app is running as, or None.
+
+    This replaces a substring match that was wrong in both directions and is
+    the root of "it opened QQ the first time but never again":
+
+        _app_visible("notepad")  matched  notepad++.exe
+        _app_visible("qq")       matched  qqbrowser.exe
+        _app_visible("code")     matched  codemeter.exe
+        _app_visible("qq")       matched  an Edge tab titled "QQ音乐下载 - Edge"
+
+    open_app() returns "already open" the moment this says yes — so a browser
+    tab that merely MENTIONS the app was enough to make Jarvis skip the launch
+    entirely, report success, and then screenshot whatever was in front. The
+    user saw "no unread messages" from a window that was never QQ.
+
+    Matching is now exact against _process_names_for(), which is alias-aware
+    and knows what app_resolver actually launched. One matcher, not two that
+    disagree.
+    """
+    n = (name or "").strip().lower()
     if not n:
-        return False
+        return None
+    wanted = _process_names_for(n)
+    if not wanted:
+        return None
     try:
-        if HAS_WINDOWS:
-            for t in gw.getAllTitles():
-                if t and n in t.lower():
-                    return True
-    except Exception:
-        pass
-    try:
-        compact = n.replace(" ", "")
         for p in psutil.process_iter(["name"]):
             pn = (p.info.get("name") or "").lower()
-            if pn and (compact[:12] in pn or pn.replace(".exe", "") in compact):
-                return True
+            if pn and pn in wanted:
+                return pn
     except Exception:
         pass
+    return None
+
+
+def _app_visible(name: str) -> bool:
+    """
+    Is this app actually running?
+
+    Process-based, because window titles are localised (Notepad is 记事本 here)
+    AND because a title is not evidence of the app — anyone can open a web page
+    called "Microsoft Word Tutorial".
+
+    Titles are still consulted on non-Windows, where there is no reliable
+    process mapping, but only as a last resort.
+    """
+    if _running_process_for(name):
+        return True
+    if os.name != "nt" and HAS_WINDOWS:
+        n = (name or "").strip().lower()
+        try:
+            return any(t and n in t.lower() for t in gw.getAllTitles())
+        except Exception:
+            return False
     return False
 
 
@@ -7365,6 +7670,24 @@ def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
 
     if action == "click_text":
         return bool(result.get("found", True)), result.get("error", "")
+
+    if action in ("click", "press", "hotkey"):
+        # click() and the key actions now LOOK at the screen afterwards, so use
+        # what they saw rather than assuming the call returning means it worked.
+        #
+        # "Couldn't see" is not "didn't work". Reporting an unobservable click
+        # as a failure would abort chains that were fine, on any machine
+        # without mss/Pillow — so it passes with the doubt stated, and the
+        # reason travels into the log and the report. Only a POSITIVE
+        # observation of nothing changing is a failure.
+        if result.get("verified") is True:
+            return True, result.get("verify_reason", "screen responded")
+        reason = result.get("verify_reason", "")
+        if "can't see" in reason or "cannot tell" in reason:
+            return True, reason          # honest pass: unverifiable, not failed
+        if reason:
+            return False, reason         # we looked, and nothing happened
+        return True, "issued (not observed)"
 
     if action == "compose":
         # The model may have failed before a single key was pressed. That's a
@@ -8371,7 +8694,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 50/212: backend/agents/executor_agent.py
+# FILE 50/215: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -8848,7 +9171,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 51/212: backend/agents/memory_agent.py
+# FILE 51/215: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -9007,7 +9330,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 52/212: backend/agents/orchestrator.py
+# FILE 52/215: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -9125,7 +9448,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 53/212: backend/agents/orchestrator_core.py
+# FILE 53/215: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -9659,7 +9982,7 @@ core = get_core()
 ```
 
 ################################################################################
-# FILE 54/212: backend/agents/perception_agent.py
+# FILE 54/215: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -9870,7 +10193,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 55/212: backend/agents/proposal_agent.py
+# FILE 55/215: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -10151,7 +10474,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 56/212: backend/agents/registry.py
+# FILE 56/215: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -10471,7 +10794,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 57/212: backend/agents/scheduler.py
+# FILE 57/215: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -10600,7 +10923,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 58/212: backend/agents/score_agent.py
+# FILE 58/215: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -10802,7 +11125,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 59/212: backend/agents/scout_agent.py
+# FILE 59/215: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -10924,7 +11247,7 @@ class ScoutAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 60/212: backend/agents/v9_models.py
+# FILE 60/215: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -10982,7 +11305,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 61/212: backend/agents/vision_agent.py
+# FILE 61/215: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -11609,14 +11932,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 62/212: backend/core/__init__.py
+# FILE 62/215: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 63/212: backend/core/browser_lock.py
+# FILE 63/215: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
@@ -11759,7 +12082,7 @@ class browser_session:
 ```
 
 ################################################################################
-# FILE 64/212: backend/main.py
+# FILE 64/215: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -11768,6 +12091,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
+import time
 from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12085,33 +12410,64 @@ def _sse(chunk="", done=False):
 @app.get("/")
 def root(): return {"app": "Jarvis OS", "version": JARVIS_VERSION, "running": True, "docs": "/api/docs"}
 
-@app.get("/health")
-def health():
-    # Through ollama_manager, not the SDK directly. Same probe, one door — and
-    # ollama_manager already knows the host, the approved model set, and how to
-    # turn a failure into a reason a human can act on. Found by
-    # .semgrep/jarvis.yml (jarvis-ollama-outside-providers).
-    #
-    # Two things about this endpoint are still wrong and are NOT changed here,
-    # because they alter what it reports; see docs/CODE_HEALTH.md:
-    #   * "model" comes from a module-level env constant, so it can disagree
-    #     with the model the router actually picked.
-    #   * the probe has no timeout, and START.bat polls /health to decide
-    #     whether the backend is up — a slow Ollama can make a working backend
-    #     look offline.
-    ollama_ok = False
+# /health answers "is the BACKEND up?" — nothing else. START.bat polls it to
+# decide whether to open the browser, so it must return fast, always.
+#
+# It used to probe Ollama inline, with no timeout. When Ollama is paging a model
+# back in on a 16 GB machine, that probe takes tens of seconds; the launcher
+# gave up waiting and told the user "Backend Offline" while the backend was
+# running perfectly and answering nothing else. The backend's health does not
+# depend on Ollama's, and pretending otherwise is what produced a false report.
+#
+# So the Ollama probe runs on a background thread and /health reports the LAST
+# KNOWN answer, with how old it is. Never "unknown" dressed up as "offline".
+_ollama_probe = {"ok": None, "at": 0.0, "reason": "not checked yet"}
+_ollama_probe_lock = threading.Lock()
+_OLLAMA_PROBE_TTL = 20.0        # seconds a probe result stays fresh
+
+
+def _refresh_ollama_probe() -> None:
+    """Ask Ollama how it is, off the request path. Never raises."""
     try:
         from services.ollama_manager import health as _ollama_health
-        ollama_ok = bool(_ollama_health().get("ok"))
+        h = _ollama_health()
+        ok, reason = bool(h.get("ok")), h.get("reason", "")
+    except Exception as e:
+        ok, reason = False, f"probe failed: {str(e)[:80]}"
+    with _ollama_probe_lock:
+        _ollama_probe.update(ok=ok, at=time.time(), reason=reason)
+
+
+@app.get("/health")
+def health():
+    with _ollama_probe_lock:
+        snap = dict(_ollama_probe)
+    age = time.time() - snap["at"] if snap["at"] else None
+    if age is None or age > _OLLAMA_PROBE_TTL:
+        # Kick a refresh for NEXT time and answer now with what we have.
+        threading.Thread(target=_refresh_ollama_probe, daemon=True).start()
+
+    # The model the router would ACTUALLY pick, not a module-level env constant
+    # read once at import. Those disagreed, which is the same bug already fixed
+    # in Diagnostics and os_state; /health was the one that got missed.
+    model = OLLAMA_MODEL
+    try:
+        from services import model_router
+        model = model_router.pick("chat").get("model") or OLLAMA_MODEL
     except Exception:
-        pass    # a health endpoint must answer even when the probe itself breaks
+        pass
+
     return {
-        "status":    "online",
+        "status":    "online",          # the backend answered — that IS the health
         "version":   JARVIS_VERSION,
         "provider":  LLM_PROVIDER,
-        "ollama":    ollama_ok,
-        "ollama_ok": ollama_ok,
-        "model":     OLLAMA_MODEL,
+        # None means "haven't looked yet", which is not the same as False.
+        # The UI must not draw "offline" for a question nobody has asked.
+        "ollama":    snap["ok"],
+        "ollama_ok": snap["ok"],
+        "ollama_checked_s_ago": round(age, 1) if age is not None else None,
+        "ollama_reason": snap["reason"],
+        "model":     model,
     }
 
 @app.get("/stats")
@@ -12348,7 +12704,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 65/212: backend/mcp_server.py
+# FILE 65/215: backend/mcp_server.py
 ################################################################################
 ```py
 """
@@ -12752,14 +13108,14 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 66/212: backend/models/__init__.py
+# FILE 66/215: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import DB_PATH, conn, init_db
 ```
 
 ################################################################################
-# FILE 67/212: backend/models/clickworker.py
+# FILE 67/215: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -12786,7 +13142,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 68/212: backend/models/db.py
+# FILE 68/215: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -13006,7 +13362,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 69/212: backend/models/fiverr.py
+# FILE 69/215: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -13053,7 +13409,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 70/212: backend/models/hubstaff.py
+# FILE 70/215: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -13097,7 +13453,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 71/212: backend/models/zuodao.py
+# FILE 71/215: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -13124,14 +13480,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 72/212: backend/platforms/__init__.py
+# FILE 72/215: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 73/212: backend/platforms/base.py
+# FILE 73/215: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -13176,7 +13532,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 74/212: backend/platforms/contra.py
+# FILE 74/215: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -13260,7 +13616,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 75/212: backend/platforms/hubstaff.py
+# FILE 75/215: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -13461,7 +13817,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 76/212: backend/platforms/peopleperhour.py
+# FILE 76/215: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -13545,7 +13901,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 77/212: backend/platforms/remoteco.py
+# FILE 77/215: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -13644,7 +14000,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 78/212: backend/platforms/remoteok.py
+# FILE 78/215: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -13688,7 +14044,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 79/212: backend/platforms/wellfound.py
+# FILE 79/215: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -13805,7 +14161,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 80/212: backend/platforms/weworkremotely.py
+# FILE 80/215: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -13852,14 +14208,14 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 81/212: backend/providers/__init__.py
+# FILE 81/215: backend/providers/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 82/212: backend/providers/base.py
+# FILE 82/215: backend/providers/base.py
 ################################################################################
 ```py
 """
@@ -13926,7 +14282,7 @@ class Provider(ABC):
 ```
 
 ################################################################################
-# FILE 83/212: backend/providers/ollama_provider.py
+# FILE 83/215: backend/providers/ollama_provider.py
 ################################################################################
 ```py
 """
@@ -13953,6 +14309,8 @@ Division of labour, to keep it straight:
 """
 from __future__ import annotations
 
+import os
+import time
 from collections.abc import Generator
 
 from providers.base import Provider
@@ -13984,12 +14342,34 @@ class OllamaProvider(Provider):
         "vision": "vision", "browser": "chat", "batch": "proposal",
     }
 
-    def _client(self):
+    def _client(self, timeout: float | None = None):
+        """
+        A client with a WALL-CLOCK TIMEOUT, not the bare ollama module.
+
+        This used to return the module, whose top-level chat() has no timeout at
+        all. LIMITS carries three bounds — tokens, context, and time — and only
+        the first two were ever applied. So a model that RAMBLES was bounded and
+        a model that STALLS was not, which on a 16 GB machine under memory
+        pressure is the more likely of the two: Ollama pages the weights back in
+        and the call simply never returns.
+
+        ollama.Client passes **kwargs to httpx, so `timeout=` is honoured.
+        Falls back to the module if this build of the library doesn't accept it
+        — an unbounded call is still better than no AI at all, and status()
+        reports which one is in use.
+        """
         try:
             import ollama
-            return ollama
         except Exception:
             return None
+        if timeout is None:
+            return ollama
+        try:
+            return ollama.Client(host=os.getenv("OLLAMA_HOST",
+                                                "http://127.0.0.1:11434"),
+                                 timeout=float(timeout))
+        except Exception:
+            return ollama
 
     def configured(self) -> bool:
         return self._client() is not None
@@ -14022,7 +14402,23 @@ class OllamaProvider(Provider):
 
     def chat(self, messages, model=None, temperature=0.7, max_tokens=None,
              task="", timeout=None, **kwargs) -> str:
-        client = self._client()
+        # Bounds come from ollama_manager, which knows what this machine can
+        # take. Unbounded generation is not a theoretical risk here — it has
+        # already cost this project a 288-second screen analysis.
+        #
+        # ALL THREE bounds are applied now: tokens, context, and wall-clock.
+        # The third was computed and dropped for a long time, which meant a
+        # model that RAMBLED was bounded and a model that STALLED was not.
+        try:
+            from services.ollama_manager import LIMITS, keep_alive_for
+            cap_tokens, cap_ctx, cap_seconds = LIMITS.get(
+                self._kind(task), LIMITS["fast"])
+            keep = keep_alive_for(model)
+        except Exception:
+            cap_tokens, cap_ctx, cap_seconds, keep = 400, 4096, 60, "5m"
+        deadline = float(timeout or cap_seconds)
+
+        client = self._client(timeout=deadline)
         if client is None:
             return ("[Ollama isn't installed. Install it from ollama.com, then "
                     "run: ollama pull qwen2.5:3b]")
@@ -14030,25 +14426,7 @@ class OllamaProvider(Provider):
         if not model:
             return "[No Ollama model is available. Run: ollama pull qwen2.5:3b]"
 
-        # Bounds come from ollama_manager, which knows what this machine can
-        # take. Unbounded generation is not a theoretical risk here — it has
-        # already cost this project a 288-second screen analysis.
-        #
-        # KNOWN GAP — LIMITS carries a third bound, a wall-clock timeout, and it
-        # is NOT applied. _client() returns the ollama MODULE, whose top-level
-        # chat() has no timeout; enforcing one needs ollama.Client(timeout=...).
-        # Tokens and context are capped, wall-clock is not, so a model that
-        # stalls rather than rambles still hangs. Unpacked to `_` rather than
-        # dropped from the tuple so the missing bound stays visible here.
-        # Tracked in docs/CODE_HEALTH.md.
-        try:
-            from services.ollama_manager import LIMITS, keep_alive_for
-            cap_tokens, cap_ctx, _wall_clock_cap_unused = LIMITS.get(
-                self._kind(task), LIMITS["fast"])
-            keep = keep_alive_for(model)
-        except Exception:
-            cap_tokens, cap_ctx, keep = 400, 4096, "5m"
-
+        started = time.monotonic()
         try:
             resp = client.chat(
                 model=model, messages=messages, keep_alive=keep,
@@ -14058,11 +14436,30 @@ class OllamaProvider(Provider):
             text = (resp.get("message", {}) or {}).get("content", "") or ""
             return text.strip() or "[The model returned nothing.]"
         except Exception as e:
+            took = time.monotonic() - started
+            # Name the cause. "Ollama error: ReadTimeout" tells the user nothing
+            # they can act on; "it ran out of time, and here is why that
+            # happens on this machine" does.
+            if took >= deadline * 0.9 or "timeout" in str(e).lower():
+                return (f"[{model} ran out of time after {deadline:.0f}s. On a "
+                        f"16GB machine this usually means Windows is paging the "
+                        f"model back in — close some tabs, or pick a smaller "
+                        f"model in Settings.]")
             return f"[Ollama error: {e}]"
 
     def stream(self, messages, model=None, temperature=0.7, max_tokens=None,
                task="", timeout=None, **kwargs) -> Generator[str, None, None]:
-        client = self._client()
+        try:
+            from services.ollama_manager import LIMITS, keep_alive_for
+            cap_tokens, cap_ctx, cap_seconds = LIMITS.get(self._kind(task),
+                                                          LIMITS["fast"])
+            keep = keep_alive_for(model)
+        except Exception:
+            cap_tokens, cap_ctx, cap_seconds, keep = 400, 4096, 60, "5m"
+        # Streaming gets a longer deadline than a single call: the bound that
+        # matters here is "the FIRST token never arrives", not total length, and
+        # a long answer streaming steadily is working correctly.
+        client = self._client(timeout=float(timeout or cap_seconds) * 2)
         if client is None:
             yield "[Ollama isn't installed. Install it from ollama.com.]"
             return
@@ -14070,12 +14467,6 @@ class OllamaProvider(Provider):
         if not model:
             yield "[No Ollama model is available. Run: ollama pull qwen2.5:3b]"
             return
-        try:
-            from services.ollama_manager import LIMITS, keep_alive_for
-            cap_tokens, cap_ctx, _ = LIMITS.get(self._kind(task), LIMITS["fast"])
-            keep = keep_alive_for(model)
-        except Exception:
-            cap_tokens, cap_ctx, keep = 400, 4096, "5m"
         try:
             for part in client.chat(
                     model=model, messages=messages, stream=True, keep_alive=keep,
@@ -14119,7 +14510,7 @@ Provider = OllamaProvider          # what the router looks for
 ```
 
 ################################################################################
-# FILE 84/212: backend/providers/openai_compatible.py
+# FILE 84/215: backend/providers/openai_compatible.py
 ################################################################################
 ```py
 """
@@ -14327,7 +14718,7 @@ Provider = OpenAICompatible
 ```
 
 ################################################################################
-# FILE 85/212: backend/requirements.txt
+# FILE 85/215: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -14376,7 +14767,7 @@ pynput>=1.7.6
 ```
 
 ################################################################################
-# FILE 86/212: backend/routes/__init__.py
+# FILE 86/215: backend/routes/__init__.py
 ################################################################################
 ```py
 from .analytics import router as analytics_router
@@ -14392,7 +14783,7 @@ from .zuodao import router as zuodao_router
 ```
 
 ################################################################################
-# FILE 87/212: backend/routes/agents.py
+# FILE 87/215: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -14887,7 +15278,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 88/212: backend/routes/analytics.py
+# FILE 88/215: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -14907,7 +15298,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 89/212: backend/routes/automation.py
+# FILE 89/215: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -15346,7 +15737,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 90/212: backend/routes/brain.py
+# FILE 90/215: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -15444,7 +15835,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 91/212: backend/routes/clickworker.py
+# FILE 91/215: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -15543,7 +15934,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 92/212: backend/routes/fiverr.py
+# FILE 92/215: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -15720,7 +16111,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 93/212: backend/routes/hubstaff.py
+# FILE 93/215: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -15900,7 +16291,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 94/212: backend/routes/messages.py
+# FILE 94/215: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -15995,7 +16386,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 95/212: backend/routes/mind.py
+# FILE 95/215: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -16096,7 +16487,7 @@ def freelance_resume(platform: str):
 ```
 
 ################################################################################
-# FILE 96/212: backend/routes/orchestrator.py
+# FILE 96/215: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -16267,7 +16658,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 97/212: backend/routes/orchestrator_feed.py
+# FILE 97/215: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -16326,7 +16717,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 98/212: backend/routes/os_console.py
+# FILE 98/215: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -16666,7 +17057,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 99/212: backend/routes/planner.py
+# FILE 99/215: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -16791,7 +17182,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 100/212: backend/routes/proposals.py
+# FILE 100/215: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -16997,7 +17388,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 101/212: backend/routes/pulse.py
+# FILE 101/215: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -17031,7 +17422,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 102/212: backend/routes/scraper.py
+# FILE 102/215: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -17175,7 +17566,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 103/212: backend/routes/sessions.py
+# FILE 103/215: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -17290,7 +17681,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 104/212: backend/routes/system.py
+# FILE 104/215: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -17489,7 +17880,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 105/212: backend/routes/workflows.py
+# FILE 105/215: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -17555,7 +17946,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 106/212: backend/routes/zuodao.py
+# FILE 106/215: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -17651,7 +18042,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 107/212: backend/services/__init__.py
+# FILE 107/215: backend/services/__init__.py
 ################################################################################
 ```py
 from .analytics_service import get_analytics
@@ -17659,7 +18050,7 @@ from .deepseek_service import auto_work_job, call_model, generate_proposal, gene
 ```
 
 ################################################################################
-# FILE 108/212: backend/services/ai_router.py
+# FILE 108/215: backend/services/ai_router.py
 ################################################################################
 ```py
 """
@@ -17954,7 +18345,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 109/212: backend/services/analytics_service.py
+# FILE 109/215: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -18057,7 +18448,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 110/212: backend/services/app_resolver.py
+# FILE 110/215: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -18275,7 +18666,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 111/212: backend/services/auth.py
+# FILE 111/215: backend/services/auth.py
 ################################################################################
 ```py
 """
@@ -18542,7 +18933,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 112/212: backend/services/bid_executor.py
+# FILE 112/215: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -18672,15 +19063,23 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         if not submit_btn:
             return {"success": False, "message": "Filled proposal text but could not find submit button. Bid NOT submitted — review manually."}
 
+        # What the page looked like BEFORE we clicked. Without this there is no
+        # way to tell "the page never changed" (the click did nothing) from
+        # "the page changed but says nothing recognisable".
+        url_before = page.url
+        form_before = await _bid_form_present(page)
+
         STATE.emit("executor", "Clicking submit…")
         await submit_btn.click()
-        await asyncio.sleep(3)
 
-        # Heuristic success check: URL change, success toast, or bid list update
-        success_indicators = [
-            "bid placed", "bid submitted", "your bid", "successfully",
-        ]
-        page_text = (await page.content()).lower()
+        # THIS IS NOT RETRIED, EVER, and that is deliberate. A submit that times
+        # out may well have ARRIVED — only the response was lost. Clicking again
+        # puts a second proposal in front of a real client under the user's name.
+        # browser_agent.with_retry() exists for idempotent things; this is not
+        # one. Instead we WAIT and then READ, which is safe to do as often as
+        # we like.
+        confirmed, evidence = await _wait_for_confirmation(page, url_before,
+                                                           form_before)
 
         # PROOF. "It said it submitted" is not evidence, and the user is right
         # to distrust it: a screenshot of the page after the click, plus the URL
@@ -18689,14 +19088,36 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         # when you most want to see what the page looked like.
         proof = await _capture_proof(page)
 
-        if any(ind in page_text for ind in success_indicators) or "manage" in page.url.lower():
-            STATE.emit("executor", "Bid submitted - proof saved", "success")
-            return {"success": True, "message": "Bid submitted", "confirmed": True,
+        if confirmed == "sent":
+            STATE.emit("executor", f"Bid submitted — {evidence}", "success")
+            return {"success": True, "message": f"Bid submitted ({evidence})",
+                    "confirmed": True, "evidence": evidence, **proof}
+
+        if confirmed == "rejected":
+            STATE.emit("executor", f"The site refused it — {evidence}", "error")
+            return {"success": False, "confirmed": False, "evidence": evidence,
+                    "message": f"The site rejected this bid: {evidence}",
+                    "what_to_do": "Open the proof screenshot — usually a missing "
+                                  "field, a duplicate bid, or an expired job.",
+                    **proof}
+
+        if confirmed == "unchanged":
+            # The form is still sitting there and the URL never moved. The click
+            # did not take. Calling that "submitted" is the exact false Done
+            # this project exists to avoid.
+            STATE.emit("executor", "Submit did nothing — the form is still open",
+                       "error")
+            return {"success": False, "confirmed": False, "evidence": evidence,
+                    "message": "Clicked Submit and nothing happened — the bid "
+                               "form is still on screen and the page never "
+                               "changed. Nothing was sent.",
+                    "what_to_do": "Open the proof screenshot. The button may be "
+                                  "disabled pending a required field.",
                     **proof}
 
         STATE.emit("executor", "Submitted, but the site did not confirm it - "
                                "check the proof screenshot", "warning")
-        return {"success": True, "confirmed": False,
+        return {"success": True, "confirmed": False, "evidence": evidence,
                 "message": "Submitted, but the page showed no confirmation. "
                            "Open the proof screenshot to see what happened.",
                 **proof}
@@ -18711,6 +19132,74 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         return {"success": False, "message": str(e), **proof}
     finally:
         await page.close()
+
+
+# Phrases that mean the site TOOK it, and phrases that mean it REFUSED.
+# Refusal is checked first: "your bid could not be placed" contains "your bid".
+_SENT_WORDS = ("bid placed", "bid submitted", "proposal submitted", "bid was placed",
+               "successfully submitted", "application sent", "thanks for applying",
+               "we've received", "we have received", "your bid is", "投标成功")
+_REFUSED_WORDS = ("could not be placed", "could not be submitted", "failed to submit",
+                  "already bid", "already applied", "already submitted",
+                  "duplicate", "no longer accepting", "this project is closed",
+                  "insufficient", "you need to", "please complete",
+                  "required field", "verify your", "not enough bids")
+
+
+async def _bid_form_present(page) -> bool:
+    """Is the bid form still on screen? A form that's gone is a strong signal."""
+    try:
+        for sel in ("textarea[name='description']", "textarea[data-qa-description-input]",
+                    "button:has-text('Place Bid')", "[data-qa-submit-bid]"):
+            if await page.query_selector(sel):
+                return True
+    except Exception:
+        pass
+    return False
+
+
+async def _wait_for_confirmation(page, url_before: str, form_before: bool,
+                                 seconds: float = 12.0) -> tuple[str, str]:
+    """
+    Watch the page after Submit and decide what actually happened.
+
+    Returns (verdict, evidence) where verdict is one of:
+        "sent"       the site said so, or the form went away and the URL moved
+        "rejected"   the site said no, and why
+        "unchanged"  nothing moved at all — the click did not take
+        "unknown"    something changed but nothing recognisable was said
+
+    POLLS rather than sleeping a fixed 3 seconds. The old code waited exactly
+    3s and then read once: a site that confirmed at 3.5s was recorded as
+    "submitted, unconfirmed" every single time, which trained the user to
+    ignore that warning — and it is the same warning that appears when a
+    submission genuinely failed.
+    """
+    deadline = asyncio.get_event_loop().time() + seconds
+    last_text = ""
+    while asyncio.get_event_loop().time() < deadline:
+        await asyncio.sleep(0.75)
+        try:
+            last_text = (await page.content()).lower()
+        except Exception:
+            return "unknown", "the page went away before it could be read"
+
+        hit = next((w for w in _REFUSED_WORDS if w in last_text), None)
+        if hit:
+            return "rejected", f"the page says “{hit}”"
+        hit = next((w for w in _SENT_WORDS if w in last_text), None)
+        if hit:
+            return "sent", f"the page says “{hit}”"
+
+        # No words, but the structure moved: form gone AND we navigated.
+        if page.url != url_before and not await _bid_form_present(page):
+            return "sent", f"the bid form closed and the page moved to {page.url[:60]}"
+
+    # Time is up. Distinguish "nothing happened" from "something did".
+    still_there = await _bid_form_present(page)
+    if still_there and page.url == url_before and form_before:
+        return "unchanged", "the bid form is still open and the URL never changed"
+    return "unknown", "the page changed but said nothing Jarvis recognises"
 
 
 async def _capture_proof(page) -> dict:
@@ -18947,7 +19436,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 113/212: backend/services/brain_core.py
+# FILE 113/215: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -19054,7 +19543,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 114/212: backend/services/brain_decision.py
+# FILE 114/215: backend/services/brain_decision.py
 ################################################################################
 ```py
 """
@@ -19312,7 +19801,7 @@ def explain(goal_type: str = "background", objective: str = "") -> dict:
 ```
 
 ################################################################################
-# FILE 115/212: backend/services/brain_service.py
+# FILE 115/215: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -19751,7 +20240,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 116/212: backend/services/browser_monitor.py
+# FILE 116/215: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -19905,7 +20394,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 117/212: backend/services/capability_registry.py
+# FILE 117/215: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -20099,7 +20588,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 118/212: backend/services/clickworker_service.py
+# FILE 118/215: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -20247,7 +20736,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 119/212: backend/services/config.py
+# FILE 119/215: backend/services/config.py
 ################################################################################
 ```py
 """
@@ -20548,7 +21037,7 @@ def effective() -> dict:
 ```
 
 ################################################################################
-# FILE 120/212: backend/services/control.py
+# FILE 120/215: backend/services/control.py
 ################################################################################
 ```py
 """
@@ -20823,7 +21312,7 @@ def explain(limit: int = 6) -> dict:
 ```
 
 ################################################################################
-# FILE 121/212: backend/services/custom_platforms.py
+# FILE 121/215: backend/services/custom_platforms.py
 ################################################################################
 ```py
 """
@@ -21020,7 +21509,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 122/212: backend/services/decompose.py
+# FILE 122/215: backend/services/decompose.py
 ################################################################################
 ```py
 """
@@ -21569,7 +22058,7 @@ def preview(text: str) -> dict:
 ```
 
 ################################################################################
-# FILE 123/212: backend/services/deepseek_service.py
+# FILE 123/215: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -21762,7 +22251,7 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 124/212: backend/services/diagnostics.py
+# FILE 124/215: backend/services/diagnostics.py
 ################################################################################
 ```py
 """
@@ -22180,7 +22669,7 @@ def build_report() -> str:
 ```
 
 ################################################################################
-# FILE 125/212: backend/services/environment.py
+# FILE 125/215: backend/services/environment.py
 ################################################################################
 ```py
 """
@@ -22621,7 +23110,7 @@ def start() -> None:
 ```
 
 ################################################################################
-# FILE 126/212: backend/services/event_bus.py
+# FILE 126/215: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -22714,7 +23203,7 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 127/212: backend/services/experience.py
+# FILE 127/215: backend/services/experience.py
 ################################################################################
 ```py
 """
@@ -23138,7 +23627,7 @@ def summary(limit: int = 8) -> dict:
 ```
 
 ################################################################################
-# FILE 128/212: backend/services/fiverr_service.py
+# FILE 128/215: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -23319,7 +23808,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 129/212: backend/services/freelancer_api.py
+# FILE 129/215: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -23534,7 +24023,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 130/212: backend/services/hubstaff_service.py
+# FILE 130/215: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -23733,7 +24222,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 131/212: backend/services/income_engine.py
+# FILE 131/215: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -24003,7 +24492,7 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 132/212: backend/services/live_plan.py
+# FILE 132/215: backend/services/live_plan.py
 ################################################################################
 ```py
 """
@@ -24302,7 +24791,7 @@ def _publish(topic: str, payload: dict) -> None:
 ```
 
 ################################################################################
-# FILE 133/212: backend/services/maintenance.py
+# FILE 133/215: backend/services/maintenance.py
 ################################################################################
 ```py
 """
@@ -24594,7 +25083,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 134/212: backend/services/memory_pressure.py
+# FILE 134/215: backend/services/memory_pressure.py
 ################################################################################
 ```py
 """
@@ -24808,7 +25297,7 @@ def free_now() -> dict:
 ```
 
 ################################################################################
-# FILE 135/212: backend/services/model_router.py
+# FILE 135/215: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -25040,7 +25529,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 136/212: backend/services/narrate.py
+# FILE 136/215: backend/services/narrate.py
 ################################################################################
 ```py
 """
@@ -25240,7 +25729,7 @@ def as_text() -> str:
 ```
 
 ################################################################################
-# FILE 137/212: backend/services/ollama_manager.py
+# FILE 137/215: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -25613,7 +26102,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 138/212: backend/services/os_state.py
+# FILE 138/215: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -25864,7 +26353,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 139/212: backend/services/persona.py
+# FILE 139/215: backend/services/persona.py
 ################################################################################
 ```py
 """
@@ -26173,7 +26662,7 @@ def _quiet_sync():
 ```
 
 ################################################################################
-# FILE 140/212: backend/services/planner_service.py
+# FILE 140/215: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -26754,7 +27243,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 141/212: backend/services/platform_health.py
+# FILE 141/215: backend/services/platform_health.py
 ################################################################################
 ```py
 """
@@ -26913,7 +27402,7 @@ def _announce_pause(platform: str, error: str) -> None:
 ```
 
 ################################################################################
-# FILE 142/212: backend/services/platform_meta.py
+# FILE 142/215: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -26995,7 +27484,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 143/212: backend/services/profile_service.py
+# FILE 143/215: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -27070,7 +27559,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 144/212: backend/services/providers.py
+# FILE 144/215: backend/services/providers.py
 ################################################################################
 ```py
 """
@@ -27283,7 +27772,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 145/212: backend/services/pulse_service.py
+# FILE 145/215: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -27560,7 +28049,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 146/212: backend/services/reflection.py
+# FILE 146/215: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -27661,7 +28150,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 147/212: backend/services/selfeval.py
+# FILE 147/215: backend/services/selfeval.py
 ################################################################################
 ```py
 """
@@ -27927,7 +28416,7 @@ def summary(limit: int = 10) -> dict:
 ```
 
 ################################################################################
-# FILE 148/212: backend/services/session_manager.py
+# FILE 148/215: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -28298,7 +28787,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 149/212: backend/services/simulate.py
+# FILE 149/215: backend/services/simulate.py
 ################################################################################
 ```py
 """
@@ -28724,7 +29213,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 150/212: backend/services/teach.py
+# FILE 150/215: backend/services/teach.py
 ################################################################################
 ```py
 """
@@ -29131,7 +29620,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 151/212: backend/services/tool_registry.py
+# FILE 151/215: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -29527,7 +30016,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 152/212: backend/services/trace.py
+# FILE 152/215: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -29660,7 +30149,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 153/212: backend/services/vault.py
+# FILE 153/215: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -29792,7 +30281,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 154/212: backend/services/workflow_service.py
+# FILE 154/215: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -30031,7 +30520,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 155/212: backend/services/world_model.py
+# FILE 155/215: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -30222,7 +30711,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 156/212: backend/services/zuodao_service.py
+# FILE 156/215: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -30337,7 +30826,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 157/212: backend/tests/conftest.py
+# FILE 157/215: backend/tests/conftest.py
 ################################################################################
 ```py
 """
@@ -30400,7 +30889,262 @@ def pytest_configure(config):
 ```
 
 ################################################################################
-# FILE 158/212: backend/tests/test_config_store.py
+# FILE 158/215: backend/tests/test_app_detection.py
+################################################################################
+```py
+"""
+"It opened QQ the first time but never again."
+
+The root cause, found by inspection after the focus fix didn't fully explain it:
+_app_visible() matched process names and window titles by SUBSTRING. So:
+
+    asked for "notepad"  ->  matched  notepad++.exe
+    asked for "qq"       ->  matched  qqbrowser.exe
+    asked for "code"     ->  matched  codemeter.exe
+    asked for "qq"       ->  matched  an Edge tab titled "QQ音乐下载 - Edge"
+
+open_app() returns "already open" the instant that says yes. So a browser tab
+that merely MENTIONED the app made Jarvis skip the launch, report success, and
+then screenshot whatever happened to be in front — which is exactly what the
+user saw: "no visible unread messages" from a window that was never QQ.
+"""
+
+import pytest
+
+from agents import desktop_agent as da
+
+
+class _FakeProc:
+    def __init__(self, name):
+        self.info = {"name": name}
+
+
+@pytest.fixture
+def processes(monkeypatch):
+    """Pretend a specific set of processes is running."""
+
+    def _set(names):
+        monkeypatch.setattr(
+            da.psutil, "process_iter", lambda *a, **k: [_FakeProc(n) for n in names]
+        )
+
+    return _set
+
+
+@pytest.mark.parametrize(
+    "asked_for,running,why",
+    [
+        ("notepad", "notepad++.exe", "Notepad++ is a different program"),
+        ("qq", "qqbrowser.exe", "QQ Browser is not QQ"),
+        ("code", "codemeter.exe", "CodeMeter is not VS Code"),
+        ("word", "wordpad.exe", "WordPad is not Word"),
+    ],
+)
+def test_a_similarly_named_program_is_not_the_app(asked_for, running, why, processes):
+    processes([running])
+    assert da._running_process_for(asked_for) is None, why
+
+
+@pytest.mark.parametrize(
+    "asked_for,running",
+    [
+        ("notepad", "notepad.exe"),
+        ("qq", "qq.exe"),
+        ("edge", "msedge.exe"),
+        ("calculator", "calculatorapp.exe"),
+        ("wechat", "weixin.exe"),
+        ("vscode", "code.exe"),
+    ],
+)
+def test_the_real_app_is_still_found(asked_for, running, processes):
+    """The fix must not make detection so strict that nothing matches."""
+    processes([running])
+    assert da._running_process_for(asked_for) == running
+
+
+def test_a_window_title_alone_is_not_evidence(monkeypatch, processes):
+    """
+    Anyone can open a web page called "QQ音乐下载". A title is not the app.
+    On Windows, detection is process-only.
+    """
+    processes([])
+    monkeypatch.setattr(da, "HAS_WINDOWS", True)
+    # raising=False: pygetwindow isn't importable here, so `gw` is unbound —
+    # which is itself the headless case the module is built to survive.
+    monkeypatch.setattr(
+        da,
+        "gw",
+        type(
+            "gw",
+            (),
+            {
+                "getAllTitles": staticmethod(
+                    lambda: ["QQ音乐下载 - Edge", "Microsoft Word Tutorial"]
+                )
+            },
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(da.os, "name", "nt")
+    assert da._app_visible("qq") is False
+    assert da._app_visible("word") is False
+
+
+def test_already_running_actually_raises_the_window(monkeypatch, processes):
+    """
+    open_app used to return {"method": "focus", "verified": True} without
+    focusing OR verifying. Both claims were false, and everything after it
+    acted on the wrong window.
+    """
+    processes(["qq.exe"])
+    calls = []
+    monkeypatch.setattr(
+        da, "focus_window", lambda app, *a, **k: (calls.append(app), {"success": True})[1]
+    )
+
+    out = da.open_app("qq")
+    assert calls == ["qq"], "claimed to focus the window and didn't"
+    assert out["verified"] is True
+    assert "qq.exe" in out["resolved"]
+
+
+def test_unraisable_window_is_reported_not_hidden(monkeypatch, processes):
+    """If it can't be brought to the front, say so — the next step is at risk."""
+    processes(["qq.exe"])
+    monkeypatch.setattr(da, "focus_window", lambda *a, **k: {"success": False})
+
+    out = da.open_app("qq")
+    assert out["verified"] is False
+    assert "warning" in out
+    assert "wrong window" in out["warning"]
+```
+
+################################################################################
+# FILE 159/215: backend/tests/test_click_verification.py
+################################################################################
+```py
+"""
+A click "succeeds" the moment pyautogui returns — which means the mouse moved,
+not that anything responded.
+
+Clicking a disabled button, a stale coordinate, or a window that closed half a
+second ago all returned success, and the whole chain then proceeded as if the
+UI had changed. That is the same false-Done problem as typing into a window
+that never had focus, one layer over.
+
+So click/press/hotkey now LOOK at the screen afterwards, and `verified` carries
+what was seen. The three outcomes are deliberately distinct:
+
+    saw a change      -> verified True
+    saw NO change     -> verified False, and the step fails
+    couldn't look     -> verified False, but the step PASSES with the doubt
+                         stated. "No eyes" is not "didn't work", and failing
+                         every click on a machine without mss/Pillow would
+                         break chains that were fine.
+"""
+
+import pytest
+
+from agents import desktop_agent as da
+
+
+@pytest.fixture
+def eyes(monkeypatch):
+    """Control what Jarvis 'sees' before and after an action."""
+
+    def _set(frames):
+        seq = list(frames)
+        monkeypatch.setattr(da, "_peek", lambda *a, **k: seq.pop(0) if seq else None)
+
+    return _set
+
+
+SAME = bytes([10] * 576)
+DIFFERENT = bytes([200] * 576)
+
+
+def test_a_click_that_changes_nothing_is_not_verified(monkeypatch, eyes):
+    monkeypatch.setattr(da, "_require", lambda *a: None)
+    monkeypatch.setattr(
+        da, "pyautogui", type("p", (), {"click": staticmethod(lambda *a, **k: None)}), raising=False
+    )
+    monkeypatch.setattr(da, "_foreground_id", lambda: "same")
+    eyes([SAME, SAME])
+
+    out = da.click(100, 100)
+    assert out["success"] is True, "the call did happen — that part is true"
+    assert out["verified"] is False
+    assert "landed on nothing" in out["verify_reason"]
+
+
+def test_a_click_that_changes_the_screen_is_verified(monkeypatch, eyes):
+    monkeypatch.setattr(da, "_require", lambda *a: None)
+    monkeypatch.setattr(
+        da, "pyautogui", type("p", (), {"click": staticmethod(lambda *a, **k: None)}), raising=False
+    )
+    monkeypatch.setattr(da, "_foreground_id", lambda: "same")
+    eyes([SAME, DIFFERENT])
+
+    out = da.click(100, 100)
+    assert out["verified"] is True
+
+
+def test_a_click_that_opens_a_window_is_verified_even_if_pixels_match(monkeypatch, eyes):
+    """A new window is proof enough; the watched box may be off-screen now."""
+    monkeypatch.setattr(da, "_require", lambda *a: None)
+    monkeypatch.setattr(
+        da, "pyautogui", type("p", (), {"click": staticmethod(lambda *a, **k: None)}), raising=False
+    )
+    fg = iter(["window-a", "window-b"])
+    monkeypatch.setattr(da, "_foreground_id", lambda: next(fg))
+    eyes([SAME, SAME])
+
+    out = da.click(100, 100)
+    assert out["verified"] is True
+    assert "window changed" in out["verify_reason"]
+
+
+def test_no_eyes_is_reported_as_doubt_not_as_failure(monkeypatch, eyes):
+    monkeypatch.setattr(da, "_require", lambda *a: None)
+    monkeypatch.setattr(
+        da, "pyautogui", type("p", (), {"click": staticmethod(lambda *a, **k: None)}), raising=False
+    )
+    monkeypatch.setattr(da, "_foreground_id", lambda: "")
+    eyes([None, None])
+
+    out = da.click(100, 100)
+    assert out["verified"] is False
+    assert "can't see" in out["verify_reason"]
+
+    # ...and the executor must let it through rather than aborting the chain.
+    ok, reason = da._verify_action("click", {}, out)
+    assert ok is True, "an unobservable click must not fail a working chain"
+    assert "can't see" in reason
+
+
+def test_an_observed_dead_click_does_fail_the_step(monkeypatch, eyes):
+    """The other side: when we CAN see and nothing moved, that is a failure."""
+    dead = {
+        "success": True,
+        "verified": False,
+        "verify_reason": "Nothing on screen changed after clicking (5, 5). "
+        "The click probably landed on nothing",
+    }
+    ok, reason = da._verify_action("click", {}, dead)
+    assert ok is False
+    assert "landed on nothing" in reason
+
+
+def test_the_comparison_needs_a_real_difference(monkeypatch):
+    """Anti-aliasing and a blinking cursor must not read as 'something happened'."""
+    almost = bytes([10] * 570 + [14] * 6)  # a couple of pixels, barely
+    assert da._changed(SAME, almost) is False
+    assert da._changed(SAME, DIFFERENT) is True
+    assert da._changed(None, SAME) is None
+```
+
+################################################################################
+# FILE 160/215: backend/tests/test_config_store.py
 ################################################################################
 ```py
 """
@@ -30473,7 +31217,7 @@ def test_a_failed_write_reports_it_rather_than_pretending(fresh_db, monkeypatch)
 ```
 
 ################################################################################
-# FILE 159/212: backend/tests/test_conftest_guard.py
+# FILE 161/215: backend/tests/test_conftest_guard.py
 ################################################################################
 ```py
 """
@@ -30519,7 +31263,7 @@ def test_loopback_is_still_allowed():
 ```
 
 ################################################################################
-# FILE 160/212: backend/tests/test_control.py
+# FILE 162/215: backend/tests/test_control.py
 ################################################################################
 ```py
 """
@@ -30645,7 +31389,7 @@ def test_status_is_readable():
 ```
 
 ################################################################################
-# FILE 161/212: backend/tests/test_decompose.py
+# FILE 163/215: backend/tests/test_decompose.py
 ################################################################################
 ```py
 """
@@ -30803,7 +31547,7 @@ def test_search_url_is_reachable_from_china():
 ```
 
 ################################################################################
-# FILE 162/212: backend/tests/test_headless.py
+# FILE 164/215: backend/tests/test_headless.py
 ################################################################################
 ```py
 """
@@ -30906,7 +31650,7 @@ def test_a_genuinely_missing_package_still_says_install_it(tmp_path, monkeypatch
 ```
 
 ################################################################################
-# FILE 163/212: backend/tests/test_security.py
+# FILE 165/215: backend/tests/test_security.py
 ################################################################################
 ```py
 """
@@ -31106,7 +31850,134 @@ def test_simulating_a_task_executes_nothing(monkeypatch):
 ```
 
 ################################################################################
-# FILE 164/212: frontend/index.html
+# FILE 166/215: backend/tests/test_submission_confirmation.py
+################################################################################
+```py
+"""
+"I press approve all but I don't know if it sent it."
+
+The old post-submit check slept exactly 3 seconds, read the page once, and
+called anything without a known phrase "submitted, but unconfirmed". Two
+consequences, both bad:
+
+  * A site that confirmed at 3.5s was recorded as unconfirmed EVERY time, which
+    trains you to ignore that warning — and it is the same warning shown when a
+    submission genuinely failed.
+  * A click that did nothing at all (disabled button, missing required field)
+    was reported as "submitted". A false Done, on a real client's job.
+
+Now it polls, and it distinguishes four outcomes. The one that matters most is
+`unchanged`: form still open, URL never moved — nothing was sent, and it says so.
+
+Also asserted here: a submission is NEVER retried. A submit that times out may
+have arrived and only lost the response; clicking again puts a second proposal
+in front of a real client under the user's name.
+"""
+
+import asyncio
+from pathlib import Path
+
+import pytest
+
+from services import bid_executor as be
+
+
+class FakePage:
+    def __init__(self, text="", url="http://job", form=True):
+        self.text, self.url, self._form = text, url, form
+
+    async def content(self):
+        return self.text
+
+    async def query_selector(self, _sel):
+        return object() if self._form else None
+
+
+def verdict(text, form, url, url_before="http://job", seconds=1.5):
+    page = FakePage(text, url, form)
+    return asyncio.run(be._wait_for_confirmation(page, url_before, True, seconds))
+
+
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "Bid placed successfully",
+        "Your proposal submitted",
+        "Application sent",
+        "we have received your application",
+        "投标成功",
+    ],
+)
+def test_the_site_saying_yes_is_recorded_as_sent(phrase):
+    v, _ = verdict(f"<div>{phrase}</div>", form=False, url="http://job/done")
+    assert v == "sent"
+
+
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "You already bid on this project",
+        "Could not be placed",
+        "This project is closed",
+        "Please complete your profile",
+    ],
+)
+def test_the_site_saying_no_is_recorded_as_rejected(phrase):
+    v, why = verdict(f"<div>{phrase}</div>", form=True, url="http://job")
+    assert v == "rejected"
+    assert why, "a rejection must say what the page said"
+
+
+def test_a_click_that_did_nothing_is_never_called_submitted():
+    """The important one. Form still there, URL unmoved: nothing was sent."""
+    v, why = verdict("<form>bid form still here</form>", form=True, url="http://job")
+    assert v == "unchanged"
+    assert "still open" in why
+
+
+def test_form_closing_and_navigating_counts_as_sent_without_words():
+    """Not every site says anything. Structure is evidence too."""
+    v, why = verdict("<div>ok</div>", form=False, url="http://job/manage")
+    assert v == "sent"
+    assert "moved to" in why
+
+
+def test_refusal_wins_over_a_success_word_in_the_same_page():
+    """ "Your bid could not be placed" contains "your bid"."""
+    v, _ = verdict("<div>Your bid could not be placed</div>", form=True, url="http://job")
+    assert v == "rejected"
+
+
+def test_a_submission_is_never_retried():
+    """
+    browser_agent.with_retry exists for idempotent calls. bid_executor must not
+    use it: a retried submit can send a second proposal to a real client.
+    """
+    # Comments are allowed to mention it (and one does, explaining why not).
+    # What must not exist is a CALL.
+    code = [
+        ln
+        for ln in Path(be.__file__).read_text(encoding="utf-8").splitlines()
+        if not ln.lstrip().startswith("#")
+    ]
+    calls = [ln.strip() for ln in code if "with_retry(" in ln]
+    assert not calls, (
+        "bid_executor must never retry a submission — a submit that timed out "
+        f"may already have arrived. Found: {calls}"
+    )
+
+
+def test_the_unchanged_verdict_reaches_the_user_as_a_failure():
+    """A dead submit must not be filed as success anywhere downstream."""
+    src = Path(be.__file__).read_text(encoding="utf-8")
+    i = src.index('if confirmed == "unchanged":')
+    block = src[i : i + 700]
+    assert '"success": False' in block
+    assert "Nothing was sent" in block
+```
+
+################################################################################
+# FILE 167/215: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -31132,7 +32003,7 @@ def test_simulating_a_task_executes_nothing(monkeypatch):
 ```
 
 ################################################################################
-# FILE 165/212: frontend/package.json
+# FILE 168/215: frontend/package.json
 ################################################################################
 ```json
 {
@@ -31163,7 +32034,7 @@ def test_simulating_a_task_executes_nothing(monkeypatch):
 ```
 
 ################################################################################
-# FILE 166/212: frontend/src/App.jsx
+# FILE 169/215: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -31181,7 +32052,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 167/212: frontend/src/JarvisOS.jsx
+# FILE 170/215: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -32703,7 +33574,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 168/212: frontend/src/colors.js
+# FILE 171/215: frontend/src/colors.js
 ################################################################################
 ```js
 /**
@@ -32797,7 +33668,7 @@ export function btn(color = "#00d4ff", opts = {}) {
 ```
 
 ################################################################################
-# FILE 169/212: frontend/src/components/UI.jsx
+# FILE 172/215: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -33035,7 +33906,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 170/212: frontend/src/config.js
+# FILE 173/215: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -33070,7 +33941,7 @@ export const apiPatch = (url, body) =>
 ```
 
 ################################################################################
-# FILE 171/212: frontend/src/index.css
+# FILE 174/215: frontend/src/index.css
 ################################################################################
 ```css
 *,
@@ -33240,7 +34111,7 @@ select:focus {
 ```
 
 ################################################################################
-# FILE 172/212: frontend/src/main.jsx
+# FILE 175/215: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from "react";
@@ -33256,7 +34127,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 ```
 
 ################################################################################
-# FILE 173/212: frontend/src/pages/Agents.jsx
+# FILE 176/215: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useEffect, useRef, useState } from "react";
@@ -34969,7 +35840,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 174/212: frontend/src/pages/Chat.jsx
+# FILE 177/215: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useEffect, useRef, useState } from "react";
@@ -35243,7 +36114,7 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 175/212: frontend/src/pages/Earn.jsx
+# FILE 178/215: frontend/src/pages/Earn.jsx
 ################################################################################
 ```jsx
 /**
@@ -36183,7 +37054,7 @@ export default function Earn() {
 ```
 
 ################################################################################
-# FILE 176/212: frontend/src/pages/Logs.jsx
+# FILE 179/215: frontend/src/pages/Logs.jsx
 ################################################################################
 ```jsx
 /**
@@ -36543,7 +37414,7 @@ function Empty({ children }) {
 ```
 
 ################################################################################
-# FILE 177/212: frontend/src/pages/Memory.jsx
+# FILE 180/215: frontend/src/pages/Memory.jsx
 ################################################################################
 ```jsx
 /**
@@ -36858,7 +37729,7 @@ export default function Memory() {
 ```
 
 ################################################################################
-# FILE 178/212: frontend/src/pages/Planner.jsx
+# FILE 181/215: frontend/src/pages/Planner.jsx
 ################################################################################
 ```jsx
 /**
@@ -37505,7 +38376,7 @@ export default function Planner({ live = [] }) {
 ```
 
 ################################################################################
-# FILE 179/212: frontend/src/pages/Settings.jsx
+# FILE 182/215: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 /**
@@ -38027,7 +38898,7 @@ function Row({ s }) {
 ```
 
 ################################################################################
-# FILE 180/212: frontend/src/theme.js
+# FILE 183/215: frontend/src/theme.js
 ################################################################################
 ```js
 /**
@@ -38099,7 +38970,7 @@ export const LEVEL_COLOR = {
 ```
 
 ################################################################################
-# FILE 181/212: frontend/vite.config.js
+# FILE 184/215: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -38111,7 +38982,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 182/212: .github/workflows/ci.yml
+# FILE 185/215: .github/workflows/ci.yml
 ################################################################################
 ```yml
 name: CI
@@ -38307,7 +39178,7 @@ jobs:
 ```
 
 ################################################################################
-# FILE 183/212: .gitignore
+# FILE 186/215: .gitignore
 ################################################################################
 ```
 # Python
@@ -38361,7 +39232,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 184/212: .mcp.json
+# FILE 187/215: .mcp.json
 ################################################################################
 ```json
 {
@@ -38380,7 +39251,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 185/212: .pytest_cache/.gitignore
+# FILE 188/215: .pytest_cache/.gitignore
 ################################################################################
 ```
 # Created by pytest automatically.
@@ -38388,7 +39259,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 186/212: .ruff_cache/.gitignore
+# FILE 189/215: .ruff_cache/.gitignore
 ################################################################################
 ```
 # Automatically created by ruff.
@@ -38396,7 +39267,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 187/212: .semgrep/jarvis.yml
+# FILE 190/215: .semgrep/jarvis.yml
 ################################################################################
 ```yml
 # Semgrep rules for Jarvis.
@@ -38606,7 +39477,7 @@ rules:
 ```
 
 ################################################################################
-# FILE 188/212: .serena/.gitignore
+# FILE 191/215: .serena/.gitignore
 ################################################################################
 ```
 /cache
@@ -38614,7 +39485,7 @@ rules:
 ```
 
 ################################################################################
-# FILE 189/212: .serena/project.local.yml
+# FILE 192/215: .serena/project.local.yml
 ################################################################################
 ```yml
 # This file allows you to locally override settings in project.yml for development purposes.
@@ -38625,7 +39496,7 @@ rules:
 ```
 
 ################################################################################
-# FILE 190/212: .serena/project.yml
+# FILE 193/215: .serena/project.yml
 ################################################################################
 ```yml
 # the name by which the project can be referenced within Serena/when chatting with the LLM.
@@ -38812,7 +39683,7 @@ ignored_memory_patterns: []
 ```
 
 ################################################################################
-# FILE 191/212: DOCTOR.bat
+# FILE 194/215: DOCTOR.bat
 ################################################################################
 ```bat
 @echo off
@@ -38857,7 +39728,7 @@ pause
 ```
 
 ################################################################################
-# FILE 192/212: FINAL_PROJECT_TREE_backend.txt
+# FILE 195/215: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -38940,7 +39811,7 @@ pause
 ```
 
 ################################################################################
-# FILE 193/212: FINAL_PROJECT_TREE_frontend.txt
+# FILE 196/215: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -38964,7 +39835,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 194/212: LEGACY_GREP_ARTIFACT.txt
+# FILE 197/215: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -38986,7 +39857,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 195/212: PROJECT_TREE.txt
+# FILE 198/215: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -39104,7 +39975,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 196/212: REQUIREMENTS_SNAPSHOT.txt
+# FILE 199/215: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -39134,7 +40005,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 197/212: RUNTIME_VALIDATION.py
+# FILE 200/215: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -39240,7 +40111,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 198/212: RUN_FAILURE_TEST.bat
+# FILE 201/215: RUN_FAILURE_TEST.bat
 ################################################################################
 ```bat
 @echo off
@@ -39288,7 +40159,7 @@ pause
 ```
 
 ################################################################################
-# FILE 199/212: START.bat
+# FILE 202/215: START.bat
 ################################################################################
 ```bat
 @echo off
@@ -39438,7 +40309,7 @@ timeout /t 15
 ```
 
 ################################################################################
-# FILE 200/212: START_JARVIS.bat
+# FILE 203/215: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
@@ -39458,7 +40329,7 @@ call "%~dp0START.bat"
 ```
 
 ################################################################################
-# FILE 201/212: UPDATE.bat
+# FILE 204/215: UPDATE.bat
 ################################################################################
 ```bat
 @echo off
@@ -39503,12 +40374,46 @@ pause
 ```
 
 ################################################################################
-# FILE 202/212: failure_injection_report.txt
+# FILE 205/215: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-04T14:09:57.442208
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-04T19:46:52.752818
 platform: linux  python: 3.11.15
-1 passed · 0 failed · 0 skipped
+24 passed · 0 failed · 1 skipped
+
+[PASS] control — Pause / resume / cancel behave
+    Pause holds, cancel releases cleanly, clear resets.
+    · a paused worker holds at the checkpoint
+    · cancel releases a paused worker and raises Cancelled
+    · explain() answered with 2 reason(s)
+
+[PASS] stale_stop — A leftover Stop doesn't poison the next command
+    Stop stops one thing, and only while that thing is running.
+    · cancel with nothing running -> cleared
+    · cancel during live work -> kept
+    · the chat path calls clear_stale() before running
+    · execute_chain runs inside run_scope()
+
+[PASS] looking — Looking at the screen targets the app that was asked about
+    Jarvis looks at the window it was asked about, or says it couldn't.
+    · screenshot and analyze require the target app to be in front
+    · an unconfirmed focus attaches a caveat to the answer
+    · 'check my qq messages' -> open_app -> wait_for_window -> screenshot -> analyze
+
+[PASS] literal_typing — Questions get answered, not transcribed
+    Literal stays literal; questions get answered by whoever can answer them.
+    · 'notepad tell me about yourself' -> compose, not type
+    · 'doubao ask it how it is' -> types the question and sends it
+    · 'type hello' still types hello
+    · 'open notepad, tell me a joke' splits at the comma
+    · 'type hello, world' is not split
+
+[PASS] reflection — Finished work produces a lesson
+    Work that finishes produces a lesson, off the critical path.
+    · orchestrator calls brain_decision.after_goal() at the terminal state
+    · the desktop chain reflects on failed or retried runs
+    · reflection runs off the reply path
+    · lesson names the failing step: Failed: 1/2 steps verified. Broke at step 2: type_text (text never lan
 
 [PASS] ai_router — One gate for AI; local by default; keys stay secret
     One gate, local by default, degrades to local, keys stay secret.
@@ -39519,10 +40424,115 @@ platform: linux  python: 3.11.15
     · keys are masked in settings and absent from status
     · call_model (imported in ~30 files) routes through ai_router
 
+[PASS] proposal_batching — Proposals batched, never mismatched
+    Batched for speed, one-at-a-time whenever correctness is in doubt.
+    · 13 jobs -> 4 LLM calls (was 13)
+    · an unsplittable reply falls back to one call per job
+    · a dead provider still returns one entry per job (template kicks in downstream)
+    · no artificial delay between jobs
+
+[PASS] memory_pressure — Low RAM is explained, not just endured
+    RAM pressure is measured, explained, and actionable.
+    · 15.8 GB free — plenty. (level=ok)
+    · 1GB -> critical, 2.5GB -> not ok, 8GB -> ok
+    · free-memory action answers: Ollama wasn't holding any models — nothing to free. The memory is goin
+
+[PASS] launchers — Windows launchers are valid Windows batch
+    Launchers are valid Windows batch and there's only one to press.
+    · 5 launcher(s) checked: DOCTOR.bat, RUN_FAILURE_TEST.bat, START.bat, START_JARVIS.bat, UPDATE.bat
+    · CRLF, pure ASCII, no Unix redirection, no redirects in comments
+    · every script they call exists
+    · start buttons: START.bat, START_JARVIS.bat
+
+[PASS] ui_renders — The console actually renders in a browser
+    React mounts, styles apply, nothing throws.
+    · mounted elements : 1
+    · body background  : rgb(10, 14, 20)
+    · crashes          : 0
+
+[PASS] simulation — Simulating never executes anything
+    Shows the full plan and its effects, executes nothing.
+    · no desktop action was executed
+    · no plan was published
+    · showed 5 steps with effects and estimates
+    · side effects are labelled, typing flagged as a change
+    · freelance cycle described without scanning or sending
+    · only explicit requests trigger a simulation
+
+[PASS] decompose — Sentences split into steps at the right places
+    Clauses split on verbs, queries stop at boundaries, leftovers reported.
+    · 5 phrasings split correctly
+    · the query stops at the step boundary
+    · unparseable clauses are reported, not dropped
+
+[PASS] plan_visibility — Live plan publishes and accepts controls
+    Plan is visible live, controls are cooperative, diagnosis survives.
+    · plan published with human wording before anything ran
+    · refuses to skip the step in flight
+    · a pending step can be skipped and the executor sees it
+    · the failure classification survives into the explanation
+
+[PASS] selfeval — Confidence is earned, not asserted
+    Confidence tracks evidence; adjustments are numeric and earned.
+    · clean run scores 100%
+    · unverified success drops to 80%
+    · retried launch -> wait 2.4s longer for qq
+    · a clean run changes nothing
+
+[PASS] auth — The gate blocks drive-by requests
+    Websites cannot drive Jarvis; the local UI is unaffected.
+    · cross-origin request to desktop control is refused
+    · the local UI still works
+    · health stays open so the launcher can see the backend
+    · DNS-rebinding host header is refused
+
+[PASS] teach_privacy — Demonstrations never record passwords
+    Passwords are never recorded; normal input still is.
+    · password keystrokes became one vault lookup
+    · login windows are recognised in English and Chinese
+    · ordinary typing is still captured normally
+
+[PASS] missing_app — Opening an app that isn't installed
+    Stopped after 1 attempt in 0.2s with a usable message.
+    · took 0.2s, 1 attempt(s), kind=app_not_found
+
+[SKIP] clipboard — Typing must not destroy what you had copied
+    clipboard unavailable: Pyperclip could not find a copy/paste mechanism for your sys
+
+[PASS] no_model — Behaviour when no LLM is available
+    Blocked up front: No local model is installed for this kind of work.
+    · router picked: None (warning: Ollama has no models. Run: ollama pull qwen2.5:3b)
+
+[PASS] queue_load — Queue performance with 500+ rows
+    Read stayed at 1ms under 500 extra rows.
+    · inserted 500 rows; 100-row read took 1ms (100 back)
+
+[PASS] browser_death — Browser dies while holding the lock
+    Dead owner reclaimed, live owner protected, dead handle dropped.
+    · lease reclaimed from the dead owner: 'fi-test-1785872812' stopped responding for over 120s and its lease ex
+    · a live, heart-beating owner is correctly left alone
+
+[PASS] estop — Emergency stop actually blocks input
+    All input refused while engaged; clears cleanly.
+    · type/click/press/hotkey all refused while engaged
+
+[PASS] learning — Learned timings converge on reality
+    Slow app 9.4s vs fast 2.0s; flaky app gets a retry.
+    · default=8.0s · slow app -> 9.4s · fast app -> 2.0s
+
+[PASS] model_pressure — keep_alive adapts to memory pressure
+    Scaling is correct: big=90s, small=5m.
+    · free RAM 15.5GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
+    · skipped the live unload (needs --include-destructive)
+
+[PASS] classification — Real errors map to the right cause
+    All 10 real errors classified; no futile retries.
+    · 10/10 classified correctly
+
 ```
 
 ################################################################################
-# FILE 203/212: legacy_dependency_report.json
+# FILE 206/215: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -39687,7 +40697,7 @@ platform: linux  python: 3.11.15
 ```
 
 ################################################################################
-# FILE 204/212: requirements-dev.txt
+# FILE 207/215: requirements-dev.txt
 ################################################################################
 ```txt
 # Developer tooling. NOT needed to run Jarvis — START.bat installs
@@ -39718,7 +40728,7 @@ tree-sitter-language-pack>=0.7
 ```
 
 ################################################################################
-# FILE 205/212: requirements.txt
+# FILE 208/215: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -39751,7 +40761,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 206/212: start.sh
+# FILE 209/215: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -39788,7 +40798,7 @@ wait
 ```
 
 ################################################################################
-# FILE 207/212: tools/codemap.py
+# FILE 210/215: tools/codemap.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
@@ -40077,7 +41087,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 208/212: tools/doctor.py
+# FILE 211/215: tools/doctor.py
 ################################################################################
 ```py
 """
@@ -40404,7 +41414,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 209/212: tools/dump_source.py
+# FILE 212/215: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
@@ -40503,7 +41513,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 210/212: tools/failure_injection.py
+# FILE 213/215: tools/failure_injection.py
 ################################################################################
 ```py
 """
@@ -42037,7 +43047,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 211/212: tools/setup.py
+# FILE 214/215: tools/setup.py
 ################################################################################
 ```py
 """
@@ -42397,7 +43407,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 212/212: tools/update.py
+# FILE 215/215: tools/update.py
 ################################################################################
 ```py
 """

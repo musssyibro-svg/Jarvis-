@@ -125,15 +125,23 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         if not submit_btn:
             return {"success": False, "message": "Filled proposal text but could not find submit button. Bid NOT submitted — review manually."}
 
+        # What the page looked like BEFORE we clicked. Without this there is no
+        # way to tell "the page never changed" (the click did nothing) from
+        # "the page changed but says nothing recognisable".
+        url_before = page.url
+        form_before = await _bid_form_present(page)
+
         STATE.emit("executor", "Clicking submit…")
         await submit_btn.click()
-        await asyncio.sleep(3)
 
-        # Heuristic success check: URL change, success toast, or bid list update
-        success_indicators = [
-            "bid placed", "bid submitted", "your bid", "successfully",
-        ]
-        page_text = (await page.content()).lower()
+        # THIS IS NOT RETRIED, EVER, and that is deliberate. A submit that times
+        # out may well have ARRIVED — only the response was lost. Clicking again
+        # puts a second proposal in front of a real client under the user's name.
+        # browser_agent.with_retry() exists for idempotent things; this is not
+        # one. Instead we WAIT and then READ, which is safe to do as often as
+        # we like.
+        confirmed, evidence = await _wait_for_confirmation(page, url_before,
+                                                           form_before)
 
         # PROOF. "It said it submitted" is not evidence, and the user is right
         # to distrust it: a screenshot of the page after the click, plus the URL
@@ -142,14 +150,36 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         # when you most want to see what the page looked like.
         proof = await _capture_proof(page)
 
-        if any(ind in page_text for ind in success_indicators) or "manage" in page.url.lower():
-            STATE.emit("executor", "Bid submitted - proof saved", "success")
-            return {"success": True, "message": "Bid submitted", "confirmed": True,
+        if confirmed == "sent":
+            STATE.emit("executor", f"Bid submitted — {evidence}", "success")
+            return {"success": True, "message": f"Bid submitted ({evidence})",
+                    "confirmed": True, "evidence": evidence, **proof}
+
+        if confirmed == "rejected":
+            STATE.emit("executor", f"The site refused it — {evidence}", "error")
+            return {"success": False, "confirmed": False, "evidence": evidence,
+                    "message": f"The site rejected this bid: {evidence}",
+                    "what_to_do": "Open the proof screenshot — usually a missing "
+                                  "field, a duplicate bid, or an expired job.",
+                    **proof}
+
+        if confirmed == "unchanged":
+            # The form is still sitting there and the URL never moved. The click
+            # did not take. Calling that "submitted" is the exact false Done
+            # this project exists to avoid.
+            STATE.emit("executor", "Submit did nothing — the form is still open",
+                       "error")
+            return {"success": False, "confirmed": False, "evidence": evidence,
+                    "message": "Clicked Submit and nothing happened — the bid "
+                               "form is still on screen and the page never "
+                               "changed. Nothing was sent.",
+                    "what_to_do": "Open the proof screenshot. The button may be "
+                                  "disabled pending a required field.",
                     **proof}
 
         STATE.emit("executor", "Submitted, but the site did not confirm it - "
                                "check the proof screenshot", "warning")
-        return {"success": True, "confirmed": False,
+        return {"success": True, "confirmed": False, "evidence": evidence,
                 "message": "Submitted, but the page showed no confirmation. "
                            "Open the proof screenshot to see what happened.",
                 **proof}
@@ -164,6 +194,74 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         return {"success": False, "message": str(e), **proof}
     finally:
         await page.close()
+
+
+# Phrases that mean the site TOOK it, and phrases that mean it REFUSED.
+# Refusal is checked first: "your bid could not be placed" contains "your bid".
+_SENT_WORDS = ("bid placed", "bid submitted", "proposal submitted", "bid was placed",
+               "successfully submitted", "application sent", "thanks for applying",
+               "we've received", "we have received", "your bid is", "投标成功")
+_REFUSED_WORDS = ("could not be placed", "could not be submitted", "failed to submit",
+                  "already bid", "already applied", "already submitted",
+                  "duplicate", "no longer accepting", "this project is closed",
+                  "insufficient", "you need to", "please complete",
+                  "required field", "verify your", "not enough bids")
+
+
+async def _bid_form_present(page) -> bool:
+    """Is the bid form still on screen? A form that's gone is a strong signal."""
+    try:
+        for sel in ("textarea[name='description']", "textarea[data-qa-description-input]",
+                    "button:has-text('Place Bid')", "[data-qa-submit-bid]"):
+            if await page.query_selector(sel):
+                return True
+    except Exception:
+        pass
+    return False
+
+
+async def _wait_for_confirmation(page, url_before: str, form_before: bool,
+                                 seconds: float = 12.0) -> tuple[str, str]:
+    """
+    Watch the page after Submit and decide what actually happened.
+
+    Returns (verdict, evidence) where verdict is one of:
+        "sent"       the site said so, or the form went away and the URL moved
+        "rejected"   the site said no, and why
+        "unchanged"  nothing moved at all — the click did not take
+        "unknown"    something changed but nothing recognisable was said
+
+    POLLS rather than sleeping a fixed 3 seconds. The old code waited exactly
+    3s and then read once: a site that confirmed at 3.5s was recorded as
+    "submitted, unconfirmed" every single time, which trained the user to
+    ignore that warning — and it is the same warning that appears when a
+    submission genuinely failed.
+    """
+    deadline = asyncio.get_event_loop().time() + seconds
+    last_text = ""
+    while asyncio.get_event_loop().time() < deadline:
+        await asyncio.sleep(0.75)
+        try:
+            last_text = (await page.content()).lower()
+        except Exception:
+            return "unknown", "the page went away before it could be read"
+
+        hit = next((w for w in _REFUSED_WORDS if w in last_text), None)
+        if hit:
+            return "rejected", f"the page says “{hit}”"
+        hit = next((w for w in _SENT_WORDS if w in last_text), None)
+        if hit:
+            return "sent", f"the page says “{hit}”"
+
+        # No words, but the structure moved: form gone AND we navigated.
+        if page.url != url_before and not await _bid_form_present(page):
+            return "sent", f"the bid form closed and the page moved to {page.url[:60]}"
+
+    # Time is up. Distinguish "nothing happened" from "something did".
+    still_there = await _bid_form_present(page)
+    if still_there and page.url == url_before and form_before:
+        return "unchanged", "the bid form is still open and the URL never changed"
+    return "unknown", "the page changed but said nothing Jarvis recognises"
 
 
 async def _capture_proof(page) -> dict:
