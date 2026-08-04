@@ -23,13 +23,11 @@ no code path that sets status='approved' automatically.
 """
 import asyncio
 import json
-import sys
 import threading
 from datetime import datetime, timezone
-from pathlib import Path
 
 from agents.orchestrator import STATE
-from agents.browser_agent import _get_context, _new_loop, PROFILE_DIR
+from agents.browser_agent import _get_context, _new_loop
 from models.db import conn
 
 _executor_lock = threading.Lock()
@@ -379,7 +377,7 @@ def execute_all_approved(headless: bool = True) -> dict:
 
     t = threading.Thread(target=_worker, daemon=True)
     t.start()
-    return {"message": f"Executor started"}
+    return {"message": "Executor started"}
 
 
 def stop_executor():

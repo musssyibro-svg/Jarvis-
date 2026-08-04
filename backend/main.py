@@ -1,9 +1,11 @@
 """main.py — Jarvis OS backend"""
 from __future__ import annotations
-import json, os, logging
+import json
+import os
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Generator
+from collections.abc import Generator
 
 import psutil
 from dotenv import load_dotenv
@@ -125,7 +127,7 @@ def _startup():
     init_db()
     # V5: init extra tables for agents, memory, plans
     try:
-        from models.db import V5_SCHEMA, init_v5
+        from models.db import init_v5
         with conn() as db:
             init_v5(db)
         logger.info("V5 agent tables ready.")
@@ -285,7 +287,7 @@ app.include_router(workflows_router,    prefix="/workflows",     tags=["Workflow
 app.include_router(mind_router,                                  tags=["Brain"])       # V14 (paths self-prefixed)
 app.include_router(os_router,           prefix="/os",            tags=["OS Console"])  # V15
 
-from services.deepseek_service import call_model, OLLAMA_MODEL, LLM_PROVIDER
+from services.deepseek_service import OLLAMA_MODEL, LLM_PROVIDER
 
 class ChatIn(BaseModel):
     message: str; session_id: str = "default"
@@ -345,7 +347,6 @@ def stats():
 @app.post("/chat")
 def chat(body: ChatIn):
     if not body.message.strip(): raise HTTPException(400, "Empty message")
-    history = _get_history(body.session_id)
     _save_msg(body.session_id, "user", body.message)
     # V8.5: Chat is the single entry point — route through Commander, which
     # detects intent and dispatches to the right agent (desktop/vision/plan/

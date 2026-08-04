@@ -194,13 +194,13 @@ def split_query(text: str):
     if not low:
         return "", None
     lowered = low.lower()
-    cut, verb = None, None
+    cut = None
     for marker in _FOLLOW_ON:
         i = lowered.find(marker)
         # Require at least a couple of words before the marker, so "and" inside
         # a genuine query ("black and decker") isn't treated as a step break.
         if i > 6 and (cut is None or i < cut):
-            cut, verb = i, marker
+            cut = i
     if cut is None:
         return low.strip(" ,.;"), None
     query = low[:cut].strip(" ,.;")

@@ -21,7 +21,6 @@ import os
 import re
 import time
 import threading
-from dataclasses import dataclass
 
 # ── Approved model registry ──────────────────────────────────────────────────
 

@@ -7,7 +7,6 @@ All optional — degrades gracefully if libraries not installed.
 import base64
 import io
 import os
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,7 +21,7 @@ except ImportError:
     HAS_MSS = False
 
 try:
-    from PIL import Image, ImageDraw, ImageFilter
+    from PIL import Image
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
@@ -30,7 +29,8 @@ except ImportError:
 try:
     import pytesseract
     # #3: auto-detect Tesseract binary on Windows (common install locations)
-    import os as _os, shutil as _shutil
+    import os as _os
+    import shutil as _shutil
     if _os.name == "nt" and not _shutil.which("tesseract"):
         for _cand in (
             r"C:\Program Files\Tesseract-OCR\tesseract.exe",
@@ -300,7 +300,10 @@ def _screen_signature(b64: str) -> str:
         return ""
     # sample the middle of the payload — full hashing a multi-MB PNG is wasteful
     chunk = b64[len(b64) // 3: len(b64) // 3 + 60000]
-    return hashlib.md5(chunk.encode()).hexdigest()
+    # usedforsecurity=False: this is a cache key for "have I already analysed
+    # this screenshot", not a signature. Saying so keeps the security linter
+    # quiet honestly instead of by suppressing the rule everywhere.
+    return hashlib.md5(chunk.encode(), usedforsecurity=False).hexdigest()
 
 
 def _downscale_b64(b64: str, max_w: int = 1280) -> str | None:
@@ -325,8 +328,9 @@ def _window_context() -> str:
     between 'there is text on the screen' and 'you're looking at Notepad'.
     """
     try:
-        from agents.desktop_agent import list_windows, _is_foreground
-        import ctypes, os
+        from agents.desktop_agent import list_windows
+        import ctypes
+        import os
         active = ""
         if os.name == "nt":
             u32 = ctypes.windll.user32
@@ -432,7 +436,7 @@ def analyze_screen(question: str = "") -> dict:
                 except Exception as e:
                     answer = f"AI analysis unavailable: {e}"
         else:
-            answer = (f"I captured the screen but couldn't read any text from it"
+            answer = ("I captured the screen but couldn't read any text from it"
                       + (f" ({ocr_error})" if ocr_error else "")
                       + ". Install/fix Tesseract OCR, or pull the llava vision "
                         "model in Ollama for true image understanding.")

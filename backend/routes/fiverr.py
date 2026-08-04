@@ -5,7 +5,6 @@ Fiverr gig management + inbox monitoring + custom offers.
 
 import json
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
@@ -31,14 +30,14 @@ class GigIn(BaseModel):
 
 
 class GigUpdate(BaseModel):
-    title: Optional[str] = None
-    category: Optional[str] = None
-    description: Optional[str] = None
-    tags: Optional[list[str]] = None
-    pricing: Optional[dict] = None
-    status: Optional[str] = None
-    orders: Optional[int] = None
-    rating: Optional[float] = None
+    title: str | None = None
+    category: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    pricing: dict | None = None
+    status: str | None = None
+    orders: int | None = None
+    rating: float | None = None
 
 
 class OfferRequest(BaseModel):

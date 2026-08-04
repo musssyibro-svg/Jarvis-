@@ -24,7 +24,6 @@ Also here: explain(), which answers "why are you doing this?" from the execution
 trace rather than by asking a model to speculate about its own behaviour.
 """
 import threading
-import time
 from datetime import datetime, timezone
 
 RUNNING, PAUSING, PAUSED, CANCELLING = "running", "pausing", "paused", "cancelling"

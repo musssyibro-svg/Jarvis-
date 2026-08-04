@@ -5,7 +5,8 @@ already has subscribe()/unsubscribe()/_listeners. No parallel queue, no emit
 patch required — every STATE.emit(agent,msg,level) already fans out to listeners.
 We add a 'state' field inferred from the message so the UI core can react.
 """
-import json, asyncio
+import json
+import asyncio
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from agents.orchestrator import STATE

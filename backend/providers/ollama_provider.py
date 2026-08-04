@@ -22,7 +22,7 @@ Division of labour, to keep it straight:
 """
 from __future__ import annotations
 
-from typing import Generator
+from collections.abc import Generator
 
 from providers.base import Provider
 
@@ -102,13 +102,21 @@ class OllamaProvider(Provider):
         # Bounds come from ollama_manager, which knows what this machine can
         # take. Unbounded generation is not a theoretical risk here — it has
         # already cost this project a 288-second screen analysis.
+        #
+        # KNOWN GAP — LIMITS carries a third bound, a wall-clock timeout, and it
+        # is NOT applied. _client() returns the ollama MODULE, whose top-level
+        # chat() has no timeout; enforcing one needs ollama.Client(timeout=...).
+        # Tokens and context are capped, wall-clock is not, so a model that
+        # stalls rather than rambles still hangs. Unpacked to `_` rather than
+        # dropped from the tuple so the missing bound stays visible here.
+        # Tracked in docs/CODE_HEALTH.md.
         try:
             from services.ollama_manager import LIMITS, keep_alive_for
-            cap_tokens, cap_ctx, cap_timeout = LIMITS.get(
+            cap_tokens, cap_ctx, _wall_clock_cap_unused = LIMITS.get(
                 self._kind(task), LIMITS["fast"])
             keep = keep_alive_for(model)
         except Exception:
-            cap_tokens, cap_ctx, cap_timeout, keep = 400, 4096, 60, "5m"
+            cap_tokens, cap_ctx, keep = 400, 4096, "5m"
 
         try:
             resp = client.chat(

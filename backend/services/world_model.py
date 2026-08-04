@@ -54,7 +54,8 @@ def _running_apps() -> list[str]:
 
 def _system() -> dict:
     try:
-        import psutil, os
+        import psutil
+        import os
         disk = "C:\\" if os.name == "nt" else "/"
         return {"cpu": round(psutil.cpu_percent(interval=0.1)),
                 "ram": round(psutil.virtual_memory().percent),

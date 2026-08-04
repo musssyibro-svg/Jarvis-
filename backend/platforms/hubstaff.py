@@ -9,8 +9,7 @@ Fix strategy (3 layers):
   3. Requests + BS4 on individual job pages
 """
 
-import re, traceback, json
-from datetime import datetime, timezone
+import re
 import requests
 from bs4 import BeautifulSoup
 from platforms.base import BasePlatform

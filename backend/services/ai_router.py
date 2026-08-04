@@ -43,7 +43,7 @@ behaves exactly as before until the user deliberately adds one.
 from __future__ import annotations
 
 import threading
-from typing import Generator
+from collections.abc import Generator
 
 _lock = threading.Lock()
 _instances: dict[str, object] = {}

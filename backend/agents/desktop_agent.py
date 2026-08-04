@@ -57,7 +57,7 @@ def _require(name):
     if _emergency_stop.is_set():
         return {"success": False, "error": "EMERGENCY STOP engaged — clear it before input actions"}
     if not HAS_PYAUTOGUI:
-        return {"success": False, "error": f"pyautogui not installed. Run: pip install pyautogui"}
+        return {"success": False, "error": "pyautogui not installed. Run: pip install pyautogui"}
     return None
 
 
@@ -350,7 +350,6 @@ def open_app(name_or_path: str) -> dict:
                 "resolved": "already open", "method": "focus", "verified": True}
 
     key = name_or_path.lower().replace(" ", "")
-    known = key in KNOWN
     cmd = KNOWN.get(key, None)
 
     # 1) A resolved/cached real path wins for anything not in the tiny KNOWN map
@@ -1235,7 +1234,7 @@ def focus_window(title_contains: str) -> dict:
                     "error": f"No window found for '{title_contains}' "
                              f"(checked window titles and running processes)"}
         win = wins[0]
-        for attempt in range(3):
+        for _attempt in range(3):
             try:
                 if getattr(win, "isMinimized", False):
                     win.restore()

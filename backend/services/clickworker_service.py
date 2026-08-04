@@ -8,8 +8,7 @@ Clickworker exposes tasks to registered users; we provide:
   - AI assistance for task completion
 """
 
-import re, traceback
-from datetime import datetime, timezone
+import re
 import requests
 from bs4 import BeautifulSoup
 

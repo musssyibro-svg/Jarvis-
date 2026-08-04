@@ -3,7 +3,6 @@ platforms/contra.py
 Contra — independent work platform. Scrapes public opportunity listings.
 """
 
-import re
 import traceback
 
 import requests
@@ -53,7 +52,7 @@ class ContraPlatform(BasePlatform):
                 })
             print(f"[Contra] Got {len(jobs)} jobs")
             return jobs
-        except Exception as exc:
+        except Exception:
             traceback.print_exc()
             return []
 

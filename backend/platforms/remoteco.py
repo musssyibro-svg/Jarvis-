@@ -61,7 +61,7 @@ class RemoteCoPlatform(BasePlatform):
                 })
             print(f"[Remote.co] Got {len(jobs)} jobs")
             return jobs
-        except Exception as exc:
+        except Exception:
             traceback.print_exc()
             return []
 

@@ -7,7 +7,6 @@ Thread-safe. Handles timeouts and missing models gracefully.
 import os
 import re
 import json
-import traceback
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -168,13 +167,15 @@ Can AI complete this? Reply ONLY with JSON:
 {{"workable": true/false, "reason": "...", "job_type": "writing|code|research|other"}}""",
         fast=True,
     )
-    workable, job_type = False, "other"
+    # KNOWN GAP — the model also returns job_type, and it is parsed and then
+    # thrown away. Nothing downstream receives it, so the classification is
+    # paid for on every call and never used. Tracked in docs/CODE_HEALTH.md.
+    workable = False
     try:
         m = re.search(r"\{.*\}", assess, re.DOTALL)
         if m:
             d = json.loads(m.group())
-            workable  = bool(d.get("workable"))
-            job_type  = d.get("job_type", "other")
+            workable = bool(d.get("workable"))
     except Exception:
         pass
 

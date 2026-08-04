@@ -188,7 +188,7 @@ def _http_fallback(max_jobs: int) -> list:
             )
         print(f"[Freelancer HTTP] Got {len(jobs)} jobs")
         return jobs
-    except Exception as exc:
+    except Exception:
         traceback.print_exc()
         return []
 

@@ -187,7 +187,7 @@ class OrchestratorCore:
             # an inconsistent state.
             try:
                 control.checkpoint(step=self.state.name.lower())
-            except control.Cancelled as c:
+            except control.Cancelled:
                 self.error = None            # a user stop is not an error
                 self.state = AgentState.STOPPED
                 self._cancelled = True

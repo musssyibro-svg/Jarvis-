@@ -1,7 +1,6 @@
 """routes/automation.py — Auto Mode + queue management"""
-import json, threading
+import json
 from datetime import datetime, timezone
-from typing import Optional, List
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from models.db import conn
@@ -11,7 +10,7 @@ router = APIRouter()
 def _now(): return datetime.now(timezone.utc).isoformat()
 
 class AutoRequest(BaseModel):
-    platforms: List[str] = ["hubstaff", "remoteok", "weworkremotely"]
+    platforms: list[str] = ["hubstaff", "remoteok", "weworkremotely"]
     your_name: str = "Ibrahim"
     your_skills: str = "Python, automation, web scraping, AI integration, FastAPI"
     max_jobs: int = 10
@@ -114,7 +113,7 @@ def auto_status():
     return s
 
 @router.get("/queue")
-def list_queue(status: Optional[str] = None, limit: int = 100):
+def list_queue(status: str | None = None, limit: int = 100):
     with conn() as db:
         if status:
             rows = db.execute("SELECT * FROM automation_queue WHERE status=? ORDER BY id DESC LIMIT ?",
@@ -124,8 +123,14 @@ def list_queue(status: Optional[str] = None, limit: int = 100):
     result = []
     for r in rows:
         d = dict(r)
-        try: d["payload"] = json.loads(d.get("payload") or "{}")
-        except: pass
+        try:
+            d["payload"] = json.loads(d.get("payload") or "{}")
+        except (ValueError, TypeError):
+            # A malformed payload means this row's proposal is unreadable, not
+            # that the queue is broken. Leave the raw string in place so it's
+            # visible in the UI rather than silently blanked. A bare `except`
+            # here also swallowed KeyboardInterrupt and SystemExit.
+            pass
         result.append(d)
     return {"queue": result, "total": len(result)}
 
@@ -316,7 +321,7 @@ def clear_queue():
     return {"success": True}
 
 @router.get("/platform-jobs")
-def list_platform_jobs(platform: Optional[str] = None, limit: int = 100):
+def list_platform_jobs(platform: str | None = None, limit: int = 100):
     with conn() as db:
         if platform:
             rows = db.execute("SELECT * FROM platform_jobs WHERE platform=? ORDER BY id DESC LIMIT ?",

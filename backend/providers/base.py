@@ -19,7 +19,7 @@ TWO RULES FOR IMPLEMENTORS
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generator
+from collections.abc import Generator
 
 
 class Provider(ABC):

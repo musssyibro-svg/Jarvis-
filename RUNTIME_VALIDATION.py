@@ -17,7 +17,10 @@ This file performs REAL actions (opens Notepad/Chrome, screenshots your screen).
 It is the proof artifact your checkpoint requires — produced by YOU running it on
 the real machine, because that evidence cannot be generated anywhere else.
 """
-import sys, os, json, traceback
+import sys
+import os
+import json
+import traceback
 from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))

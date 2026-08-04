@@ -23,7 +23,6 @@ user is logged into (see bid_executor's platform gate).
 """
 import json
 import threading
-import time
 from datetime import datetime, timezone
 
 from models.db import conn

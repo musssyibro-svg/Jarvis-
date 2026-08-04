@@ -165,7 +165,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
         soup = BeautifulSoup(r.text, "html.parser")
         cards = soup.select(sel["card"])[:max_jobs]
         jobs = []
-        for i, c in enumerate(cards):
+        for _i, c in enumerate(cards):
             t = c.select_one(sel["title"])
             title = (t.get_text(strip=True) if t else "")[:160]
             if not title:

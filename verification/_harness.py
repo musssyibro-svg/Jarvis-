@@ -136,7 +136,8 @@ def capture_screenshot(name: str) -> str | None:
     """Take a screenshot using mss or pyautogui. Returns saved path or None."""
     path = str(SCREENSHOTS / f"{name}_{ts()}.png")
     try:
-        import mss, io
+        import mss
+        import io
         from PIL import Image
         with mss.mss() as sct:
             raw = sct.grab(sct.monitors[1])

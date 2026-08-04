@@ -73,7 +73,7 @@ def main():
         out.write("\n\n")
         for i, (rel, full) in enumerate(files, 1):
             try:
-                with open(full, "r", encoding="utf-8", errors="replace") as f:
+                with open(full, encoding="utf-8", errors="replace") as f:
                     content = f.read()
             except Exception as e:
                 content = f"[could not read: {e}]"

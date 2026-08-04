@@ -10,7 +10,6 @@ Used by the session manager to pre-fill login forms in the persistent browser
 profile. If `cryptography` isn't installed the vault refuses to store secrets
 rather than silently downgrading to plaintext.
 """
-import base64
 import os
 from datetime import datetime, timezone
 from pathlib import Path

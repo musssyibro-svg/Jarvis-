@@ -18,7 +18,7 @@ ExecutorAgent, which OrchestratorCore owns. Approval lifecycle lives in the
 ExecutorAgent, never here.
 """
 from agents.orchestrator import STATE
-from agents.v9_models import Goal, Action
+from agents.v9_models import Action
 
 
 def _emit(agent: str, msg: str, level: str = "info"):
@@ -68,7 +68,6 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
 
     # ── Confirm / cancel: delegate to ExecutorAgent's approval lifecycle ────────
     if intent == "confirm":
-        from agents.executor_agent import ExecutorAgent
         ex = _shared_executor()
         if not ex.has_pending(session_id):
             return {"response": "No pending action to confirm.", "intent": "chat"}
@@ -640,7 +639,7 @@ def _run_tool_chain(message: str, steps: list, lines: list | None = None,
     what is about to happen rather than only what already did.
     """
     from services import trace
-    _emit("commander", f"Recognised a direct command — running it (no planning needed)", "info")
+    _emit("commander", "Recognised a direct command — running it (no planning needed)", "info")
     # Human wording where decomposition produced it; action names otherwise.
     labels = " → ".join(lines or [s.get("action", "").replace("_", " ") for s in steps])
     try:

@@ -4,7 +4,6 @@ Orchestrator API + SSE live feed endpoint.
 """
 import json
 import queue as _queue
-from typing import List, Optional
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -13,7 +12,7 @@ router = APIRouter()
 
 
 class PipelineRequest(BaseModel):
-    platforms:         List[str] = ["remoteok", "weworkremotely", "hubstaff"]
+    platforms:         list[str] = ["remoteok", "weworkremotely", "hubstaff"]
     your_name:         str       = "Ibrahim"
     your_skills:       str       = "Python, automation, web scraping, AI integration, FastAPI"
     max_per_platform:  int       = 10
@@ -138,7 +137,7 @@ def platform_memory():
 # ── AutoMode scheduling (V8.5) ────────────────────────────────────────────────
 
 class ScheduleRequest(BaseModel):
-    platforms:        List[str] = ["remoteok", "weworkremotely", "hubstaff"]
+    platforms:        list[str] = ["remoteok", "weworkremotely", "hubstaff"]
     your_name:        str = "Ibrahim"
     your_skills:      str = "Python, automation, web scraping, AI integration, FastAPI"
     max_per_platform: int = 10

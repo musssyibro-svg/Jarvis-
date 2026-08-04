@@ -10,7 +10,6 @@ Both paths generate, save to the proposals table, and return the entries.
 The old mismatch (core passing "job", agent reading "qualified_jobs") was the
 root cause of the permanent "ProposalAgent complete: 0 generated" log line.
 """
-import time
 from agents.base_agent import BaseAgent
 
 
@@ -130,7 +129,7 @@ class ProposalAgent(BaseAgent):
                 parsed = []
 
             if len(parsed) == len(group) and all(p.strip() for p in parsed):
-                for job, text in zip(group, parsed):
+                for job, text in zip(group, parsed, strict=True):
                     out[id(job)] = text.strip()
             else:
                 # Any doubt at all: do them individually. Slower, but every job

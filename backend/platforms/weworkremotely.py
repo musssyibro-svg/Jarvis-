@@ -1,5 +1,6 @@
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
-import re, requests
+import re
+import requests
 from bs4 import BeautifulSoup
 from platforms.base import BasePlatform
 

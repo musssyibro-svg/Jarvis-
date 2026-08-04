@@ -128,7 +128,8 @@ def _registry_steps(goal: str) -> list[dict] | None:
     for a in actions:
         act = a.get("action", "")
         params = a.get("params", {})
-        text = labels.get(act, lambda p: act.replace("_", " "))(params)
+        label = labels.get(act)
+        text = label(params) if label else act.replace("_", " ")
         steps.append({"text": text, "action": [a]})
     return steps
 

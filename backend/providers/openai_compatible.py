@@ -34,7 +34,7 @@ the user deliberately says otherwise.
 from __future__ import annotations
 
 import json
-from typing import Generator
+from collections.abc import Generator
 
 from providers.base import Provider
 

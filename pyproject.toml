@@ -1,0 +1,123 @@
+[project]
+name = "jarvis"
+version = "9.0.0"
+description = "A local AI operating system: desktop control, browser automation, autonomous freelance income engine."
+requires-python = ">=3.10"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Ruff — lint + format for Python.
+#
+# Chosen over flake8+isort+black because it is one tool, one config, and fast
+# enough to run on every save on a 16 GB machine. CLAUDE.md says "free and
+# open-source before paid, smallest thing that does the job"; three tools where
+# one will do is the same mistake as three launchers.
+#
+# The rule selection below is deliberately NOT the default. Several defaults
+# would demand a thousand-line reformat of working code, and a linter whose
+# output you have to ignore is worse than no linter — you stop reading it.
+# ─────────────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 100          # p99 of the existing code is 97 chars
+target-version = "py310"   # the oldest Python START.bat will accept
+extend-exclude = [
+    "JARVIS_FULL_SOURCE.txt",
+    "frontend",
+    "screenshots",
+    "backend/browser-profile",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes — real bugs: undefined names, unused imports
+    "W",    # pycodestyle warnings
+    "I",    # import sorting
+    "B",    # flake8-bugbear — mutable defaults, except-in-loop, etc.
+    "UP",   # pyupgrade — modern syntax for the Python we target
+    "S102", # exec()
+    "S105", # hardcoded password string
+    "S106", # hardcoded password argument
+    "S108", # insecure /tmp usage
+    "S307", # eval()
+    "S324", # insecure hash (md5/sha1) for security purposes
+    "S602", # subprocess with shell=True
+    "S605", # os.system with a shell
+    "T20",  # print() left in library code
+]
+
+ignore = [
+    # ── Style choices this codebase makes on purpose ─────────────────────────
+    "E501",   # line too long — the formatter owns line length, not the linter
+    "E701",   # `if x: return` on one line. Used throughout for one-line guard
+              # clauses. Reformatting 52 of them would bury a real diff.
+    "E702",   # same, with semicolons
+    "E741",   # `l` as a variable name. 11 uses, all `for l in lines`. Renaming
+              # them touches five agents to fix nothing.
+
+    # ── Rules that fight the architecture, not the code ──────────────────────
+    "E402",   # module-level import not at top. main.py imports routers AFTER
+              # the auth gate is installed, deliberately — the gate must be the
+              # outermost layer. Moving those imports up would break it.
+    "B008",   # function call in a default argument. This is how FastAPI's
+              # Depends()/Query() are meant to be written.
+    "B904",   # `raise ... from err` inside except. Worth doing, but 30+ sites;
+              # tracked separately rather than mixed into a tooling commit.
+
+    # ── Deliberate, and CLAUDE.md explains why ───────────────────────────────
+    "T201",   # print(). tools/ and the .bat-facing scripts ARE console programs;
+              # print is their output, not a debugging leftover. Scoped below.
+]
+
+# Rules that must NEVER be silenced, because each one maps to a bug this
+# project has actually shipped. Listed here so a future `# noqa` is a visible
+# decision rather than a quiet one.
+#   F821 undefined name      — the circular-import blank page
+#   F401 unused import       — dead code the audit kept missing
+#   B006 mutable default     — shared state across calls
+#   S602 shell=True          — removed once already (PART A2), stays removed
+
+[tool.ruff.lint.per-file-ignores]
+# Console programs. print() is the whole point of them.
+"tools/*.py" = [
+    "T201",
+    "S105",   # the auth scenario needs a literal fake token to test the gate
+]
+"backend/mcp_server.py" = ["T201"]
+"verification/*.py" = [
+    "T201", "F401", "E722",
+    "S108",   # /tmp scratch dirs for throwaway stub packages, not app data
+]
+"RUNTIME_VALIDATION.py" = ["T201"]
+"backend/tests/*.py" = ["T201", "S101"]
+# Package re-exports: an "unused" import here is the public surface.
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agents", "services", "routes", "models", "adapters", "core"]
+
+[tool.ruff.format]
+quote-style = "preserve"      # don't churn ' -> " across 183 files
+docstring-code-format = false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# pytest
+#
+# IMPORTANT: verification/ is NOT a pytest suite. Those files are manual
+# scripts with a run() entry point that need a live backend on :8000, a live
+# Ollama, and in some cases a real Windows desktop. Letting pytest collect them
+# gives you a wall of red that means "the server isn't running", which trains
+# you to ignore a red test run. They stay where they are and keep their own
+# runner; pytest only collects backend/tests.
+# ─────────────────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+norecursedirs = ["verification", "frontend", "node_modules", "screenshots",
+                 "backend/browser-profile", ".git"]
+pythonpath = ["backend"]
+addopts = "-q --strict-markers"
+markers = [
+    "needs_display: requires a real screen (skipped in CI and containers)",
+    "needs_windows: requires Windows APIs (skipped elsewhere)",
+    "needs_backend: requires a running backend on 127.0.0.1:8000",
+]
+filterwarnings = ["ignore::DeprecationWarning"]

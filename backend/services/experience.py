@@ -29,7 +29,6 @@ Deliberately NOT here: any attempt to have an LLM diagnose failures. Diagnosis
 that runs on every failed step must be instant and must work when the model is
 the thing that's broken.
 """
-import json
 import re
 import statistics
 import threading

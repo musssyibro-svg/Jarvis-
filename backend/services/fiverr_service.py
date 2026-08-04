@@ -110,7 +110,6 @@ def fetch_fiverr_inbox() -> list[dict]:
 
 def sync_fiverr_inbox() -> int:
     from models.db import conn
-    from services.deepseek_service import call_model
 
     messages = fetch_fiverr_inbox()
     new_count = 0

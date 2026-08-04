@@ -5,7 +5,6 @@ Full proposal lifecycle: generate → send → track → work → submit
 
 import json
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -38,8 +37,8 @@ class GenerateRequest(BaseModel):
 
 class StatusUpdate(BaseModel):
     status: str
-    got_reply: Optional[bool] = None
-    won: Optional[bool] = None
+    got_reply: bool | None = None
+    won: bool | None = None
 
 
 class WorkUpdate(BaseModel):
@@ -103,7 +102,7 @@ def generate_proposal_route(req: GenerateRequest):
 
 
 @router.get("/")
-def list_proposals(status: Optional[str] = None, limit: int = 100):
+def list_proposals(status: str | None = None, limit: int = 100):
     with conn() as db:
         if status:
             rows = db.execute(

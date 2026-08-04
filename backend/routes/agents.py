@@ -3,10 +3,8 @@ backend/routes/agents.py
 Agent API: Commander, Desktop, Vision, Planner, Memory
 All heavy work routes through CommanderAgent.
 """
-import threading
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 
 router = APIRouter()
 
@@ -40,14 +38,14 @@ class OutcomeRequest(BaseModel):
 
 class DesktopActionRequest(BaseModel):
     action: str   # click, type, hotkey, open_app, etc.
-    x:      Optional[int]   = None
-    y:      Optional[int]   = None
-    text:   Optional[str]   = None
-    keys:   Optional[list]  = None
-    app:    Optional[str]   = None
-    url:    Optional[str]   = None
-    path:   Optional[str]   = None
-    content:Optional[str]   = None
+    x:      int | None   = None
+    y:      int | None   = None
+    text:   str | None   = None
+    keys:   list | None  = None
+    app:    str | None   = None
+    url:    str | None   = None
+    path:   str | None   = None
+    content:str | None   = None
 
 
 # ── Commander ─────────────────────────────────────────────────────────────────
@@ -330,7 +328,7 @@ def memory_insights():
     return MemoryAgent.generate_insights()
 
 @router.get("/memory/patterns")
-def memory_patterns(won: Optional[bool] = None):
+def memory_patterns(won: bool | None = None):
     from agents.memory_agent import MemoryAgent
     if won is True:
         return {"patterns": MemoryAgent.get_win_patterns()}
@@ -348,7 +346,7 @@ def record_outcome(body: OutcomeRequest):
     return {"success": True}
 
 @router.get("/memory/history")
-def action_history(agent: Optional[str] = None, limit: int = 50):
+def action_history(agent: str | None = None, limit: int = 50):
     from agents.memory_agent import MemoryAgent
     return {"history": MemoryAgent.get_action_history(agent, limit)}
 

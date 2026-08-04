@@ -5,8 +5,6 @@ Zuodao is a Chinese freelance/task platform. Integration via HTTP scraping.
 AI assists with task understanding and completion where appropriate.
 """
 
-import re, traceback
-from datetime import datetime, timezone
 import requests
 from bs4 import BeautifulSoup
 

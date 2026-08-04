@@ -17,7 +17,6 @@ Everything is best-effort and never interrupts real work: if the browser or a
 workflow is busy, maintenance defers to the next tick.
 """
 import logging
-import os
 import threading
 import time
 from datetime import datetime, timedelta, timezone

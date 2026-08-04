@@ -103,8 +103,8 @@ def s_missing_app():
     elapsed = time.time() - t0
 
     if res.get("success"):
-        return r.bad(f"Reported SUCCESS for an app that does not exist. "
-                     f"This is the 'it said it did it but didn't' bug.")
+        return r.bad("Reported SUCCESS for an app that does not exist. "
+                     "This is the 'it said it did it but didn't' bug.")
 
     fail = res.get("failure") or {}
     steps = res.get("steps") or [{}]
@@ -413,7 +413,6 @@ def s_model_pressure(destructive=False):
         return r.ok(f"Scaling is correct: big={big}, small={small}.")
 
     try:
-        import ollama
         installed = model_router.installed_models()
         if not installed:
             return r.skip("no models installed to unload")
@@ -998,8 +997,7 @@ def s_memory_pressure():
     r.note("1GB -> critical, 2.5GB -> not ok, 8GB -> ok")
 
     # A pressured machine must produce something ACTIONABLE, not just a number.
-    for lvl in ("critical", "low"):
-        effects = {"critical": 3, "low": 2}[lvl]
+    for _lvl in ("critical", "low"):
         # status() reflects the real machine, so check the table directly.
         if not mp.status.__doc__:
             break

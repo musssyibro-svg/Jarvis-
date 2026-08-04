@@ -1,5 +1,5 @@
 """platforms/remoteok.py — RemoteOK public JSON API"""
-import re, traceback
+import re
 import requests
 from platforms.base import BasePlatform
 

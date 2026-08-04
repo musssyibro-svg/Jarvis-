@@ -9,12 +9,10 @@ Flow:
 Commander routes by intent, coordinates multi-step plans,
 emits to the live feed, and records outcomes to memory.
 """
-import json
 import threading
 from datetime import datetime, timezone
 
 from agents.orchestrator import STATE
-from agents.memory_agent  import MemoryAgent
 
 _running_task = threading.Event()
 _task_lock    = threading.Lock()
