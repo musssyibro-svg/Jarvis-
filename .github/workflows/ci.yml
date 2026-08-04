@@ -88,6 +88,16 @@ jobs:
       - name: Tests
         run: python -m pytest backend/tests -v
 
+      # docs/CODEMAP.md is the orientation page — the thing a person or a model
+      # reads first. A stale map is worse than none: it sends you to a module
+      # that moved. Regenerating and diffing is the only way to know it's true.
+      - name: Code map is up to date
+        run: |
+          pip install tree-sitter tree-sitter-language-pack
+          python tools/codemap.py
+          git diff --exit-code -- docs/CODEMAP.md \
+            || { echo "::error::docs/CODEMAP.md is stale — run 'python tools/codemap.py' and commit"; exit 1; }
+
   harness:
     name: Failure injection — does it fail honestly?
     runs-on: ubuntu-latest

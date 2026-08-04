@@ -37,3 +37,12 @@ scratchpad/
 failure_injection_report.txt
 fi_test.db*
 backend/fi_*.db*
+
+# ── Developer tooling ────────────────────────────────────────────────────────
+# Serena's LSP symbol cache. The project CONFIG (.serena/project.yml) IS
+# committed — it's the shared setup — but the cache is machine-specific and
+# regenerates in about four seconds via `serena project index .`.
+.serena/cache/
+.serena/memories/
+.ruff_cache/
+.pytest_cache/

@@ -11,6 +11,7 @@ which teaches you to ignore red. pytest is pointed here instead
 Everything in here must run offline, on any OS, with no backend, no Ollama and
 no display — otherwise it can't gate a commit.
 """
+
 import os
 import sys
 from pathlib import Path
