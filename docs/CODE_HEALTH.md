@@ -21,8 +21,10 @@ python tools/failure_injection.py
 ```
 
 Last full pass: 2026-08-04. Ruff clean, Biome 0 errors / 123 warnings,
-Semgrep 0 findings on 151 files, pytest 51 passed, failure injection 24
-passed / 0 failed / 1 skipped.
+Semgrep 0 findings, pytest 57 passed, failure injection 24 passed / 0 failed /
+1 skipped — **and the same again with the optional display libraries stubbed to
+fail**, which is the condition CI runs under and the one that found the bug
+below.
 
 ---
 
@@ -137,6 +139,58 @@ buttons are still flagged.
 ### 8. Two `<div>`s carry `onClick`
 `JarvisOS.jsx` trace rows and Planner step rows. Fixing properly means making
 them `<button>`s, which changes layout and styling.
+
+---
+
+## What CI caught that local testing could not
+
+The first CI run failed three jobs while everything passed locally. Worth
+recording, because it is the clearest argument for having CI at all.
+
+**`import pyautogui` does not raise `ImportError` on a headless machine.** It
+pulls in mouseinfo, which runs `Display(os.environ['DISPLAY'])` at module scope
+and raises `KeyError: 'DISPLAY'`. The guard was `except ImportError`, so
+importing `desktop_agent` crashed rather than degrading to
+`HAS_PYAUTOGUI = False` — taking down the import check and five
+failure-injection scenarios with it.
+
+It never reproduced locally because pyautogui simply isn't installed in the dev
+container, so the ImportError path worked perfectly. **"Installed but unusable"
+is a different state from "not installed", and only one of them was handled.**
+
+The error message was wrong too: "Run: pip install pyautogui" for a package
+that was already installed. Same class as telling the user to `ollama pull` a
+model they already have — an error naming the wrong cause sends you hunting for
+a bug that isn't there.
+
+Fixed, with `backend/tests/test_headless.py` keeping both halves honest:
+installed-but-unusable degrades and names the real cause; genuinely missing
+still gets the install hint.
+
+**`config.set()` silently did nothing on a database that had never been
+initialised.** `services/config.py` assumed `models.db.init_db()` had already
+run. Inside the running backend that holds — `main.py` calls it at startup —
+but nothing else does: `tools/`, the failure-injection harness and
+`mcp_server.py` all reach for config directly.
+
+With no `settings` table, `set()` returned
+`{"ok": False, "error": "no such table: settings"}`, and almost every caller
+ignores that dict. **The value looked saved and wasn't.** That is the
+"I set it, I saved it, nothing changed" bug config.py exists to prevent,
+happening one layer below where it was being prevented.
+
+It could not reproduce on any machine where Jarvis had been started once —
+which is every dev machine. Config now creates its own table, retries the
+write once, and still reports honestly if it genuinely can't (read-only disk,
+locked database). `backend/tests/test_config_store.py` covers both halves, and
+CI runs the harness on a fresh checkout.
+
+**And `tools/check_ui.mjs` lied about why it failed.** It reported "vite never
+came up. Run `npm install` in frontend/ first" on a runner where `npm ci` had
+just succeeded. It swallowed both of vite's output streams and printed a guess.
+The real cause: vite defaults to binding "localhost", which resolves to `::1`
+first on the runner, so it listened on IPv6 while the probe polled 127.0.0.1.
+Now it binds 127.0.0.1 explicitly and prints whatever vite actually said.
 
 ---
 

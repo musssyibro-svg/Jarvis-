@@ -197,6 +197,12 @@ a request can't be handled, do the rest and name what you skipped.
 - A missing optional dependency is a **skip with an install hint**, not a
   failure. Reporting it as a failure sends the user hunting for a bug that
   isn't there.
+- **"Installed but unusable" is a third state, and it needs its own message.**
+  Guard optional imports with `except Exception`, not `except ImportError`:
+  pyautogui is installed and still raises `KeyError: 'DISPLAY'` where there is
+  no desktop session, and mss does the same. `except ImportError` let that
+  crash the whole module. And do not then say "run pip install" — the package
+  is right there. Say what actually stopped it.
 
 ---
 

@@ -1,7 +1,7 @@
 ================================================================================
 JARVIS OS — FULL SOURCE DUMP (single file for AI review)
 Repo: musssyibro-svg/Jarvis-  Branch: claude/jarvis-automation-rebuild-37xvhr
-Files included: 211 (source + config; excludes node_modules, db, secrets, binaries, build output)
+Files included: 212 (source + config; excludes node_modules, db, secrets, binaries, build output)
 Regenerate with: python tools/dump_source.py
 ================================================================================
 
@@ -164,65 +164,66 @@ TABLE OF CONTENTS
 155. backend/services/world_model.py
 156. backend/services/zuodao_service.py
 157. backend/tests/conftest.py
-158. backend/tests/test_conftest_guard.py
-159. backend/tests/test_control.py
-160. backend/tests/test_decompose.py
-161. backend/tests/test_headless.py
-162. backend/tests/test_security.py
-163. frontend/index.html
-164. frontend/package.json
-165. frontend/src/App.jsx
-166. frontend/src/JarvisOS.jsx
-167. frontend/src/colors.js
-168. frontend/src/components/UI.jsx
-169. frontend/src/config.js
-170. frontend/src/index.css
-171. frontend/src/main.jsx
-172. frontend/src/pages/Agents.jsx
-173. frontend/src/pages/Chat.jsx
-174. frontend/src/pages/Earn.jsx
-175. frontend/src/pages/Logs.jsx
-176. frontend/src/pages/Memory.jsx
-177. frontend/src/pages/Planner.jsx
-178. frontend/src/pages/Settings.jsx
-179. frontend/src/theme.js
-180. frontend/vite.config.js
-181. .github/workflows/ci.yml
-182. .gitignore
-183. .mcp.json
-184. .pytest_cache/.gitignore
-185. .ruff_cache/.gitignore
-186. .semgrep/jarvis.yml
-187. .serena/.gitignore
-188. .serena/project.local.yml
-189. .serena/project.yml
-190. DOCTOR.bat
-191. FINAL_PROJECT_TREE_backend.txt
-192. FINAL_PROJECT_TREE_frontend.txt
-193. LEGACY_GREP_ARTIFACT.txt
-194. PROJECT_TREE.txt
-195. REQUIREMENTS_SNAPSHOT.txt
-196. RUNTIME_VALIDATION.py
-197. RUN_FAILURE_TEST.bat
-198. START.bat
-199. START_JARVIS.bat
-200. UPDATE.bat
-201. failure_injection_report.txt
-202. legacy_dependency_report.json
-203. requirements-dev.txt
-204. requirements.txt
-205. start.sh
-206. tools/codemap.py
-207. tools/doctor.py
-208. tools/dump_source.py
-209. tools/failure_injection.py
-210. tools/setup.py
-211. tools/update.py
+158. backend/tests/test_config_store.py
+159. backend/tests/test_conftest_guard.py
+160. backend/tests/test_control.py
+161. backend/tests/test_decompose.py
+162. backend/tests/test_headless.py
+163. backend/tests/test_security.py
+164. frontend/index.html
+165. frontend/package.json
+166. frontend/src/App.jsx
+167. frontend/src/JarvisOS.jsx
+168. frontend/src/colors.js
+169. frontend/src/components/UI.jsx
+170. frontend/src/config.js
+171. frontend/src/index.css
+172. frontend/src/main.jsx
+173. frontend/src/pages/Agents.jsx
+174. frontend/src/pages/Chat.jsx
+175. frontend/src/pages/Earn.jsx
+176. frontend/src/pages/Logs.jsx
+177. frontend/src/pages/Memory.jsx
+178. frontend/src/pages/Planner.jsx
+179. frontend/src/pages/Settings.jsx
+180. frontend/src/theme.js
+181. frontend/vite.config.js
+182. .github/workflows/ci.yml
+183. .gitignore
+184. .mcp.json
+185. .pytest_cache/.gitignore
+186. .ruff_cache/.gitignore
+187. .semgrep/jarvis.yml
+188. .serena/.gitignore
+189. .serena/project.local.yml
+190. .serena/project.yml
+191. DOCTOR.bat
+192. FINAL_PROJECT_TREE_backend.txt
+193. FINAL_PROJECT_TREE_frontend.txt
+194. LEGACY_GREP_ARTIFACT.txt
+195. PROJECT_TREE.txt
+196. REQUIREMENTS_SNAPSHOT.txt
+197. RUNTIME_VALIDATION.py
+198. RUN_FAILURE_TEST.bat
+199. START.bat
+200. START_JARVIS.bat
+201. UPDATE.bat
+202. failure_injection_report.txt
+203. legacy_dependency_report.json
+204. requirements-dev.txt
+205. requirements.txt
+206. start.sh
+207. tools/codemap.py
+208. tools/doctor.py
+209. tools/dump_source.py
+210. tools/failure_injection.py
+211. tools/setup.py
+212. tools/update.py
 
 
 
 ################################################################################
-# FILE 1/211: .pytest_cache/README.md
+# FILE 1/212: .pytest_cache/README.md
 ################################################################################
 ```md
 # pytest cache directory #
@@ -236,7 +237,7 @@ See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more inf
 ```
 
 ################################################################################
-# FILE 2/211: AGENT_EXTENSIBILITY_REPORT.md
+# FILE 2/212: AGENT_EXTENSIBILITY_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Agent Extensibility Report
@@ -302,7 +303,7 @@ no plugin installation, no Settings UI built — exactly as scoped.
 ```
 
 ################################################################################
-# FILE 3/211: BRAIN_GUIDE.md
+# FILE 3/212: BRAIN_GUIDE.md
 ################################################################################
 ```md
 # Jarvis Brain — Quick Guide
@@ -358,7 +359,7 @@ Brain panel → ✕ next to a document, or `DELETE /brain/document/{id}`.
 ```
 
 ################################################################################
-# FILE 4/211: CLAUDE.md
+# FILE 4/212: CLAUDE.md
 ################################################################################
 ```md
 # Jarvis — how to work on this repo
@@ -560,6 +561,12 @@ a request can't be handled, do the rest and name what you skipped.
 - A missing optional dependency is a **skip with an install hint**, not a
   failure. Reporting it as a failure sends the user hunting for a bug that
   isn't there.
+- **"Installed but unusable" is a third state, and it needs its own message.**
+  Guard optional imports with `except Exception`, not `except ImportError`:
+  pyautogui is installed and still raises `KeyError: 'DISPLAY'` where there is
+  no desktop session, and mss does the same. `except ImportError` let that
+  crash the whole module. And do not then say "run pip install" — the package
+  is right there. Say what actually stopped it.
 
 ---
 
@@ -696,7 +703,7 @@ be believed when it says what it did — that is the goal.
 ```
 
 ################################################################################
-# FILE 5/211: CONTROL_FLOW_REPORT.md
+# FILE 5/212: CONTROL_FLOW_REPORT.md
 ################################################################################
 ```md
 # Jarvis V9 — Post-Migration Control-Flow Report (Step G)
@@ -751,7 +758,7 @@ Architecture/wiring is proven; runtime behavior is yours to confirm.
 ```
 
 ################################################################################
-# FILE 6/211: DEEPSEEK_BLOCKERS_FIX.md
+# FILE 6/212: DEEPSEEK_BLOCKERS_FIX.md
 ################################################################################
 ```md
 # DeepSeek Integration Blockers - Fix Report
@@ -830,7 +837,7 @@ RUNTIME PROOF (3 cases, executed):
 ```
 
 ################################################################################
-# FILE 7/211: DO_THIS.md
+# FILE 7/212: DO_THIS.md
 ################################################################################
 ```md
 # Do this
@@ -1166,7 +1173,7 @@ DESKTOP_CONTROL_ENABLED=0
 ```
 
 ################################################################################
-# FILE 8/211: FIX_MY_INSTALL.md
+# FILE 8/212: FIX_MY_INSTALL.md
 ################################################################################
 ```md
 # It won't start — do this
@@ -1344,7 +1351,7 @@ of whatever fails.
 ```
 
 ################################################################################
-# FILE 9/211: FRESH_EYES_AUDIT_2026-07-03.md
+# FILE 9/212: FRESH_EYES_AUDIT_2026-07-03.md
 ################################################################################
 ```md
 # Fresh-Eyes Audit — 2026-07-03
@@ -1463,7 +1470,7 @@ independent check, not because they're assumed correct going forward.
 ```
 
 ################################################################################
-# FILE 10/211: HIDDEN_RUNTIME_AUDIT.md
+# FILE 10/212: HIDDEN_RUNTIME_AUDIT.md
 ################################################################################
 ```md
 # Jarvis V8.5 — Hidden Runtime Failure Audit
@@ -1616,7 +1623,7 @@ load-dependent).
 ```
 
 ################################################################################
-# FILE 11/211: MIGRATION_CHANGELOG.md
+# FILE 11/212: MIGRATION_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Phase 2 — Migration Changelog
@@ -1663,7 +1670,7 @@ results, identical to the pre-migration baseline.)
 ```
 
 ################################################################################
-# FILE 12/211: PLANNER_AND_DOCTOR.md
+# FILE 12/212: PLANNER_AND_DOCTOR.md
 ################################################################################
 ```md
 # Planner & Doctor — Quick Guide
@@ -1720,7 +1727,7 @@ what still needs setup versus what's already working.
 ```
 
 ################################################################################
-# FILE 13/211: PRE_RELEASE_AUDIT.md
+# FILE 13/212: PRE_RELEASE_AUDIT.md
 ################################################################################
 ```md
 # PRE-RELEASE AUDIT — Jarvis V8
@@ -1905,7 +1912,7 @@ Must be fixed before packaging the final ZIP.
 ```
 
 ################################################################################
-# FILE 14/211: QA_VERIFICATION_REPORT.md
+# FILE 14/212: QA_VERIFICATION_REPORT.md
 ################################################################################
 ```md
 # Jarvis V14 — Verification & Architecture Pass (QA report)
@@ -1999,7 +2006,7 @@ failure paths loud so the next run is diagnosable rather than silent.
 ```
 
 ################################################################################
-# FILE 15/211: README.md
+# FILE 15/212: README.md
 ################################################################################
 ```md
 # Jarvis OS — autonomous desktop assistant + freelance income engine
@@ -2141,7 +2148,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 16/211: README_START_HERE.md
+# FILE 16/212: README_START_HERE.md
 ################################################################################
 ```md
 # JARVIS — Quick Start
@@ -2196,7 +2203,7 @@ traceback is what pins down the fix.
 ```
 
 ################################################################################
-# FILE 17/211: REAL_MACHINE_FIXES.md
+# FILE 17/212: REAL_MACHINE_FIXES.md
 ################################################################################
 ```md
 # REAL MACHINE FIX LIST — Progress & Evidence
@@ -2297,7 +2304,7 @@ desktop command video, per-platform job screenshots, proposal flow, autonomy dem
 ```
 
 ################################################################################
-# FILE 18/211: RESEARCH_UPGRADE_2026-07.md
+# FILE 18/212: RESEARCH_UPGRADE_2026-07.md
 ################################################################################
 ```md
 # Deep Research: How to Make Jarvis 100% Better (2026-07)
@@ -2386,7 +2393,7 @@ addition is `nomic-embed-text` (274MB); total resident footprint stays under
 ```
 
 ################################################################################
-# FILE 19/211: RUNTIME_VALIDATION_README.md
+# FILE 19/212: RUNTIME_VALIDATION_README.md
 ################################################################################
 ```md
 # V9 Runtime Validation — your 5-minute checkpoint
@@ -2424,7 +2431,7 @@ was a known issue: 'chrome' may need a full path or different alias on your box)
 ```
 
 ################################################################################
-# FILE 20/211: STAGE2_CHANGELOG.md
+# FILE 20/212: STAGE2_CHANGELOG.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 2 — Structured Perception Changelog
@@ -2461,7 +2468,7 @@ extraction requires a live browser + display on the Windows target.
 ```
 
 ################################################################################
-# FILE 21/211: START_HERE.md
+# FILE 21/212: START_HERE.md
 ################################################################################
 ```md
 # Jarvis — Run Guide (single package)
@@ -2612,7 +2619,7 @@ New fixes this pass:
 ```
 
 ################################################################################
-# FILE 22/211: TESTING_STAGES.md
+# FILE 22/212: TESTING_STAGES.md
 ################################################################################
 ```md
 # Proving Jarvis actually works — in the right order
@@ -2710,7 +2717,7 @@ Everything else has been tested. This hasn't, and can't be.
 ```
 
 ################################################################################
-# FILE 23/211: V8_PHASE1_REPORT.md
+# FILE 23/212: V8_PHASE1_REPORT.md
 ################################################################################
 ```md
 # V8_PHASE1_REPORT.md — Stabilization (partial)
@@ -2766,7 +2773,7 @@ are written for you to run and verify on the target box.
 ```
 
 ################################################################################
-# FILE 24/211: V9_FINAL_README.md
+# FILE 24/212: V9_FINAL_README.md
 ################################################################################
 ```md
 # Jarvis V9 — Final Package
@@ -2828,7 +2835,7 @@ External: Ollama (local LLM runtime), Tesseract OCR (optional, for desktop bbox 
 ```
 
 ################################################################################
-# FILE 25/211: V9_STAGE1_MIGRATION.md
+# FILE 25/212: V9_STAGE1_MIGRATION.md
 ################################################################################
 ```md
 # Jarvis V9 Stage 1 — Migration Record (LOCKED spec)
@@ -2892,7 +2899,7 @@ Capability estimate per spec: Stage 1 ~70-75% structural; real-world needs Stage
 ```
 
 ################################################################################
-# FILE 26/211: WHAT_JARVIS_NEEDS_FROM_YOU.md
+# FILE 26/212: WHAT_JARVIS_NEEDS_FROM_YOU.md
 ################################################################################
 ```md
 # What Jarvis needs from you (one-time setup)
@@ -2964,7 +2971,7 @@ That's it. No logins in chat, no other files needed.
 ```
 
 ################################################################################
-# FILE 27/211: WINDOWS_DEPLOYMENT.md
+# FILE 27/212: WINDOWS_DEPLOYMENT.md
 ################################################################################
 ```md
 # Jarvis V9 — Windows Deployment + Runtime Validation
@@ -3002,7 +3009,7 @@ The whole runtime_validation_<timestamp> folder + any traceback from results.jso
 ```
 
 ################################################################################
-# FILE 28/211: WINDOWS_FAILURE_ANALYSIS.md
+# FILE 28/212: WINDOWS_FAILURE_ANALYSIS.md
 ################################################################################
 ```md
 # WINDOWS FAILURE ANALYSIS — Jarvis V8 Verification
@@ -3092,7 +3099,7 @@ FIX:
 ```
 
 ################################################################################
-# FILE 29/211: backend/README.md
+# FILE 29/212: backend/README.md
 ################################################################################
 ```md
 # JARVIS OS V4 — Autonomous Freelance Agent
@@ -3228,7 +3235,7 @@ CORS_ORIGINS=*
 ```
 
 ################################################################################
-# FILE 30/211: docs/AI_ROUTER.md
+# FILE 30/212: docs/AI_ROUTER.md
 ################################################################################
 ```md
 # AI Router
@@ -3366,7 +3373,7 @@ missing optional key is a skip, not a failure.
 ```
 
 ################################################################################
-# FILE 31/211: docs/ARCHITECTURE.md
+# FILE 31/212: docs/ARCHITECTURE.md
 ################################################################################
 ```md
 # Architecture
@@ -3581,7 +3588,7 @@ look like a missing Python. Em-dashes become mojibake in a GBK console.
 ```
 
 ################################################################################
-# FILE 32/211: docs/BRAIN_LAYER.md
+# FILE 32/212: docs/BRAIN_LAYER.md
 ################################################################################
 ```md
 # The brain layer
@@ -3653,7 +3660,7 @@ with per-task benchmarking. The scaffolding above is what those plug into.
 ```
 
 ################################################################################
-# FILE 33/211: docs/BROWSER_AGENT.md
+# FILE 33/212: docs/BROWSER_AGENT.md
 ################################################################################
 ```md
 # Browser Agent
@@ -3777,7 +3784,7 @@ rather than after every cleanup, because a VACUUM on every operation is how a
 ```
 
 ################################################################################
-# FILE 34/211: docs/CODEMAP.md
+# FILE 34/212: docs/CODEMAP.md
 ################################################################################
 ```md
 # Code map
@@ -3789,7 +3796,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-158 source files · 575 public symbols
+159 source files · 579 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -4285,6 +4292,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`pytest_configure`
   <br>`backend/tests/conftest.py`
 
+**`test_config_store.py`** — Settings must save on a database that has never been initialised.
+  <br>`test_set_succeeds_on_an_uninitialised_database`, `test_the_value_is_actually_readable_afterwards`, `test_get_still_falls_back_when_nothing_is_stored`, `test_a_failed_write_reports_it_rather_than_pretending`
+  <br>`backend/tests/test_config_store.py`
+
 **`test_conftest_guard.py`** — Does the test harness itself still work?
   <br>`test_outbound_connections_are_blocked`, `test_loopback_is_still_allowed`
   <br>`backend/tests/test_conftest_guard.py`
@@ -4473,7 +4484,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 ```
 
 ################################################################################
-# FILE 35/211: docs/CODE_HEALTH.md
+# FILE 35/212: docs/CODE_HEALTH.md
 ################################################################################
 ```md
 # Code health
@@ -4499,8 +4510,10 @@ python tools/failure_injection.py
 ```
 
 Last full pass: 2026-08-04. Ruff clean, Biome 0 errors / 123 warnings,
-Semgrep 0 findings on 151 files, pytest 51 passed, failure injection 24
-passed / 0 failed / 1 skipped.
+Semgrep 0 findings, pytest 57 passed, failure injection 24 passed / 0 failed /
+1 skipped — **and the same again with the optional display libraries stubbed to
+fail**, which is the condition CI runs under and the one that found the bug
+below.
 
 ---
 
@@ -4618,6 +4631,58 @@ them `<button>`s, which changes layout and styling.
 
 ---
 
+## What CI caught that local testing could not
+
+The first CI run failed three jobs while everything passed locally. Worth
+recording, because it is the clearest argument for having CI at all.
+
+**`import pyautogui` does not raise `ImportError` on a headless machine.** It
+pulls in mouseinfo, which runs `Display(os.environ['DISPLAY'])` at module scope
+and raises `KeyError: 'DISPLAY'`. The guard was `except ImportError`, so
+importing `desktop_agent` crashed rather than degrading to
+`HAS_PYAUTOGUI = False` — taking down the import check and five
+failure-injection scenarios with it.
+
+It never reproduced locally because pyautogui simply isn't installed in the dev
+container, so the ImportError path worked perfectly. **"Installed but unusable"
+is a different state from "not installed", and only one of them was handled.**
+
+The error message was wrong too: "Run: pip install pyautogui" for a package
+that was already installed. Same class as telling the user to `ollama pull` a
+model they already have — an error naming the wrong cause sends you hunting for
+a bug that isn't there.
+
+Fixed, with `backend/tests/test_headless.py` keeping both halves honest:
+installed-but-unusable degrades and names the real cause; genuinely missing
+still gets the install hint.
+
+**`config.set()` silently did nothing on a database that had never been
+initialised.** `services/config.py` assumed `models.db.init_db()` had already
+run. Inside the running backend that holds — `main.py` calls it at startup —
+but nothing else does: `tools/`, the failure-injection harness and
+`mcp_server.py` all reach for config directly.
+
+With no `settings` table, `set()` returned
+`{"ok": False, "error": "no such table: settings"}`, and almost every caller
+ignores that dict. **The value looked saved and wasn't.** That is the
+"I set it, I saved it, nothing changed" bug config.py exists to prevent,
+happening one layer below where it was being prevented.
+
+It could not reproduce on any machine where Jarvis had been started once —
+which is every dev machine. Config now creates its own table, retries the
+write once, and still reports honestly if it genuinely can't (read-only disk,
+locked database). `backend/tests/test_config_store.py` covers both halves, and
+CI runs the harness on a fresh checkout.
+
+**And `tools/check_ui.mjs` lied about why it failed.** It reported "vite never
+came up. Run `npm install` in frontend/ first" on a runner where `npm ci` had
+just succeeded. It swallowed both of vite's output streams and printed a guess.
+The real cause: vite defaults to binding "localhost", which resolves to `::1`
+first on the runner, so it listened on IPv6 while the probe polled 127.0.0.1.
+Now it binds 127.0.0.1 explicitly and prints whatever vite actually said.
+
+---
+
 ## A near-miss worth remembering
 
 Running `biome check --write --unsafe` to clear the 83 `useButtonType` findings
@@ -4639,7 +4704,7 @@ is that the tool was run again afterwards and its output was read.
 ```
 
 ################################################################################
-# FILE 36/211: docs/DESKTOP_AGENT.md
+# FILE 36/212: docs/DESKTOP_AGENT.md
 ################################################################################
 ```md
 # Desktop Agent
@@ -4787,7 +4852,7 @@ Cancels are skipped: you pressing Stop is not a lesson about the task.
 ```
 
 ################################################################################
-# FILE 37/211: docs/FREELANCER.md
+# FILE 37/212: docs/FREELANCER.md
 ################################################################################
 ```md
 # Freelance income engine
@@ -4926,7 +4991,7 @@ write, whether it would submit. Scans nothing, sends nothing. In chat:
 ```
 
 ################################################################################
-# FILE 38/211: docs/MCP.md
+# FILE 38/212: docs/MCP.md
 ################################################################################
 ```md
 # MCP
@@ -5024,7 +5089,7 @@ failure.
 ```
 
 ################################################################################
-# FILE 39/211: docs/MEMORY.md
+# FILE 39/212: docs/MEMORY.md
 ################################################################################
 ```md
 # Memory
@@ -5156,7 +5221,7 @@ every operation is how a 24/7 process spends its day doing nothing useful.
 ```
 
 ################################################################################
-# FILE 40/211: docs/PLANNER.md
+# FILE 40/212: docs/PLANNER.md
 ################################################################################
 ```md
 # Planner
@@ -5299,7 +5364,7 @@ the feature still produces a usable checklist offline.
 ```
 
 ################################################################################
-# FILE 41/211: docs/README.md
+# FILE 41/212: docs/README.md
 ################################################################################
 ```md
 # Jarvis docs
@@ -5359,14 +5424,14 @@ A stale doc is worse than none: it sends you to a module that moved.
 ```
 
 ################################################################################
-# FILE 42/211: backend/adapters/__init__.py
+# FILE 42/212: backend/adapters/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 43/211: backend/adapters/commander_adapter.py
+# FILE 43/212: backend/adapters/commander_adapter.py
 ################################################################################
 ```py
 """
@@ -6161,14 +6226,14 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
 ```
 
 ################################################################################
-# FILE 44/211: backend/agents/__init__.py
+# FILE 44/212: backend/agents/__init__.py
 ################################################################################
 ```py
 from .orchestrator import STATE
 ```
 
 ################################################################################
-# FILE 45/211: backend/agents/base_agent.py
+# FILE 45/212: backend/agents/base_agent.py
 ################################################################################
 ```py
 """agents/base_agent.py — Base class for all Jarvis agents"""
@@ -6191,7 +6256,7 @@ class BaseAgent:
 ```
 
 ################################################################################
-# FILE 46/211: backend/agents/browser_agent.py
+# FILE 46/212: backend/agents/browser_agent.py
 ################################################################################
 ```py
 """
@@ -6487,7 +6552,7 @@ class BrowserAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 47/211: backend/agents/commander.py
+# FILE 47/212: backend/agents/commander.py
 ################################################################################
 ```py
 """
@@ -6632,14 +6697,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 48/211: backend/agents/custom/__init__.py
+# FILE 48/212: backend/agents/custom/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 49/211: backend/agents/desktop_agent.py
+# FILE 49/212: backend/agents/desktop_agent.py
 ################################################################################
 ```py
 """
@@ -8286,7 +8351,7 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 50/211: backend/agents/executor_agent.py
+# FILE 50/212: backend/agents/executor_agent.py
 ################################################################################
 ```py
 """
@@ -8763,7 +8828,7 @@ class ExecutorAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 51/211: backend/agents/memory_agent.py
+# FILE 51/212: backend/agents/memory_agent.py
 ################################################################################
 ```py
 """
@@ -8922,7 +8987,7 @@ Give specific actionable advice. Be concise."""
 ```
 
 ################################################################################
-# FILE 52/211: backend/agents/orchestrator.py
+# FILE 52/212: backend/agents/orchestrator.py
 ################################################################################
 ```py
 """
@@ -9040,7 +9105,7 @@ def _queue_for_approval(generated: list):
 ```
 
 ################################################################################
-# FILE 53/211: backend/agents/orchestrator_core.py
+# FILE 53/212: backend/agents/orchestrator_core.py
 ################################################################################
 ```py
 """
@@ -9574,7 +9639,7 @@ core = get_core()
 ```
 
 ################################################################################
-# FILE 54/211: backend/agents/perception_agent.py
+# FILE 54/212: backend/agents/perception_agent.py
 ################################################################################
 ```py
 """
@@ -9785,7 +9850,7 @@ perception = PerceptionAgent()
 ```
 
 ################################################################################
-# FILE 55/211: backend/agents/proposal_agent.py
+# FILE 55/212: backend/agents/proposal_agent.py
 ################################################################################
 ```py
 """
@@ -10066,7 +10131,7 @@ Output ONLY the proposal text."""
 ```
 
 ################################################################################
-# FILE 56/211: backend/agents/registry.py
+# FILE 56/212: backend/agents/registry.py
 ################################################################################
 ```py
 """
@@ -10386,7 +10451,7 @@ def register_core_agents():
 ```
 
 ################################################################################
-# FILE 57/211: backend/agents/scheduler.py
+# FILE 57/212: backend/agents/scheduler.py
 ################################################################################
 ```py
 """
@@ -10515,7 +10580,7 @@ def get_schedule_status() -> dict:
 ```
 
 ################################################################################
-# FILE 58/211: backend/agents/score_agent.py
+# FILE 58/212: backend/agents/score_agent.py
 ################################################################################
 ```py
 """
@@ -10717,7 +10782,7 @@ class ScoreAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 59/211: backend/agents/scout_agent.py
+# FILE 59/212: backend/agents/scout_agent.py
 ################################################################################
 ```py
 """
@@ -10839,7 +10904,7 @@ class ScoutAgent(BaseAgent):
 ```
 
 ################################################################################
-# FILE 60/211: backend/agents/v9_models.py
+# FILE 60/212: backend/agents/v9_models.py
 ################################################################################
 ```py
 """
@@ -10897,7 +10962,7 @@ class Action:
 ```
 
 ################################################################################
-# FILE 61/211: backend/agents/vision_agent.py
+# FILE 61/212: backend/agents/vision_agent.py
 ################################################################################
 ```py
 """
@@ -11524,14 +11589,14 @@ def get_status() -> dict:
 ```
 
 ################################################################################
-# FILE 62/211: backend/core/__init__.py
+# FILE 62/212: backend/core/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 63/211: backend/core/browser_lock.py
+# FILE 63/212: backend/core/browser_lock.py
 ################################################################################
 ```py
 """
@@ -11674,7 +11739,7 @@ class browser_session:
 ```
 
 ################################################################################
-# FILE 64/211: backend/main.py
+# FILE 64/212: backend/main.py
 ################################################################################
 ```py
 """main.py — Jarvis OS backend"""
@@ -12263,7 +12328,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 65/211: backend/mcp_server.py
+# FILE 65/212: backend/mcp_server.py
 ################################################################################
 ```py
 """
@@ -12667,14 +12732,14 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 66/211: backend/models/__init__.py
+# FILE 66/212: backend/models/__init__.py
 ################################################################################
 ```py
 from .db import DB_PATH, conn, init_db
 ```
 
 ################################################################################
-# FILE 67/211: backend/models/clickworker.py
+# FILE 67/212: backend/models/clickworker.py
 ################################################################################
 ```py
 """models/clickworker.py"""
@@ -12701,7 +12766,7 @@ def init_clickworker_tables():
 ```
 
 ################################################################################
-# FILE 68/211: backend/models/db.py
+# FILE 68/212: backend/models/db.py
 ################################################################################
 ```py
 """
@@ -12921,7 +12986,7 @@ def init_v5(db_conn):
 ```
 
 ################################################################################
-# FILE 69/211: backend/models/fiverr.py
+# FILE 69/212: backend/models/fiverr.py
 ################################################################################
 ```py
 """
@@ -12968,7 +13033,7 @@ def init_fiverr_tables() -> None:
 ```
 
 ################################################################################
-# FILE 70/211: backend/models/hubstaff.py
+# FILE 70/212: backend/models/hubstaff.py
 ################################################################################
 ```py
 """
@@ -13012,7 +13077,7 @@ def init_hubstaff_tables() -> None:
 ```
 
 ################################################################################
-# FILE 71/211: backend/models/zuodao.py
+# FILE 71/212: backend/models/zuodao.py
 ################################################################################
 ```py
 """models/zuodao.py"""
@@ -13039,14 +13104,14 @@ def init_zuodao_tables():
 ```
 
 ################################################################################
-# FILE 72/211: backend/platforms/__init__.py
+# FILE 72/212: backend/platforms/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 73/211: backend/platforms/base.py
+# FILE 73/212: backend/platforms/base.py
 ################################################################################
 ```py
 """
@@ -13091,7 +13156,7 @@ class BasePlatform(ABC):
 ```
 
 ################################################################################
-# FILE 74/211: backend/platforms/contra.py
+# FILE 74/212: backend/platforms/contra.py
 ################################################################################
 ```py
 """
@@ -13175,7 +13240,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 75/211: backend/platforms/hubstaff.py
+# FILE 75/212: backend/platforms/hubstaff.py
 ################################################################################
 ```py
 """
@@ -13376,7 +13441,7 @@ def _extract_skills(t):
 ```
 
 ################################################################################
-# FILE 76/211: backend/platforms/peopleperhour.py
+# FILE 76/212: backend/platforms/peopleperhour.py
 ################################################################################
 ```py
 """
@@ -13460,7 +13525,7 @@ Output ONLY the proposal."""
 ```
 
 ################################################################################
-# FILE 77/211: backend/platforms/remoteco.py
+# FILE 77/212: backend/platforms/remoteco.py
 ################################################################################
 ```py
 """
@@ -13559,7 +13624,7 @@ def _extract_skills(text: str) -> list[str]:
 ```
 
 ################################################################################
-# FILE 78/211: backend/platforms/remoteok.py
+# FILE 78/212: backend/platforms/remoteok.py
 ################################################################################
 ```py
 """platforms/remoteok.py — RemoteOK public JSON API"""
@@ -13603,7 +13668,7 @@ class RemoteOKPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 79/211: backend/platforms/wellfound.py
+# FILE 79/212: backend/platforms/wellfound.py
 ################################################################################
 ```py
 """
@@ -13720,7 +13785,7 @@ Output ONLY the message."""
 ```
 
 ################################################################################
-# FILE 80/211: backend/platforms/weworkremotely.py
+# FILE 80/212: backend/platforms/weworkremotely.py
 ################################################################################
 ```py
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
@@ -13767,14 +13832,14 @@ class WeWorkRemotelyPlatform(BasePlatform):
 ```
 
 ################################################################################
-# FILE 81/211: backend/providers/__init__.py
+# FILE 81/212: backend/providers/__init__.py
 ################################################################################
 ```py
 
 ```
 
 ################################################################################
-# FILE 82/211: backend/providers/base.py
+# FILE 82/212: backend/providers/base.py
 ################################################################################
 ```py
 """
@@ -13841,7 +13906,7 @@ class Provider(ABC):
 ```
 
 ################################################################################
-# FILE 83/211: backend/providers/ollama_provider.py
+# FILE 83/212: backend/providers/ollama_provider.py
 ################################################################################
 ```py
 """
@@ -14034,7 +14099,7 @@ Provider = OllamaProvider          # what the router looks for
 ```
 
 ################################################################################
-# FILE 84/211: backend/providers/openai_compatible.py
+# FILE 84/212: backend/providers/openai_compatible.py
 ################################################################################
 ```py
 """
@@ -14242,7 +14307,7 @@ Provider = OpenAICompatible
 ```
 
 ################################################################################
-# FILE 85/211: backend/requirements.txt
+# FILE 85/212: backend/requirements.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -14291,7 +14356,7 @@ pynput>=1.7.6
 ```
 
 ################################################################################
-# FILE 86/211: backend/routes/__init__.py
+# FILE 86/212: backend/routes/__init__.py
 ################################################################################
 ```py
 from .analytics import router as analytics_router
@@ -14307,7 +14372,7 @@ from .zuodao import router as zuodao_router
 ```
 
 ################################################################################
-# FILE 87/211: backend/routes/agents.py
+# FILE 87/212: backend/routes/agents.py
 ################################################################################
 ```py
 """
@@ -14802,7 +14867,7 @@ def desktop_maximize(body: dict):
 ```
 
 ################################################################################
-# FILE 88/211: backend/routes/analytics.py
+# FILE 88/212: backend/routes/analytics.py
 ################################################################################
 ```py
 """
@@ -14822,7 +14887,7 @@ def analytics():
 ```
 
 ################################################################################
-# FILE 89/211: backend/routes/automation.py
+# FILE 89/212: backend/routes/automation.py
 ################################################################################
 ```py
 """routes/automation.py — Auto Mode + queue management"""
@@ -15261,7 +15326,7 @@ def executor_get_status():
 ```
 
 ################################################################################
-# FILE 90/211: backend/routes/brain.py
+# FILE 90/212: backend/routes/brain.py
 ################################################################################
 ```py
 """
@@ -15359,7 +15424,7 @@ def status():
 ```
 
 ################################################################################
-# FILE 91/211: backend/routes/clickworker.py
+# FILE 91/212: backend/routes/clickworker.py
 ################################################################################
 ```py
 """routes/clickworker.py"""
@@ -15458,7 +15523,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 92/211: backend/routes/fiverr.py
+# FILE 92/212: backend/routes/fiverr.py
 ################################################################################
 ```py
 """
@@ -15635,7 +15700,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 93/211: backend/routes/hubstaff.py
+# FILE 93/212: backend/routes/hubstaff.py
 ################################################################################
 ```py
 """
@@ -15815,7 +15880,7 @@ def delete_application(aid: int):
 ```
 
 ################################################################################
-# FILE 94/211: backend/routes/messages.py
+# FILE 94/212: backend/routes/messages.py
 ################################################################################
 ```py
 """
@@ -15910,7 +15975,7 @@ def delete_message(mid: int):
 ```
 
 ################################################################################
-# FILE 95/211: backend/routes/mind.py
+# FILE 95/212: backend/routes/mind.py
 ################################################################################
 ```py
 """
@@ -16011,7 +16076,7 @@ def freelance_resume(platform: str):
 ```
 
 ################################################################################
-# FILE 96/211: backend/routes/orchestrator.py
+# FILE 96/212: backend/routes/orchestrator.py
 ################################################################################
 ```py
 """
@@ -16182,7 +16247,7 @@ def schedule_status():
 ```
 
 ################################################################################
-# FILE 97/211: backend/routes/orchestrator_feed.py
+# FILE 97/212: backend/routes/orchestrator_feed.py
 ################################################################################
 ```py
 """backend/routes/orchestrator_feed.py — SSE feed of orchestrator state.
@@ -16241,7 +16306,7 @@ async def orchestrator_feed(request: Request):
 ```
 
 ################################################################################
-# FILE 98/211: backend/routes/os_console.py
+# FILE 98/212: backend/routes/os_console.py
 ################################################################################
 ```py
 """
@@ -16581,7 +16646,7 @@ def os_diagnostics():
 ```
 
 ################################################################################
-# FILE 99/211: backend/routes/planner.py
+# FILE 99/212: backend/routes/planner.py
 ################################################################################
 ```py
 """
@@ -16706,7 +16771,7 @@ def executing(project_id: int):
 ```
 
 ################################################################################
-# FILE 100/211: backend/routes/proposals.py
+# FILE 100/212: backend/routes/proposals.py
 ################################################################################
 ```py
 """
@@ -16912,7 +16977,7 @@ def delete_proposal(pid: int):
 ```
 
 ################################################################################
-# FILE 101/211: backend/routes/pulse.py
+# FILE 101/212: backend/routes/pulse.py
 ################################################################################
 ```py
 """
@@ -16946,7 +17011,7 @@ def tick():
 ```
 
 ################################################################################
-# FILE 102/211: backend/routes/scraper.py
+# FILE 102/212: backend/routes/scraper.py
 ################################################################################
 ```py
 """
@@ -17090,7 +17155,7 @@ def clear_jobs():
 ```
 
 ################################################################################
-# FILE 103/211: backend/routes/sessions.py
+# FILE 103/212: backend/routes/sessions.py
 ################################################################################
 ```py
 """
@@ -17205,7 +17270,7 @@ def check_replies(background_tasks: BackgroundTasks):
 ```
 
 ################################################################################
-# FILE 104/211: backend/routes/system.py
+# FILE 104/212: backend/routes/system.py
 ################################################################################
 ```py
 """
@@ -17404,7 +17469,7 @@ def doctor():
 ```
 
 ################################################################################
-# FILE 105/211: backend/routes/workflows.py
+# FILE 105/212: backend/routes/workflows.py
 ################################################################################
 ```py
 """
@@ -17470,7 +17535,7 @@ def delete_wf(name: str):
 ```
 
 ################################################################################
-# FILE 106/211: backend/routes/zuodao.py
+# FILE 106/212: backend/routes/zuodao.py
 ################################################################################
 ```py
 """routes/zuodao.py"""
@@ -17566,7 +17631,7 @@ def delete_task(tid: int):
 ```
 
 ################################################################################
-# FILE 107/211: backend/services/__init__.py
+# FILE 107/212: backend/services/__init__.py
 ################################################################################
 ```py
 from .analytics_service import get_analytics
@@ -17574,7 +17639,7 @@ from .deepseek_service import auto_work_job, call_model, generate_proposal, gene
 ```
 
 ################################################################################
-# FILE 108/211: backend/services/ai_router.py
+# FILE 108/212: backend/services/ai_router.py
 ################################################################################
 ```py
 """
@@ -17869,7 +17934,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 109/211: backend/services/analytics_service.py
+# FILE 109/212: backend/services/analytics_service.py
 ################################################################################
 ```py
 """
@@ -17972,7 +18037,7 @@ def get_analytics() -> dict:
 ```
 
 ################################################################################
-# FILE 110/211: backend/services/app_resolver.py
+# FILE 110/212: backend/services/app_resolver.py
 ################################################################################
 ```py
 """
@@ -18190,7 +18255,7 @@ def list_known() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 111/211: backend/services/auth.py
+# FILE 111/212: backend/services/auth.py
 ################################################################################
 ```py
 """
@@ -18457,7 +18522,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 112/211: backend/services/bid_executor.py
+# FILE 112/212: backend/services/bid_executor.py
 ################################################################################
 ```py
 """
@@ -18862,7 +18927,7 @@ def executor_status() -> dict:
 ```
 
 ################################################################################
-# FILE 113/211: backend/services/brain_core.py
+# FILE 113/212: backend/services/brain_core.py
 ################################################################################
 ```py
 """
@@ -18969,7 +19034,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 114/211: backend/services/brain_decision.py
+# FILE 114/212: backend/services/brain_decision.py
 ################################################################################
 ```py
 """
@@ -19227,7 +19292,7 @@ def explain(goal_type: str = "background", objective: str = "") -> dict:
 ```
 
 ################################################################################
-# FILE 115/211: backend/services/brain_service.py
+# FILE 115/212: backend/services/brain_service.py
 ################################################################################
 ```py
 """
@@ -19666,7 +19731,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 116/211: backend/services/browser_monitor.py
+# FILE 116/212: backend/services/browser_monitor.py
 ################################################################################
 ```py
 """
@@ -19820,7 +19885,7 @@ def sync_inbox_to_db() -> int:
 ```
 
 ################################################################################
-# FILE 117/211: backend/services/capability_registry.py
+# FILE 117/212: backend/services/capability_registry.py
 ################################################################################
 ```py
 """
@@ -20014,7 +20079,7 @@ def describe() -> str:
 ```
 
 ################################################################################
-# FILE 118/211: backend/services/clickworker_service.py
+# FILE 118/212: backend/services/clickworker_service.py
 ################################################################################
 ```py
 """
@@ -20162,7 +20227,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 119/211: backend/services/config.py
+# FILE 119/212: backend/services/config.py
 ################################################################################
 ```py
 """
@@ -20283,6 +20348,32 @@ KNOWN = {
 }
 
 
+def _ensure_table() -> None:
+    """
+    Create the settings table if it isn't there yet.
+
+    This module used to assume models.db.init_db() had already run. Inside the
+    running backend that is true — main.py calls it at startup — but nothing
+    else does: tools/, the failure-injection harness and mcp_server.py all
+    reach for config on their own.
+
+    On a database where init_db() had never run, set() returned
+    {"ok": False, "error": "no such table: settings"} and almost every caller
+    ignores that dict. So the value looked saved and wasn't: exactly the
+    "I set it, I saved it, nothing changed" failure this module exists to
+    prevent, one layer down.
+
+    Found by CI on a fresh checkout. It could not reproduce on any machine
+    where Jarvis had been started once — including every dev machine.
+    """
+    try:
+        with conn() as db:
+            db.execute("CREATE TABLE IF NOT EXISTS settings ("
+                       "key TEXT PRIMARY KEY, value TEXT)")
+    except Exception:
+        pass        # read-only disk or a locked db — get() still falls back
+
+
 def _rows() -> dict:
     with _lock:
         if _cache["rows"] and time.time() - _cache["at"] < _TTL:
@@ -20293,7 +20384,7 @@ def _rows() -> dict:
             for r in db.execute("SELECT key, value FROM settings").fetchall():
                 rows[r["key"]] = r["value"]
     except Exception:
-        pass                    # a missing table must not break every lookup
+        _ensure_table()         # first read on a fresh database
     with _lock:
         _cache["rows"] = rows
         _cache["at"] = time.time()
@@ -20347,8 +20438,17 @@ def set(key: str, value) -> dict:
         with conn() as db:
             db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)",
                        (key, val))
-    except Exception as e:
-        return {"ok": False, "key": key, "error": str(e)[:120]}
+    except Exception:
+        # Most likely the table doesn't exist yet. Create it and try ONCE more,
+        # then report honestly if it still fails — a settings write that
+        # silently does nothing is worse than one that says it couldn't.
+        _ensure_table()
+        try:
+            with conn() as db:
+                db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)",
+                           (key, val))
+        except Exception as e:
+            return {"ok": False, "key": key, "error": str(e)[:120]}
     invalidate()
     # Mirror into the environment as well. Anything still reading os.getenv
     # directly (third-party code, a module we haven't migrated) then agrees
@@ -20428,7 +20528,7 @@ def effective() -> dict:
 ```
 
 ################################################################################
-# FILE 120/211: backend/services/control.py
+# FILE 120/212: backend/services/control.py
 ################################################################################
 ```py
 """
@@ -20703,7 +20803,7 @@ def explain(limit: int = 6) -> dict:
 ```
 
 ################################################################################
-# FILE 121/211: backend/services/custom_platforms.py
+# FILE 121/212: backend/services/custom_platforms.py
 ################################################################################
 ```py
 """
@@ -20900,7 +21000,7 @@ def scan(slug: str, max_jobs: int = 15) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 122/211: backend/services/decompose.py
+# FILE 122/212: backend/services/decompose.py
 ################################################################################
 ```py
 """
@@ -21449,7 +21549,7 @@ def preview(text: str) -> dict:
 ```
 
 ################################################################################
-# FILE 123/211: backend/services/deepseek_service.py
+# FILE 123/212: backend/services/deepseek_service.py
 ################################################################################
 ```py
 """
@@ -21642,7 +21742,7 @@ Can AI complete this? Reply ONLY with JSON:
 ```
 
 ################################################################################
-# FILE 124/211: backend/services/diagnostics.py
+# FILE 124/212: backend/services/diagnostics.py
 ################################################################################
 ```py
 """
@@ -22060,7 +22160,7 @@ def build_report() -> str:
 ```
 
 ################################################################################
-# FILE 125/211: backend/services/environment.py
+# FILE 125/212: backend/services/environment.py
 ################################################################################
 ```py
 """
@@ -22501,7 +22601,7 @@ def start() -> None:
 ```
 
 ################################################################################
-# FILE 126/211: backend/services/event_bus.py
+# FILE 126/212: backend/services/event_bus.py
 ################################################################################
 ```py
 """
@@ -22594,7 +22694,7 @@ def _short(data: dict | None) -> str:
 ```
 
 ################################################################################
-# FILE 127/211: backend/services/experience.py
+# FILE 127/212: backend/services/experience.py
 ################################################################################
 ```py
 """
@@ -23018,7 +23118,7 @@ def summary(limit: int = 8) -> dict:
 ```
 
 ################################################################################
-# FILE 128/211: backend/services/fiverr_service.py
+# FILE 128/212: backend/services/fiverr_service.py
 ################################################################################
 ```py
 """
@@ -23199,7 +23299,7 @@ Under 150 words. Output ONLY the offer text.
 ```
 
 ################################################################################
-# FILE 129/211: backend/services/freelancer_api.py
+# FILE 129/212: backend/services/freelancer_api.py
 ################################################################################
 ```py
 """
@@ -23414,7 +23514,7 @@ def scrape_freelancer(max_jobs: int = 20) -> list:
 ```
 
 ################################################################################
-# FILE 130/211: backend/services/hubstaff_service.py
+# FILE 130/212: backend/services/hubstaff_service.py
 ################################################################################
 ```py
 """
@@ -23613,7 +23713,7 @@ Output ONLY the application message.
 ```
 
 ################################################################################
-# FILE 131/211: backend/services/income_engine.py
+# FILE 131/212: backend/services/income_engine.py
 ################################################################################
 ```py
 """
@@ -23883,7 +23983,7 @@ def start_watchdog():
 ```
 
 ################################################################################
-# FILE 132/211: backend/services/live_plan.py
+# FILE 132/212: backend/services/live_plan.py
 ################################################################################
 ```py
 """
@@ -24182,7 +24282,7 @@ def _publish(topic: str, payload: dict) -> None:
 ```
 
 ################################################################################
-# FILE 133/211: backend/services/maintenance.py
+# FILE 133/212: backend/services/maintenance.py
 ################################################################################
 ```py
 """
@@ -24474,7 +24574,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 134/211: backend/services/memory_pressure.py
+# FILE 134/212: backend/services/memory_pressure.py
 ################################################################################
 ```py
 """
@@ -24688,7 +24788,7 @@ def free_now() -> dict:
 ```
 
 ################################################################################
-# FILE 135/211: backend/services/model_router.py
+# FILE 135/212: backend/services/model_router.py
 ################################################################################
 ```py
 """
@@ -24920,7 +25020,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 136/211: backend/services/narrate.py
+# FILE 136/212: backend/services/narrate.py
 ################################################################################
 ```py
 """
@@ -25120,7 +25220,7 @@ def as_text() -> str:
 ```
 
 ################################################################################
-# FILE 137/211: backend/services/ollama_manager.py
+# FILE 137/212: backend/services/ollama_manager.py
 ################################################################################
 ```py
 """
@@ -25493,7 +25593,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 138/211: backend/services/os_state.py
+# FILE 138/212: backend/services/os_state.py
 ################################################################################
 ```py
 """
@@ -25744,7 +25844,7 @@ def _stage_label(stage: str, running: bool) -> str:
 ```
 
 ################################################################################
-# FILE 139/211: backend/services/persona.py
+# FILE 139/212: backend/services/persona.py
 ################################################################################
 ```py
 """
@@ -26053,7 +26153,7 @@ def _quiet_sync():
 ```
 
 ################################################################################
-# FILE 140/211: backend/services/planner_service.py
+# FILE 140/212: backend/services/planner_service.py
 ################################################################################
 ```py
 """
@@ -26634,7 +26734,7 @@ def summary_line() -> str:
 ```
 
 ################################################################################
-# FILE 141/211: backend/services/platform_health.py
+# FILE 141/212: backend/services/platform_health.py
 ################################################################################
 ```py
 """
@@ -26793,7 +26893,7 @@ def _announce_pause(platform: str, error: str) -> None:
 ```
 
 ################################################################################
-# FILE 142/211: backend/services/platform_meta.py
+# FILE 142/212: backend/services/platform_meta.py
 ################################################################################
 ```py
 """
@@ -26875,7 +26975,7 @@ def apply_note(platform: str) -> str:
 ```
 
 ################################################################################
-# FILE 143/211: backend/services/profile_service.py
+# FILE 143/212: backend/services/profile_service.py
 ################################################################################
 ```py
 """
@@ -26950,7 +27050,7 @@ def prompt_block(profile: dict | None = None) -> str:
 ```
 
 ################################################################################
-# FILE 144/211: backend/services/providers.py
+# FILE 144/212: backend/services/providers.py
 ################################################################################
 ```py
 """
@@ -27163,7 +27263,7 @@ def status() -> dict:
 ```
 
 ################################################################################
-# FILE 145/211: backend/services/pulse_service.py
+# FILE 145/212: backend/services/pulse_service.py
 ################################################################################
 ```py
 """
@@ -27440,7 +27540,7 @@ def mark_seen() -> int:
 ```
 
 ################################################################################
-# FILE 146/211: backend/services/reflection.py
+# FILE 146/212: backend/services/reflection.py
 ################################################################################
 ```py
 """
@@ -27541,7 +27641,7 @@ def recent(limit: int = 10) -> list[dict]:
 ```
 
 ################################################################################
-# FILE 147/211: backend/services/selfeval.py
+# FILE 147/212: backend/services/selfeval.py
 ################################################################################
 ```py
 """
@@ -27807,7 +27907,7 @@ def summary(limit: int = 10) -> dict:
 ```
 
 ################################################################################
-# FILE 148/211: backend/services/session_manager.py
+# FILE 148/212: backend/services/session_manager.py
 ################################################################################
 ```py
 """
@@ -28178,7 +28278,7 @@ def check_replies() -> dict:
 ```
 
 ################################################################################
-# FILE 149/211: backend/services/simulate.py
+# FILE 149/212: backend/services/simulate.py
 ################################################################################
 ```py
 """
@@ -28604,7 +28704,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 150/211: backend/services/teach.py
+# FILE 150/212: backend/services/teach.py
 ################################################################################
 ```py
 """
@@ -29011,7 +29111,7 @@ def match(message: str) -> dict | None:
 ```
 
 ################################################################################
-# FILE 151/211: backend/services/tool_registry.py
+# FILE 151/212: backend/services/tool_registry.py
 ################################################################################
 ```py
 """
@@ -29407,7 +29507,7 @@ def list_tools() -> list[dict]:
 ```
 
 ################################################################################
-# FILE 152/211: backend/services/trace.py
+# FILE 152/212: backend/services/trace.py
 ################################################################################
 ```py
 """
@@ -29540,7 +29640,7 @@ def summary() -> dict:
 ```
 
 ################################################################################
-# FILE 153/211: backend/services/vault.py
+# FILE 153/212: backend/services/vault.py
 ################################################################################
 ```py
 """
@@ -29672,7 +29772,7 @@ def _mask(username: str) -> str:
 ```
 
 ################################################################################
-# FILE 154/211: backend/services/workflow_service.py
+# FILE 154/212: backend/services/workflow_service.py
 ################################################################################
 ```py
 """
@@ -29911,7 +30011,7 @@ def find_run_command(message: str) -> str | None:
 ```
 
 ################################################################################
-# FILE 155/211: backend/services/world_model.py
+# FILE 155/212: backend/services/world_model.py
 ################################################################################
 ```py
 """
@@ -30102,7 +30202,7 @@ def start():
 ```
 
 ################################################################################
-# FILE 156/211: backend/services/zuodao_service.py
+# FILE 156/212: backend/services/zuodao_service.py
 ################################################################################
 ```py
 """
@@ -30217,7 +30317,7 @@ Output ONLY the task response."""
 ```
 
 ################################################################################
-# FILE 157/211: backend/tests/conftest.py
+# FILE 157/212: backend/tests/conftest.py
 ################################################################################
 ```py
 """
@@ -30280,7 +30380,80 @@ def pytest_configure(config):
 ```
 
 ################################################################################
-# FILE 158/211: backend/tests/test_conftest_guard.py
+# FILE 158/212: backend/tests/test_config_store.py
+################################################################################
+```py
+"""
+Settings must save on a database that has never been initialised.
+
+CI found this on a fresh checkout, and it could not reproduce on any machine
+where Jarvis had been started even once — which is every dev machine.
+
+`services/config.py` assumed `models.db.init_db()` had already run. Inside the
+running backend that holds: main.py calls it at startup. Nothing else does —
+tools/, the failure-injection harness and mcp_server.py all reach for config
+directly.
+
+On a database with no `settings` table, `set()` returned
+`{"ok": False, "error": "no such table: settings"}` and almost every caller
+ignores that dict. So the value looked saved and wasn't.
+
+That is the "I set it, I saved it, nothing changed" bug that config.py exists
+to prevent, occurring one layer below where it was being prevented.
+"""
+
+import importlib
+import sys
+
+import pytest
+
+
+@pytest.fixture
+def fresh_db(tmp_path, monkeypatch):
+    """A database file that no init_db() has ever touched."""
+    monkeypatch.setenv("JARVIS_DB", str(tmp_path / "brand_new.db"))
+    for mod in ("services.config", "models.db", "models"):
+        monkeypatch.delitem(sys.modules, mod, raising=False)
+    config = importlib.import_module("services.config")
+    config.invalidate()
+    yield config
+
+
+def test_set_succeeds_on_an_uninitialised_database(fresh_db):
+    out = fresh_db.set("search_engine", "baidu")
+    assert out["ok"] is True, f"settings silently failed to save: {out}"
+
+
+def test_the_value_is_actually_readable_afterwards(fresh_db):
+    """ok:True is a claim. Reading it back is the evidence."""
+    fresh_db.set("search_engine", "baidu")
+    fresh_db.invalidate()
+    assert fresh_db.get("search_engine") == "baidu"
+
+
+def test_get_still_falls_back_when_nothing_is_stored(fresh_db):
+    """A fresh install must still have working defaults, not empty strings."""
+    assert fresh_db.get("ai_route_default") == "ollama"
+
+
+def test_a_failed_write_reports_it_rather_than_pretending(fresh_db, monkeypatch):
+    """
+    The other half. If the write genuinely cannot happen — read-only disk,
+    locked database — say so. A settings write that silently does nothing is
+    worse than one that admits it failed.
+    """
+
+    def broken():
+        raise RuntimeError("disk is read-only")
+
+    monkeypatch.setattr(fresh_db, "conn", broken)
+    out = fresh_db.set("search_engine", "bing")
+    assert out["ok"] is False
+    assert "read-only" in out["error"]
+```
+
+################################################################################
+# FILE 159/212: backend/tests/test_conftest_guard.py
 ################################################################################
 ```py
 """
@@ -30326,7 +30499,7 @@ def test_loopback_is_still_allowed():
 ```
 
 ################################################################################
-# FILE 159/211: backend/tests/test_control.py
+# FILE 160/212: backend/tests/test_control.py
 ################################################################################
 ```py
 """
@@ -30452,7 +30625,7 @@ def test_status_is_readable():
 ```
 
 ################################################################################
-# FILE 160/211: backend/tests/test_decompose.py
+# FILE 161/212: backend/tests/test_decompose.py
 ################################################################################
 ```py
 """
@@ -30610,7 +30783,7 @@ def test_search_url_is_reachable_from_china():
 ```
 
 ################################################################################
-# FILE 161/211: backend/tests/test_headless.py
+# FILE 162/212: backend/tests/test_headless.py
 ################################################################################
 ```py
 """
@@ -30713,7 +30886,7 @@ def test_a_genuinely_missing_package_still_says_install_it(tmp_path, monkeypatch
 ```
 
 ################################################################################
-# FILE 162/211: backend/tests/test_security.py
+# FILE 163/212: backend/tests/test_security.py
 ################################################################################
 ```py
 """
@@ -30913,7 +31086,7 @@ def test_simulating_a_task_executes_nothing(monkeypatch):
 ```
 
 ################################################################################
-# FILE 163/211: frontend/index.html
+# FILE 164/212: frontend/index.html
 ################################################################################
 ```html
 <!DOCTYPE html>
@@ -30939,7 +31112,7 @@ def test_simulating_a_task_executes_nothing(monkeypatch):
 ```
 
 ################################################################################
-# FILE 164/211: frontend/package.json
+# FILE 165/212: frontend/package.json
 ################################################################################
 ```json
 {
@@ -30970,7 +31143,7 @@ def test_simulating_a_task_executes_nothing(monkeypatch):
 ```
 
 ################################################################################
-# FILE 165/211: frontend/src/App.jsx
+# FILE 166/212: frontend/src/App.jsx
 ################################################################################
 ```jsx
 /**
@@ -30988,7 +31161,7 @@ export default function App() {
 ```
 
 ################################################################################
-# FILE 166/211: frontend/src/JarvisOS.jsx
+# FILE 167/212: frontend/src/JarvisOS.jsx
 ################################################################################
 ```jsx
 /**
@@ -32510,7 +32683,7 @@ const hhmm = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 ```
 
 ################################################################################
-# FILE 167/211: frontend/src/colors.js
+# FILE 168/212: frontend/src/colors.js
 ################################################################################
 ```js
 /**
@@ -32604,7 +32777,7 @@ export function btn(color = "#00d4ff", opts = {}) {
 ```
 
 ################################################################################
-# FILE 168/211: frontend/src/components/UI.jsx
+# FILE 169/212: frontend/src/components/UI.jsx
 ################################################################################
 ```jsx
 // components/UI.jsx — shared micro-components
@@ -32842,7 +33015,7 @@ export const PageHeader = ({ breadcrumb, title }) => (
 ```
 
 ################################################################################
-# FILE 169/211: frontend/src/config.js
+# FILE 170/212: frontend/src/config.js
 ################################################################################
 ```js
 // src/config.js — central API config (V8)
@@ -32877,7 +33050,7 @@ export const apiPatch = (url, body) =>
 ```
 
 ################################################################################
-# FILE 170/211: frontend/src/index.css
+# FILE 171/212: frontend/src/index.css
 ################################################################################
 ```css
 *,
@@ -33047,7 +33220,7 @@ select:focus {
 ```
 
 ################################################################################
-# FILE 171/211: frontend/src/main.jsx
+# FILE 172/212: frontend/src/main.jsx
 ################################################################################
 ```jsx
 import React from "react";
@@ -33063,7 +33236,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 ```
 
 ################################################################################
-# FILE 172/211: frontend/src/pages/Agents.jsx
+# FILE 173/212: frontend/src/pages/Agents.jsx
 ################################################################################
 ```jsx
 import { useEffect, useRef, useState } from "react";
@@ -34776,7 +34949,7 @@ function OutcomeForm({ onSave }) {
 ```
 
 ################################################################################
-# FILE 173/211: frontend/src/pages/Chat.jsx
+# FILE 174/212: frontend/src/pages/Chat.jsx
 ################################################################################
 ```jsx
 import { useEffect, useRef, useState } from "react";
@@ -35050,7 +35223,7 @@ export default function Chat() {
 ```
 
 ################################################################################
-# FILE 174/211: frontend/src/pages/Earn.jsx
+# FILE 175/212: frontend/src/pages/Earn.jsx
 ################################################################################
 ```jsx
 /**
@@ -35990,7 +36163,7 @@ export default function Earn() {
 ```
 
 ################################################################################
-# FILE 175/211: frontend/src/pages/Logs.jsx
+# FILE 176/212: frontend/src/pages/Logs.jsx
 ################################################################################
 ```jsx
 /**
@@ -36350,7 +36523,7 @@ function Empty({ children }) {
 ```
 
 ################################################################################
-# FILE 176/211: frontend/src/pages/Memory.jsx
+# FILE 177/212: frontend/src/pages/Memory.jsx
 ################################################################################
 ```jsx
 /**
@@ -36665,7 +36838,7 @@ export default function Memory() {
 ```
 
 ################################################################################
-# FILE 177/211: frontend/src/pages/Planner.jsx
+# FILE 178/212: frontend/src/pages/Planner.jsx
 ################################################################################
 ```jsx
 /**
@@ -37312,7 +37485,7 @@ export default function Planner({ live = [] }) {
 ```
 
 ################################################################################
-# FILE 178/211: frontend/src/pages/Settings.jsx
+# FILE 179/212: frontend/src/pages/Settings.jsx
 ################################################################################
 ```jsx
 /**
@@ -37834,7 +38007,7 @@ function Row({ s }) {
 ```
 
 ################################################################################
-# FILE 179/211: frontend/src/theme.js
+# FILE 180/212: frontend/src/theme.js
 ################################################################################
 ```js
 /**
@@ -37906,7 +38079,7 @@ export const LEVEL_COLOR = {
 ```
 
 ################################################################################
-# FILE 180/211: frontend/vite.config.js
+# FILE 181/212: frontend/vite.config.js
 ################################################################################
 ```js
 import { defineConfig } from 'vite'
@@ -37918,7 +38091,7 @@ export default defineConfig({
 ```
 
 ################################################################################
-# FILE 181/211: .github/workflows/ci.yml
+# FILE 182/212: .github/workflows/ci.yml
 ################################################################################
 ```yml
 name: CI
@@ -38043,6 +38216,10 @@ jobs:
       # twice missed a bug that cost the user a day. Better than nothing.
       #
       # Errors in this output are normal — it is deliberately breaking things.
+      # No jarvis.db exists on a fresh checkout, which is the point: this job
+      # is the only place that exercises a FIRST RUN. It caught config.set()
+      # silently doing nothing because the settings table did not exist yet —
+      # a bug invisible on any machine where Jarvis had been started once.
       - name: Run the harness
         run: python tools/failure_injection.py
 
@@ -38110,7 +38287,7 @@ jobs:
 ```
 
 ################################################################################
-# FILE 182/211: .gitignore
+# FILE 183/212: .gitignore
 ################################################################################
 ```
 # Python
@@ -38164,7 +38341,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 183/211: .mcp.json
+# FILE 184/212: .mcp.json
 ################################################################################
 ```json
 {
@@ -38183,7 +38360,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 184/211: .pytest_cache/.gitignore
+# FILE 185/212: .pytest_cache/.gitignore
 ################################################################################
 ```
 # Created by pytest automatically.
@@ -38191,7 +38368,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 185/211: .ruff_cache/.gitignore
+# FILE 186/212: .ruff_cache/.gitignore
 ################################################################################
 ```
 # Automatically created by ruff.
@@ -38199,7 +38376,7 @@ backend/fi_*.db*
 ```
 
 ################################################################################
-# FILE 186/211: .semgrep/jarvis.yml
+# FILE 187/212: .semgrep/jarvis.yml
 ################################################################################
 ```yml
 # Semgrep rules for Jarvis.
@@ -38409,7 +38586,7 @@ rules:
 ```
 
 ################################################################################
-# FILE 187/211: .serena/.gitignore
+# FILE 188/212: .serena/.gitignore
 ################################################################################
 ```
 /cache
@@ -38417,7 +38594,7 @@ rules:
 ```
 
 ################################################################################
-# FILE 188/211: .serena/project.local.yml
+# FILE 189/212: .serena/project.local.yml
 ################################################################################
 ```yml
 # This file allows you to locally override settings in project.yml for development purposes.
@@ -38428,7 +38605,7 @@ rules:
 ```
 
 ################################################################################
-# FILE 189/211: .serena/project.yml
+# FILE 190/212: .serena/project.yml
 ################################################################################
 ```yml
 # the name by which the project can be referenced within Serena/when chatting with the LLM.
@@ -38615,7 +38792,7 @@ ignored_memory_patterns: []
 ```
 
 ################################################################################
-# FILE 190/211: DOCTOR.bat
+# FILE 191/212: DOCTOR.bat
 ################################################################################
 ```bat
 @echo off
@@ -38660,7 +38837,7 @@ pause
 ```
 
 ################################################################################
-# FILE 191/211: FINAL_PROJECT_TREE_backend.txt
+# FILE 192/212: FINAL_PROJECT_TREE_backend.txt
 ################################################################################
 ```txt
 ./RUNTIME_VALIDATION.py
@@ -38743,7 +38920,7 @@ pause
 ```
 
 ################################################################################
-# FILE 192/211: FINAL_PROJECT_TREE_frontend.txt
+# FILE 193/212: FINAL_PROJECT_TREE_frontend.txt
 ################################################################################
 ```txt
 frontend/src/App.jsx
@@ -38767,7 +38944,7 @@ frontend/src/pages/WorkspaceHub.jsx
 ```
 
 ################################################################################
-# FILE 193/211: LEGACY_GREP_ARTIFACT.txt
+# FILE 194/212: LEGACY_GREP_ARTIFACT.txt
 ################################################################################
 ```txt
 Jarvis V9 Phase 2 — Step C Repo Grep Artifact (zero live legacy callers)
@@ -38789,7 +38966,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 194/211: PROJECT_TREE.txt
+# FILE 195/212: PROJECT_TREE.txt
 ################################################################################
 ```txt
 ./AGENT_EXTENSIBILITY_REPORT.md
@@ -38907,7 +39084,7 @@ describing the migration, not executable calls.
 ```
 
 ################################################################################
-# FILE 195/211: REQUIREMENTS_SNAPSHOT.txt
+# FILE 196/212: REQUIREMENTS_SNAPSHOT.txt
 ################################################################################
 ```txt
 # Jarvis V8 — Backend Requirements
@@ -38937,7 +39114,7 @@ schedule>=1.2.0
 ```
 
 ################################################################################
-# FILE 196/211: RUNTIME_VALIDATION.py
+# FILE 197/212: RUNTIME_VALIDATION.py
 ################################################################################
 ```py
 """
@@ -39043,7 +39220,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 197/211: RUN_FAILURE_TEST.bat
+# FILE 198/212: RUN_FAILURE_TEST.bat
 ################################################################################
 ```bat
 @echo off
@@ -39091,7 +39268,7 @@ pause
 ```
 
 ################################################################################
-# FILE 198/211: START.bat
+# FILE 199/212: START.bat
 ################################################################################
 ```bat
 @echo off
@@ -39241,7 +39418,7 @@ timeout /t 15
 ```
 
 ################################################################################
-# FILE 199/211: START_JARVIS.bat
+# FILE 200/212: START_JARVIS.bat
 ################################################################################
 ```bat
 @echo off
@@ -39261,7 +39438,7 @@ call "%~dp0START.bat"
 ```
 
 ################################################################################
-# FILE 200/211: UPDATE.bat
+# FILE 201/212: UPDATE.bat
 ################################################################################
 ```bat
 @echo off
@@ -39306,46 +39483,12 @@ pause
 ```
 
 ################################################################################
-# FILE 201/211: failure_injection_report.txt
+# FILE 202/212: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-04T14:05:38.292825
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-04T14:09:57.442208
 platform: linux  python: 3.11.15
-24 passed · 0 failed · 1 skipped
-
-[PASS] control — Pause / resume / cancel behave
-    Pause holds, cancel releases cleanly, clear resets.
-    · a paused worker holds at the checkpoint
-    · cancel releases a paused worker and raises Cancelled
-    · explain() answered with 2 reason(s)
-
-[PASS] stale_stop — A leftover Stop doesn't poison the next command
-    Stop stops one thing, and only while that thing is running.
-    · cancel with nothing running -> cleared
-    · cancel during live work -> kept
-    · the chat path calls clear_stale() before running
-    · execute_chain runs inside run_scope()
-
-[PASS] looking — Looking at the screen targets the app that was asked about
-    Jarvis looks at the window it was asked about, or says it couldn't.
-    · screenshot and analyze require the target app to be in front
-    · an unconfirmed focus attaches a caveat to the answer
-    · 'check my qq messages' -> open_app -> wait_for_window -> screenshot -> analyze
-
-[PASS] literal_typing — Questions get answered, not transcribed
-    Literal stays literal; questions get answered by whoever can answer them.
-    · 'notepad tell me about yourself' -> compose, not type
-    · 'doubao ask it how it is' -> types the question and sends it
-    · 'type hello' still types hello
-    · 'open notepad, tell me a joke' splits at the comma
-    · 'type hello, world' is not split
-
-[PASS] reflection — Finished work produces a lesson
-    Work that finishes produces a lesson, off the critical path.
-    · orchestrator calls brain_decision.after_goal() at the terminal state
-    · the desktop chain reflects on failed or retried runs
-    · reflection runs off the reply path
-    · lesson names the failing step: Failed: 1/2 steps verified. Broke at step 2: type_text (text never lan
+1 passed · 0 failed · 0 skipped
 
 [PASS] ai_router — One gate for AI; local by default; keys stay secret
     One gate, local by default, degrades to local, keys stay secret.
@@ -39356,115 +39499,10 @@ platform: linux  python: 3.11.15
     · keys are masked in settings and absent from status
     · call_model (imported in ~30 files) routes through ai_router
 
-[PASS] proposal_batching — Proposals batched, never mismatched
-    Batched for speed, one-at-a-time whenever correctness is in doubt.
-    · 13 jobs -> 4 LLM calls (was 13)
-    · an unsplittable reply falls back to one call per job
-    · a dead provider still returns one entry per job (template kicks in downstream)
-    · no artificial delay between jobs
-
-[PASS] memory_pressure — Low RAM is explained, not just endured
-    RAM pressure is measured, explained, and actionable.
-    · 16.1 GB free — plenty. (level=ok)
-    · 1GB -> critical, 2.5GB -> not ok, 8GB -> ok
-    · free-memory action answers: Ollama wasn't holding any models — nothing to free. The memory is goin
-
-[PASS] launchers — Windows launchers are valid Windows batch
-    Launchers are valid Windows batch and there's only one to press.
-    · 5 launcher(s) checked: DOCTOR.bat, RUN_FAILURE_TEST.bat, START.bat, START_JARVIS.bat, UPDATE.bat
-    · CRLF, pure ASCII, no Unix redirection, no redirects in comments
-    · every script they call exists
-    · start buttons: START.bat, START_JARVIS.bat
-
-[PASS] ui_renders — The console actually renders in a browser
-    React mounts, styles apply, nothing throws.
-    · mounted elements : 1
-    · body background  : rgb(10, 14, 20)
-    · crashes          : 0
-
-[PASS] simulation — Simulating never executes anything
-    Shows the full plan and its effects, executes nothing.
-    · no desktop action was executed
-    · no plan was published
-    · showed 5 steps with effects and estimates
-    · side effects are labelled, typing flagged as a change
-    · freelance cycle described without scanning or sending
-    · only explicit requests trigger a simulation
-
-[PASS] decompose — Sentences split into steps at the right places
-    Clauses split on verbs, queries stop at boundaries, leftovers reported.
-    · 5 phrasings split correctly
-    · the query stops at the step boundary
-    · unparseable clauses are reported, not dropped
-
-[PASS] plan_visibility — Live plan publishes and accepts controls
-    Plan is visible live, controls are cooperative, diagnosis survives.
-    · plan published with human wording before anything ran
-    · refuses to skip the step in flight
-    · a pending step can be skipped and the executor sees it
-    · the failure classification survives into the explanation
-
-[PASS] selfeval — Confidence is earned, not asserted
-    Confidence tracks evidence; adjustments are numeric and earned.
-    · clean run scores 100%
-    · unverified success drops to 80%
-    · retried launch -> wait 2.4s longer for qq
-    · a clean run changes nothing
-
-[PASS] auth — The gate blocks drive-by requests
-    Websites cannot drive Jarvis; the local UI is unaffected.
-    · cross-origin request to desktop control is refused
-    · the local UI still works
-    · health stays open so the launcher can see the backend
-    · DNS-rebinding host header is refused
-
-[PASS] teach_privacy — Demonstrations never record passwords
-    Passwords are never recorded; normal input still is.
-    · password keystrokes became one vault lookup
-    · login windows are recognised in English and Chinese
-    · ordinary typing is still captured normally
-
-[PASS] missing_app — Opening an app that isn't installed
-    Stopped after 1 attempt in 0.0s with a usable message.
-    · took 0.0s, 1 attempt(s), kind=app_not_found
-
-[SKIP] clipboard — Typing must not destroy what you had copied
-    clipboard unavailable: Pyperclip could not find a copy/paste mechanism for your sys
-
-[PASS] no_model — Behaviour when no LLM is available
-    Blocked up front: No local model is installed for this kind of work.
-    · router picked: None (warning: Ollama has no models. Run: ollama pull qwen2.5:3b)
-
-[PASS] queue_load — Queue performance with 500+ rows
-    Read stayed at 1ms under 500 extra rows.
-    · inserted 500 rows; 100-row read took 1ms (100 back)
-
-[PASS] browser_death — Browser dies while holding the lock
-    Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785852338' stopped responding for over 120s and its lease ex
-    · a live, heart-beating owner is correctly left alone
-
-[PASS] estop — Emergency stop actually blocks input
-    All input refused while engaged; clears cleanly.
-    · type/click/press/hotkey all refused while engaged
-
-[PASS] learning — Learned timings converge on reality
-    Slow app 9.4s vs fast 2.0s; flaky app gets a retry.
-    · default=8.0s · slow app -> 9.4s · fast app -> 2.0s
-
-[PASS] model_pressure — keep_alive adapts to memory pressure
-    Scaling is correct: big=90s, small=5m.
-    · free RAM 15.7GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
-    · skipped the live unload (needs --include-destructive)
-
-[PASS] classification — Real errors map to the right cause
-    All 10 real errors classified; no futile retries.
-    · 10/10 classified correctly
-
 ```
 
 ################################################################################
-# FILE 202/211: legacy_dependency_report.json
+# FILE 203/212: legacy_dependency_report.json
 ################################################################################
 ```json
 {
@@ -39629,7 +39667,7 @@ platform: linux  python: 3.11.15
 ```
 
 ################################################################################
-# FILE 203/211: requirements-dev.txt
+# FILE 204/212: requirements-dev.txt
 ################################################################################
 ```txt
 # Developer tooling. NOT needed to run Jarvis — START.bat installs
@@ -39660,7 +39698,7 @@ tree-sitter-language-pack>=0.7
 ```
 
 ################################################################################
-# FILE 204/211: requirements.txt
+# FILE 205/212: requirements.txt
 ################################################################################
 ```txt
 # Jarvis VNext (V5) — Backend Requirements
@@ -39693,7 +39731,7 @@ pypdf>=4.0.0
 ```
 
 ################################################################################
-# FILE 205/211: start.sh
+# FILE 206/212: start.sh
 ################################################################################
 ```sh
 #!/usr/bin/env bash
@@ -39730,7 +39768,7 @@ wait
 ```
 
 ################################################################################
-# FILE 206/211: tools/codemap.py
+# FILE 207/212: tools/codemap.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
@@ -40019,7 +40057,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 207/211: tools/doctor.py
+# FILE 208/212: tools/doctor.py
 ################################################################################
 ```py
 """
@@ -40346,7 +40384,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 208/211: tools/dump_source.py
+# FILE 209/212: tools/dump_source.py
 ################################################################################
 ```py
 #!/usr/bin/env python3
@@ -40445,7 +40483,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 209/211: tools/failure_injection.py
+# FILE 210/212: tools/failure_injection.py
 ################################################################################
 ```py
 """
@@ -41979,7 +42017,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 210/211: tools/setup.py
+# FILE 211/212: tools/setup.py
 ################################################################################
 ```py
 """
@@ -42339,7 +42377,7 @@ if __name__ == "__main__":
 ```
 
 ################################################################################
-# FILE 211/211: tools/update.py
+# FILE 212/212: tools/update.py
 ################################################################################
 ```py
 """

@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-158 source files · 575 public symbols
+159 source files · 579 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -502,6 +502,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`conftest.py`** — Shared pytest fixtures.
   <br>`pytest_configure`
   <br>`backend/tests/conftest.py`
+
+**`test_config_store.py`** — Settings must save on a database that has never been initialised.
+  <br>`test_set_succeeds_on_an_uninitialised_database`, `test_the_value_is_actually_readable_afterwards`, `test_get_still_falls_back_when_nothing_is_stored`, `test_a_failed_write_reports_it_rather_than_pretending`
+  <br>`backend/tests/test_config_store.py`
 
 **`test_conftest_guard.py`** — Does the test harness itself still work?
   <br>`test_outbound_connections_are_blocked`, `test_loopback_is_still_allowed`

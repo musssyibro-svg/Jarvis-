@@ -116,6 +116,32 @@ KNOWN = {
 }
 
 
+def _ensure_table() -> None:
+    """
+    Create the settings table if it isn't there yet.
+
+    This module used to assume models.db.init_db() had already run. Inside the
+    running backend that is true — main.py calls it at startup — but nothing
+    else does: tools/, the failure-injection harness and mcp_server.py all
+    reach for config on their own.
+
+    On a database where init_db() had never run, set() returned
+    {"ok": False, "error": "no such table: settings"} and almost every caller
+    ignores that dict. So the value looked saved and wasn't: exactly the
+    "I set it, I saved it, nothing changed" failure this module exists to
+    prevent, one layer down.
+
+    Found by CI on a fresh checkout. It could not reproduce on any machine
+    where Jarvis had been started once — including every dev machine.
+    """
+    try:
+        with conn() as db:
+            db.execute("CREATE TABLE IF NOT EXISTS settings ("
+                       "key TEXT PRIMARY KEY, value TEXT)")
+    except Exception:
+        pass        # read-only disk or a locked db — get() still falls back
+
+
 def _rows() -> dict:
     with _lock:
         if _cache["rows"] and time.time() - _cache["at"] < _TTL:
@@ -126,7 +152,7 @@ def _rows() -> dict:
             for r in db.execute("SELECT key, value FROM settings").fetchall():
                 rows[r["key"]] = r["value"]
     except Exception:
-        pass                    # a missing table must not break every lookup
+        _ensure_table()         # first read on a fresh database
     with _lock:
         _cache["rows"] = rows
         _cache["at"] = time.time()
@@ -180,8 +206,17 @@ def set(key: str, value) -> dict:
         with conn() as db:
             db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)",
                        (key, val))
-    except Exception as e:
-        return {"ok": False, "key": key, "error": str(e)[:120]}
+    except Exception:
+        # Most likely the table doesn't exist yet. Create it and try ONCE more,
+        # then report honestly if it still fails — a settings write that
+        # silently does nothing is worse than one that says it couldn't.
+        _ensure_table()
+        try:
+            with conn() as db:
+                db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)",
+                           (key, val))
+        except Exception as e:
+            return {"ok": False, "key": key, "error": str(e)[:120]}
     invalidate()
     # Mirror into the environment as well. Anything still reading os.getenv
     # directly (third-party code, a module we haven't migrated) then agrees

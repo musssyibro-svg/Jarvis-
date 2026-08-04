@@ -120,6 +120,10 @@ jobs:
       # twice missed a bug that cost the user a day. Better than nothing.
       #
       # Errors in this output are normal — it is deliberately breaking things.
+      # No jarvis.db exists on a fresh checkout, which is the point: this job
+      # is the only place that exercises a FIRST RUN. It caught config.set()
+      # silently doing nothing because the settings table did not exist yet —
+      # a bug invisible on any machine where Jarvis had been started once.
       - name: Run the harness
         run: python tools/failure_injection.py
 
