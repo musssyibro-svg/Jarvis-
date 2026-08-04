@@ -5,6 +5,7 @@ Every case here is a sentence that Jarvis got wrong on the user's real machine.
 The test names say what the user saw, not what the function returns — when one
 of these fails, the failure should tell you which user-visible behaviour broke.
 """
+
 import pytest
 
 from services import decompose, tool_registry
@@ -25,6 +26,7 @@ def typed(text: str):
 
 
 # ── "It typed the question instead of answering it" ──────────────────────────
+
 
 def test_notepad_question_is_answered_not_transcribed():
     """
@@ -63,16 +65,19 @@ def test_write_composes():
 
 @pytest.mark.parametrize("phrase", ["type exactly hello world", "type the words good morning"])
 def test_literal_hints_defeat_composition(phrase):
-    """"exactly"/"the words" mean literal, whatever else is in the sentence."""
+    """ "exactly"/"the words" mean literal, whatever else is in the sentence."""
     assert "compose" not in actions(f"open notepad and {phrase}")
 
 
 # ── Clause splitting ─────────────────────────────────────────────────────────
 
+
 def test_comma_is_a_step_boundary():
-    """"open notepad, tell me a joke" tried to launch an app by that whole name."""
-    app = next((p.get("name_or_path") for a, p in plan("open notepad, tell me a joke")
-                if a == "open_app"), None)
+    """ "open notepad, tell me a joke" tried to launch an app by that whole name."""
+    app = next(
+        (p.get("name_or_path") for a, p in plan("open notepad, tell me a joke") if a == "open_app"),
+        None,
+    )
     assert app == "notepad"
 
 
@@ -81,7 +86,7 @@ def test_comma_inside_literal_text_is_not_a_boundary():
 
 
 def test_and_inside_a_search_query_is_not_a_boundary():
-    """"black and decker" is one query, not two steps."""
+    """ "black and decker" is one query, not two steps."""
     steps = plan("search black and decker drills")
     url = next((p.get("url", "") for a, p in steps if a == "open_url"), "")
     assert "decker" in url and "drills" in url
@@ -115,10 +120,14 @@ def test_unhandled_clause_is_reported_not_dropped():
 
 # ── App resolution ───────────────────────────────────────────────────────────
 
+
 def test_check_messages_opens_looks_and_reads():
     """The QQ flow: open, wait, screenshot, analyze — in that order."""
     assert actions("check my qq messages") == [
-        "open_app", "wait_for_window", "screenshot", "analyze"
+        "open_app",
+        "wait_for_window",
+        "screenshot",
+        "analyze",
     ]
 
 
@@ -127,9 +136,14 @@ def test_browser_is_resolved_not_hardcoded():
     "open browser" was hardcoded to chrome, on a machine with no Chrome.
     Whatever it resolves to, it must not be a literal "browser".
     """
-    app = next((p.get("name_or_path") or p.get("browser")
-                for a, p in plan("open browser and search bmw m4")
-                if a in ("open_app", "open_url")), None)
+    app = next(
+        (
+            p.get("name_or_path") or p.get("browser")
+            for a, p in plan("open browser and search bmw m4")
+            if a in ("open_app", "open_url")
+        ),
+        None,
+    )
     assert app and app != "browser"
 
 

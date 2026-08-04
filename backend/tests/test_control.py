@@ -14,6 +14,7 @@ One press of Stop, and every command after it died instantly for the rest of
 the session. Cancel is global on purpose — one Stop button has to halt whatever
 is running — but global also meant the flag outlived the thing it was aimed at.
 """
+
 import threading
 
 import pytest
@@ -78,7 +79,7 @@ def test_checkpoint_raises_on_cancel():
 
 
 def test_checkpoint_is_a_no_op_when_nothing_is_pending():
-    control.checkpoint("some step")   # must not raise, must not block
+    control.checkpoint("some step")  # must not raise, must not block
 
 
 def test_pause_then_cancel_does_not_deadlock():

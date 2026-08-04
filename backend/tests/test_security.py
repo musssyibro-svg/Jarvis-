@@ -5,16 +5,21 @@ Jarvis can type on the user's keyboard and drive a browser already signed in to
 their accounts. Every test here guards a rule from CLAUDE.md, and every one of
 them maps to a real leak or a real bypass that has happened in this repo.
 """
+
 import pytest
 
 from services import auth, config
 
 # ── The gate ─────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("origin,host", [
-    ("http://evil.example.com", "127.0.0.1:8000"),
-    ("https://attacker.test", "localhost:8000"),
-])
+
+@pytest.mark.parametrize(
+    "origin,host",
+    [
+        ("http://evil.example.com", "127.0.0.1:8000"),
+        ("https://attacker.test", "localhost:8000"),
+    ],
+)
 def test_foreign_origin_is_refused(origin, host):
     """
     CORS is NOT a defence. It governs whether a page may READ a response, not
@@ -25,9 +30,14 @@ def test_foreign_origin_is_refused(origin, host):
     assert ok is False
 
 
-@pytest.mark.parametrize("origin", [
-    "http://127.0.0.1:5173", "http://localhost:5173", "http://127.0.0.1:8000",
-])
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:8000",
+    ],
+)
 def test_the_real_console_is_allowed(origin):
     ok, why = auth.origin_ok(origin, "127.0.0.1:8000")
     assert ok is True, why
@@ -59,9 +69,15 @@ def test_anything_that_types_is_a_control_path():
 
 # ── Credentials must never appear in anything the user sends me ──────────────
 
-@pytest.mark.parametrize("key", [
-    "ai_deepseek_api_key", "ai_kimi_api_key", "ai_openai_api_key",
-])
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "ai_deepseek_api_key",
+        "ai_kimi_api_key",
+        "ai_openai_api_key",
+    ],
+)
 def test_api_keys_are_recognised_as_secret(key):
     assert config.is_secret(key) is True
 
@@ -98,10 +114,19 @@ def test_a_masked_value_is_still_recognisable():
 
 # ── Teaching by demonstration must not record passwords ──────────────────────
 
-@pytest.mark.parametrize("title", [
-    "Sign in - Freelancer", "Login | Upwork", "Enter your password",
-    "登录 - QQ", "密码", "Two-factor authenticate", "Unlock vault",
-])
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Sign in - Freelancer",
+        "Login | Upwork",
+        "Enter your password",
+        "登录 - QQ",
+        "密码",
+        "Two-factor authenticate",
+        "Unlock vault",
+    ],
+)
 def test_login_windows_are_recognised_in_both_languages(title):
     """
     Windows here may be in Chinese. A password box titled 登录 must be caught
@@ -109,6 +134,7 @@ def test_login_windows_are_recognised_in_both_languages(title):
     English on a machine that mostly isn't.
     """
     from services import teach
+
     assert teach._looks_secret(title) is True
 
 
@@ -123,12 +149,17 @@ def test_demonstration_emits_a_placeholder_not_the_keystrokes():
 
     t0 = 1_700_000_000.0
     events = [
-        {"t": t0, "kind": "key", "char": "n", "key": None,
-         "app": "notepad.exe", "title": "Untitled - Notepad"},
+        {
+            "t": t0,
+            "kind": "key",
+            "char": "n",
+            "key": None,
+            "app": "notepad.exe",
+            "title": "Untitled - Notepad",
+        },
         # What on_key() writes when the focused window looks like a login: no
         # char field exists, because the character was never captured.
-        {"t": t0 + 1, "kind": "secret",
-         "app": "chrome.exe", "title": "Sign in - Freelancer"},
+        {"t": t0 + 1, "kind": "secret", "app": "chrome.exe", "title": "Sign in - Freelancer"},
     ]
     steps = teach.distil(events)
     blob = repr(steps)
@@ -144,6 +175,7 @@ def test_demonstration_emits_a_placeholder_not_the_keystrokes():
 
 # ── Simulation must never actually do anything ───────────────────────────────
 
+
 def test_simulating_a_task_executes_nothing(monkeypatch):
     """
     "Show me what you would do" is only useful if it is guaranteed not to do
@@ -153,6 +185,7 @@ def test_simulating_a_task_executes_nothing(monkeypatch):
 
     fired = []
     import agents.desktop_agent as da
+
     for name in ("open_app", "type_text", "press", "click"):
         if hasattr(da, name):
             monkeypatch.setattr(da, name, lambda *a, _n=name, **k: fired.append(_n))

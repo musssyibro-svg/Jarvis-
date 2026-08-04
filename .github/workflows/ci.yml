@@ -1,0 +1,176 @@
+name: CI
+
+# What this gate is FOR.
+#
+# Two bugs got past a green `npm run build` and into the user's hands: a blank
+# white page (circular import — the bundler was happy, the browser was not) and
+# a launcher that reported "Python is not installed" on a working Python. Both
+# were invisible to any check that only asks "did it compile?".
+#
+# So this workflow does not just build. It runs the failure-injection harness,
+# which breaks things on purpose and checks that Jarvis fails HONESTLY, and it
+# opens a real browser and looks at the page. Those two are the ones that catch
+# what matters.
+#
+# Jobs are independent and all of them run even when one fails, because
+# "backend broke" and "the UI is blank" are different pieces of information and
+# you want both on the first push, not on the second.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python — lint, import, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"     # what the user's machine runs
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff pytest
+
+      - name: Ruff (lint)
+        run: ruff check . --output-format=github
+
+      # Format check is scoped to backend/tests ON PURPOSE. `ruff format` would
+      # reformat 105 of 118 existing files — that buries git blame and the next
+      # real diff, and a step that warns on every single run is a step nobody
+      # reads. New code is held to it; existing code is formatted when it is
+      # touched for another reason.
+      - name: Ruff (format check, new code only)
+        run: ruff format --check backend/tests
+
+      # Every module must at least IMPORT. A syntax error or a bad import in a
+      # rarely-hit service is otherwise found by the user, at runtime, as a 500.
+      # mcp_server is skipped: it exits by design when fastmcp is absent.
+      - name: Every module imports
+        working-directory: backend
+        run: |
+          python - <<'PY'
+          import importlib, pathlib, sys
+          sys.path.insert(0, ".")
+          bad, n = [], 0
+          for p in sorted(pathlib.Path(".").rglob("*.py")):
+              if {"__pycache__", "browser-profile", "tests"} & set(p.parts):
+                  continue
+              m = ".".join(p.with_suffix("").parts).removesuffix(".__init__")
+              if m == "mcp_server":
+                  continue
+              n += 1
+              try:
+                  importlib.import_module(m)
+              except Exception as e:
+                  bad.append(f"{m}: {type(e).__name__}: {e}")
+          print(f"{n - len(bad)}/{n} modules import cleanly")
+          for b in bad:
+              print(f"::error::{b}")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Tests
+        run: python -m pytest backend/tests -v
+
+  harness:
+    name: Failure injection — does it fail honestly?
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # This is the important one. It breaks things on purpose and asserts that
+      # the failure is reported truthfully — including the launcher check, which
+      # reads the .bat files for CRLF, pure ASCII and Unix redirection. There is
+      # no cmd.exe here, so a launcher can only be READ, and reading one has
+      # twice missed a bug that cost the user a day. Better than nothing.
+      #
+      # Errors in this output are normal — it is deliberately breaking things.
+      - name: Run the harness
+        run: python tools/failure_injection.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: failure-injection-report
+          path: failure_injection_report.txt
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend — lint, build, and RENDER
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      # NOTE: never `--write --unsafe` here. Biome's unsafe fix for
+      # useExhaustiveDependencies once appended consts to a useEffect dependency
+      # array ABOVE their own declarations — temporal dead zone, ReferenceError,
+      # blank page. See docs/CODE_HEALTH.md. CI checks; it does not rewrite.
+      - name: Biome
+        working-directory: frontend
+        run: npx biome check src
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      # `npm run build` passing while the app is dead is a thing that happened.
+      # This starts vite and opens a real browser at the page.
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Does it actually render?
+        run: node tools/check_ui.mjs
+
+  semgrep:
+    name: Semgrep — architecture rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: pip install semgrep
+
+      # --config .semgrep only: the local rules. NOT the registry rulesets,
+      # which need a network round trip to semgrep.dev and would not run on the
+      # machine this project actually ships to. See docs/CODE_HEALTH.md.
+      - name: Scan
+        run: semgrep scan --config .semgrep --error --metrics=off
