@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { API, apiFetch, apiPost } from '../config'
-import { tint, edge, btn } from '../colors'
+import { tint, btn } from '../colors'
 
 const C = { accent:'#00d4ff', green:'#00ff88', orange:'#ff9500', red:'#ff4444', purple:'#a78bfa' }
 const card  = { border:'1px solid rgba(0,212,255,0.15)', borderRadius:4, padding:18, background:'rgba(0,8,16,0.8)', marginBottom:12 }

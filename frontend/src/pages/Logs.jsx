@@ -26,10 +26,6 @@ import { API } from "../config.js";
 import { T } from "../theme.js";
 
 const card = { background: "#0d1220", border: `1px solid ${T.line}`, borderRadius: 14 };
-const label = {
-  fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
-  color: T.dim, marginBottom: 10, fontWeight: 600,
-};
 const LEVEL = { info: T.cyan, success: T.green, warning: T.amber, error: T.red };
 
 const chip = (on, color) => ({

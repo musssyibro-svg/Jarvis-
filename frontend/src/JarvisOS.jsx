@@ -752,7 +752,10 @@ function Diagnostics() {
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
 
   const grouped = {};
-  (health?.checks || []).forEach((c) => { (grouped[c.group] ||= []).push(c); });
+  for (const c of health?.checks || []) {
+    if (!grouped[c.group]) grouped[c.group] = [];
+    grouped[c.group].push(c);
+  }
 
   return (
     <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 18 }}>

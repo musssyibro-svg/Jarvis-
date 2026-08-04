@@ -107,6 +107,9 @@ export const Btn = ({ children, onClick, disabled, variant = 'primary', small })
 export const PageHeader = ({ breadcrumb, title }) => (
   <div style={{ marginBottom: '22px' }}>
     <div style={{ fontSize: '9px', color: 'rgba(0,212,255,0.5)', letterSpacing: '0.3em', marginBottom: '4px' }}>
+      {/* biome-ignore lint/suspicious/noCommentText: the "//" is on-screen text
+          ("JARVIS // Chat"), not a comment. Suppressed here rather than
+          disabling the rule, so a real stray // in JSX is still caught. */}
       JARVIS // {breadcrumb}
     </div>
     <h1 style={{
