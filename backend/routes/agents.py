@@ -264,8 +264,8 @@ def create_plan(body: PlanRequest, background_tasks: BackgroundTasks):
     V9: planning is no longer a separate one-shot planner. A goal is handed to
     OrchestratorCore, which owns PLANNING as a state. planner.py is being retired.
     """
-    from agents.v9_models import Goal
     from agents.orchestrator_core import get_core
+    from agents.v9_models import Goal
     goal = Goal(goal_type="task", objective=body.goal,
                 constraints={"context": body.context},
                 approval_required=False)
@@ -379,7 +379,7 @@ class InstallAgentRequest(BaseModel):
 @router.get("/registry")
 def registry_list():
     """All registered agents (built-in + custom) with metadata + enabled state."""
-    from agents.registry import registry, AGENT_TEMPLATE
+    from agents.registry import AGENT_TEMPLATE, registry
     out = []
     for name, entry in registry.list_agents().items():
         meta = dict(entry["metadata"])

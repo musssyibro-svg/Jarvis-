@@ -43,6 +43,7 @@ async def upload(file: UploadFile = File(...)):
     if lower.endswith(".pdf"):
         try:
             import io
+
             from pypdf import PdfReader
             reader = PdfReader(io.BytesIO(raw))
             text = "\n\n".join((p.extract_text() or "") for p in reader.pages)

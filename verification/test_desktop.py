@@ -9,9 +9,17 @@ test_desktop.py — Verify desktop control.
 """
 import os
 import sys
-import time
 import tempfile
-from _harness import TestRun, guard, process_running, dump_process_list, ram_snapshot, save_ram_artifact
+import time
+
+from _harness import (
+    TestRun,
+    dump_process_list,
+    guard,
+    process_running,
+    ram_snapshot,
+    save_ram_artifact,
+)
 
 NOTEPAD_EXE = "notepad.exe"
 NOTEPAD_APP = "notepad"

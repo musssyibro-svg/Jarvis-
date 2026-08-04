@@ -180,7 +180,7 @@ def s_no_model():
     invented without a model; the right one is an immediate, specific error.
     """
     r = Result("no_model", "Behaviour when no LLM is available")
-    from services import model_router, experience
+    from services import experience, model_router
 
     picked = model_router.pick("chat")
     r.note(f"router picked: {picked.get('model')} (warning: {picked.get('warning')})")
@@ -255,8 +255,8 @@ def s_browser_death():
     context handle must be dropped so the next call relaunches.
     """
     r = Result("browser_death", "Browser dies while holding the lock")
-    from core import browser_lock
     from agents import browser_agent
+    from core import browser_lock
 
     owner = f"fi-test-{int(time.time())}"
     got = browser_lock.acquire(owner)
@@ -536,7 +536,7 @@ def s_decompose():
     "search BMW M4 and analyze the page" became a search for that whole string.
     """
     r = Result("decompose", "Sentences split into steps at the right places")
-    from services.decompose import split_clauses, decompose
+    from services.decompose import decompose, split_clauses
 
     cases = [
         ("open browser and search BMW M4 and analyze the page", 3),
@@ -763,7 +763,7 @@ def s_simulation():
     side effects is worse than no dry run, because it gets trusted.
     """
     r = Result("simulation", "Simulating never executes anything")
-    from services import simulate, live_plan
+    from services import live_plan, simulate
 
     live_plan.clear()
 
@@ -898,9 +898,9 @@ def s_proposal_batching():
     the wrong job is unrecoverable in a way that being slow is not.
     """
     r = Result("proposal_batching", "Proposals batched, never mismatched")
-    from agents.proposal_agent import ProposalAgent
     import services.ai_router as ar
     import services.deepseek_service as ds
+    from agents.proposal_agent import ProposalAgent
 
     agent = ProposalAgent()
     profile = {"name": "Ibrahim", "skills": "Python"}
@@ -1300,6 +1300,7 @@ def s_ai_router():
     # The legacy name ~30 modules import must now go through the gate, or the
     # whole exercise achieved nothing.
     import inspect
+
     from services import deepseek_service
     src = inspect.getsource(deepseek_service.call_model)
     if "ai_router" not in src:

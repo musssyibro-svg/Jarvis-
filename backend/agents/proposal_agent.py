@@ -250,8 +250,9 @@ Output ONLY the proposal text."""
                 f"When would you like to see a first result?\n\n— {name}")
 
     def _save(self, entry: dict):
-        from models.db import conn
         from datetime import datetime, timezone
+
+        from models.db import conn
         now = datetime.now(timezone.utc).isoformat()
         with conn() as db:
             # Check if already generated for this job_id

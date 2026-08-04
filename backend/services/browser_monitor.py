@@ -5,9 +5,9 @@ Stores new messages in the DB and generates reply drafts via DeepSeek.
 """
 
 import asyncio
+import concurrent.futures
 import sys
 import traceback
-import concurrent.futures
 from datetime import datetime, timezone
 from pathlib import Path
 

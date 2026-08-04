@@ -10,7 +10,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from models.db import conn
-from services.deepseek_service import generate_proposal as ai_generate, auto_work_job
+from services.deepseek_service import auto_work_job
+from services.deepseek_service import generate_proposal as ai_generate
 
 router = APIRouter()
 

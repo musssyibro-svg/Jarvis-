@@ -9,7 +9,8 @@ test_v9_stage1.py — Verify V9 Stage 1 control core (LOCKED spec).
 """
 import sys
 from pathlib import Path
-from _harness import TestRun, guard, ROOT
+
+from _harness import ROOT, TestRun, guard
 
 BACKEND = ROOT / "backend"
 STUBS   = Path("/tmp/v85_stubs")
@@ -21,8 +22,9 @@ def run() -> dict:
 
     # 1. typed models
     def check_models():
-        from agents.v9_models import Goal, WorldState, Action
         import dataclasses
+
+        from agents.v9_models import Action, Goal, WorldState
         g = Goal(goal_type="freelance_application", objective="EV battery jobs")
         a = Action(action_type="browse", params={"url": "http://x"}, risk_level="low")
         w = WorldState()
@@ -41,7 +43,12 @@ def run() -> dict:
     def check_transitions():
         import agents.orchestrator as orch
         orch.STATE.emit = lambda *a, **k: None
-        from agents.orchestrator_core import OrchestratorCore, AgentState, TRANSITIONS, IllegalTransition
+        from agents.orchestrator_core import (
+            TRANSITIONS,
+            AgentState,
+            IllegalTransition,
+            OrchestratorCore,
+        )
         oc = OrchestratorCore()
         # IDLE -> SCOUTING is illegal (must go through PLANNING)
         illegal_caught = False

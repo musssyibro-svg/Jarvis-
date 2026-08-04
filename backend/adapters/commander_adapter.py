@@ -184,7 +184,8 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         return taught
     if not _is_question(message):
         try:
-            from services.workflow_service import find_run_command, run as run_wf
+            from services.workflow_service import find_run_command
+            from services.workflow_service import run as run_wf
             wf_name = find_run_command(message)
         except Exception:
             wf_name = None
@@ -248,8 +249,8 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
             k in message.lower() for k in ("job", "proposal", "bid", "freelanc", "apply")):
         return _plan_goal(message)
     if intent in ("plan", "freelance"):
-        from agents.orchestrator_core import OrchestratorCore
         from agents.commander import normalize_goal
+        from agents.orchestrator_core import OrchestratorCore
         goal = normalize_goal(message, session_id)
         _emit("orchestrator", f"Starting goal: {goal.objective}", "info")
         core = OrchestratorCore()
@@ -462,6 +463,7 @@ def _is_question(message: str) -> bool:
 
 # ── Action routing through ExecutorAgent ──────────────────────────────────────
 import threading
+
 _EXECUTOR = None
 _executor_lock = threading.Lock()
 
@@ -556,8 +558,9 @@ def _llm_parse_steps(message: str) -> list:
     typed steps. Returns [] if no LLM or the output isn't usable.
     """
     try:
-        from services.deepseek_service import call_model
         import json as _json
+
+        from services.deepseek_service import call_model
         raw = call_model(
             "Translate this desktop command into JSON steps. Allowed actions:\n"
             '  open_app {"name_or_path": "..."} | close_app {"process_name": "..."}\n'

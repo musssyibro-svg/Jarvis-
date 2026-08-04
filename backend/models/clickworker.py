@@ -1,6 +1,7 @@
 """models/clickworker.py"""
 from models.db import conn
 
+
 def init_clickworker_tables():
     with conn() as db:
         db.executescript("""

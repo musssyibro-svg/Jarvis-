@@ -10,14 +10,14 @@ Key design rules:
 - Temp DB cleanup registered automatically
 - Old artifact cleanup (files > N days) available on request
 """
-import os
-import sys
-import json
-import time
 import atexit
+import json
+import os
 import shutil
-import traceback
 import subprocess
+import sys
+import time
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -136,8 +136,9 @@ def capture_screenshot(name: str) -> str | None:
     """Take a screenshot using mss or pyautogui. Returns saved path or None."""
     path = str(SCREENSHOTS / f"{name}_{ts()}.png")
     try:
-        import mss
         import io
+
+        import mss
         from PIL import Image
         with mss.mss() as sct:
             raw = sct.grab(sct.monitors[1])

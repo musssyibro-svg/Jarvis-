@@ -9,6 +9,7 @@ Clickworker exposes tasks to registered users; we provide:
 """
 
 import re
+
 import requests
 from bs4 import BeautifulSoup
 

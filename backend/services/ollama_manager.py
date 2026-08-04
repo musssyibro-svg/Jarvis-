@@ -19,8 +19,8 @@ error dicts if missing.
 """
 import os
 import re
-import time
 import threading
+import time
 
 # ── Approved model registry ──────────────────────────────────────────────────
 

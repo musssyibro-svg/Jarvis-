@@ -5,10 +5,10 @@ Priority: Official API  →  Browser scrape fallback  →  HTTP fallback
 """
 
 import asyncio
+import concurrent.futures
 import os
 import sys
 import traceback
-import concurrent.futures
 from pathlib import Path
 
 from dotenv import load_dotenv

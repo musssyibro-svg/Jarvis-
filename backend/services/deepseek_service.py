@@ -4,10 +4,11 @@ Unified AI service — Ollama (DeepSeek-R1 + Qwen) with Anthropic fallback.
 Thread-safe. Handles timeouts and missing models gracefully.
 """
 
+import json
 import os
 import re
-import json
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent

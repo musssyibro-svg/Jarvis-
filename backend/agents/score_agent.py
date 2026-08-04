@@ -14,6 +14,7 @@ The detected job_type and est_pay are written onto the job so the ProposalAgent
 can tailor (or the pipeline can skip) accordingly.
 """
 import re
+
 from agents.base_agent import BaseAgent
 
 SKILL_KEYWORDS = [

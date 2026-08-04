@@ -17,9 +17,9 @@ This file performs REAL actions (opens Notepad/Chrome, screenshots your screen).
 It is the proof artifact your checkpoint requires — produced by YOU running it on
 the real machine, because that evidence cannot be generated anywhere else.
 """
-import sys
-import os
 import json
+import os
+import sys
 import traceback
 from datetime import datetime
 

@@ -33,8 +33,9 @@ def runtime_report():
     traces + log tail in one file. This is the thing to send when something
     misbehaves; it contains everything needed to debug it.
     """
-    from services.diagnostics import build_report
     from datetime import datetime
+
+    from services.diagnostics import build_report
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     return PlainTextResponse(
         build_report(),
@@ -323,7 +324,7 @@ def os_teach_stop(body: dict | None = None):
 @router.get("/diagnostics")
 def os_diagnostics():
     """Is the routing itself healthy? Surfaces silent failures instead of hiding them."""
-    from services import trace, capability_registry
+    from services import capability_registry, trace
     return {
         "traces": trace.summary(),
         "recent": trace.recent(8),

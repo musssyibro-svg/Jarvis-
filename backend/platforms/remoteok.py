@@ -1,6 +1,8 @@
 """platforms/remoteok.py — RemoteOK public JSON API"""
 import re
+
 import requests
+
 from platforms.base import BasePlatform
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; JarvisBot/3.0)", "Accept": "application/json"}

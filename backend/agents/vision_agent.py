@@ -27,10 +27,11 @@ except ImportError:
     HAS_PIL = False
 
 try:
-    import pytesseract
     # #3: auto-detect Tesseract binary on Windows (common install locations)
     import os as _os
     import shutil as _shutil
+
+    import pytesseract
     if _os.name == "nt" and not _shutil.which("tesseract"):
         for _cand in (
             r"C:\Program Files\Tesseract-OCR\tesseract.exe",
@@ -328,9 +329,10 @@ def _window_context() -> str:
     between 'there is text on the screen' and 'you're looking at Notepad'.
     """
     try:
-        from agents.desktop_agent import list_windows
         import ctypes
         import os
+
+        from agents.desktop_agent import list_windows
         active = ""
         if os.name == "nt":
             u32 = ctypes.windll.user32
@@ -387,7 +389,8 @@ def analyze_screen(question: str = "") -> dict:
     vision_used = False
     answer = None
     try:
-        from services.ollama_manager import vision as llava_vision, validate_model, VISION_MODEL
+        from services.ollama_manager import VISION_MODEL, validate_model
+        from services.ollama_manager import vision as llava_vision
         if b64 and validate_model(VISION_MODEL).get("valid"):
             # Send a DOWNSCALED image: llava doesn't need 4K, and full-res
             # payloads are the difference between seconds and minutes.

@@ -26,8 +26,8 @@ import json
 import threading
 from datetime import datetime, timezone
 
-from agents.orchestrator import STATE
 from agents.browser_agent import _get_context, _new_loop
+from agents.orchestrator import STATE
 from models.db import conn
 
 _executor_lock = threading.Lock()
@@ -181,8 +181,8 @@ async def _capture_proof(page) -> dict:
     except Exception:
         pass
     try:
-        from pathlib import Path as _P
         from datetime import datetime as _dt
+        from pathlib import Path as _P
         shots = _P(__file__).resolve().parent.parent / "screenshots" / "receipts"
         shots.mkdir(parents=True, exist_ok=True)
         name = f"bid-{_dt.now().strftime('%Y%m%d-%H%M%S')}.png"

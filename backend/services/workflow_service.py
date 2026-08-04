@@ -89,8 +89,9 @@ def _resolve_to_steps(text: str) -> list[dict]:
 
 def _llm_steps(clause: str) -> list[dict]:
     try:
-        from services.deepseek_service import call_model
         import re
+
+        from services.deepseek_service import call_model
         raw = call_model(
             "Convert this ONE desktop instruction into JSON steps. Allowed actions:\n"
             '  open_app{"name_or_path"} close_app{"process_name"} type_text{"text"}\n'

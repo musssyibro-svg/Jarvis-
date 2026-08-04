@@ -10,8 +10,10 @@ Fix strategy (3 layers):
 """
 
 import re
+
 import requests
 from bs4 import BeautifulSoup
+
 from platforms.base import BasePlatform
 
 HEADERS = {

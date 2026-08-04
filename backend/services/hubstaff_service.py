@@ -5,9 +5,9 @@ Application message generation via DeepSeek-R1.
 """
 
 import asyncio
+import concurrent.futures
 import sys
 import traceback
-import concurrent.futures
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent

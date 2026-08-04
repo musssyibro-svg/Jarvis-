@@ -130,7 +130,7 @@ def normalize_goal(message: str, session_id: str = "default"):
 
 def get_status() -> dict:
     from agents.desktop_agent import get_status as ds
-    from agents.vision_agent  import get_status as vs
+    from agents.vision_agent import get_status as vs
     return {
         "commander":   "online",
         "desktop":     ds(),

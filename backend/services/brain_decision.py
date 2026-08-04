@@ -23,7 +23,7 @@ It reasons over the REAL systems already present: world model (what's true),
 capability registry (what I can do), model router (can I think well enough),
 reflection/memory (what happened before).
 """
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 
 from services import event_bus

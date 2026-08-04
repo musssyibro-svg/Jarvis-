@@ -5,12 +5,12 @@ Uses PyAutoGUI + PyWinAuto (Windows) with graceful fallback.
 """
 import os
 import re
-import sys
-import time
 import subprocess
+import sys
 import threading
-from pathlib import Path
+import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 import psutil
 

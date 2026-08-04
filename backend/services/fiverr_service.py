@@ -4,9 +4,9 @@ Fiverr inbox monitoring via Playwright + AI reply/offer generation.
 """
 
 import asyncio
+import concurrent.futures
 import sys
 import traceback
-import concurrent.futures
 from datetime import datetime, timezone
 from pathlib import Path
 

@@ -134,7 +134,7 @@ def set_enabled(slug: str, on: bool) -> dict:
 def _register_with_session_manager() -> None:
     """Make user-added sites first-class in login status + platform kind lookups."""
     try:
-        from services import session_manager, platform_meta
+        from services import platform_meta, session_manager
         for p in list_platforms():
             session_manager.PLATFORMS[p["slug"]] = {
                 "label": p["label"],

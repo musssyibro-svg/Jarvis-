@@ -491,7 +491,7 @@ def maybe_complete(project_id: int) -> bool:
         except Exception:
             pass
         try:   # reflect on the project + fire an event
-            from services import reflection, event_bus
+            from services import event_bus, reflection
             reflection.reflect(f"project '{proj['title']}'",
                                [{"success": s["status"] == "done", "action": "step",
                                  "step": s["seq"]} for s in proj["steps"]],

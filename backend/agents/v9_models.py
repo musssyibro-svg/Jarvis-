@@ -2,9 +2,9 @@
 agents/v9_models.py — V9 typed data models (LOCKED spec).
 Enforced dataclasses so goal/world/action objects can't drift into ad-hoc dicts.
 """
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
 import uuid
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 
 
 def _now() -> str:

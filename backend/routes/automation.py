@@ -1,8 +1,10 @@
 """routes/automation.py — Auto Mode + queue management"""
 import json
 from datetime import datetime, timezone
+
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
+
 from models.db import conn
 
 router = APIRouter()
@@ -23,8 +25,8 @@ async def start_auto(req: AutoRequest, background_tasks: BackgroundTasks = None)
     pipeline). Reads/writes the same automation_queue, so existing queued data
     is preserved, not orphaned.
     """
-    from agents.v9_models import Goal
     from agents.orchestrator_core import OrchestratorCore
+    from agents.v9_models import Goal
     goal = Goal(
         goal_type="freelance_application",
         objective=f"Auto mode across {', '.join(req.platforms)}",
@@ -292,8 +294,9 @@ def queue_receipt(qid: int):
 @router.get("/proof/{path:path}")
 def get_proof(path: str):
     """Serve a submission screenshot. Confined to the screenshots folder."""
-    from fastapi.responses import FileResponse
     from pathlib import Path as _P
+
+    from fastapi.responses import FileResponse
     root = (_P(__file__).resolve().parent.parent / "screenshots").resolve()
     target = (root / path).resolve()
     if not str(target).startswith(str(root)) or not target.is_file():
@@ -387,7 +390,13 @@ def _active_platforms():
 
 # ── Bid Executor (runs only on approved items) ───────────────────────────────
 # NOTE: single canonical executor route set. The frontend uses these paths.
-from services.bid_executor import execute_queue_item, execute_all_approved, stop_executor, executor_status
+from services.bid_executor import (
+    execute_all_approved,
+    execute_queue_item,
+    executor_status,
+    stop_executor,
+)
+
 
 @router.post("/queue/{qid}/execute")
 def execute_queue_one(qid: int, background_tasks: BackgroundTasks):

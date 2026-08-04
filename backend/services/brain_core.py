@@ -30,7 +30,7 @@ _started = False
 
 def state() -> dict:
     """One snapshot of the whole mind — powers /brain/state and the Core UI."""
-    from services import world_model, capability_registry, reflection
+    from services import capability_registry, reflection, world_model
     world = world_model.get_cached()
     return {
         "world":        world,

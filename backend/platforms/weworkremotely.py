@@ -1,7 +1,9 @@
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
 import re
+
 import requests
 from bs4 import BeautifulSoup
+
 from platforms.base import BasePlatform
 
 RSS = ["https://weworkremotely.com/remote-jobs.rss",

@@ -9,9 +9,10 @@ Fixes from Windows run:
 - RAM monitoring.
 """
 import json
-import time
 import threading
-from _harness import TestRun, guard, ram_snapshot, save_ram_artifact, ARTIFACTS
+import time
+
+from _harness import ARTIFACTS, TestRun, guard, ram_snapshot, save_ram_artifact
 
 BACKEND = "http://127.0.0.1:8000"
 SSE_URL = f"{BACKEND}/orchestrator/feed"

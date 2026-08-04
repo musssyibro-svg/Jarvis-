@@ -37,6 +37,7 @@ def snapshot(timeline_limit: int = 40) -> dict:
     # ── system telemetry ──────────────────────────────────────────────────────
     def _sys():
         import os as _os
+
         import psutil
         disk = "C:\\" if _os.name == "nt" else "/"
         return {"cpu": round(psutil.cpu_percent(interval=None)),

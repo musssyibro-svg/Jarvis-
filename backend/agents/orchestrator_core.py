@@ -7,7 +7,7 @@ Absorbs services/automation_engine.py responsibilities.
 import threading
 from enum import Enum
 
-from agents.orchestrator import STATE          # existing SSE feed
+from agents.orchestrator import STATE  # existing SSE feed
 from agents.v9_models import Goal, WorldState
 
 # One workflow at a time. The UI polls aggressively and users double-click —
@@ -412,8 +412,9 @@ class OrchestratorCore:
             try:
                 from services.profile_service import get_profile
                 if generated and (c.get("auto_submit") or get_profile().get("auto_submit")):
-                    from models.db import conn
                     from datetime import datetime, timezone
+
+                    from models.db import conn
                     now = datetime.now(timezone.utc).isoformat()
                     with conn() as db:
                         db.execute("UPDATE automation_queue SET status='approved',"

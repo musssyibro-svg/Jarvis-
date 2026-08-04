@@ -14,7 +14,6 @@ extraction obviously requires a live browser / display on the target machine.
 """
 from agents.base_agent import BaseAgent
 
-
 # JS evaluated in the page to extract a structured, clickable-aware element tree.
 _DOM_EXTRACT_JS = r"""
 () => {
@@ -71,13 +70,14 @@ class PerceptionAgent(BaseAgent):
             return PerceptionAgent._available_cache
         ok = False
         try:
-            import agents.vision_agent  # noqa: F401 — configures tesseract_cmd path
             import pytesseract
+
+            import agents.vision_agent  # noqa: F401 — configures tesseract_cmd path
             pytesseract.get_tesseract_version()  # runs the binary; raises if absent
             ok = True
         except Exception:
             try:
-                from services.ollama_manager import validate_model, VISION_MODEL
+                from services.ollama_manager import VISION_MODEL, validate_model
                 ok = bool(validate_model(VISION_MODEL).get("valid"))
             except Exception:
                 ok = False
@@ -117,8 +117,9 @@ class PerceptionAgent(BaseAgent):
         bbox is [x, y, width, height] in CSS pixels relative to the viewport.
         """
         try:
-            from agents.browser_agent import _get_context, _new_loop
             import asyncio
+
+            from agents.browser_agent import _get_context, _new_loop
 
             async def _extract():
                 ctx = await _get_context(headless)

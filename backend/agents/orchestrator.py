@@ -13,7 +13,6 @@ import queue
 import threading
 from datetime import datetime, timezone
 
-
 # ── Shared state (thread-safe) ───────────────────────────────────────────────
 
 class _State:

@@ -163,9 +163,9 @@ def _active_platforms(cfg: dict) -> list[str]:
 
 
 def _run_cycle(cfg: dict):
-    from agents.v9_models import Goal
-    from agents.orchestrator_core import OrchestratorCore
     from agents.orchestrator import STATE
+    from agents.orchestrator_core import OrchestratorCore
+    from agents.v9_models import Goal
     from services.profile_service import get_profile
 
     platforms = _active_platforms(cfg)

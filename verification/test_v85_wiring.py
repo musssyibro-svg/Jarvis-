@@ -10,10 +10,11 @@ Runs via run_all_tests.py; writes results/test_v85_wiring.json.
 Uses lightweight stubs for fastapi/schedule when the real libs aren't installed,
 so the WIRING logic is exercised even in a headless build env.
 """
-import sys
 import json
+import sys
 from pathlib import Path
-from _harness import TestRun, guard, ROOT
+
+from _harness import ROOT, TestRun, guard
 
 BACKEND = ROOT / "backend"
 FRONTEND = ROOT / "frontend" / "src"

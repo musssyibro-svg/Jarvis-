@@ -5,6 +5,7 @@ Returns normalized job/task list for ScoreAgent.
 """
 import json
 from datetime import datetime, timezone
+
 from agents.base_agent import BaseAgent
 from models.db import conn
 
@@ -18,7 +19,7 @@ class ScoutAgent(BaseAgent):
         all_jobs  = []
         feed      = []
 
-        from services import platform_health, event_bus
+        from services import event_bus, platform_health
         for platform in platforms:
             # Skip sites that are backing off or paused — scraping a dead site
             # every cycle is pure waste.
@@ -106,7 +107,8 @@ class ScoutAgent(BaseAgent):
                     t["company"] = "Zuodao"
                 return tasks
             # User-added sites (services/custom_platforms) scan generically.
-            from services.custom_platforms import list_platforms, scan as scan_custom
+            from services.custom_platforms import list_platforms
+            from services.custom_platforms import scan as scan_custom
             if any(p["slug"] == platform for p in list_platforms()):
                 return scan_custom(platform, max_jobs)
         except Exception as e:

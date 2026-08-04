@@ -294,9 +294,10 @@ class ExecutorAgent(BaseAgent):
         """
         if self._plan is None:
             try:
-                from services.deepseek_service import call_model
                 import json as _json
                 import re as _re
+
+                from services.deepseek_service import call_model
                 prompt = (f"Break this into a JSON list of desktop steps. Goal: "
                          f"{task.get('objective','')}\nEach step: "
                          f'{{"action":"open_app|type_text|hotkey|press|screenshot",'
@@ -461,8 +462,8 @@ class ExecutorAgent(BaseAgent):
         return True
 
     def _recover(self, action: Action, state: dict, attempt: int = 1):
-        import time
         import os
+        import time
         backoff = min(2 * attempt, 6)
         self._emit(f"Recovery: retry {action.action_type} in {backoff}s "
                    f"(attempt {attempt}/{self.MAX_RETRIES})", "info")

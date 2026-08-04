@@ -4,6 +4,7 @@ Orchestrator API + SSE live feed endpoint.
 """
 import json
 import queue as _queue
+
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -28,9 +29,10 @@ def start_pipeline(req: PipelineRequest):
     The legacy agents.orchestrator.start_pipeline thread-pipeline is no longer
     invoked. STATE (the SSE feed) in agents.orchestrator is preserved and reused.
     """
-    from agents.v9_models import Goal
-    from agents.orchestrator_core import get_core, AgentState
     from fastapi import HTTPException
+
+    from agents.orchestrator_core import AgentState, get_core
+    from agents.v9_models import Goal
 
     core = get_core()          # the SHARED instance, not a throwaway local
     if core.state not in (AgentState.IDLE, AgentState.COMPLETE,

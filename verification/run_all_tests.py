@@ -7,17 +7,17 @@ Usage:
     python run_all_tests.py test_health  # single test
     python run_all_tests.py --clean 7   # clean artifacts older than 7 days first
 """
-import sys
-import json
 import argparse
 import importlib
+import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from _harness import dump_ollama_status, RESULTS, ARTIFACTS, cleanup_old_artifacts
+from _harness import ARTIFACTS, RESULTS, cleanup_old_artifacts, dump_ollama_status
 
 ALL_TESTS = [
     "test_health",

@@ -1,11 +1,12 @@
 """main.py — Jarvis OS backend"""
 from __future__ import annotations
+
 import json
-import os
 import logging
+import os
+from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
-from collections.abc import Generator
 
 import psutil
 from dotenv import load_dotenv
@@ -121,6 +122,7 @@ def auth_status():
 
 from models.db import conn, init_db
 
+
 @app.on_event("startup")
 def _startup():
     logger.info(f"Jarvis OS v{JARVIS_VERSION} starting...")
@@ -187,7 +189,7 @@ def _startup():
     except Exception as e:
         logger.warning(f"App-path store init: {e}")
     try:
-        from services.custom_platforms import init_custom_platforms, _register_with_session_manager
+        from services.custom_platforms import _register_with_session_manager, init_custom_platforms
         init_custom_platforms()
         _register_with_session_manager()   # user-added freelance sites become first-class
         logger.info("Custom platforms ready.")
@@ -245,26 +247,26 @@ def _startup():
     logger.info("Database ready.")
 
 # ── Routers ──────────────────────────────────────────────────────────────────
-from routes.proposals    import router as proposals_router
-from routes.messages     import router as messages_router
-from routes.analytics    import router as analytics_router
-from routes.scraper      import router as scraper_router
-from routes.fiverr       import router as fiverr_router
-from routes.hubstaff     import router as hubstaff_router
-from routes.clickworker  import router as clickworker_router
-from routes.zuodao       import router as zuodao_router
-from routes.automation   import router as automation_router
-from routes.orchestrator_feed import router as orchestrator_feed_router
+from routes.agents import router as agents_router  # V5
+from routes.analytics import router as analytics_router
+from routes.automation import router as automation_router
+from routes.brain import router as brain_router  # V10 Brain
+from routes.clickworker import router as clickworker_router
+from routes.fiverr import router as fiverr_router
+from routes.hubstaff import router as hubstaff_router
+from routes.messages import router as messages_router
+from routes.mind import router as mind_router  # V14 Brain / World / Capabilities
 from routes.orchestrator import router as orchestrator_router
-from routes.agents       import router as agents_router          # V5
-from routes.brain        import router as brain_router           # V10 Brain
-from routes.planner      import router as planner_router         # V10 Planner
-from routes.system       import router as system_router          # V10 Doctor
-from routes.pulse        import router as pulse_router           # V11 Pulse
-from routes.sessions     import router as sessions_router        # V12 login sessions + vault
-from routes.workflows    import router as workflows_router       # V13 learned workflows
-from routes.mind         import router as mind_router            # V14 Brain / World / Capabilities
-from routes.os_console   import router as os_router              # V15 OS console (unified state)
+from routes.orchestrator_feed import router as orchestrator_feed_router
+from routes.os_console import router as os_router  # V15 OS console (unified state)
+from routes.planner import router as planner_router  # V10 Planner
+from routes.proposals import router as proposals_router
+from routes.pulse import router as pulse_router  # V11 Pulse
+from routes.scraper import router as scraper_router
+from routes.sessions import router as sessions_router  # V12 login sessions + vault
+from routes.system import router as system_router  # V10 Doctor
+from routes.workflows import router as workflows_router  # V13 learned workflows
+from routes.zuodao import router as zuodao_router
 
 app.include_router(orchestrator_router, prefix="/orchestrator",  tags=["Orchestrator"])
 app.include_router(agents_router,       prefix="/agents",        tags=["Agents"])      # V5
@@ -287,7 +289,8 @@ app.include_router(workflows_router,    prefix="/workflows",     tags=["Workflow
 app.include_router(mind_router,                                  tags=["Brain"])       # V14 (paths self-prefixed)
 app.include_router(os_router,           prefix="/os",            tags=["OS Console"])  # V15
 
-from services.deepseek_service import OLLAMA_MODEL, LLM_PROVIDER
+from services.deepseek_service import LLM_PROVIDER, OLLAMA_MODEL
+
 
 class ChatIn(BaseModel):
     message: str; session_id: str = "default"
@@ -394,6 +397,7 @@ def _maybe_learn(session_id: str):
             return
         history = _get_history(session_id, limit=LEARN_EVERY)
         import threading
+
         from services.brain_service import learn_from_chat
         threading.Thread(target=learn_from_chat, args=(session_id, history),
                          daemon=True).start()

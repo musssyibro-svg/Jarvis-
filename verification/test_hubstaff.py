@@ -4,7 +4,7 @@ test_hubstaff.py — Verify Hubstaff scraper returns REAL jobs.
 - RAM monitoring before and after scrape
 - FAIL if zero jobs returned
 """
-from _harness import TestRun, guard, dump_process_list, save_ram_artifact
+from _harness import TestRun, dump_process_list, guard, save_ram_artifact
 
 FAKE_MARKERS = [
     "sample", "fake", "test job", "hardcoded", "placeholder",

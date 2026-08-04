@@ -16,7 +16,7 @@ Capabilities are auto-populated from the concrete subsystems (desktop, vision,
 browser, freelance, planner, workflows) plus any learned workflows and custom
 agents, so the registry grows as Jarvis grows — no hand-maintained list.
 """
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 
 
 @dataclass

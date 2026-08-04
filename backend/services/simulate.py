@@ -36,7 +36,6 @@ app). Where there is no history, it says so rather than inventing a number.
 """
 from __future__ import annotations
 
-
 # ── what a step actually touches ─────────────────────────────────────────────
 
 # Anything that changes something outside Jarvis. These are the lines in a plan

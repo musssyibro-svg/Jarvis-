@@ -6,16 +6,25 @@ test_executor.py — Verify bid executor (final).
 - Evidence: STATE.emit log captured, queue status change, navigator log
 - RAM monitoring throughout
 """
+import json
 import os
 import sys
-import json
-import time
 import tempfile
-from io import StringIO
+import time
 from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
-from _harness import (TestRun, guard, dump_process_list, dump_ollama_status,
-                      ram_snapshot, save_ram_artifact, register_temp, ARTIFACTS)
+
+from _harness import (
+    ARTIFACTS,
+    TestRun,
+    dump_ollama_status,
+    dump_process_list,
+    guard,
+    ram_snapshot,
+    register_temp,
+    save_ram_artifact,
+)
 
 FAKE_JOB_URL = "https://www.freelancer.com/projects/python/test-verification-99999999"
 
