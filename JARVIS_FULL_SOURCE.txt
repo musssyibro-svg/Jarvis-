@@ -32088,12 +32088,16 @@ def _clean():
 
 
 def open_app_turn(app, session="s"):
-    cv.remember(session, f"open {app}",
-                steps=[{"action": "open_app", "params": {"name_or_path": app}}],
-                ok=True)
+    cv.remember(
+        session,
+        f"open {app}",
+        steps=[{"action": "open_app", "params": {"name_or_path": app}}],
+        ok=True,
+    )
 
 
 # ── Resolving a follow-up ────────────────────────────────────────────────────
+
 
 def test_close_it_means_the_app_we_just_opened():
     open_app_turn("qq")
@@ -32133,7 +32137,7 @@ def test_the_inherited_app_does_not_end_up_in_the_TYPED_TEXT():
 
 
 def test_an_explicit_app_is_never_overridden():
-    """"type hello in word" means Word, whatever we were just doing."""
+    """ "type hello in word" means Word, whatever we were just doing."""
     open_app_turn("notepad")
     out = cv.resolve("s", "type hello in word")
     assert out["changed"] is False
@@ -32167,6 +32171,7 @@ def test_the_other_ways_of_saying_again(phrase):
 
 # ── The important half: NOT guessing ─────────────────────────────────────────
 
+
 def test_with_no_history_a_pronoun_stays_unresolved():
     """
     No context means no guess. "close it" must fail honestly rather than close
@@ -32197,12 +32202,12 @@ def test_sessions_do_not_leak_into_each_other():
 
 def test_a_full_sentence_is_left_alone():
     open_app_turn("notepad")
-    for msg in ("open calculator and type 1+1", "what's on my screen",
-                "check my qq messages"):
+    for msg in ("open calculator and type 1+1", "what's on my screen", "check my qq messages"):
         assert cv.resolve("s", msg)["changed"] is False, msg
 
 
 # ── Reading the two step shapes ──────────────────────────────────────────────
+
 
 def test_remembers_the_app_from_executor_RESULT_steps():
     """
@@ -32210,14 +32215,17 @@ def test_remembers_the_app_from_executor_RESULT_steps():
     Reading only the plan shape would look right in a test and do nothing in
     the running system, because handle_chat passes results.
     """
-    cv.remember("s", "open qq",
-                steps=[{"step": 1, "action": "open_app", "app": "qq",
-                        "verified": True}], ok=True)
+    cv.remember(
+        "s",
+        "open qq",
+        steps=[{"step": 1, "action": "open_app", "app": "qq", "verified": True}],
+        ok=True,
+    )
     assert cv.recall("s")["app"] == "qq"
 
 
 def test_the_app_carries_across_turns_that_dont_name_one():
-    """"open notepad" -> "type hi" -> "save it" all still mean notepad."""
+    """ "open notepad" -> "type hi" -> "save it" all still mean notepad."""
     open_app_turn("notepad")
     cv.remember("s", "type hi", steps=[{"action": "type_text"}], ok=True)
     assert cv.recall("s")["app"] == "notepad"
@@ -32542,13 +32550,15 @@ def test_every_kind_resolves_to_a_model_role(monkeypatch):
     monkeypatch.setattr(ollama_manager, "vision_model", lambda: "eye-model")
     # model_router unavailable is the branch under test.
     import services.model_router as mr
+
     monkeypatch.setattr(mr, "pick", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("down")))
 
     prov = OllamaProvider()
     for task in OllamaProvider._KIND:
         assert prov.select_model(task), (
             f"task '{task}' resolved to no model at all — the user is told "
-            f"nothing is installed on a machine where something is")
+            f"nothing is installed on a machine where something is"
+        )
 
 
 def test_planning_is_cheaper_than_general_chat():
@@ -32575,9 +32585,10 @@ def test_the_planner_actually_asks_for_the_planner_budget():
     def fake_call_model(prompt, history=None, fast=False, task=None):
         seen["task"] = task
         seen["fast"] = fast
-        return "[no model]"          # force the keyword fallback, offline-safe
+        return "[no model]"  # force the keyword fallback, offline-safe
 
     import services.deepseek_service as ds
+
     original = ds.call_model
     ds.call_model = fake_call_model
     try:
@@ -32587,12 +32598,15 @@ def test_the_planner_actually_asks_for_the_planner_budget():
 
     assert seen.get("task") == "planning", (
         f"planner asked for task={seen.get('task')!r}, so it gets some other "
-        f"budget than the one tuned for it")
+        f"budget than the one tuned for it"
+    )
     assert steps, "a bounded model failure must still produce an editable checklist"
 
 
-@pytest.mark.parametrize("task,kind", [("planner", "planner"), ("chat", "fast"),
-                                       ("vision", "vision"), ("batch", "batch")])
+@pytest.mark.parametrize(
+    "task,kind",
+    [("planner", "planner"), ("chat", "fast"), ("vision", "vision"), ("batch", "batch")],
+)
 def test_task_to_kind_stays_wired(task, kind):
     assert OllamaProvider._KIND[task] == kind
 ```
@@ -32633,10 +32647,11 @@ def _clean():
 
 # ── A failed action leaves enough to diagnose it ─────────────────────────────
 
+
 def test_a_raising_action_records_the_traceback_not_just_the_message():
     from agents import desktop_agent as da
 
-    out = da._run_action("hotkey", {"keys": None})     # TypeError inside the lambda
+    out = da._run_action("hotkey", {"keys": None})  # TypeError inside the lambda
     assert out["success"] is False
 
     rec = trace.failures()[0]
@@ -32655,8 +32670,10 @@ def test_an_unknown_action_is_not_recorded_as_a_crash():
 
 # ── Nothing secret reaches the buffer ────────────────────────────────────────
 
-@pytest.mark.parametrize("key", ["password", "api_key", "auth_token",
-                                 "session_cookie", "otp_code", "vault_secret"])
+
+@pytest.mark.parametrize(
+    "key", ["password", "api_key", "auth_token", "session_cookie", "otp_code", "vault_secret"]
+)
 def test_credential_shaped_parameters_are_redacted(key):
     trace.failure("test", "boom", **{key: "hunter2"})
     assert trace.failures()[0]["context"][key] == "[redacted]"
@@ -32691,6 +32708,7 @@ def test_the_buffer_is_bounded():
 
 
 # ── Where the time went ──────────────────────────────────────────────────────
+
 
 def test_the_profile_names_the_slowest_component():
     for _ in range(5):
@@ -32739,6 +32757,7 @@ def test_every_chat_closes_its_trace(monkeypatch):
     """
     from adapters import commander_adapter as ca
     from services import ai_router
+
     monkeypatch.setattr(ai_router, "ask", lambda **k: "stubbed reply")
 
     ca.handle_chat("hello there", "trace-test")

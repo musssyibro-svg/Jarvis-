@@ -39,13 +39,15 @@ def test_every_kind_resolves_to_a_model_role(monkeypatch):
     monkeypatch.setattr(ollama_manager, "vision_model", lambda: "eye-model")
     # model_router unavailable is the branch under test.
     import services.model_router as mr
+
     monkeypatch.setattr(mr, "pick", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("down")))
 
     prov = OllamaProvider()
     for task in OllamaProvider._KIND:
         assert prov.select_model(task), (
             f"task '{task}' resolved to no model at all — the user is told "
-            f"nothing is installed on a machine where something is")
+            f"nothing is installed on a machine where something is"
+        )
 
 
 def test_planning_is_cheaper_than_general_chat():
@@ -72,9 +74,10 @@ def test_the_planner_actually_asks_for_the_planner_budget():
     def fake_call_model(prompt, history=None, fast=False, task=None):
         seen["task"] = task
         seen["fast"] = fast
-        return "[no model]"          # force the keyword fallback, offline-safe
+        return "[no model]"  # force the keyword fallback, offline-safe
 
     import services.deepseek_service as ds
+
     original = ds.call_model
     ds.call_model = fake_call_model
     try:
@@ -84,11 +87,14 @@ def test_the_planner_actually_asks_for_the_planner_budget():
 
     assert seen.get("task") == "planning", (
         f"planner asked for task={seen.get('task')!r}, so it gets some other "
-        f"budget than the one tuned for it")
+        f"budget than the one tuned for it"
+    )
     assert steps, "a bounded model failure must still produce an editable checklist"
 
 
-@pytest.mark.parametrize("task,kind", [("planner", "planner"), ("chat", "fast"),
-                                       ("vision", "vision"), ("batch", "batch")])
+@pytest.mark.parametrize(
+    "task,kind",
+    [("planner", "planner"), ("chat", "fast"), ("vision", "vision"), ("batch", "batch")],
+)
 def test_task_to_kind_stays_wired(task, kind):
     assert OllamaProvider._KIND[task] == kind

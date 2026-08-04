@@ -30,10 +30,11 @@ def _clean():
 
 # ── A failed action leaves enough to diagnose it ─────────────────────────────
 
+
 def test_a_raising_action_records_the_traceback_not_just_the_message():
     from agents import desktop_agent as da
 
-    out = da._run_action("hotkey", {"keys": None})     # TypeError inside the lambda
+    out = da._run_action("hotkey", {"keys": None})  # TypeError inside the lambda
     assert out["success"] is False
 
     rec = trace.failures()[0]
@@ -52,8 +53,10 @@ def test_an_unknown_action_is_not_recorded_as_a_crash():
 
 # ── Nothing secret reaches the buffer ────────────────────────────────────────
 
-@pytest.mark.parametrize("key", ["password", "api_key", "auth_token",
-                                 "session_cookie", "otp_code", "vault_secret"])
+
+@pytest.mark.parametrize(
+    "key", ["password", "api_key", "auth_token", "session_cookie", "otp_code", "vault_secret"]
+)
 def test_credential_shaped_parameters_are_redacted(key):
     trace.failure("test", "boom", **{key: "hunter2"})
     assert trace.failures()[0]["context"][key] == "[redacted]"
@@ -88,6 +91,7 @@ def test_the_buffer_is_bounded():
 
 
 # ── Where the time went ──────────────────────────────────────────────────────
+
 
 def test_the_profile_names_the_slowest_component():
     for _ in range(5):
@@ -136,6 +140,7 @@ def test_every_chat_closes_its_trace(monkeypatch):
     """
     from adapters import commander_adapter as ca
     from services import ai_router
+
     monkeypatch.setattr(ai_router, "ask", lambda **k: "stubbed reply")
 
     ca.handle_chat("hello there", "trace-test")

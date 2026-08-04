@@ -33,12 +33,16 @@ def _clean():
 
 
 def open_app_turn(app, session="s"):
-    cv.remember(session, f"open {app}",
-                steps=[{"action": "open_app", "params": {"name_or_path": app}}],
-                ok=True)
+    cv.remember(
+        session,
+        f"open {app}",
+        steps=[{"action": "open_app", "params": {"name_or_path": app}}],
+        ok=True,
+    )
 
 
 # ── Resolving a follow-up ────────────────────────────────────────────────────
+
 
 def test_close_it_means_the_app_we_just_opened():
     open_app_turn("qq")
@@ -78,7 +82,7 @@ def test_the_inherited_app_does_not_end_up_in_the_TYPED_TEXT():
 
 
 def test_an_explicit_app_is_never_overridden():
-    """"type hello in word" means Word, whatever we were just doing."""
+    """ "type hello in word" means Word, whatever we were just doing."""
     open_app_turn("notepad")
     out = cv.resolve("s", "type hello in word")
     assert out["changed"] is False
@@ -112,6 +116,7 @@ def test_the_other_ways_of_saying_again(phrase):
 
 # ── The important half: NOT guessing ─────────────────────────────────────────
 
+
 def test_with_no_history_a_pronoun_stays_unresolved():
     """
     No context means no guess. "close it" must fail honestly rather than close
@@ -142,12 +147,12 @@ def test_sessions_do_not_leak_into_each_other():
 
 def test_a_full_sentence_is_left_alone():
     open_app_turn("notepad")
-    for msg in ("open calculator and type 1+1", "what's on my screen",
-                "check my qq messages"):
+    for msg in ("open calculator and type 1+1", "what's on my screen", "check my qq messages"):
         assert cv.resolve("s", msg)["changed"] is False, msg
 
 
 # ── Reading the two step shapes ──────────────────────────────────────────────
+
 
 def test_remembers_the_app_from_executor_RESULT_steps():
     """
@@ -155,14 +160,17 @@ def test_remembers_the_app_from_executor_RESULT_steps():
     Reading only the plan shape would look right in a test and do nothing in
     the running system, because handle_chat passes results.
     """
-    cv.remember("s", "open qq",
-                steps=[{"step": 1, "action": "open_app", "app": "qq",
-                        "verified": True}], ok=True)
+    cv.remember(
+        "s",
+        "open qq",
+        steps=[{"step": 1, "action": "open_app", "app": "qq", "verified": True}],
+        ok=True,
+    )
     assert cv.recall("s")["app"] == "qq"
 
 
 def test_the_app_carries_across_turns_that_dont_name_one():
-    """"open notepad" -> "type hi" -> "save it" all still mean notepad."""
+    """ "open notepad" -> "type hi" -> "save it" all still mean notepad."""
     open_app_turn("notepad")
     cv.remember("s", "type hi", steps=[{"action": "type_text"}], ok=True)
     assert cv.recall("s")["app"] == "notepad"
