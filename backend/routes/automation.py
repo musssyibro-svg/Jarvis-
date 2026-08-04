@@ -148,12 +148,84 @@ def approve_all():
     if n:
         try:
             from agents.orchestrator import STATE
-            STATE.emit("executor", f"{n} proposal(s) approved - submitting now.", "success")
+            # NOT "submitting now". Approving submits nothing — the executor is
+            # a separate, deliberate step. Saying otherwise is why the user
+            # pressed Approve all, read that Jarvis was submitting, and then had
+            # no idea whether anything had been sent. A false claim of action is
+            # worse than no message.
+            STATE.emit("executor",
+                       f"{n} proposal(s) approved. Nothing has been sent yet - "
+                       f"press Submit to send them.", "success")
         except Exception:
             pass
-    return {"ok": True, "approved": n,
-            "message": (f"{n} approved and queued for submission."
+    return {"ok": True, "approved": n, "submitted": 0,
+            "message": (f"{n} approved. NOTHING IS SENT YET - press "
+                        f"\"Submit {n} approved\" to actually send them."
                         if n else "Nothing was waiting for approval.")}
+
+
+@router.get("/queue/outcome")
+def queue_outcome():
+    """
+    One honest answer to "did it send, and what happened?".
+
+    The submit endpoint starts a background thread and returns "Executor
+    started", which tells you nothing about the result. The user's words:
+    "I press approve all but I don't know what's going on, if it sent it".
+    This reports the real state of every item plus the last few receipts, so
+    the page can say "3 sent, 1 needs login" instead of going quiet.
+    """
+    from services.bid_executor import executor_status
+    counts, recent = {}, []
+    with conn() as db:
+        for row in db.execute("SELECT status, COUNT(*) c FROM automation_queue "
+                              "GROUP BY status").fetchall():
+            counts[row["status"]] = row["c"]
+        rows = db.execute("SELECT id, job_title, platform, status, payload "
+                          "FROM automation_queue WHERE status IN "
+                          "('done','failed','ready','needs_login') "
+                          "ORDER BY processed_at DESC LIMIT 8").fetchall()
+    for r in rows:
+        try:
+            rec = (json.loads(r["payload"] or "{}") or {}).get("receipt") or {}
+        except Exception:
+            rec = {}
+        recent.append({
+            "id": r["id"], "job_title": r["job_title"], "platform": r["platform"],
+            "status": r["status"],
+            "confirmed_by_site": rec.get("confirmed_by_site"),
+            "has_proof": bool(rec.get("proof_screenshot")),
+            "message": rec.get("message", ""),
+        })
+
+    ex = executor_status()
+    sent = counts.get("done", 0)
+    unconfirmed = sum(1 for x in recent
+                      if x["status"] == "done" and x["confirmed_by_site"] is False)
+    if ex.get("running"):
+        headline = (f"Submitting now - {ex.get('approved', 0)} left to send.")
+    elif not counts:
+        headline = "Nothing in the queue yet."
+    else:
+        bits = []
+        if sent:
+            bits.append(f"{sent} sent"
+                        + (f" ({unconfirmed} the site didn't confirm - check Proof)"
+                           if unconfirmed else ""))
+        if counts.get("ready"):
+            bits.append(f"{counts['ready']} ready to apply by hand (job boards "
+                        f"have no bid form)")
+        if counts.get("needs_login"):
+            bits.append(f"{counts['needs_login']} blocked - not logged in")
+        if counts.get("failed"):
+            bits.append(f"{counts['failed']} failed")
+        if counts.get("approved"):
+            bits.append(f"{counts['approved']} approved but NOT sent - press Submit")
+        if counts.get("pending"):
+            bits.append(f"{counts['pending']} drafted, awaiting your approval")
+        headline = " · ".join(bits) or "Nothing has happened yet."
+    return {"running": bool(ex.get("running")), "counts": counts,
+            "headline": headline, "recent": recent}
 
 
 @router.post("/queue/{qid}/approve")
@@ -320,9 +392,23 @@ def execute_queue_one(qid: int, background_tasks: BackgroundTasks):
 
 @router.post("/execute-approved")
 def execute_all(background_tasks: BackgroundTasks):
-    """Execute ALL approved queue items sequentially."""
+    """
+    Execute ALL approved queue items sequentially.
+
+    Says how many and where to watch. "Executor started" told the user nothing
+    about what was happening or when it would be over, which is most of the
+    reason they couldn't tell whether anything had been sent.
+    """
+    with conn() as db:
+        n = db.execute("SELECT COUNT(*) c FROM automation_queue "
+                       "WHERE status='approved'").fetchone()["c"]
+    if not n:
+        return {"message": "Nothing is approved, so nothing was sent.",
+                "submitting": 0}
     background_tasks.add_task(execute_all_approved)
-    return {"message": "Executor started for all approved items"}
+    return {"submitting": n,
+            "message": f"Sending {n} proposal(s) now. Each one saves a receipt - "
+                       f"press Proof on a row to see exactly what was sent."}
 
 @router.post("/executor/stop")
 def executor_stop():

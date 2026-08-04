@@ -169,6 +169,8 @@ Type them into the Jarvis chat box.
 |---|---|
 | `open notepad and type hello` | Notepad opens, types `hello` |
 | `open notepad and write about yourself` | Notepad opens with **real written text**, not the words "about yourself" |
+| `open notepad tell me about yourself` | Same — Notepad can't answer a question, so Jarvis answers it and writes it there. It used to type `me about yourself`. |
+| `open notepad, tell me a joke` | Works with a comma too. It used to try to launch an app called "notepad, tell me a joke". |
 | `open browser and search BMW M4` | **Edge** opens (not Chrome), searching Bing |
 | `open browser and search BMW M4 and analyze the page` | Searches only `BMW M4`, then describes it |
 | `open notepad, then type hello, then save it` | Three separate steps, in order |
@@ -223,11 +225,28 @@ Go to **Earn**.
 1. Press **Start earning**
 2. Wait for it to find jobs and write proposals
 3. Press **Approve all N drafts**
-4. Press **Submit N approved**
+4. Press **Submit N approved** ← **this is the one that actually sends them**
 5. Press **Proof** on any row — you'll see the exact text it sent, the page it
    ended on, and a screenshot
 
-Nothing gets submitted without you pressing Approve, unless you tick
+**Approving sends nothing.** That's the bit that wasn't clear, and it was my
+fault: the old message said "submitting now" when it wasn't. Approve means "yes,
+these are fine". Submit is what puts them on the site.
+
+There's now a **"What has actually happened"** box on that page, always visible.
+It says things like:
+
+> 3 sent (1 the site didn't confirm — check Proof) · 2 ready to apply by hand
+> (job boards have no bid form) · 1 blocked — not logged in
+
+That's the answer to "did it send it?". While it's submitting, the box updates
+every two seconds and tells you how many are left.
+
+"Ready to apply by hand" is not a failure. RemoteOK and similar job boards have
+no bid form to fill in — the proposal is written and waiting, and you apply
+through the link.
+
+Nothing gets submitted without you pressing Submit, unless you tick
 "auto-submit" yourself.
 
 ---
@@ -247,6 +266,11 @@ they did nothing.
 ## Buttons you now have
 
 - **Pause / Stop** — top strip, on every screen. Never cuts anything in half.
+  **Fixed:** one press of Stop used to kill every command for the rest of the
+  session. Your last report showed it — you pressed Stop at 10:58, and the next
+  five commands over three minutes all died instantly with "Cancelled". Jarvis
+  looked completely broken and there was no way to tell why short of restarting
+  it. Stop now only stops what was running when you pressed it.
 - **Skip / Retry** — per step, on the Planner screen.
 - **Why?** — top strip and Planner. The full chain, not "Failed".
 - **Show plan** — Planner. See what a command will do before it does it.
@@ -286,7 +310,7 @@ drive it even from this machine.
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 20 or 21 passes.
+purpose and checks it fails honestly. You want 24 or 25 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 

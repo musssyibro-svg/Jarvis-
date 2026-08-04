@@ -44,6 +44,19 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     if not message or not message.strip():
         return {"response": "Say something and I'll get to work.", "intent": "chat"}
 
+    # A stop from an earlier command must not kill this one.
+    #
+    # Cancel is global on purpose — one Stop button has to halt whatever is
+    # running. But nothing cleared it on the chat path, so a single press left
+    # every later command dying at its first checkpoint with "Cancelled" and no
+    # further explanation, for the rest of the session. clear_stale() refuses to
+    # act while work is genuinely in flight, so a real stop still works.
+    try:
+        from services import control
+        control.clear_stale()
+    except Exception:
+        pass
+
     # Trace this request end-to-end so the exact path is visible (diagnostics).
     from services import trace
     trace.start("chat", message)

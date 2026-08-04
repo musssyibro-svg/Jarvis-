@@ -237,7 +237,74 @@ class OrchestratorCore:
             control.clear()      # don't let this run's stop bleed into the next
         except Exception:
             pass
+        self._learn()
         return self.snapshot()
+
+    def _learn(self) -> None:
+        """
+        Hand the finished run to the brain so a lesson gets recorded.
+
+        brain_decision.after_goal() and reflection.reflect() both existed and
+        neither was ever called from here, which is why a runtime report after
+        hours of use said `reflections: 0`. A learning loop nothing feeds is
+        indistinguishable from no learning loop at all.
+
+        Off the request thread: reflect() may consult the fast model, and this
+        machine has no RAM to spare on the critical path. A stopped run is
+        skipped — the user interrupting is not a lesson about the task.
+        """
+        if self._cancelled or self._skipped:
+            return
+        ok = self.state == AgentState.COMPLETE
+        steps = self._outcome_steps()
+        goal = self.goal
+
+        def _bg():
+            try:
+                from services import brain_decision
+                brain_decision.after_goal(goal.goal_type, goal.objective, ok, steps)
+            except Exception:
+                pass
+
+        try:
+            import threading
+            threading.Thread(target=_bg, daemon=True).start()
+        except Exception:
+            pass
+
+    def _outcome_steps(self) -> list[dict]:
+        """
+        What this run actually did, in the shape reflection.reflect() reads.
+
+        Built from counts the handlers already recorded — jobs found, proposals
+        drafted, applications sent — not from a narrative. A reflection assembled
+        from real numbers can be wrong about the lesson; one assembled from a
+        model's guess about the run can be wrong about the run.
+        """
+        ss = self.world.screen_state or {}
+        jobs = len(self.world.jobs or [])
+        props = len(self.world.proposals or [])
+        applied = int(ss.get("applied") or 0)
+        need_prop = bool((ss.get("plan") or {}).get("need_proposal"))
+        need_exec = bool((ss.get("plan") or {}).get("need_execute"))
+
+        steps = [{"step": 1, "action": "scout", "success": jobs > 0,
+                  "verified": jobs > 0,
+                  "verify_reason": f"{jobs} job(s) qualified"}]
+        if need_prop:
+            steps.append({"step": 2, "action": "propose", "success": props > 0,
+                          "verified": props > 0,
+                          "verify_reason": f"{props} proposal(s) drafted"})
+        if need_exec:
+            steps.append({"step": len(steps) + 1, "action": "apply",
+                          "success": applied > 0, "verified": applied > 0,
+                          "attempts": self.retries + 1,
+                          "verify_reason": f"{applied} application(s) sent"})
+        if self.error:
+            steps.append({"step": len(steps) + 1, "action": self.state.name.lower(),
+                          "success": False, "verified": False,
+                          "error": self.error, "verify_reason": self.error})
+        return steps
 
     # alias kept for older callers
     run = run_full_workflow

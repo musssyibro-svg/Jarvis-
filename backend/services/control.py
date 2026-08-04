@@ -37,6 +37,14 @@ _resumed.set()
 
 _state = {"mode": RUNNING, "since": None, "reason": "", "paused_at_step": None}
 
+# How many chains are inside run_scope() right now.
+#
+# This exists to answer one question: is a cancel flag still MEANT for
+# something, or is it left over? Cancel is deliberately global — one Stop
+# button must halt whatever is running, whether that's a chat command or the
+# income engine — but "global" made it outlive the thing it was aimed at.
+_active = 0
+
 
 def _now():
     return datetime.now(timezone.utc).isoformat()
@@ -104,6 +112,66 @@ def clear() -> dict:
         _resumed.set()
         _state.update(mode=RUNNING, since=None, reason="", paused_at_step=None)
     return {"ok": True, "mode": RUNNING}
+
+
+class run_scope:
+    """
+    Marks a chain as running, so a leftover cancel can be told apart from a
+    live one. Use as a context manager around any checkpoint-guarded loop.
+    """
+
+    def __enter__(self):
+        global _active
+        with _lock:
+            _active += 1
+        return self
+
+    def __exit__(self, *exc):
+        global _active
+        with _lock:
+            _active = max(0, _active - 1)
+        return False
+
+
+def busy() -> bool:
+    with _lock:
+        return _active > 0
+
+
+def clear_stale() -> dict:
+    """
+    Drop a cancel flag that nothing is running to receive.
+
+    THE BUG THIS FIXES, straight out of a real runtime report:
+
+        10:58:39 [control] Cancelling — stopping after the current step.
+        10:58:43 check my qq messages   -> Cancelled, 0ms
+        10:58:49 check my qq messages   -> Cancelled, 0ms
+        11:00:22 open calculator        -> Cancelled, 0ms
+        11:01:02 open calculator        -> Cancelled, 0ms
+        11:01:24 open calculator        -> Cancelled, 0ms
+
+    One press of Stop, and every command after it died instantly — for the rest
+    of the session, until the backend was restarted. From the outside Jarvis
+    simply stopped working and gave no usable reason: five different commands,
+    five identical one-line failures. The orchestrator cleared the flag when a
+    GOAL finished, but a chat command never goes through the orchestrator, so
+    nothing ever cleared it.
+
+    A cancel with nothing running is by definition stale: whatever it was aimed
+    at is already over. Clearing it is safe. Clearing it while work IS running
+    would silently un-cancel that work, so this refuses to.
+    """
+    with _lock:
+        if _active > 0:
+            return {"ok": False, "cleared": False, "reason": "work is still running"}
+        was = _cancel.is_set() or _pause.is_set()
+    if not was:
+        return {"ok": True, "cleared": False}
+    clear()
+    _emit("Cleared a leftover stop from an earlier command — this one will run.",
+          "info")
+    return {"ok": True, "cleared": True}
 
 
 # ── The bit worker loops call ────────────────────────────────────────────────

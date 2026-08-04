@@ -33,6 +33,9 @@ export default function Earn() {
   const [form, setForm] = useState({ label: "", jobs_url: "", login_url: "", kind: "board", username: "", password: "" });
   const [switching, setSwitching] = useState(false);
   const [receipt, setReceipt] = useState(null);   // "what did it actually send?"
+  // "I press approve all but I don't know what's going on, if it sent it."
+  // One line of live truth about the queue, always on screen.
+  const [outcome, setOutcome] = useState(null);
 
   /**
    * Pending intent. The switch used to flip back and forth: you pressed Start,
@@ -50,12 +53,13 @@ export default function Earn() {
 
   const load = async () => {
     try {
-      const [i, q, s, c, p] = await Promise.all([
+      const [i, q, s, c, p, o] = await Promise.all([
         fetch(`${API}/automation/income/status`).then(r => r.json()).catch(() => null),
         fetch(`${API}/automation/queue?limit=100`).then(r => r.json()).catch(() => ({ queue: [] })),
         fetch(`${API}/sessions/status`).then(r => r.json()).catch(() => ({ platforms: [] })),
         fetch(`${API}/sessions/custom`).then(r => r.json()).catch(() => ({ platforms: [] })),
         fetch(`${API}/automation/profile`).then(r => r.json()).catch(() => null),
+        fetch(`${API}/automation/queue/outcome`).then(r => r.json()).catch(() => null),
       ]);
       // Resolve the pending intent once the server reports what we asked for
       // (or once we've waited long enough that it clearly isn't going to).
@@ -68,10 +72,18 @@ export default function Earn() {
         }
       }
       setIncome(i); setQueue(q.queue || []); setSessions(s.platforms || []);
-      setCustom(c.platforms || []); setProfile(p);
+      setCustom(c.platforms || []); setProfile(p); setOutcome(o);
     } catch { /* backend down */ }
   };
-  useEffect(() => { load(); const t = setInterval(load, 7000); return () => clearInterval(t); }, []);
+  // Poll faster while the executor is actually sending. Seven seconds is fine
+  // for an idle page; during a submission run it's long enough that the page
+  // looks frozen at the exact moment you most want to see it move.
+  const submitting = !!outcome?.running;
+  useEffect(() => {
+    load();
+    const t = setInterval(load, submitting ? 2000 : 7000);
+    return () => clearInterval(t);
+  }, [submitting]);
 
   const toggle = async () => {
     if (switching) return;                       // no double-fire
@@ -223,8 +235,50 @@ export default function Earn() {
               </button>
             )}
             <span style={{ fontSize: 12, color: T.dim }}>
-              Each submission saves a receipt you can open with "Proof".
+              Approving sends nothing. Submit does — and saves a receipt you can
+              open with "Proof".
             </span>
+          </div>
+        )}
+
+        {/* The answer to "did it actually send?" — always visible, never a guess. */}
+        {outcome?.headline && (
+          <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10,
+                        background: "rgba(0,0,0,0.25)",
+                        border: `1px solid ${submitting ? "rgba(84,214,255,0.4)" : T.line}` }}>
+            <div style={{ fontSize: 9, color: T.dim, letterSpacing: "0.12em",
+                          textTransform: "uppercase", marginBottom: 5 }}>
+              What has actually happened
+            </div>
+            <div style={{ fontSize: 13, color: submitting ? T.cyan : T.text, lineHeight: 1.5 }}>
+              {outcome.headline}
+            </div>
+            {(outcome.recent || []).length > 0 && (
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                {outcome.recent.slice(0, 4).map(r => (
+                  <div key={r.id} style={{ display: "flex", gap: 8, alignItems: "center",
+                                           fontSize: 12, color: T.dim }}>
+                    <span style={{ color: r.status === "done" ? T.green
+                                        : r.status === "failed" ? T.red : T.amber }}>
+                      {r.status === "done"
+                        ? (r.confirmed_by_site === false ? "sent, unconfirmed" : "sent")
+                        : r.status === "needs_login" ? "needs login"
+                        : r.status === "ready" ? "apply by hand" : r.status}
+                    </span>
+                    <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis",
+                                   whiteSpace: "nowrap" }}>
+                      {r.job_title}
+                    </span>
+                    {r.has_proof && (
+                      <button onClick={() => openReceipt(r.id)}
+                        style={{ background: "none", border: `1px solid ${T.line}`,
+                                 color: T.cyan, borderRadius: 7, fontSize: 11,
+                                 padding: "2px 8px", cursor: "pointer" }}>Proof</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -106,7 +106,24 @@ _COMPOSE_HINTS = (
 _LITERAL_HINTS = ("exactly", "verbatim", "literally", "the words", "character for character")
 
 
-def _wants_composition(verb: str, text: str) -> bool:
+# Apps that can ANSWER a question typed into them. Everything else is a place
+# to put text, not something to have a conversation with.
+#
+# This distinction decides who answers "open notepad tell me about yourself".
+# Doubao can answer it; Notepad cannot. Typing the question into Notepad and
+# calling it done is a fake success — the user gets a text file containing a
+# question nobody will ever read.
+_CONVERSATIONAL_APPS = {
+    "doubao", "kimi", "qq", "wechat", "tim", "dingtalk", "telegram", "whatsapp",
+    "discord", "slack", "signal", "line", "skype", "chatgpt", "claude",
+}
+
+
+def _app_can_answer(app: str) -> bool:
+    return _canon_app(app) in _CONVERSATIONAL_APPS
+
+
+def _wants_composition(verb: str, text: str, app: str = "") -> bool:
     """
     Should Jarvis GENERATE this text, or type it as given?
 
@@ -116,14 +133,23 @@ def _wants_composition(verb: str, text: str) -> bool:
     hello. When in doubt, type literally — a wrong literal is obvious and
     harmless, whereas wrongly generating replaces what the user actually wanted
     to say with an invention.
+
+    ONE exception, added because of a real report: "Open notepad tell me about
+    yourself" put the characters `me about yourself` in Notepad. Asking a text
+    editor a question can only ever mean "you answer it, and write the answer
+    here" — there is nothing in Notepad to ask. So ask/tell aimed at a
+    non-conversational app composes. Aimed at Doubao or QQ it stays literal,
+    because there the question is meant for the app.
     """
     t = (text or "").strip().lower()
     if not t:
         return False
     if any(h in t for h in _LITERAL_HINTS):
         return False
+    if verb.startswith(("ask", "tell")):
+        return bool(app) and not _app_can_answer(app)
     if not verb.startswith(("write", "compose")):
-        return False          # type/say/ask/send are never generative
+        return False          # type/say/send are never generative
     if any(h in t for h in _COMPOSE_HINTS):
         return True
     # A long phrase after "write" reads as a description of what to write
@@ -268,7 +294,10 @@ def resolve_steps(text: str) -> list[dict] | None:
         app = _canon_app(am.group(1))
         verb = am.group(2)
         text = am.group(3).strip()
-        text = re.sub(r"^it\s+", "", text).strip() or text   # "ask it how..." -> "how..."
+        # "ask it how..." -> "how...", "tell me about..." -> "about...".
+        # Only "it" was stripped before, so "tell me about yourself" kept the
+        # "me" and Notepad received the characters `me about yourself`.
+        text = re.sub(r"^(?:it|me|us|him|her|them)\s+", "", text).strip() or text
 
         # ── Browser + search is its own thing ─────────────────────────────────
         # Typing into a browser window is the fragile way to search: it depends
@@ -296,17 +325,20 @@ def resolve_steps(text: str) -> list[dict] | None:
         # used to type the literal words "about yourself", which is the single
         # most obviously stupid thing it did. `compose` generates the text with
         # the LLM first, then types the result.
+        composing = _wants_composition(verb, text, app)
         body = ({"action": "compose",   "params": {"prompt": text, "topic": text}}
-                if _wants_composition(verb, text)
+                if composing
                 else {"action": "type_text", "params": {"text": text}})
         steps = [
             {"action": "open_app",        "params": {"name_or_path": app}},
             {"action": "wait_for_window", "params": {"title": app, "timeout": 12}},
             body,
         ]
-        # Press Enter only for send/ask/search verbs (chat & search boxes submit
-        # on Enter). For "type/write" into an editor like Notepad, leave it be.
-        if not verb.startswith(("type", "write")):
+        # Press Enter only when the text is a message TO something that will
+        # answer it. Composed prose is the answer — hitting Enter after it just
+        # adds a blank line to the user's document, and in a chat app it would
+        # send Jarvis's own essay to a contact.
+        if not verb.startswith(("type", "write")) and not composing:
             steps.append({"action": "press", "params": {"key": "enter"}})
         return steps
 

@@ -559,7 +559,7 @@ fails honestly. Run it before claiming anything is finished. Add a scenario for
 each new subsystem; the scenario should describe the *user-visible harm*, not
 the function signature.
 
-Current baseline: 20 passed, 0 failed, 1 skipped (clipboard needs a display).
+Current baseline: 24 passed, 0 failed, 1 skipped (clipboard needs a display).
 
 The `launchers` scenario checks the .bat files mechanically — CRLF, pure ASCII,
 no Unix redirection, no redirect characters inside REM comments, and that every
@@ -916,6 +916,8 @@ Type them into the Jarvis chat box.
 |---|---|
 | `open notepad and type hello` | Notepad opens, types `hello` |
 | `open notepad and write about yourself` | Notepad opens with **real written text**, not the words "about yourself" |
+| `open notepad tell me about yourself` | Same — Notepad can't answer a question, so Jarvis answers it and writes it there. It used to type `me about yourself`. |
+| `open notepad, tell me a joke` | Works with a comma too. It used to try to launch an app called "notepad, tell me a joke". |
 | `open browser and search BMW M4` | **Edge** opens (not Chrome), searching Bing |
 | `open browser and search BMW M4 and analyze the page` | Searches only `BMW M4`, then describes it |
 | `open notepad, then type hello, then save it` | Three separate steps, in order |
@@ -970,11 +972,28 @@ Go to **Earn**.
 1. Press **Start earning**
 2. Wait for it to find jobs and write proposals
 3. Press **Approve all N drafts**
-4. Press **Submit N approved**
+4. Press **Submit N approved** ← **this is the one that actually sends them**
 5. Press **Proof** on any row — you'll see the exact text it sent, the page it
    ended on, and a screenshot
 
-Nothing gets submitted without you pressing Approve, unless you tick
+**Approving sends nothing.** That's the bit that wasn't clear, and it was my
+fault: the old message said "submitting now" when it wasn't. Approve means "yes,
+these are fine". Submit is what puts them on the site.
+
+There's now a **"What has actually happened"** box on that page, always visible.
+It says things like:
+
+> 3 sent (1 the site didn't confirm — check Proof) · 2 ready to apply by hand
+> (job boards have no bid form) · 1 blocked — not logged in
+
+That's the answer to "did it send it?". While it's submitting, the box updates
+every two seconds and tells you how many are left.
+
+"Ready to apply by hand" is not a failure. RemoteOK and similar job boards have
+no bid form to fill in — the proposal is written and waiting, and you apply
+through the link.
+
+Nothing gets submitted without you pressing Submit, unless you tick
 "auto-submit" yourself.
 
 ---
@@ -994,6 +1013,11 @@ they did nothing.
 ## Buttons you now have
 
 - **Pause / Stop** — top strip, on every screen. Never cuts anything in half.
+  **Fixed:** one press of Stop used to kill every command for the rest of the
+  session. Your last report showed it — you pressed Stop at 10:58, and the next
+  five commands over three minutes all died instantly with "Cancelled". Jarvis
+  looked completely broken and there was no way to tell why short of restarting
+  it. Stop now only stops what was running when you pressed it.
 - **Skip / Retry** — per step, on the Planner screen.
 - **Why?** — top strip and Planner. The full chain, not "Failed".
 - **Show plan** — Planner. See what a command will do before it does it.
@@ -1033,7 +1057,7 @@ drive it even from this machine.
 ## Optional: check it recovers from failure
 
 Double-click **`RUN_FAILURE_TEST.bat`**. Takes 2 minutes. Breaks Jarvis on
-purpose and checks it fails honestly. You want 20 or 21 passes.
+purpose and checks it fails honestly. You want 24 or 25 passes.
 
 Errors in that output are normal — it's deliberately breaking things.
 
@@ -3172,6 +3196,19 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     if not message or not message.strip():
         return {"response": "Say something and I'll get to work.", "intent": "chat"}
 
+    # A stop from an earlier command must not kill this one.
+    #
+    # Cancel is global on purpose — one Stop button has to halt whatever is
+    # running. But nothing cleared it on the chat path, so a single press left
+    # every later command dying at its first checkpoint with "Cancelled" and no
+    # further explanation, for the rest of the session. clear_stale() refuses to
+    # act while work is genuinely in flight, so a real stop still works.
+    try:
+        from services import control
+        control.clear_stale()
+    except Exception:
+        pass
+
     # Trace this request end-to-end so the exact path is visible (diagnostics).
     from services import trace
     trace.start("chat", message)
@@ -4274,15 +4311,25 @@ INTENT_MAP = {
                 "take a screenshot", "screenshot", "screen shot", "window",
                 "file", "folder", "notepad", "calculator", "chrome", "edge",
                 "explorer", "run ", "launch ", "launching ", "start ",
-                "starting ", "hotkey", "rename", "delete file", "move file"],
+                "starting ", "hotkey", "rename", "delete file", "move file",
+                # Apps the user actually runs. Without these, "check my qq
+                # messages" scored freelance (on the word "message") and desktop
+                # zero — the intent said "go find me a job" for a request to
+                # look at a chat window.
+                "qq", "wechat", "weixin", "doubao", "kimi", "dingtalk", "tim"],
     "memory":  ["remember", "recall", "what did", "why did", "why do we",
                 "why we", "decision", "history", "learn",
                 "pattern", "forgot", "store this", "memorize"],
     "plan":    ["plan ", "how to", "steps to", "automate", "task list",
                 "achieve", "do this for me", "build ", "build me", "set up "],
     "browser": ["browse", "navigate to", "go to website", "open url", "open http"],
+    # "message", "reply" and "inbox" were in here and had to come out. They are
+    # the ordinary words for using a chat app, so "check my qq messages" and
+    # "reply to Ahmed" were classified as freelance work. Freelance keywords now
+    # have to actually be about freelancing.
     "freelance": ["job", "proposal", "bid", "freelancer", "hubstaff",
-                  "scan jobs", "message", "reply", "analytics", "inbox"],
+                  "scan jobs", "upwork", "fiverr", "client", "analytics",
+                  "earn", "apply for"],
     "chat":    [],  # fallthrough — handled by AI directly
 }
 
@@ -5099,6 +5146,61 @@ def _learned_wait(app: str) -> float:
 
 def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
     """
+    Public entry point. Marks the chain as RUNNING for the duration.
+
+    That mark is what lets a leftover Stop be told apart from a live one. Cancel
+    is global on purpose — one Stop button has to halt whatever is going — but
+    global also meant the flag outlived the thing it was aimed at, so a single
+    press killed every command for the rest of the session. See
+    control.clear_stale(); it refuses to clear while this scope is open.
+    """
+    try:
+        from services import control
+    except Exception:
+        out = _execute_chain(steps, max_retries, goal)
+    else:
+        with control.run_scope():
+            out = _execute_chain(steps, max_retries, goal)
+    _learn_from_chain(goal, out)
+    return out
+
+
+def _learn_from_chain(goal: str, out: dict) -> None:
+    """
+    Record a lesson when a chat command went badly.
+
+    Reflection was wired to workflows and projects but never to chat, which is
+    how the user actually drives Jarvis — so a report after hours of use said
+    `reflections: 0` and the learning loop was, in practice, dead.
+
+    Only failures and retried runs are reflected on. A clean run teaches
+    nothing, and reflect() may consult the model: on a 16 GB machine that is not
+    something to do after every "open notepad". Cancels are skipped too — you
+    pressing Stop is not a lesson about the task.
+    """
+    if not isinstance(out, dict) or out.get("cancelled"):
+        return
+    results = out.get("steps") or []
+    ok = bool(out.get("success"))
+    retried = any((s.get("attempts") or 1) > 1 for s in results if isinstance(s, dict))
+    if ok and not retried:
+        return
+
+    def _bg():
+        try:
+            from services import reflection
+            reflection.reflect(goal or "desktop command", results, ok, kind="desktop")
+        except Exception:
+            pass
+
+    try:
+        threading.Thread(target=_bg, daemon=True).start()
+    except Exception:
+        pass
+
+
+def _execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
+    """
     Run desktop steps with the full execution loop:
         act → observe → verify → retry(≤max_retries) → record.
 
@@ -5114,7 +5216,22 @@ def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
     results = []
     steps = steps or []
     last_opened = None            # the app we most recently opened in this chain
-    _INPUT = {"type_text", "compose", "press", "hotkey", "click", "click_text"}
+    focus_unconfirmed = None      # set when we couldn't prove the app was in front
+
+    # Actions that need the target app IN FRONT before they run.
+    #
+    # screenshot and analyze were missing from this set, and that is the whole
+    # "it says there are no messages but it never opened QQ" complaint. QQ was
+    # already running, so open_app saw a live window, returned verified, and
+    # never raised it. The screenshot then captured whatever happened to be in
+    # front — and the vision model answered honestly about the wrong window:
+    # "no visible unread messages". Technically true, completely useless, and
+    # indistinguishable from a real answer.
+    #
+    # Looking at the screen is an interaction with a specific window, exactly
+    # like typing into one.
+    _INPUT = {"type_text", "compose", "press", "hotkey", "click", "click_text",
+              "screenshot", "analyze", "scroll"}
 
     # Publish the plan so it's watchable while it runs, not only afterwards.
     # ensure() defers to a caller that already published a better-worded plan.
@@ -5144,6 +5261,7 @@ def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
         # doesn't type" bug, which also happens when wait_for_window sits between
         # open and type). Confirm focus here regardless of step ordering, and
         # STOP HONESTLY if we can't get it — never type into the void.
+        looking = action in ("screenshot", "analyze")
         if action in _INPUT and last_opened:
             if not _is_foreground(last_opened):
                 fw = focus_window(last_opened)
@@ -5154,7 +5272,16 @@ def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
                 # that check is the real arbiter of whether the text landed. So
                 # try anyway and let verification decide. Still truthful: if the
                 # text didn't land, the step fails with that exact reason.
-                time.sleep(0.3)
+                time.sleep(0.5)
+
+            # Typing has a read-back to prove it landed. LOOKING has nothing:
+            # a screenshot always succeeds, and the vision model will answer
+            # confidently about whatever window it was handed. So if we still
+            # can't confirm the app is in front, record that — the answer must
+            # carry the doubt rather than presenting a description of the wrong
+            # window as the answer to a question about this one.
+            if looking and not _is_foreground(last_opened):
+                focus_unconfirmed = last_opened
 
         # Pause/cancel lands BETWEEN steps. Never inside one: stopping halfway
         # through typing leaves half a sentence in the user's document.
@@ -5214,6 +5341,19 @@ def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
         entry = {"step": i + 1, "action": action, "attempts": attempts,
                  "verified": verified, "verify_reason": reason,
                  "duration_s": elapsed, **(r or {})}
+
+        # An answer about the screen is only about the app we were asked about
+        # if that app was actually in front. When it wasn't, say so IN the
+        # answer — "no unread messages" describing the wrong window is the most
+        # misleading thing Jarvis can produce, because it looks like a result.
+        if action == "analyze" and focus_unconfirmed:
+            caveat = (f"(I could not bring {focus_unconfirmed} to the front, so "
+                      f"this describes whatever window was showing — it may not "
+                      f"be {focus_unconfirmed}.)")
+            for key in ("answer", "ai_answer"):
+                if entry.get(key):
+                    entry[key] = f"{caveat}\n\n{entry[key]}"
+            entry["focus_unconfirmed"] = focus_unconfirmed
 
         fail = None
         if not verified:
@@ -6884,7 +7024,74 @@ class OrchestratorCore:
             control.clear()      # don't let this run's stop bleed into the next
         except Exception:
             pass
+        self._learn()
         return self.snapshot()
+
+    def _learn(self) -> None:
+        """
+        Hand the finished run to the brain so a lesson gets recorded.
+
+        brain_decision.after_goal() and reflection.reflect() both existed and
+        neither was ever called from here, which is why a runtime report after
+        hours of use said `reflections: 0`. A learning loop nothing feeds is
+        indistinguishable from no learning loop at all.
+
+        Off the request thread: reflect() may consult the fast model, and this
+        machine has no RAM to spare on the critical path. A stopped run is
+        skipped — the user interrupting is not a lesson about the task.
+        """
+        if self._cancelled or self._skipped:
+            return
+        ok = self.state == AgentState.COMPLETE
+        steps = self._outcome_steps()
+        goal = self.goal
+
+        def _bg():
+            try:
+                from services import brain_decision
+                brain_decision.after_goal(goal.goal_type, goal.objective, ok, steps)
+            except Exception:
+                pass
+
+        try:
+            import threading
+            threading.Thread(target=_bg, daemon=True).start()
+        except Exception:
+            pass
+
+    def _outcome_steps(self) -> list[dict]:
+        """
+        What this run actually did, in the shape reflection.reflect() reads.
+
+        Built from counts the handlers already recorded — jobs found, proposals
+        drafted, applications sent — not from a narrative. A reflection assembled
+        from real numbers can be wrong about the lesson; one assembled from a
+        model's guess about the run can be wrong about the run.
+        """
+        ss = self.world.screen_state or {}
+        jobs = len(self.world.jobs or [])
+        props = len(self.world.proposals or [])
+        applied = int(ss.get("applied") or 0)
+        need_prop = bool((ss.get("plan") or {}).get("need_proposal"))
+        need_exec = bool((ss.get("plan") or {}).get("need_execute"))
+
+        steps = [{"step": 1, "action": "scout", "success": jobs > 0,
+                  "verified": jobs > 0,
+                  "verify_reason": f"{jobs} job(s) qualified"}]
+        if need_prop:
+            steps.append({"step": 2, "action": "propose", "success": props > 0,
+                          "verified": props > 0,
+                          "verify_reason": f"{props} proposal(s) drafted"})
+        if need_exec:
+            steps.append({"step": len(steps) + 1, "action": "apply",
+                          "success": applied > 0, "verified": applied > 0,
+                          "attempts": self.retries + 1,
+                          "verify_reason": f"{applied} application(s) sent"})
+        if self.error:
+            steps.append({"step": len(steps) + 1, "action": self.state.name.lower(),
+                          "success": False, "verified": False,
+                          "error": self.error, "verify_reason": self.error})
+        return steps
 
     # alias kept for older callers
     run = run_full_workflow
@@ -12464,12 +12671,84 @@ def approve_all():
     if n:
         try:
             from agents.orchestrator import STATE
-            STATE.emit("executor", f"{n} proposal(s) approved - submitting now.", "success")
+            # NOT "submitting now". Approving submits nothing — the executor is
+            # a separate, deliberate step. Saying otherwise is why the user
+            # pressed Approve all, read that Jarvis was submitting, and then had
+            # no idea whether anything had been sent. A false claim of action is
+            # worse than no message.
+            STATE.emit("executor",
+                       f"{n} proposal(s) approved. Nothing has been sent yet - "
+                       f"press Submit to send them.", "success")
         except Exception:
             pass
-    return {"ok": True, "approved": n,
-            "message": (f"{n} approved and queued for submission."
+    return {"ok": True, "approved": n, "submitted": 0,
+            "message": (f"{n} approved. NOTHING IS SENT YET - press "
+                        f"\"Submit {n} approved\" to actually send them."
                         if n else "Nothing was waiting for approval.")}
+
+
+@router.get("/queue/outcome")
+def queue_outcome():
+    """
+    One honest answer to "did it send, and what happened?".
+
+    The submit endpoint starts a background thread and returns "Executor
+    started", which tells you nothing about the result. The user's words:
+    "I press approve all but I don't know what's going on, if it sent it".
+    This reports the real state of every item plus the last few receipts, so
+    the page can say "3 sent, 1 needs login" instead of going quiet.
+    """
+    from services.bid_executor import executor_status
+    counts, recent = {}, []
+    with conn() as db:
+        for row in db.execute("SELECT status, COUNT(*) c FROM automation_queue "
+                              "GROUP BY status").fetchall():
+            counts[row["status"]] = row["c"]
+        rows = db.execute("SELECT id, job_title, platform, status, payload "
+                          "FROM automation_queue WHERE status IN "
+                          "('done','failed','ready','needs_login') "
+                          "ORDER BY processed_at DESC LIMIT 8").fetchall()
+    for r in rows:
+        try:
+            rec = (json.loads(r["payload"] or "{}") or {}).get("receipt") or {}
+        except Exception:
+            rec = {}
+        recent.append({
+            "id": r["id"], "job_title": r["job_title"], "platform": r["platform"],
+            "status": r["status"],
+            "confirmed_by_site": rec.get("confirmed_by_site"),
+            "has_proof": bool(rec.get("proof_screenshot")),
+            "message": rec.get("message", ""),
+        })
+
+    ex = executor_status()
+    sent = counts.get("done", 0)
+    unconfirmed = sum(1 for x in recent
+                      if x["status"] == "done" and x["confirmed_by_site"] is False)
+    if ex.get("running"):
+        headline = (f"Submitting now - {ex.get('approved', 0)} left to send.")
+    elif not counts:
+        headline = "Nothing in the queue yet."
+    else:
+        bits = []
+        if sent:
+            bits.append(f"{sent} sent"
+                        + (f" ({unconfirmed} the site didn't confirm - check Proof)"
+                           if unconfirmed else ""))
+        if counts.get("ready"):
+            bits.append(f"{counts['ready']} ready to apply by hand (job boards "
+                        f"have no bid form)")
+        if counts.get("needs_login"):
+            bits.append(f"{counts['needs_login']} blocked - not logged in")
+        if counts.get("failed"):
+            bits.append(f"{counts['failed']} failed")
+        if counts.get("approved"):
+            bits.append(f"{counts['approved']} approved but NOT sent - press Submit")
+        if counts.get("pending"):
+            bits.append(f"{counts['pending']} drafted, awaiting your approval")
+        headline = " · ".join(bits) or "Nothing has happened yet."
+    return {"running": bool(ex.get("running")), "counts": counts,
+            "headline": headline, "recent": recent}
 
 
 @router.post("/queue/{qid}/approve")
@@ -12636,9 +12915,23 @@ def execute_queue_one(qid: int, background_tasks: BackgroundTasks):
 
 @router.post("/execute-approved")
 def execute_all(background_tasks: BackgroundTasks):
-    """Execute ALL approved queue items sequentially."""
+    """
+    Execute ALL approved queue items sequentially.
+
+    Says how many and where to watch. "Executor started" told the user nothing
+    about what was happening or when it would be over, which is most of the
+    reason they couldn't tell whether anything had been sent.
+    """
+    with conn() as db:
+        n = db.execute("SELECT COUNT(*) c FROM automation_queue "
+                       "WHERE status='approved'").fetchone()["c"]
+    if not n:
+        return {"message": "Nothing is approved, so nothing was sent.",
+                "submitting": 0}
     background_tasks.add_task(execute_all_approved)
-    return {"message": "Executor started for all approved items"}
+    return {"submitting": n,
+            "message": f"Sending {n} proposal(s) now. Each one saves a receipt - "
+                       f"press Proof on a row to see exactly what was sent."}
 
 @router.post("/executor/stop")
 def executor_stop():
@@ -17848,6 +18141,14 @@ _resumed.set()
 
 _state = {"mode": RUNNING, "since": None, "reason": "", "paused_at_step": None}
 
+# How many chains are inside run_scope() right now.
+#
+# This exists to answer one question: is a cancel flag still MEANT for
+# something, or is it left over? Cancel is deliberately global — one Stop
+# button must halt whatever is running, whether that's a chat command or the
+# income engine — but "global" made it outlive the thing it was aimed at.
+_active = 0
+
 
 def _now():
     return datetime.now(timezone.utc).isoformat()
@@ -17915,6 +18216,66 @@ def clear() -> dict:
         _resumed.set()
         _state.update(mode=RUNNING, since=None, reason="", paused_at_step=None)
     return {"ok": True, "mode": RUNNING}
+
+
+class run_scope:
+    """
+    Marks a chain as running, so a leftover cancel can be told apart from a
+    live one. Use as a context manager around any checkpoint-guarded loop.
+    """
+
+    def __enter__(self):
+        global _active
+        with _lock:
+            _active += 1
+        return self
+
+    def __exit__(self, *exc):
+        global _active
+        with _lock:
+            _active = max(0, _active - 1)
+        return False
+
+
+def busy() -> bool:
+    with _lock:
+        return _active > 0
+
+
+def clear_stale() -> dict:
+    """
+    Drop a cancel flag that nothing is running to receive.
+
+    THE BUG THIS FIXES, straight out of a real runtime report:
+
+        10:58:39 [control] Cancelling — stopping after the current step.
+        10:58:43 check my qq messages   -> Cancelled, 0ms
+        10:58:49 check my qq messages   -> Cancelled, 0ms
+        11:00:22 open calculator        -> Cancelled, 0ms
+        11:01:02 open calculator        -> Cancelled, 0ms
+        11:01:24 open calculator        -> Cancelled, 0ms
+
+    One press of Stop, and every command after it died instantly — for the rest
+    of the session, until the backend was restarted. From the outside Jarvis
+    simply stopped working and gave no usable reason: five different commands,
+    five identical one-line failures. The orchestrator cleared the flag when a
+    GOAL finished, but a chat command never goes through the orchestrator, so
+    nothing ever cleared it.
+
+    A cancel with nothing running is by definition stale: whatever it was aimed
+    at is already over. Clearing it is safe. Clearing it while work IS running
+    would silently un-cancel that work, so this refuses to.
+    """
+    with _lock:
+        if _active > 0:
+            return {"ok": False, "cleared": False, "reason": "work is still running"}
+        was = _cancel.is_set() or _pause.is_set()
+    if not was:
+        return {"ok": True, "cleared": False}
+    clear()
+    _emit("Cleared a leftover stop from an earlier command — this one will run.",
+          "info")
+    return {"ok": True, "cleared": True}
 
 
 # ── The bit worker loops call ────────────────────────────────────────────────
@@ -18292,8 +18653,14 @@ ACTION_VERBS: dict[str, str] = {
 _VERBS_BY_LENGTH = sorted(ACTION_VERBS, key=len, reverse=True)
 
 # Words that join clauses. Only a boundary when an action verb follows.
+#
+# "," and ";" are in here for the same reason as the words: people write "open
+# notepad, tell me a joke" constantly. Without the comma the whole tail became
+# the app name and Jarvis tried to launch an application called "notepad, tell
+# me a joke". The verb-follows rule is what keeps this safe — "type hello,
+# world" has no verb after the comma, so it stays one clause.
 _CONNECTORS = ("and then", "then", "and after that", "after that", "and also",
-               "also", "and", "next", "afterwards", "followed by", ";")
+               "also", "and", "next", "afterwards", "followed by", ";", ",")
 
 # Filler between a connector and its verb: "and then please also open ..."
 _FILLER = ("please", "just", "now", "also", "go ahead and", "you can", "can you",
@@ -18371,7 +18738,8 @@ def split_clauses(text: str) -> list[str]:
     marks: list[tuple[int, int]] = []
     low = protected.lower()
     for conn in sorted(_CONNECTORS, key=len, reverse=True):
-        pat = re.escape(conn) if conn == ";" else r"\b" + re.escape(conn) + r"\b"
+        # \b doesn't apply to punctuation — ";" and "," need a literal match.
+        pat = re.escape(conn) if conn in (";", ",") else r"\b" + re.escape(conn) + r"\b"
         for m in re.finditer(pat, low):
             if any(s <= m.start() < e for s, e in marks):
                 continue        # inside a connector we already took
@@ -18456,17 +18824,39 @@ def parse_clause(clause: str) -> dict:
         return {"intent": "unknown", "object": clause.strip(), "raw": clause}
     verb, intent, obj = hit
     obj = obj.strip(" .,\"'“”")
-    # "ask it how it is" / "tell it hello" — the pronoun is the app we just opened.
-    obj = re.sub(r"^(?:it|them|him|her)\s+", "", obj).strip()
+    # "ask it how it is" / "tell it hello" — the pronoun is the app we just
+    # opened. "me"/"us" points the other way: "tell me a joke" is addressed to
+    # Jarvis. Either way the pronoun is not part of the text, and leaving it in
+    # is how Notepad ended up containing the characters `me about yourself`.
+    obj = re.sub(r"^(?:it|them|him|her|me|us)\s+", "", obj).strip()
+
+    # "tell me about X" is listed as an analyze verb because "tell me about this
+    # page" means look at the screen. It only means that when X IS the screen —
+    # "tell me about yourself" is a request for writing, and answering it by
+    # screenshotting Notepad describes an empty document instead.
+    if verb == "tell me about" and obj and obj.lower() not in _PAGE_WORDS:
+        intent = "write"
+        obj = f"about {obj}"      # keep the subject readable as a writing brief
     return {"intent": intent, "object": obj, "verb": verb, "raw": clause}
 
 
 # ── intent + context -> steps ────────────────────────────────────────────────
 
-def _wants_composition(intent: str, text: str) -> bool:
+def _wants_composition(intent: str, text: str, verb: str = "", app: str = "") -> bool:
+    """
+    Defer to tool_registry so both entry points answer this identically.
+
+    The VERB matters, not just the intent: "ask" and "tell" aimed at Notepad
+    mean Jarvis should answer and write it down, because there is nothing in
+    Notepad to ask. Aimed at Doubao they stay literal — the question is for the
+    app. Passing only the intent flattened that distinction.
+    """
     try:
         from services.tool_registry import _wants_composition as w
-        return w("write" if intent == "write" else "type", text)
+        v = (verb or "").lower()
+        if not v.startswith(("ask", "tell")):
+            v = "write" if intent == "write" else "type"
+        return w(v, text, app)
     except Exception:
         return intent == "write" and len(text.split()) >= 5
 
@@ -18560,7 +18950,9 @@ def _steps_for(parsed: dict, ctx: dict) -> list[dict]:
             steps.append({"action": "wait_for_window",
                           "params": {"title": ctx["app"], "timeout": 12}})
             ctx["focused"] = True
-        if _wants_composition(intent, text):
+        composing = _wants_composition(intent, text, parsed.get("verb", ""),
+                                       ctx.get("app") or "")
+        if composing:
             hint = ""
             try:
                 from services import persona
@@ -18571,8 +18963,10 @@ def _steps_for(parsed: dict, ctx: dict) -> list[dict]:
                           "params": {"prompt": text, "topic": text, "style": hint}})
         else:
             steps.append({"action": "type_text", "params": {"text": text}})
-        # Chat boxes and search fields submit on Enter; editors should not.
-        if intent == "ask" or (ctx.get("app") and ctx.get("is_chat_app")):
+        # Chat boxes and search fields submit on Enter; editors should not — and
+        # composed prose never should, because it IS the answer, not a message
+        # being sent to something that will reply to it.
+        if not composing and (intent == "ask" or (ctx.get("app") and ctx.get("is_chat_app"))):
             steps.append({"action": "press", "params": {"key": "enter"}})
         return steps
 
@@ -26407,7 +26801,24 @@ _COMPOSE_HINTS = (
 _LITERAL_HINTS = ("exactly", "verbatim", "literally", "the words", "character for character")
 
 
-def _wants_composition(verb: str, text: str) -> bool:
+# Apps that can ANSWER a question typed into them. Everything else is a place
+# to put text, not something to have a conversation with.
+#
+# This distinction decides who answers "open notepad tell me about yourself".
+# Doubao can answer it; Notepad cannot. Typing the question into Notepad and
+# calling it done is a fake success — the user gets a text file containing a
+# question nobody will ever read.
+_CONVERSATIONAL_APPS = {
+    "doubao", "kimi", "qq", "wechat", "tim", "dingtalk", "telegram", "whatsapp",
+    "discord", "slack", "signal", "line", "skype", "chatgpt", "claude",
+}
+
+
+def _app_can_answer(app: str) -> bool:
+    return _canon_app(app) in _CONVERSATIONAL_APPS
+
+
+def _wants_composition(verb: str, text: str, app: str = "") -> bool:
     """
     Should Jarvis GENERATE this text, or type it as given?
 
@@ -26417,14 +26828,23 @@ def _wants_composition(verb: str, text: str) -> bool:
     hello. When in doubt, type literally — a wrong literal is obvious and
     harmless, whereas wrongly generating replaces what the user actually wanted
     to say with an invention.
+
+    ONE exception, added because of a real report: "Open notepad tell me about
+    yourself" put the characters `me about yourself` in Notepad. Asking a text
+    editor a question can only ever mean "you answer it, and write the answer
+    here" — there is nothing in Notepad to ask. So ask/tell aimed at a
+    non-conversational app composes. Aimed at Doubao or QQ it stays literal,
+    because there the question is meant for the app.
     """
     t = (text or "").strip().lower()
     if not t:
         return False
     if any(h in t for h in _LITERAL_HINTS):
         return False
+    if verb.startswith(("ask", "tell")):
+        return bool(app) and not _app_can_answer(app)
     if not verb.startswith(("write", "compose")):
-        return False          # type/say/ask/send are never generative
+        return False          # type/say/send are never generative
     if any(h in t for h in _COMPOSE_HINTS):
         return True
     # A long phrase after "write" reads as a description of what to write
@@ -26569,7 +26989,10 @@ def resolve_steps(text: str) -> list[dict] | None:
         app = _canon_app(am.group(1))
         verb = am.group(2)
         text = am.group(3).strip()
-        text = re.sub(r"^it\s+", "", text).strip() or text   # "ask it how..." -> "how..."
+        # "ask it how..." -> "how...", "tell me about..." -> "about...".
+        # Only "it" was stripped before, so "tell me about yourself" kept the
+        # "me" and Notepad received the characters `me about yourself`.
+        text = re.sub(r"^(?:it|me|us|him|her|them)\s+", "", text).strip() or text
 
         # ── Browser + search is its own thing ─────────────────────────────────
         # Typing into a browser window is the fragile way to search: it depends
@@ -26597,17 +27020,20 @@ def resolve_steps(text: str) -> list[dict] | None:
         # used to type the literal words "about yourself", which is the single
         # most obviously stupid thing it did. `compose` generates the text with
         # the LLM first, then types the result.
+        composing = _wants_composition(verb, text, app)
         body = ({"action": "compose",   "params": {"prompt": text, "topic": text}}
-                if _wants_composition(verb, text)
+                if composing
                 else {"action": "type_text", "params": {"text": text}})
         steps = [
             {"action": "open_app",        "params": {"name_or_path": app}},
             {"action": "wait_for_window", "params": {"title": app, "timeout": 12}},
             body,
         ]
-        # Press Enter only for send/ask/search verbs (chat & search boxes submit
-        # on Enter). For "type/write" into an editor like Notepad, leave it be.
-        if not verb.startswith(("type", "write")):
+        # Press Enter only when the text is a message TO something that will
+        # answer it. Composed prose is the answer — hitting Enter after it just
+        # adds a blank line to the user's document, and in a chat app it would
+        # send Jarvis's own essay to a contact.
+        if not verb.startswith(("type", "write")) and not composing:
             steps.append({"action": "press", "params": {"key": "enter"}})
         return steps
 
@@ -29703,6 +30129,9 @@ export default function Earn() {
   const [form, setForm] = useState({ label: "", jobs_url: "", login_url: "", kind: "board", username: "", password: "" });
   const [switching, setSwitching] = useState(false);
   const [receipt, setReceipt] = useState(null);   // "what did it actually send?"
+  // "I press approve all but I don't know what's going on, if it sent it."
+  // One line of live truth about the queue, always on screen.
+  const [outcome, setOutcome] = useState(null);
 
   /**
    * Pending intent. The switch used to flip back and forth: you pressed Start,
@@ -29720,12 +30149,13 @@ export default function Earn() {
 
   const load = async () => {
     try {
-      const [i, q, s, c, p] = await Promise.all([
+      const [i, q, s, c, p, o] = await Promise.all([
         fetch(`${API}/automation/income/status`).then(r => r.json()).catch(() => null),
         fetch(`${API}/automation/queue?limit=100`).then(r => r.json()).catch(() => ({ queue: [] })),
         fetch(`${API}/sessions/status`).then(r => r.json()).catch(() => ({ platforms: [] })),
         fetch(`${API}/sessions/custom`).then(r => r.json()).catch(() => ({ platforms: [] })),
         fetch(`${API}/automation/profile`).then(r => r.json()).catch(() => null),
+        fetch(`${API}/automation/queue/outcome`).then(r => r.json()).catch(() => null),
       ]);
       // Resolve the pending intent once the server reports what we asked for
       // (or once we've waited long enough that it clearly isn't going to).
@@ -29738,10 +30168,18 @@ export default function Earn() {
         }
       }
       setIncome(i); setQueue(q.queue || []); setSessions(s.platforms || []);
-      setCustom(c.platforms || []); setProfile(p);
+      setCustom(c.platforms || []); setProfile(p); setOutcome(o);
     } catch { /* backend down */ }
   };
-  useEffect(() => { load(); const t = setInterval(load, 7000); return () => clearInterval(t); }, []);
+  // Poll faster while the executor is actually sending. Seven seconds is fine
+  // for an idle page; during a submission run it's long enough that the page
+  // looks frozen at the exact moment you most want to see it move.
+  const submitting = !!outcome?.running;
+  useEffect(() => {
+    load();
+    const t = setInterval(load, submitting ? 2000 : 7000);
+    return () => clearInterval(t);
+  }, [submitting]);
 
   const toggle = async () => {
     if (switching) return;                       // no double-fire
@@ -29893,8 +30331,50 @@ export default function Earn() {
               </button>
             )}
             <span style={{ fontSize: 12, color: T.dim }}>
-              Each submission saves a receipt you can open with "Proof".
+              Approving sends nothing. Submit does — and saves a receipt you can
+              open with "Proof".
             </span>
+          </div>
+        )}
+
+        {/* The answer to "did it actually send?" — always visible, never a guess. */}
+        {outcome?.headline && (
+          <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10,
+                        background: "rgba(0,0,0,0.25)",
+                        border: `1px solid ${submitting ? "rgba(84,214,255,0.4)" : T.line}` }}>
+            <div style={{ fontSize: 9, color: T.dim, letterSpacing: "0.12em",
+                          textTransform: "uppercase", marginBottom: 5 }}>
+              What has actually happened
+            </div>
+            <div style={{ fontSize: 13, color: submitting ? T.cyan : T.text, lineHeight: 1.5 }}>
+              {outcome.headline}
+            </div>
+            {(outcome.recent || []).length > 0 && (
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                {outcome.recent.slice(0, 4).map(r => (
+                  <div key={r.id} style={{ display: "flex", gap: 8, alignItems: "center",
+                                           fontSize: 12, color: T.dim }}>
+                    <span style={{ color: r.status === "done" ? T.green
+                                        : r.status === "failed" ? T.red : T.amber }}>
+                      {r.status === "done"
+                        ? (r.confirmed_by_site === false ? "sent, unconfirmed" : "sent")
+                        : r.status === "needs_login" ? "needs login"
+                        : r.status === "ready" ? "apply by hand" : r.status}
+                    </span>
+                    <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis",
+                                   whiteSpace: "nowrap" }}>
+                      {r.job_title}
+                    </span>
+                    {r.has_proof && (
+                      <button onClick={() => openReceipt(r.id)}
+                        style={{ background: "none", border: `1px solid ${T.line}`,
+                                 color: T.cyan, borderRadius: 7, fontSize: 11,
+                                 padding: "2px 8px", cursor: "pointer" }}>Proof</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -32359,15 +32839,43 @@ pause
 # FILE 175/183: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-03T18:29:23.244519
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-04T12:56:16.460956
 platform: linux  python: 3.11.15
-20 passed · 0 failed · 1 skipped
+24 passed · 0 failed · 1 skipped
 
 [PASS] control — Pause / resume / cancel behave
     Pause holds, cancel releases cleanly, clear resets.
     · a paused worker holds at the checkpoint
     · cancel releases a paused worker and raises Cancelled
     · explain() answered with 2 reason(s)
+
+[PASS] stale_stop — A leftover Stop doesn't poison the next command
+    Stop stops one thing, and only while that thing is running.
+    · cancel with nothing running -> cleared
+    · cancel during live work -> kept
+    · the chat path calls clear_stale() before running
+    · execute_chain runs inside run_scope()
+
+[PASS] looking — Looking at the screen targets the app that was asked about
+    Jarvis looks at the window it was asked about, or says it couldn't.
+    · screenshot and analyze require the target app to be in front
+    · an unconfirmed focus attaches a caveat to the answer
+    · 'check my qq messages' -> open_app -> wait_for_window -> screenshot -> analyze
+
+[PASS] literal_typing — Questions get answered, not transcribed
+    Literal stays literal; questions get answered by whoever can answer them.
+    · 'notepad tell me about yourself' -> compose, not type
+    · 'doubao ask it how it is' -> types the question and sends it
+    · 'type hello' still types hello
+    · 'open notepad, tell me a joke' splits at the comma
+    · 'type hello, world' is not split
+
+[PASS] reflection — Finished work produces a lesson
+    Work that finishes produces a lesson, off the critical path.
+    · orchestrator calls brain_decision.after_goal() at the terminal state
+    · the desktop chain reflects on failed or retried runs
+    · reflection runs off the reply path
+    · lesson names the failing step: Failed: 1/2 steps verified. Broke at step 2: type_text (text never lan
 
 [PASS] ai_router — One gate for AI; local by default; keys stay secret
     One gate, local by default, degrades to local, keys stay secret.
@@ -32387,7 +32895,7 @@ platform: linux  python: 3.11.15
 
 [PASS] memory_pressure — Low RAM is explained, not just endured
     RAM pressure is measured, explained, and actionable.
-    · 16.1 GB free — plenty. (level=ok)
+    · 16.2 GB free — plenty. (level=ok)
     · 1GB -> critical, 2.5GB -> not ok, 8GB -> ok
     · free-memory action answers: Ollama wasn't holding any models — nothing to free. The memory is goin
 
@@ -32463,7 +32971,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785781763' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1785848176' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -32476,7 +32984,7 @@ platform: linux  python: 3.11.15
 
 [PASS] model_pressure — keep_alive adapts to memory pressure
     Scaling is correct: big=90s, small=5m.
-    · free RAM 15.9GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
+    · free RAM 15.8GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
     · skipped the live unload (needs --include-destructive)
 
 [PASS] classification — Real errors map to the right cause
@@ -34166,6 +34674,220 @@ def s_memory_pressure():
     return r.ok("RAM pressure is measured, explained, and actionable.")
 
 
+def s_stale_stop():
+    """
+    One press of Stop must not kill every command after it.
+
+    Straight from a runtime report: Stop was pressed at 10:58:39, and the next
+    five commands over the following three minutes all died instantly with
+    "Cancelled — stopped between steps". Jarvis appeared to stop working
+    entirely, with no usable reason, until the backend was restarted. The
+    orchestrator cleared the cancel flag when a GOAL ended, but a chat command
+    never goes through the orchestrator, so nothing ever cleared it.
+    """
+    r = Result("stale_stop", "A leftover Stop doesn't poison the next command")
+    from services import control
+
+    control.clear()
+
+    # Nothing running: a cancel is by definition aimed at something that's over.
+    control.cancel("test")
+    if not control.is_cancelled():
+        return r.bad("cancel() didn't set the flag.")
+    out = control.clear_stale()
+    if not out.get("cleared"):
+        return r.bad("A cancel with nothing running was NOT cleared — this is "
+                     "the bug where one Stop killed every later command.")
+    if control.is_cancelled():
+        return r.bad("clear_stale() said it cleared, but the flag is still set.")
+    r.note("cancel with nothing running -> cleared")
+
+    # A cancel aimed at LIVE work must survive. Clearing it would silently
+    # un-cancel work the user just asked to stop, which is the worse failure.
+    with control.run_scope():
+        control.cancel("test")
+        if not control.busy():
+            return r.bad("run_scope() didn't mark the chain as running.")
+        out = control.clear_stale()
+        if out.get("cleared"):
+            return r.bad("A LIVE cancel was cleared — Stop would do nothing "
+                         "while work was actually running.")
+        if not control.is_cancelled():
+            return r.bad("The live cancel was dropped anyway.")
+    r.note("cancel during live work -> kept")
+
+    if control.busy():
+        return r.bad("run_scope() leaked: still 'busy' after the block exited.")
+    control.clear()
+
+    # The real chat path has to call it, or the fix exists and never runs.
+    src = (Path(ROOT) / "backend" / "adapters" / "commander_adapter.py").read_text(encoding="utf-8")
+    if "clear_stale" not in src:
+        return r.bad("commander_adapter never calls clear_stale(), so the chat "
+                     "path is still poisoned by a leftover Stop.")
+    r.note("the chat path calls clear_stale() before running")
+
+    exe = (Path(ROOT) / "backend" / "agents" / "desktop_agent.py").read_text(encoding="utf-8")
+    if "run_scope()" not in exe:
+        return r.bad("execute_chain isn't inside run_scope(), so a live cancel "
+                     "would be cleared by the next chat message.")
+    r.note("execute_chain runs inside run_scope()")
+    return r.ok("Stop stops one thing, and only while that thing is running.")
+
+
+def s_looking_at_the_right_window():
+    """
+    Answers about a specific app must not come from whatever window was in front.
+
+    The user asked Jarvis to check QQ messages. QQ was ALREADY running, so
+    open_app saw a live window and returned verified without raising it. The
+    screenshot then captured a different window, and the vision model answered
+    honestly about it: "no visible new or unread messages". Technically true,
+    completely wrong, and indistinguishable from a real answer — the user only
+    knew because they never saw QQ come to the front.
+    """
+    r = Result("looking", "Looking at the screen targets the app that was asked about")
+    src = (Path(ROOT) / "backend" / "agents" / "desktop_agent.py").read_text(encoding="utf-8")
+
+    m = re.search(r"_INPUT\s*=\s*\{(.*?)\}", src, re.S)
+    if not m:
+        return r.bad("No _INPUT set in execute_chain — nothing decides which "
+                     "actions need the app in front.")
+    need_focus = m.group(1)
+    for act in ("screenshot", "analyze"):
+        if f'"{act}"' not in need_focus:
+            return r.bad(f"'{act}' isn't in the set of actions that require the "
+                         f"target app to be foreground. Looking at the screen IS "
+                         f"an interaction with a specific window.")
+    r.note("screenshot and analyze require the target app to be in front")
+
+    if "focus_unconfirmed" not in src:
+        return r.bad("Nothing records that focus couldn't be confirmed, so an "
+                     "answer about the wrong window is presented as fact.")
+    if "could not bring" not in src:
+        return r.bad("No caveat text — an unverified look still reads as a "
+                     "confident answer about the app you asked about.")
+    r.note("an unconfirmed focus attaches a caveat to the answer")
+
+    # And the plan for "check my qq messages" must still be the right four steps.
+    from services import decompose
+    steps = decompose.decompose("check my qq messages")["steps"]
+    actions = [s["action"] for s in steps]
+    for want in ("open_app", "wait_for_window", "screenshot", "analyze"):
+        if want not in actions:
+            return r.bad(f"'check my qq messages' produced {actions} — no {want}.")
+    r.note(f"'check my qq messages' -> {' -> '.join(actions)}")
+    return r.ok("Jarvis looks at the window it was asked about, or says it couldn't.")
+
+
+def s_literal_typing():
+    """
+    Asking an app a question must not put the question in the app.
+
+    "Open notepad tell me about yourself" typed the characters `me about
+    yourself` into Notepad. Two faults in one: the pronoun was left in the text,
+    and a question aimed at a text editor was treated as literal input. Notepad
+    cannot answer anything — so the only sensible reading is "you answer it and
+    write the answer here".
+    """
+    r = Result("literal_typing", "Questions get answered, not transcribed")
+    from services import decompose
+
+    def plan(text):
+        return [(s["action"], s.get("params", {})) for s in
+                decompose.decompose(text)["steps"]]
+
+    # The exact sentence from the report.
+    steps = plan("Open notepad tell me about yourself")
+    typed = [p.get("text", "") for a, p in steps if a == "type_text"]
+    if any("me about" in t for t in typed):
+        return r.bad(f"Still typing the pronoun: {typed!r}")
+    if not any(a == "compose" for a, _ in steps):
+        return r.bad("Notepad was asked a question and Jarvis didn't compose an "
+                     f"answer — plan was {[a for a, _ in steps]}")
+    r.note("'notepad tell me about yourself' -> compose, not type")
+
+    # A conversational app is the opposite: the question is FOR the app.
+    steps = plan("open doubao and ask it how it is")
+    if any(a == "compose" for a, _ in steps):
+        return r.bad("Composed an answer instead of asking Doubao — the question "
+                     "was meant for the app, not for Jarvis.")
+    if not any(a == "type_text" and "how it is" in p.get("text", "")
+               for a, p in steps):
+        return r.bad(f"Didn't type the question into Doubao: {steps}")
+    if not any(a == "press" for a, _ in steps):
+        return r.bad("Typed a question into a chat app and never sent it.")
+    r.note("'doubao ask it how it is' -> types the question and sends it")
+
+    # Literal must stay literal.
+    steps = plan("open notepad and type hello")
+    if not any(a == "type_text" and p.get("text") == "hello" for a, p in steps):
+        return r.bad(f"'type hello' stopped being literal: {steps}")
+    r.note("'type hello' still types hello")
+
+    # A comma is a step boundary when a verb follows it, or the whole tail
+    # becomes the app name and the launch fails on an app that doesn't exist.
+    steps = plan("open notepad, tell me a joke")
+    app = next((p.get("name_or_path") for a, p in steps if a == "open_app"), "")
+    if app != "notepad":
+        return r.bad(f"Tried to launch an app called {app!r}.")
+    r.note("'open notepad, tell me a joke' splits at the comma")
+
+    # ...but not when it's part of the text being typed.
+    steps = plan("open notepad and type hello, world")
+    if not any(a == "type_text" and p.get("text") == "hello, world" for a, p in steps):
+        return r.bad(f"Split inside literal text: {steps}")
+    r.note("'type hello, world' is not split")
+    return r.ok("Literal stays literal; questions get answered by whoever can answer them.")
+
+
+def s_reflection_wired():
+    """
+    The learning loop must actually be fed.
+
+    reflection.reflect() and brain_decision.after_goal() both existed and
+    neither was called from the orchestrator or from the chat path — the two
+    places where work actually finishes. A runtime report after hours of use
+    said `reflections: 0`, which is what a learning loop nobody calls looks
+    like from the outside: identical to having none.
+    """
+    r = Result("reflection", "Finished work produces a lesson")
+
+    core = (Path(ROOT) / "backend" / "agents" / "orchestrator_core.py").read_text(encoding="utf-8")
+    if "after_goal" not in core:
+        return r.bad("The orchestrator never hands a finished goal to the brain, "
+                     "so nothing is ever learned from a freelance run.")
+    r.note("orchestrator calls brain_decision.after_goal() at the terminal state")
+
+    desk = (Path(ROOT) / "backend" / "agents" / "desktop_agent.py").read_text(encoding="utf-8")
+    if "reflection.reflect" not in desk:
+        return r.bad("Chat commands never reflect — and chat is how Jarvis is "
+                     "actually driven.")
+    r.note("the desktop chain reflects on failed or retried runs")
+
+    # It must not be on the critical path: reflect() may call the model, and
+    # this machine cannot spare a model call after every "open notepad".
+    body = desk.split("def _learn_from_chain")[-1].split("\ndef ")[0]
+    if "threading.Thread" not in body:
+        return r.bad("Reflection runs inline — every command would wait for a "
+                     "model call on a 16GB machine.")
+    r.note("reflection runs off the reply path")
+
+    from services import reflection
+    out = reflection.reflect("test goal", [
+        {"step": 1, "action": "open_app", "success": True, "verified": True},
+        {"step": 2, "action": "type_text", "success": False, "verified": False,
+         "verify_reason": "text never landed"},
+    ], False, kind="test")
+    lesson = (out or {}).get("reflection", "")
+    if not lesson:
+        return r.bad("reflect() produced no lesson at all.")
+    if "type_text" not in lesson and "step 2" not in lesson:
+        return r.bad(f"The lesson doesn't name where it broke: {lesson[:120]!r}")
+    r.note(f"lesson names the failing step: {lesson[:70]}")
+    return r.ok("Work that finishes produces a lesson, off the critical path.")
+
+
 def s_ai_router():
     """
     Every AI call goes through one gate, that gate never raises, it stays local
@@ -34353,6 +35075,10 @@ def s_launchers():
 
 SCENARIOS = {
     "control":        (s_control, False),
+    "stale_stop":     (s_stale_stop, False),
+    "looking":        (s_looking_at_the_right_window, False),
+    "literal_typing": (s_literal_typing, False),
+    "reflection":     (s_reflection_wired, False),
     "ai_router":      (s_ai_router, False),
     "proposal_batching": (s_proposal_batching, False),
     "memory_pressure": (s_memory_pressure, False),

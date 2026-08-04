@@ -76,8 +76,14 @@ ACTION_VERBS: dict[str, str] = {
 _VERBS_BY_LENGTH = sorted(ACTION_VERBS, key=len, reverse=True)
 
 # Words that join clauses. Only a boundary when an action verb follows.
+#
+# "," and ";" are in here for the same reason as the words: people write "open
+# notepad, tell me a joke" constantly. Without the comma the whole tail became
+# the app name and Jarvis tried to launch an application called "notepad, tell
+# me a joke". The verb-follows rule is what keeps this safe — "type hello,
+# world" has no verb after the comma, so it stays one clause.
 _CONNECTORS = ("and then", "then", "and after that", "after that", "and also",
-               "also", "and", "next", "afterwards", "followed by", ";")
+               "also", "and", "next", "afterwards", "followed by", ";", ",")
 
 # Filler between a connector and its verb: "and then please also open ..."
 _FILLER = ("please", "just", "now", "also", "go ahead and", "you can", "can you",
@@ -155,7 +161,8 @@ def split_clauses(text: str) -> list[str]:
     marks: list[tuple[int, int]] = []
     low = protected.lower()
     for conn in sorted(_CONNECTORS, key=len, reverse=True):
-        pat = re.escape(conn) if conn == ";" else r"\b" + re.escape(conn) + r"\b"
+        # \b doesn't apply to punctuation — ";" and "," need a literal match.
+        pat = re.escape(conn) if conn in (";", ",") else r"\b" + re.escape(conn) + r"\b"
         for m in re.finditer(pat, low):
             if any(s <= m.start() < e for s, e in marks):
                 continue        # inside a connector we already took
@@ -240,17 +247,39 @@ def parse_clause(clause: str) -> dict:
         return {"intent": "unknown", "object": clause.strip(), "raw": clause}
     verb, intent, obj = hit
     obj = obj.strip(" .,\"'“”")
-    # "ask it how it is" / "tell it hello" — the pronoun is the app we just opened.
-    obj = re.sub(r"^(?:it|them|him|her)\s+", "", obj).strip()
+    # "ask it how it is" / "tell it hello" — the pronoun is the app we just
+    # opened. "me"/"us" points the other way: "tell me a joke" is addressed to
+    # Jarvis. Either way the pronoun is not part of the text, and leaving it in
+    # is how Notepad ended up containing the characters `me about yourself`.
+    obj = re.sub(r"^(?:it|them|him|her|me|us)\s+", "", obj).strip()
+
+    # "tell me about X" is listed as an analyze verb because "tell me about this
+    # page" means look at the screen. It only means that when X IS the screen —
+    # "tell me about yourself" is a request for writing, and answering it by
+    # screenshotting Notepad describes an empty document instead.
+    if verb == "tell me about" and obj and obj.lower() not in _PAGE_WORDS:
+        intent = "write"
+        obj = f"about {obj}"      # keep the subject readable as a writing brief
     return {"intent": intent, "object": obj, "verb": verb, "raw": clause}
 
 
 # ── intent + context -> steps ────────────────────────────────────────────────
 
-def _wants_composition(intent: str, text: str) -> bool:
+def _wants_composition(intent: str, text: str, verb: str = "", app: str = "") -> bool:
+    """
+    Defer to tool_registry so both entry points answer this identically.
+
+    The VERB matters, not just the intent: "ask" and "tell" aimed at Notepad
+    mean Jarvis should answer and write it down, because there is nothing in
+    Notepad to ask. Aimed at Doubao they stay literal — the question is for the
+    app. Passing only the intent flattened that distinction.
+    """
     try:
         from services.tool_registry import _wants_composition as w
-        return w("write" if intent == "write" else "type", text)
+        v = (verb or "").lower()
+        if not v.startswith(("ask", "tell")):
+            v = "write" if intent == "write" else "type"
+        return w(v, text, app)
     except Exception:
         return intent == "write" and len(text.split()) >= 5
 
@@ -344,7 +373,9 @@ def _steps_for(parsed: dict, ctx: dict) -> list[dict]:
             steps.append({"action": "wait_for_window",
                           "params": {"title": ctx["app"], "timeout": 12}})
             ctx["focused"] = True
-        if _wants_composition(intent, text):
+        composing = _wants_composition(intent, text, parsed.get("verb", ""),
+                                       ctx.get("app") or "")
+        if composing:
             hint = ""
             try:
                 from services import persona
@@ -355,8 +386,10 @@ def _steps_for(parsed: dict, ctx: dict) -> list[dict]:
                           "params": {"prompt": text, "topic": text, "style": hint}})
         else:
             steps.append({"action": "type_text", "params": {"text": text}})
-        # Chat boxes and search fields submit on Enter; editors should not.
-        if intent == "ask" or (ctx.get("app") and ctx.get("is_chat_app")):
+        # Chat boxes and search fields submit on Enter; editors should not — and
+        # composed prose never should, because it IS the answer, not a message
+        # being sent to something that will reply to it.
+        if not composing and (intent == "ask" or (ctx.get("app") and ctx.get("is_chat_app"))):
             steps.append({"action": "press", "params": {"key": "enter"}})
         return steps
 

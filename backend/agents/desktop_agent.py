@@ -720,6 +720,61 @@ def _learned_wait(app: str) -> float:
 
 def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
     """
+    Public entry point. Marks the chain as RUNNING for the duration.
+
+    That mark is what lets a leftover Stop be told apart from a live one. Cancel
+    is global on purpose — one Stop button has to halt whatever is going — but
+    global also meant the flag outlived the thing it was aimed at, so a single
+    press killed every command for the rest of the session. See
+    control.clear_stale(); it refuses to clear while this scope is open.
+    """
+    try:
+        from services import control
+    except Exception:
+        out = _execute_chain(steps, max_retries, goal)
+    else:
+        with control.run_scope():
+            out = _execute_chain(steps, max_retries, goal)
+    _learn_from_chain(goal, out)
+    return out
+
+
+def _learn_from_chain(goal: str, out: dict) -> None:
+    """
+    Record a lesson when a chat command went badly.
+
+    Reflection was wired to workflows and projects but never to chat, which is
+    how the user actually drives Jarvis — so a report after hours of use said
+    `reflections: 0` and the learning loop was, in practice, dead.
+
+    Only failures and retried runs are reflected on. A clean run teaches
+    nothing, and reflect() may consult the model: on a 16 GB machine that is not
+    something to do after every "open notepad". Cancels are skipped too — you
+    pressing Stop is not a lesson about the task.
+    """
+    if not isinstance(out, dict) or out.get("cancelled"):
+        return
+    results = out.get("steps") or []
+    ok = bool(out.get("success"))
+    retried = any((s.get("attempts") or 1) > 1 for s in results if isinstance(s, dict))
+    if ok and not retried:
+        return
+
+    def _bg():
+        try:
+            from services import reflection
+            reflection.reflect(goal or "desktop command", results, ok, kind="desktop")
+        except Exception:
+            pass
+
+    try:
+        threading.Thread(target=_bg, daemon=True).start()
+    except Exception:
+        pass
+
+
+def _execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
+    """
     Run desktop steps with the full execution loop:
         act → observe → verify → retry(≤max_retries) → record.
 
@@ -735,7 +790,22 @@ def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
     results = []
     steps = steps or []
     last_opened = None            # the app we most recently opened in this chain
-    _INPUT = {"type_text", "compose", "press", "hotkey", "click", "click_text"}
+    focus_unconfirmed = None      # set when we couldn't prove the app was in front
+
+    # Actions that need the target app IN FRONT before they run.
+    #
+    # screenshot and analyze were missing from this set, and that is the whole
+    # "it says there are no messages but it never opened QQ" complaint. QQ was
+    # already running, so open_app saw a live window, returned verified, and
+    # never raised it. The screenshot then captured whatever happened to be in
+    # front — and the vision model answered honestly about the wrong window:
+    # "no visible unread messages". Technically true, completely useless, and
+    # indistinguishable from a real answer.
+    #
+    # Looking at the screen is an interaction with a specific window, exactly
+    # like typing into one.
+    _INPUT = {"type_text", "compose", "press", "hotkey", "click", "click_text",
+              "screenshot", "analyze", "scroll"}
 
     # Publish the plan so it's watchable while it runs, not only afterwards.
     # ensure() defers to a caller that already published a better-worded plan.
@@ -765,6 +835,7 @@ def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
         # doesn't type" bug, which also happens when wait_for_window sits between
         # open and type). Confirm focus here regardless of step ordering, and
         # STOP HONESTLY if we can't get it — never type into the void.
+        looking = action in ("screenshot", "analyze")
         if action in _INPUT and last_opened:
             if not _is_foreground(last_opened):
                 fw = focus_window(last_opened)
@@ -775,7 +846,16 @@ def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
                 # that check is the real arbiter of whether the text landed. So
                 # try anyway and let verification decide. Still truthful: if the
                 # text didn't land, the step fails with that exact reason.
-                time.sleep(0.3)
+                time.sleep(0.5)
+
+            # Typing has a read-back to prove it landed. LOOKING has nothing:
+            # a screenshot always succeeds, and the vision model will answer
+            # confidently about whatever window it was handed. So if we still
+            # can't confirm the app is in front, record that — the answer must
+            # carry the doubt rather than presenting a description of the wrong
+            # window as the answer to a question about this one.
+            if looking and not _is_foreground(last_opened):
+                focus_unconfirmed = last_opened
 
         # Pause/cancel lands BETWEEN steps. Never inside one: stopping halfway
         # through typing leaves half a sentence in the user's document.
@@ -835,6 +915,19 @@ def execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
         entry = {"step": i + 1, "action": action, "attempts": attempts,
                  "verified": verified, "verify_reason": reason,
                  "duration_s": elapsed, **(r or {})}
+
+        # An answer about the screen is only about the app we were asked about
+        # if that app was actually in front. When it wasn't, say so IN the
+        # answer — "no unread messages" describing the wrong window is the most
+        # misleading thing Jarvis can produce, because it looks like a result.
+        if action == "analyze" and focus_unconfirmed:
+            caveat = (f"(I could not bring {focus_unconfirmed} to the front, so "
+                      f"this describes whatever window was showing — it may not "
+                      f"be {focus_unconfirmed}.)")
+            for key in ("answer", "ai_answer"):
+                if entry.get(key):
+                    entry[key] = f"{caveat}\n\n{entry[key]}"
+            entry["focus_unconfirmed"] = focus_unconfirmed
 
         fail = None
         if not verified:

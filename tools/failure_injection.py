@@ -1014,6 +1014,220 @@ def s_memory_pressure():
     return r.ok("RAM pressure is measured, explained, and actionable.")
 
 
+def s_stale_stop():
+    """
+    One press of Stop must not kill every command after it.
+
+    Straight from a runtime report: Stop was pressed at 10:58:39, and the next
+    five commands over the following three minutes all died instantly with
+    "Cancelled — stopped between steps". Jarvis appeared to stop working
+    entirely, with no usable reason, until the backend was restarted. The
+    orchestrator cleared the cancel flag when a GOAL ended, but a chat command
+    never goes through the orchestrator, so nothing ever cleared it.
+    """
+    r = Result("stale_stop", "A leftover Stop doesn't poison the next command")
+    from services import control
+
+    control.clear()
+
+    # Nothing running: a cancel is by definition aimed at something that's over.
+    control.cancel("test")
+    if not control.is_cancelled():
+        return r.bad("cancel() didn't set the flag.")
+    out = control.clear_stale()
+    if not out.get("cleared"):
+        return r.bad("A cancel with nothing running was NOT cleared — this is "
+                     "the bug where one Stop killed every later command.")
+    if control.is_cancelled():
+        return r.bad("clear_stale() said it cleared, but the flag is still set.")
+    r.note("cancel with nothing running -> cleared")
+
+    # A cancel aimed at LIVE work must survive. Clearing it would silently
+    # un-cancel work the user just asked to stop, which is the worse failure.
+    with control.run_scope():
+        control.cancel("test")
+        if not control.busy():
+            return r.bad("run_scope() didn't mark the chain as running.")
+        out = control.clear_stale()
+        if out.get("cleared"):
+            return r.bad("A LIVE cancel was cleared — Stop would do nothing "
+                         "while work was actually running.")
+        if not control.is_cancelled():
+            return r.bad("The live cancel was dropped anyway.")
+    r.note("cancel during live work -> kept")
+
+    if control.busy():
+        return r.bad("run_scope() leaked: still 'busy' after the block exited.")
+    control.clear()
+
+    # The real chat path has to call it, or the fix exists and never runs.
+    src = (Path(ROOT) / "backend" / "adapters" / "commander_adapter.py").read_text(encoding="utf-8")
+    if "clear_stale" not in src:
+        return r.bad("commander_adapter never calls clear_stale(), so the chat "
+                     "path is still poisoned by a leftover Stop.")
+    r.note("the chat path calls clear_stale() before running")
+
+    exe = (Path(ROOT) / "backend" / "agents" / "desktop_agent.py").read_text(encoding="utf-8")
+    if "run_scope()" not in exe:
+        return r.bad("execute_chain isn't inside run_scope(), so a live cancel "
+                     "would be cleared by the next chat message.")
+    r.note("execute_chain runs inside run_scope()")
+    return r.ok("Stop stops one thing, and only while that thing is running.")
+
+
+def s_looking_at_the_right_window():
+    """
+    Answers about a specific app must not come from whatever window was in front.
+
+    The user asked Jarvis to check QQ messages. QQ was ALREADY running, so
+    open_app saw a live window and returned verified without raising it. The
+    screenshot then captured a different window, and the vision model answered
+    honestly about it: "no visible new or unread messages". Technically true,
+    completely wrong, and indistinguishable from a real answer — the user only
+    knew because they never saw QQ come to the front.
+    """
+    r = Result("looking", "Looking at the screen targets the app that was asked about")
+    src = (Path(ROOT) / "backend" / "agents" / "desktop_agent.py").read_text(encoding="utf-8")
+
+    m = re.search(r"_INPUT\s*=\s*\{(.*?)\}", src, re.S)
+    if not m:
+        return r.bad("No _INPUT set in execute_chain — nothing decides which "
+                     "actions need the app in front.")
+    need_focus = m.group(1)
+    for act in ("screenshot", "analyze"):
+        if f'"{act}"' not in need_focus:
+            return r.bad(f"'{act}' isn't in the set of actions that require the "
+                         f"target app to be foreground. Looking at the screen IS "
+                         f"an interaction with a specific window.")
+    r.note("screenshot and analyze require the target app to be in front")
+
+    if "focus_unconfirmed" not in src:
+        return r.bad("Nothing records that focus couldn't be confirmed, so an "
+                     "answer about the wrong window is presented as fact.")
+    if "could not bring" not in src:
+        return r.bad("No caveat text — an unverified look still reads as a "
+                     "confident answer about the app you asked about.")
+    r.note("an unconfirmed focus attaches a caveat to the answer")
+
+    # And the plan for "check my qq messages" must still be the right four steps.
+    from services import decompose
+    steps = decompose.decompose("check my qq messages")["steps"]
+    actions = [s["action"] for s in steps]
+    for want in ("open_app", "wait_for_window", "screenshot", "analyze"):
+        if want not in actions:
+            return r.bad(f"'check my qq messages' produced {actions} — no {want}.")
+    r.note(f"'check my qq messages' -> {' -> '.join(actions)}")
+    return r.ok("Jarvis looks at the window it was asked about, or says it couldn't.")
+
+
+def s_literal_typing():
+    """
+    Asking an app a question must not put the question in the app.
+
+    "Open notepad tell me about yourself" typed the characters `me about
+    yourself` into Notepad. Two faults in one: the pronoun was left in the text,
+    and a question aimed at a text editor was treated as literal input. Notepad
+    cannot answer anything — so the only sensible reading is "you answer it and
+    write the answer here".
+    """
+    r = Result("literal_typing", "Questions get answered, not transcribed")
+    from services import decompose
+
+    def plan(text):
+        return [(s["action"], s.get("params", {})) for s in
+                decompose.decompose(text)["steps"]]
+
+    # The exact sentence from the report.
+    steps = plan("Open notepad tell me about yourself")
+    typed = [p.get("text", "") for a, p in steps if a == "type_text"]
+    if any("me about" in t for t in typed):
+        return r.bad(f"Still typing the pronoun: {typed!r}")
+    if not any(a == "compose" for a, _ in steps):
+        return r.bad("Notepad was asked a question and Jarvis didn't compose an "
+                     f"answer — plan was {[a for a, _ in steps]}")
+    r.note("'notepad tell me about yourself' -> compose, not type")
+
+    # A conversational app is the opposite: the question is FOR the app.
+    steps = plan("open doubao and ask it how it is")
+    if any(a == "compose" for a, _ in steps):
+        return r.bad("Composed an answer instead of asking Doubao — the question "
+                     "was meant for the app, not for Jarvis.")
+    if not any(a == "type_text" and "how it is" in p.get("text", "")
+               for a, p in steps):
+        return r.bad(f"Didn't type the question into Doubao: {steps}")
+    if not any(a == "press" for a, _ in steps):
+        return r.bad("Typed a question into a chat app and never sent it.")
+    r.note("'doubao ask it how it is' -> types the question and sends it")
+
+    # Literal must stay literal.
+    steps = plan("open notepad and type hello")
+    if not any(a == "type_text" and p.get("text") == "hello" for a, p in steps):
+        return r.bad(f"'type hello' stopped being literal: {steps}")
+    r.note("'type hello' still types hello")
+
+    # A comma is a step boundary when a verb follows it, or the whole tail
+    # becomes the app name and the launch fails on an app that doesn't exist.
+    steps = plan("open notepad, tell me a joke")
+    app = next((p.get("name_or_path") for a, p in steps if a == "open_app"), "")
+    if app != "notepad":
+        return r.bad(f"Tried to launch an app called {app!r}.")
+    r.note("'open notepad, tell me a joke' splits at the comma")
+
+    # ...but not when it's part of the text being typed.
+    steps = plan("open notepad and type hello, world")
+    if not any(a == "type_text" and p.get("text") == "hello, world" for a, p in steps):
+        return r.bad(f"Split inside literal text: {steps}")
+    r.note("'type hello, world' is not split")
+    return r.ok("Literal stays literal; questions get answered by whoever can answer them.")
+
+
+def s_reflection_wired():
+    """
+    The learning loop must actually be fed.
+
+    reflection.reflect() and brain_decision.after_goal() both existed and
+    neither was called from the orchestrator or from the chat path — the two
+    places where work actually finishes. A runtime report after hours of use
+    said `reflections: 0`, which is what a learning loop nobody calls looks
+    like from the outside: identical to having none.
+    """
+    r = Result("reflection", "Finished work produces a lesson")
+
+    core = (Path(ROOT) / "backend" / "agents" / "orchestrator_core.py").read_text(encoding="utf-8")
+    if "after_goal" not in core:
+        return r.bad("The orchestrator never hands a finished goal to the brain, "
+                     "so nothing is ever learned from a freelance run.")
+    r.note("orchestrator calls brain_decision.after_goal() at the terminal state")
+
+    desk = (Path(ROOT) / "backend" / "agents" / "desktop_agent.py").read_text(encoding="utf-8")
+    if "reflection.reflect" not in desk:
+        return r.bad("Chat commands never reflect — and chat is how Jarvis is "
+                     "actually driven.")
+    r.note("the desktop chain reflects on failed or retried runs")
+
+    # It must not be on the critical path: reflect() may call the model, and
+    # this machine cannot spare a model call after every "open notepad".
+    body = desk.split("def _learn_from_chain")[-1].split("\ndef ")[0]
+    if "threading.Thread" not in body:
+        return r.bad("Reflection runs inline — every command would wait for a "
+                     "model call on a 16GB machine.")
+    r.note("reflection runs off the reply path")
+
+    from services import reflection
+    out = reflection.reflect("test goal", [
+        {"step": 1, "action": "open_app", "success": True, "verified": True},
+        {"step": 2, "action": "type_text", "success": False, "verified": False,
+         "verify_reason": "text never landed"},
+    ], False, kind="test")
+    lesson = (out or {}).get("reflection", "")
+    if not lesson:
+        return r.bad("reflect() produced no lesson at all.")
+    if "type_text" not in lesson and "step 2" not in lesson:
+        return r.bad(f"The lesson doesn't name where it broke: {lesson[:120]!r}")
+    r.note(f"lesson names the failing step: {lesson[:70]}")
+    return r.ok("Work that finishes produces a lesson, off the critical path.")
+
+
 def s_ai_router():
     """
     Every AI call goes through one gate, that gate never raises, it stays local
@@ -1201,6 +1415,10 @@ def s_launchers():
 
 SCENARIOS = {
     "control":        (s_control, False),
+    "stale_stop":     (s_stale_stop, False),
+    "looking":        (s_looking_at_the_right_window, False),
+    "literal_typing": (s_literal_typing, False),
+    "reflection":     (s_reflection_wired, False),
     "ai_router":      (s_ai_router, False),
     "proposal_batching": (s_proposal_batching, False),
     "memory_pressure": (s_memory_pressure, False),
