@@ -316,6 +316,26 @@ Errors in that output are normal — it's deliberately breaking things.
 
 ---
 
+## Nothing to do here — just so you know it exists
+
+I set up automatic checking on the code itself. **You don't run any of this**
+and it changes nothing about how you use Jarvis. It runs on GitHub every time I
+change something, and it has already caught three real bugs that I could not
+see on my machine:
+
+- **Jarvis crashed on any PC with no screen attached.** A library it uses fails
+  differently there, and the code only handled one of the two ways it can fail.
+- **Settings silently didn't save on a brand-new install.** If you'd run
+  `DOCTOR.bat` on a fresh copy before ever starting Jarvis, anything it saved
+  would have been thrown away without a word.
+- **A checker told me to install something that was already installed** — the
+  same kind of wrong-advice message that has wasted your time before.
+
+The point of it is that "it works on my machine" stops being good enough. Two
+of those three would have reached you.
+
+---
+
 ## One safety note
 
 Jarvis can type on your keyboard and use a browser that's already signed in to
