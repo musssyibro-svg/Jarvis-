@@ -15,18 +15,44 @@ from pathlib import Path
 import psutil
 
 # ── Safe imports ──────────────────────────────────────────────────────────────
+#
+# `except Exception`, not `except ImportError`, and that distinction is the
+# whole point.
+#
+# pyautogui is INSTALLED and still fails to import when there is no display:
+# it pulls in mouseinfo, which does `Display(os.environ['DISPLAY'])` at module
+# scope and raises KeyError('DISPLAY'). That is not an ImportError, so the old
+# guard didn't catch it — and importing desktop_agent crashed outright instead
+# of degrading to HAS_PYAUTOGUI = False.
+#
+# CLAUDE.md: a missing optional dependency is a SKIP with an install hint, not
+# a failure. "Installed but unusable here" is the same situation and deserves
+# the same treatment. Found by CI on a headless runner; it never reproduced
+# locally, because locally pyautogui simply wasn't installed and the
+# ImportError path worked fine.
 try:
     import pyautogui
     pyautogui.FAILSAFE = True   # Move mouse to top-left to abort
     pyautogui.PAUSE    = 0.05
     HAS_PYAUTOGUI = True
-except ImportError:
+    _NO_INPUT_REASON = ""
+except Exception as _e:
     HAS_PYAUTOGUI = False
+    # Keep WHY, so the error names the real cause. "Run: pip install pyautogui"
+    # is actively misleading when the package is installed and the display is
+    # missing — it sends the user off to install something they already have.
+    _NO_INPUT_REASON = (
+        "pyautogui is not installed. Run: pip install pyautogui"
+        if isinstance(_e, ImportError) else
+        f"pyautogui is installed but can't start here ({type(_e).__name__}: "
+        f"{_e}). On Windows that usually means no interactive desktop session — "
+        f"Jarvis must run as you, not as a service."
+    )
 
 try:
     import pygetwindow as gw
     HAS_WINDOWS = True
-except ImportError:
+except Exception:      # same reason: pygetwindow needs a window system
     HAS_WINDOWS = False
 
 _lock = threading.Lock()
@@ -57,7 +83,7 @@ def _require(name):
     if _emergency_stop.is_set():
         return {"success": False, "error": "EMERGENCY STOP engaged — clear it before input actions"}
     if not HAS_PYAUTOGUI:
-        return {"success": False, "error": "pyautogui not installed. Run: pip install pyautogui"}
+        return {"success": False, "error": _NO_INPUT_REASON}
     return None
 
 

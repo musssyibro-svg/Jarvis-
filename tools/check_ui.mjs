@@ -46,15 +46,36 @@ async function waitForServer(url, seconds = 40) {
   return false;
 }
 
+// Everything vite says, kept so a failure can be explained instead of guessed at.
+let viteOutput = "";
+
 function startVite() {
   const npx = process.platform === "win32" ? "npx.cmd" : "npx";
-  const child = spawn(npx, ["vite", "--port", String(PORT), "--strictPort"], {
-    cwd: new URL("../frontend/", import.meta.url).pathname,
-    stdio: ["ignore", "pipe", "pipe"],
-    detached: false,
-  });
-  child.stdout.on("data", () => {});
-  child.stderr.on("data", () => {});
+  const child = spawn(
+    npx,
+    [
+      "vite",
+      "--port", String(PORT),
+      "--strictPort",
+      // Bind 127.0.0.1 EXPLICITLY. Vite's default is "localhost", which on a
+      // CI runner resolves to ::1 first — vite then listens on IPv6 only while
+      // this script probes 127.0.0.1, and the wait times out on a server that
+      // is running perfectly. That is what failed the first CI run.
+      "--host", "127.0.0.1",
+    ],
+    {
+      cwd: new URL("../frontend/", import.meta.url).pathname,
+      stdio: ["ignore", "pipe", "pipe"],
+      detached: false,
+    }
+  );
+  // Do NOT discard this. The old version swallowed both streams and then
+  // printed a guess — "Run `npm install`" — which was wrong on CI, where the
+  // install had just succeeded. An error message that names the wrong cause
+  // sends you hunting for a bug that isn't there.
+  child.stdout.on("data", (d) => { viteOutput += d; });
+  child.stderr.on("data", (d) => { viteOutput += d; });
+  child.on("error", (e) => { viteOutput += `\nfailed to spawn vite: ${e.message}`; });
   return child;
 }
 
@@ -64,7 +85,13 @@ async function main() {
     console.log(`Starting vite on ${PORT}...`);
     vite = startVite();
     if (!(await waitForServer(OWN_URL))) {
-      console.error("vite never came up. Run `npm install` in frontend/ first.");
+      console.error(`vite never answered on ${OWN_URL} within 40s.`);
+      console.error(
+        viteOutput.trim()
+          ? `\n--- what vite actually said ---\n${viteOutput.trim()}\n`
+          : "\nvite printed nothing at all, which usually means it never " +
+            "started — check that `npm install` has been run in frontend/.\n"
+      );
       return 1;
     }
     url = OWN_URL;

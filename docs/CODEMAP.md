@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-157 source files · 571 public symbols
+158 source files · 575 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -514,6 +514,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`test_decompose.py`** — Regression tests for command understanding.
   <br>`plan`, `actions`, `typed`, `test_notepad_question_is_answered_not_transcribed`, `test_question_to_a_chat_app_stays_literal`, `test_composed_prose_is_not_followed_by_enter`, `test_type_stays_literal`, `test_write_composes`, `test_comma_is_a_step_boundary`, `test_comma_inside_literal_text_is_not_a_boundary`, `test_and_inside_a_search_query_is_not_a_boundary`, `test_search_stops_at_a_follow_on_verb`, `test_three_clauses_stay_in_order`, `test_unhandled_clause_is_reported_not_dropped` _(+3 more)_
   <br>`backend/tests/test_decompose.py`
+
+**`test_headless.py`** — Jarvis must survive a machine with no display.
+  <br>`test_desktop_agent_imports_without_a_display`, `test_vision_agent_imports_without_a_display`, `test_input_refuses_with_a_reason_that_is_true`, `test_a_genuinely_missing_package_still_says_install_it`
+  <br>`backend/tests/test_headless.py`
 
 **`test_security.py`** — Regression tests for the things that make Jarvis dangerous if they slip.
   <br>`test_dns_rebinding_host_is_refused`, `test_health_is_open_so_the_launcher_can_wait_for_it`, `test_anything_that_types_is_a_control_path`, `test_effective_settings_never_expose_a_key`, `test_a_masked_value_is_still_recognisable`, `test_demonstration_emits_a_placeholder_not_the_keystrokes`, `test_simulating_a_task_executes_nothing`

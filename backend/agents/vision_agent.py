@@ -14,16 +14,18 @@ SCREENSHOT_DIR = Path("screenshots")
 SCREENSHOT_DIR.mkdir(exist_ok=True)
 
 # ── Safe imports ──────────────────────────────────────────────────────────────
+# except Exception, not ImportError — mss is installed and still raises when
+# there is no display. See the note in desktop_agent.py.
 try:
     import mss
     HAS_MSS = True
-except ImportError:
+except Exception:
     HAS_MSS = False
 
 try:
     from PIL import Image
     HAS_PIL = True
-except ImportError:
+except Exception:
     HAS_PIL = False
 
 try:
@@ -43,14 +45,14 @@ try:
                 pytesseract.pytesseract.tesseract_cmd = _cand
                 break
     HAS_OCR = True
-except ImportError:
+except Exception:
     HAS_OCR = False
 
 try:
     import cv2
     import numpy as np
     HAS_CV2 = True
-except ImportError:
+except Exception:
     HAS_CV2 = False
 
 
