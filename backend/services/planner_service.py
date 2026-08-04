@@ -153,7 +153,7 @@ def decompose(goal: str) -> list[str]:
             "never say 'Douyin'. If the goal is 'open <app> and ask X', the steps are: "
             "open the app, wait for it, type X, press Enter. "
             "Output ONLY the steps, one per line, no numbering, no preamble.\n\n"
-            f"Goal: {goal}", fast=True)
+            f"Goal: {goal}", task="planning")
         if raw and not raw.startswith("["):
             steps = []
             for line in raw.splitlines():
@@ -341,7 +341,7 @@ def _step_to_actions(step_text: str, goal: str) -> dict:
             'If doable, reply ONLY with compact JSON (double quotes, commas between '
             'items): {"kind":"actions","actions":[{"action":"open_app","params":{"name_or_path":"notepad"}}]}\n'
             'Allowed actions: open_app, open_url, type_text, press, hotkey, screenshot, write_text.\n'
-            'If knowledge work, reply ONLY: {"kind":"text"}', fast=True)
+            'If knowledge work, reply ONLY: {"kind":"text"}', task="planning")
         d = _loads_lenient(raw)
         if d and d.get("kind") == "actions":
             actions = [a for a in d.get("actions", [])[:8]

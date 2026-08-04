@@ -227,6 +227,17 @@ LIMITS = {
     "vision":       (320,         2048,     90),
     "fast":         (400,         4096,     60),
     "reasoning":    (700,         8192,    120),
+    # Planning had no profile of its own and ran on "fast", which is a general
+    # budget: 400 tokens and a minute. The planner's entire output is 3-6 short
+    # lines — about 80 tokens — so most of that minute was the model deciding
+    # whether to keep going, while the user watched a spinner.
+    #
+    # The tight deadline is safe HERE and would not be elsewhere: when the model
+    # runs out of time it returns a "[...]" string, and planner_service.decompose
+    # already treats that as "use the keyword checklist". The bound degrades to a
+    # usable, editable plan instead of stalling. Do not copy this profile to a
+    # call that has no fallback.
+    "planner":      (220,         2048,     40),
     # Several proposals in ONE call. The point of these caps is to stop
     # UNBOUNDED generation, which once produced a 288-second screenshot
     # analysis — not to stop a deliberate, counted request. Writing four

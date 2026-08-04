@@ -38,7 +38,8 @@ class OllamaProvider(Provider):
     _KIND = {
         "vision": "vision",
         "reasoning": "reasoning",
-        "planner": "reasoning",
+        # Its own profile, not reasoning's — see ollama_manager.LIMITS.
+        "planner": "planner",
         "coding": "reasoning",
         "proposal": "fast",
         "batch": "batch",          # several answers in one call — see LIMITS
@@ -101,12 +102,22 @@ class OllamaProvider(Provider):
         except Exception:
             pass
         # model_router unavailable: fall back to the configured role name.
+        #
+        # .get(kind, fast_model), not [kind]. _KIND has more kinds than there
+        # are model roles — "batch" already fell through the KeyError into the
+        # bare `except` here and came back as None, which surfaces as "no model
+        # is available" on a machine where one plainly is. A new kind must not
+        # be able to reintroduce that silently.
         try:
             from services import ollama_manager
             kind = self._KIND.get(task, "fast")
-            return {"fast": ollama_manager.fast_model,
+            role = {"fast": ollama_manager.fast_model,
                     "reasoning": ollama_manager.reasoning_model,
-                    "vision": ollama_manager.vision_model}[kind]()
+                    "planner": ollama_manager.reasoning_model,
+                    "batch": ollama_manager.reasoning_model,
+                    "vision": ollama_manager.vision_model}.get(
+                        kind, ollama_manager.fast_model)
+            return role()
         except Exception:
             return None
 
