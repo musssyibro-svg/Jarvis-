@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-162 source files · 597 public symbols
+164 source files · 620 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -351,6 +351,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`Cancelled`, `pause`, `resume`, `cancel`, `clear`, `run_scope`, `busy`, `clear_stale`, `checkpoint`, `is_paused`, `is_cancelled`, `status`, `explain`
   <br>`backend/services/control.py`
 
+**`conversation.py`** — what the last turn was about.
+  <br>`remember`, `recall`, `forget`, `is_repeat`, `resolve`, `prompt_block`, `status`
+  <br>`backend/services/conversation.py`
+
 **`custom_platforms.py`** — add ANY freelance site yourself.
   <br>`init_custom_platforms`, `add_platform`, `list_platforms`, `delete_platform`, `set_enabled`, `scan`
   <br>`backend/services/custom_platforms.py`
@@ -522,6 +526,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`test_control.py`** — Regression tests for the stop button.
   <br>`test_cancel_with_nothing_running_is_cleared`, `test_cancel_during_live_work_is_kept`, `test_run_scope_does_not_leak`, `test_run_scope_releases_on_exception`, `test_nested_scopes_count`, `test_checkpoint_raises_on_cancel`, `test_checkpoint_is_a_no_op_when_nothing_is_pending`, `test_pause_then_cancel_does_not_deadlock`, `test_resume_clears_pause`, `test_status_is_readable`
   <br>`backend/tests/test_control.py`
+
+**`test_conversation.py`** — Follow-up messages used to be parsed in complete isolation.
+  <br>`open_app_turn`, `test_close_it_means_the_app_we_just_opened`, `test_a_bare_instruction_inherits_the_current_app`, `test_the_inherited_app_does_not_end_up_in_the_TYPED_TEXT`, `test_an_explicit_app_is_never_overridden`, `test_do_it_again_repeats_the_last_command`, `test_repeating_a_follow_up_repeats_the_ACTION_not_the_pronoun`, `test_with_no_history_a_pronoun_stays_unresolved`, `test_do_it_again_with_nothing_to_repeat_says_so`, `test_context_expires`, `test_sessions_do_not_leak_into_each_other`, `test_a_full_sentence_is_left_alone`, `test_remembers_the_app_from_executor_RESULT_steps`, `test_the_app_carries_across_turns_that_dont_name_one` _(+2 more)_
+  <br>`backend/tests/test_conversation.py`
 
 **`test_decompose.py`** — Regression tests for command understanding.
   <br>`plan`, `actions`, `typed`, `test_notepad_question_is_answered_not_transcribed`, `test_question_to_a_chat_app_stays_literal`, `test_composed_prose_is_not_followed_by_enter`, `test_type_stays_literal`, `test_write_composes`, `test_comma_is_a_step_boundary`, `test_comma_inside_literal_text_is_not_a_boundary`, `test_and_inside_a_search_query_is_not_a_boundary`, `test_search_stops_at_a_follow_on_verb`, `test_three_clauses_stay_in_order`, `test_unhandled_clause_is_reported_not_dropped` _(+3 more)_

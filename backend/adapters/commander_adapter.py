@@ -37,9 +37,51 @@ def _memory_context(message: str) -> dict:
 
 def handle_chat(message: str, session_id: str = "default") -> dict:
     """
-    Single chat entry point. Returns:
-      {response, intent, needs_approval, data}
-    Never executes desktop/browser directly.
+    Single chat entry point. Returns {response, intent, needs_approval, data}.
+
+    Thin wrapper so the turn is REMEMBERED however the work below returns —
+    and there are a dozen return points. Doing it at each one guarantees that
+    the next person to add a thirteenth forgets, and then "close it" silently
+    stops working for that path only, which is a horrible bug to track down.
+
+    Resolving follow-ups happens here too, for a reason worth stating: what
+    gets remembered has to be the RESOLVED text, not what was typed. Remember
+    "close it" and then "do it again" replays the pronoun, which resolves
+    against itself and means nothing. Remember "close qq" and it replays the
+    action.
+    """
+    spoken = message
+    try:
+        from services import conversation
+        res = conversation.resolve(session_id, message)
+        if res["changed"]:
+            message = res["text"]
+            _emit("commander", f"Understood as: {message}  ({res['why']})")
+    except Exception:
+        pass        # a follow-up we can't resolve still runs as typed
+
+    out = _handle_chat(message, session_id, spoken=spoken)
+
+    try:
+        from services import conversation
+        data = out.get("data") or {}
+        conversation.remember(
+            session_id, message,
+            steps=data.get("steps") or data.get("plan") or [],
+            ok=data.get("success", out.get("intent") != "error"),
+            reply=out.get("response", ""))
+    except Exception:
+        pass        # remembering is a convenience; never fail a reply over it
+    return out
+
+
+def _handle_chat(message: str, session_id: str = "default", spoken: str = "") -> dict:
+    """
+    The actual work. See handle_chat for why it's wrapped.
+
+    `message` is what we're going to run; `spoken` is what the user typed,
+    which differs when a follow-up was resolved. The trace records both so a
+    surprising action can be traced back to the pronoun that caused it.
     """
     if not message or not message.strip():
         return {"response": "Say something and I'll get to work.", "intent": "chat"}
@@ -60,6 +102,11 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     # Trace this request end-to-end so the exact path is visible (diagnostics).
     from services import trace
     trace.start("chat", message)
+    if spoken and spoken != message:
+        # "close it" -> "close qq". Recorded so that when Jarvis closes the
+        # wrong thing, the trace shows WHY it thought that, instead of showing
+        # a command the user never typed.
+        trace.step("conversation.resolve", f"“{spoken}” → “{message}”", ok=True)
 
     from agents.commander import detect_intent  # pure intent detection only
     intent = detect_intent(message)
