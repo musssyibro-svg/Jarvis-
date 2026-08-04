@@ -45,6 +45,8 @@ from __future__ import annotations
 import threading
 from collections.abc import Generator
 
+from services import trace
+
 _lock = threading.Lock()
 _instances: dict[str, object] = {}
 
@@ -172,8 +174,15 @@ def ask(task: str = "chat", prompt: str = "", history: list | None = None,
             tried.append(f"{name}: not set up")
             continue
         try:
-            out = prov.chat(msgs, temperature=temperature, max_tokens=max_tokens,
-                            task=task, **kwargs)
+            # Timed because this is the single biggest cost in Jarvis and it
+            # was the one thing never measured — "it feels slow" had no
+            # attributable component. Named per provider AND task so the
+            # profile distinguishes a slow local model from a slow network.
+            with trace.timed(f"ai.{task}/{name}") as t:
+                out = prov.chat(msgs, temperature=temperature, max_tokens=max_tokens,
+                                task=task, **kwargs)
+                t.detail = f"{len(out or '')} chars"
+                t.ok = bool(out) and not _is_error(out)
         except Exception as e:                 # a provider that breaks its own contract
             tried.append(f"{name}: {str(e)[:80]}")
             continue

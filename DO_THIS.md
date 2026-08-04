@@ -261,6 +261,21 @@ Send me that file. It's dated, so I can tell it's from the new version. The last
 three you sent were all the same old file, which is why my fixes looked like
 they did nothing.
 
+The report now has two new sections at the end:
+
+**WHERE THE TIME GOES** — every part of Jarvis, ranked by how much time it
+actually spent. When something feels slow, this names it. Before, "it feels
+slow" was all either of us had.
+
+**FAILED ACTIONS IN FULL** — the complete story behind each failure, including
+the Python traceback. Before, a failed action recorded one line, and for one
+real crash that line was the single word `DISPLAY`, which meant nothing to
+anyone. It never contains your passwords: anything typed is stored as its
+length only, so the report stays safe to send.
+
+You can see both live too, without downloading anything — the **Logs** screen
+has new **Speed** and **Failures** tabs.
+
 ---
 
 ## Buttons you now have

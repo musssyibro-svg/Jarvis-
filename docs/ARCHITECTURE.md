@@ -155,6 +155,32 @@ fail?" from the execution trace. A model asked to explain its own failure
 writes a plausible story whether or not it matches what the code did — and
 being convincingly wrong is worse than being silent.
 
+### Three questions, three records, one module
+
+`services/trace.py` answers all three, and they are genuinely different:
+
+| Question | What answers it | Where to see it |
+|---|---|---|
+| What happened? | trace steps, per request | `/os/traces`, Logs → Request traces |
+| What did it cost? | the rolling cost table | `/os/profile`, Logs → Speed |
+| What actually broke? | failure records, with traceback | `/os/failures`, Logs → Failures |
+
+The cost table is deliberately separate from the trace ring buffer: most slow
+work happens with no trace open, on the income engine's and the watchdog's
+background threads. Measuring only what the chat box triggers would profile the
+fast half of the system.
+
+The profile ranks by TOTAL time, not by the worst single call. 400 ms on every
+action costs more than 30 seconds once an hour, and ranking by max sends
+whoever reads it off optimising the wrong thing.
+
+Failure records carry the traceback, the timing, and the surrounding state,
+with credentials stripped by `trace._safe_value` before anything is stored —
+these are served over HTTP and land in the downloadable runtime report, which
+is a file the user emails. Parameters named like secrets are redacted; typed
+text is reduced to its length, because "type my password" puts a credential in
+a field called `text` that no name-based rule would catch.
+
 ---
 
 ## Security posture

@@ -4,6 +4,8 @@ routes/os_console.py — the operating console's data surface.
 GET  /os/state        one live snapshot of everything (replaces 6+ separate polls)
 GET  /os/traces       recent request traces (exact execution path per request)
 GET  /os/traces/{id}  one trace in full
+GET  /os/profile      where the time actually goes, worst component first
+GET  /os/failures     every failed action in full, with the traceback
 GET  /os/diagnostics  health of the routing itself: failures + worst component
 GET  /os/experience   what Jarvis has learned about this machine's apps/failures
 POST /os/confidence   how likely a plan is to work, before running it
@@ -61,6 +63,27 @@ def os_trace(trace_id: str):
     if not t:
         raise HTTPException(404, "trace not found")
     return t
+
+
+@router.get("/profile")
+def os_profile(limit: int = 12):
+    """
+    What is slow. Measured, not guessed — "Jarvis feels sluggish" was never a
+    bug report anyone could act on.
+    """
+    from services import trace
+    return trace.profile(limit)
+
+
+@router.get("/failures")
+def os_failures(limit: int = 20):
+    """
+    Recent failed actions in full: traceback, timing, and the state around
+    them. Credentials are stripped before anything is stored — see
+    trace._safe_value.
+    """
+    from services import trace
+    return {"failures": trace.failures(limit)}
 
 
 @router.get("/control")

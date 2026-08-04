@@ -62,6 +62,24 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
 
     out = _handle_chat(message, session_id, spoken=spoken)
 
+    # Close the trace if the path we took didn't. Only 8 of 41 return points
+    # called trace.finish, so most requests left a trace open — shown in the
+    # diagnostics panel as "…" forever, counted by trace.summary() as
+    # not-yet-completed, and therefore never counted as FAILED. A failure
+    # dashboard that under-reports failures is worse than not having one.
+    #
+    # The open trace also stayed bound to this thread until its next request,
+    # so a background thread calling trace.step() appended to a trace that had
+    # already been answered — steps from one request appearing inside another.
+    try:
+        from services import trace
+        if trace.current_id():
+            data = out.get("data") or {}
+            ok = data.get("success", out.get("intent") != "error")
+            trace.finish(str(out.get("response", ""))[:200], ok=bool(ok))
+    except Exception:
+        pass
+
     try:
         from services import conversation
         data = out.get("data") or {}

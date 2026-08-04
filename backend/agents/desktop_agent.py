@@ -14,6 +14,8 @@ from pathlib import Path
 
 import psutil
 
+from services import trace
+
 # ── Safe imports ──────────────────────────────────────────────────────────────
 #
 # `except Exception`, not `except ImportError`, and that distinction is the
@@ -773,10 +775,25 @@ def _run_action(action: str, params: dict) -> dict:
     fn = ACTIONS.get(action)
     if fn is None:
         return {"success": False, "error": f"unknown action '{action}'"}
+    started = time.time()
     try:
-        return fn(params) or {"success": False, "error": "no result"}
+        out = fn(params) or {"success": False, "error": "no result"}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        # This used to be `str(e)` and nothing else. For the headless crash that
+        # cost an afternoon, `str(e)` was the string 'DISPLAY' — no traceback,
+        # no arguments, no way to tell which of twenty actions raised it.
+        #
+        # The user still sees a short cause-and-fix message; the traceback goes
+        # to the diagnostics buffer, with the parameters redacted, because
+        # `type_text` params have contained a password.
+        import traceback
+        rec = trace.failure(f"desktop.{action}", f"{type(e).__name__}: {e}",
+                            detail=traceback.format_exc(), **(params or {}))
+        trace.record_cost(f"desktop.{action}", (time.time() - started) * 1000)
+        return {"success": False, "error": str(e) or type(e).__name__,
+                "exception": type(e).__name__, "diagnostic": rec["at"]}
+    trace.record_cost(f"desktop.{action}", (time.time() - started) * 1000)
+    return out
 
 
 def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
@@ -1161,6 +1178,21 @@ def _execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
         if not verified:
             fail = _classify(reason or (r or {}).get("error", ""), action, r)
             entry["failure"] = fail
+            # An action that RAN and didn't take is the harder failure to
+            # diagnose — there's no exception, so nothing was recorded and the
+            # only evidence was a one-line reason in a reply the user had
+            # already scrolled past. Keep the surrounding state: which attempt,
+            # how long, what the action returned, what verification looked for.
+            trace.failure(
+                f"desktop.{action}", reason or "action did not verify",
+                detail=(f"kind={fail.get('kind')}  attempts={attempts}  "
+                        f"elapsed={elapsed}s\n"
+                        f"action returned: {str(r)[:400]}"),
+                # One dict, splatted once: a params key called "goal" or
+                # "target" would otherwise be a TypeError inside error handling,
+                # which is the worst possible place for a new exception.
+                **{"step": i + 1, "goal": goal, "target": target,
+                   **(params or {})})
             # Targeted recovery for the next run: if we couldn't find the app,
             # the cached path is probably stale (reinstalled, moved, updated).
             # Forget it so the next launch re-resolves instead of failing

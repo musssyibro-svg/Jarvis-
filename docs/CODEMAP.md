@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-164 source files · 620 public symbols
+166 source files · 643 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -480,7 +480,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/services/tool_registry.py`
 
 **`trace.py`** — execution tracing. Every request records the EXACT path it took.
-  <br>`start`, `step`, `finish`, `current_id`, `recent`, `get`, `summary`
+  <br>`start`, `step`, `record_cost`, `timed`, `profile`, `reset_costs`, `failure`, `failures`, `finish`, `current_id`, `recent`, `get`, `summary`
   <br>`backend/services/trace.py`
 
 **`vault.py`** — Encrypted local credential vault.
@@ -538,6 +538,14 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`test_headless.py`** — Jarvis must survive a machine with no display.
   <br>`test_desktop_agent_imports_without_a_display`, `test_vision_agent_imports_without_a_display`, `test_input_refuses_with_a_reason_that_is_true`, `test_a_genuinely_missing_package_still_says_install_it`
   <br>`backend/tests/test_headless.py`
+
+**`test_llm_budgets.py`** — Two ways a model call goes wrong on a 16 GB machine, and neither looks like a bug.
+  <br>`test_every_kind_has_a_budget`, `test_every_kind_resolves_to_a_model_role`, `test_planning_is_cheaper_than_general_chat`, `test_the_planner_actually_asks_for_the_planner_budget`
+  <br>`backend/tests/test_llm_budgets.py`
+
+**`test_profiling_and_failures.py`** — "It didn't work" and "it feels slow" were both unanswerable.
+  <br>`test_a_raising_action_records_the_traceback_not_just_the_message`, `test_an_unknown_action_is_not_recorded_as_a_crash`, `test_typed_text_is_reduced_to_its_length`, `test_ordinary_context_survives`, `test_the_buffer_is_bounded`, `test_the_profile_names_the_slowest_component`, `test_ranking_is_by_total_time_not_by_the_worst_single_call`, `test_a_call_that_throws_is_still_measured`, `test_every_chat_closes_its_trace`, `test_steps_carry_their_own_cost`
+  <br>`backend/tests/test_profiling_and_failures.py`
 
 **`test_security.py`** — Regression tests for the things that make Jarvis dangerous if they slip.
   <br>`test_dns_rebinding_host_is_refused`, `test_health_is_open_so_the_launcher_can_wait_for_it`, `test_anything_that_types_is_a_control_path`, `test_effective_settings_never_expose_a_key`, `test_a_masked_value_is_still_recognisable`, `test_demonstration_emits_a_placeholder_not_the_keystrokes`, `test_simulating_a_task_executes_nothing`
@@ -601,7 +609,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`frontend/src/pages/Earn.jsx`
 
 **`Logs.jsx`** — every decision, with a timestamp and a reason.
-  <br>`chip`, `Logs`, `Empty`
+  <br>`chip`, `Logs`, `Empty`, `ms`, `Num`
   <br>`frontend/src/pages/Logs.jsx`
 
 **`Memory.jsx`** — everything Jarvis knows, in one place you can edit.
@@ -637,7 +645,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`tools/dump_source.py`
 
 **`failure_injection.py`** — Phase 0. Break Jarvis on purpose, in two minutes,
-  <br>`Result`, `s_missing_app`, `s_clipboard`, `s_no_model`, `s_queue_load`, `s_browser_death`, `s_estop`, `s_learning`, `s_model_pressure`, `s_classification`, `s_control`, `s_decompose`, `s_plan_visibility`, `s_selfeval` _(+13 more)_
+  <br>`Result`, `s_missing_app`, `s_clipboard`, `s_no_model`, `s_queue_load`, `s_browser_death`, `s_estop`, `s_learning`, `s_model_pressure`, `s_classification`, `s_control`, `s_decompose`, `s_plan_visibility`, `s_selfeval` _(+14 more)_
   <br>`tools/failure_injection.py`
 
 **`setup.py`** — install everything Jarvis needs, then say what's left.

@@ -399,11 +399,51 @@ def build_report() -> str:
             w(f"\n[{status}] {t['kind']}: {t['label']}  ({t.get('duration_ms','?')}ms)\n")
             for st in t.get("steps", []):
                 m = "OK " if st.get("ok") else ("ERR" if st.get("ok") is False else "-  ")
-                w(f"    {m} {st['component']:<32} {st.get('detail','')}  [{st.get('at_ms')}ms]\n")
+                w(f"    {m} {st['component']:<32} {st.get('detail','')}  "
+                  f"[{st.get('took_ms', '?')}ms]\n")
             if t.get("result"):
                 w(f"    -> {t['result']}\n")
     except Exception as e:
         w(f"(traces unavailable: {e})\n")
+    w("\n")
+
+    # Answers "why is it slow", which the sections above never could: they show
+    # what happened, not what it cost.
+    w("## WHERE THE TIME GOES (this run)\n")
+    try:
+        from services import trace
+        prof = trace.profile(15)
+        if prof["components"]:
+            w("  component                          calls    total   median      p95      max\n")
+            for c in prof["components"]:
+                w(f"  {c['component'][:32]:<32} {c['calls']:>7} {c['total_ms']:>8} "
+                  f"{c['median_ms']:>8} {c['p95_ms']:>8} {c['max_ms']:>8}\n")
+            w(f"\n  slowest overall: {prof['slowest']}\n")
+        else:
+            w("  nothing measured yet this run\n")
+    except Exception as e:
+        w(f"(profile unavailable: {e})\n")
+    w("\n")
+
+    # The full story behind each failed action. The sections above give the
+    # user-facing cause and fix; this is the traceback, which used to exist
+    # only as str(e) and was usually a single unhelpful word.
+    w("## FAILED ACTIONS IN FULL\n")
+    try:
+        from services import trace
+        fails = trace.failures(15)
+        if not fails:
+            w("  none this run\n")
+        for f in fails:
+            w(f"\n[{f['at']}] {f['component']}  (trace {f.get('trace') or '-'})\n")
+            w(f"  {f['summary']}\n")
+            if f.get("context"):
+                w("  context: " + ", ".join(f"{k}={v}" for k, v in f["context"].items()) + "\n")
+            if f.get("detail"):
+                for line in f["detail"].splitlines():
+                    w(f"      {line}\n")
+    except Exception as e:
+        w(f"(failures unavailable: {e})\n")
     w("\n")
 
     w("## LOG TAIL\n")

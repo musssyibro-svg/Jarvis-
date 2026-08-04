@@ -757,6 +757,66 @@ def s_teach_privacy():
     return r.ok("Passwords are never recorded; normal input still is.")
 
 
+def s_failure_evidence():
+    """
+    When an action fails, the user gets a short "here's the cause and the fix".
+    Behind it there has to be enough to actually diagnose the thing — and it
+    must not contain their password.
+
+    The harm if this breaks: a failure whose only record is str(e). That was
+    the single word 'DISPLAY' for the headless crash, and the only way forward
+    was to reproduce it on the user's machine.
+
+    The opposite harm, if the fix is careless: the runtime report is the file
+    the user emails when something misbehaves. A typed password in it travels
+    with it.
+    """
+    r = Result("failure_evidence", "A failed action leaves evidence, not secrets")
+    from agents import desktop_agent as da
+    from services import trace
+
+    trace._failures.clear()
+    out = da._run_action("hotkey", {"keys": None})     # raises inside the lambda
+    if out.get("success"):
+        return r.bad("A broken action reported success.")
+    recs = trace.failures()
+    if not recs:
+        return r.bad("A failed action left no record at all.")
+    if "desktop_agent.py" not in recs[0]["detail"]:
+        return r.bad("The record has no traceback — this is the whole point of it.")
+    r.note("a raising action records the traceback and the line that raised")
+
+    trace._failures.clear()
+    # noqa S106: the fake password IS the test. Ruff spotting it here is the
+    # rule working — it's exactly the string that must not survive redaction.
+    trace.failure("desktop.type_text", "did not verify",
+                  text="hunter2-is-my-banking-password",
+                  password="hunter2",  # noqa: S106
+                  name_or_path="chrome")
+    blob = repr(trace.failures())
+    if "hunter2" in blob:
+        return r.bad("A password reached the diagnostics buffer, which is served "
+                     "over HTTP and lands in the downloadable runtime report.")
+    r.note("credentials and typed text never reach the buffer")
+    if "chrome" not in blob:
+        return r.bad("Redaction ate the useful context too — a record with "
+                     "nothing in it is not evidence.")
+    r.note("ordinary context survives, so the record is still worth reading")
+
+    trace.reset_costs()
+    for _ in range(3):
+        trace.record_cost("ai.chat/ollama", 9000)
+    for _ in range(80):
+        trace.record_cost("desktop.click", 10)
+    if trace.profile()["slowest"] != "ai.chat/ollama":
+        return r.bad("The profile can't name the slowest component, so "
+                     "'Jarvis is slow' stays an opinion.")
+    r.note("the profile names where the time actually went")
+    trace._failures.clear()
+    trace.reset_costs()
+    return r.ok("Failures are diagnosable and carry no credentials.")
+
+
 def s_simulation():
     """
     A simulation must execute NOTHING. This is the whole feature: a dry run with
@@ -1438,6 +1498,7 @@ SCENARIOS = {
     "learning":       (s_learning, False),
     "model_pressure": (s_model_pressure, False),
     "classification": (s_classification, False),
+    "failure_evidence": (s_failure_evidence, False),
 }
 
 

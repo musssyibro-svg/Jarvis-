@@ -10,7 +10,13 @@
  *
  *   LIVE FEED   what each subsystem announced, as it happened (SSE)
  *   TRACES      the code path a request actually took, step by step
+ *   SPEED       where the time went, worst component first
+ *   FAILURES    the full story behind each failed action, traceback included
  *   GRADES      confidence in each finished run, and what changed as a result
+ *
+ * Traces answer "what happened" and Speed answers "what did it cost" — they
+ * look similar and they are not the same question. "Jarvis feels slow" was
+ * unanswerable until the second one existed.
  *
  * Filters are on the things you actually filter by when hunting a problem:
  * which subsystem, how bad, and free text. Errors-only is one click, because
@@ -42,6 +48,8 @@ const chip = (on, color) => ({
 const TABS = [
   { id: "feed", label: "Live feed" },
   { id: "traces", label: "Request traces" },
+  { id: "speed", label: "Speed" },
+  { id: "failures", label: "Failures" },
   { id: "grades", label: "Confidence" },
 ];
 
@@ -52,7 +60,10 @@ export default function Logs({ live = [] }) {
   const [q, setQ] = useState("");
   const [traces, setTraces] = useState(null);
   const [grades, setGrades] = useState(null);
+  const [speed, setSpeed] = useState(null);
+  const [fails, setFails] = useState(null);
   const [openTrace, setOpenTrace] = useState(null);
+  const [openFail, setOpenFail] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -60,6 +71,12 @@ export default function Logs({ live = [] }) {
     } catch {}
     try {
       setGrades(await fetch(`${API}/os/selfeval?limit=25`).then((r) => r.json()));
+    } catch {}
+    try {
+      setSpeed(await fetch(`${API}/os/profile`).then((r) => r.json()));
+    } catch {}
+    try {
+      setFails(await fetch(`${API}/os/failures?limit=25`).then((r) => r.json()));
     } catch {}
   }, []);
   useEffect(() => {
@@ -219,10 +236,19 @@ export default function Logs({ live = [] }) {
                     borderBottom: `1px solid ${T.line}`,
                   }}
                 >
-                  {traces.summary.total} traced ·{" "}
+                  {/* summary() returns recent/completed/failed/worst_component.
+                      This read `.total`, which has never existed — so the line
+                      said "undefined traced" for as long as the panel has. */}
+                  {traces.summary.recent} traced ·{" "}
                   <span style={{ color: traces.summary.failed ? T.red : T.green }}>
                     {traces.summary.failed || 0} failed
                   </span>
+                  {traces.summary.worst_component && (
+                    <span style={{ color: T.amber }}>
+                      {" "}
+                      · most often at fault: {traces.summary.worst_component}
+                    </span>
+                  )}
                 </div>
               )}
               {traces.traces.map((t) => (
@@ -248,8 +274,9 @@ export default function Logs({ live = [] }) {
                       {t.label || t.kind}
                     </span>
                     <span style={{ fontSize: 11, color: T.dim }}>
+                      {/* duration_ms, not ms — the timing never showed. */}
                       {t.steps?.length || 0} steps
-                      {t.ms ? ` · ${(t.ms / 1000).toFixed(1)}s` : ""}
+                      {t.duration_ms ? ` · ${(t.duration_ms / 1000).toFixed(1)}s` : ""}
                     </span>
                   </button>
                   {openTrace === t.id && (
@@ -269,6 +296,17 @@ export default function Logs({ live = [] }) {
                           <span style={{ color: T.text, width: 210, flexShrink: 0 }}>
                             {s.component}
                           </span>
+                          <span
+                            style={{
+                              color: s.took_ms >= 1000 ? T.amber : T.dim,
+                              width: 62,
+                              flexShrink: 0,
+                              textAlign: "right",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {ms(s.took_ms || 0)}
+                          </span>
                           <span style={{ color: T.dim, wordBreak: "break-word" }}>{s.detail}</span>
                         </div>
                       ))}
@@ -283,6 +321,135 @@ export default function Logs({ live = [] }) {
                           → {t.result}
                         </div>
                       )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          ))}
+
+        {/* ── Speed ─────────────────────────────────────────────────────── */}
+        {tab === "speed" &&
+          (!speed?.components?.length ? (
+            <Empty>Nothing measured yet. Ask Jarvis to do something first.</Empty>
+          ) : (
+            <>
+              <div
+                style={{
+                  padding: "12px 14px",
+                  fontSize: 12,
+                  color: T.dim,
+                  borderBottom: `1px solid ${T.line}`,
+                  lineHeight: 1.5,
+                }}
+              >
+                Ranked by total time, not by the worst single call — 400ms on every action costs
+                more than 30 seconds once an hour. {speed.note}
+              </div>
+              {speed.components.map((c) => (
+                <div
+                  key={c.component}
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    padding: "9px 14px",
+                    fontSize: 12,
+                    alignItems: "baseline",
+                    borderBottom: `1px solid rgba(255,255,255,0.03)`,
+                  }}
+                >
+                  <span
+                    style={{
+                      color: c.component === speed.slowest ? T.amber : T.text,
+                      flex: 1,
+                      minWidth: 0,
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    {c.component}
+                  </span>
+                  <Num label="calls">{c.calls}</Num>
+                  <Num label="median">{ms(c.median_ms)}</Num>
+                  <Num label="p95">{ms(c.p95_ms)}</Num>
+                  <Num label="total">{ms(c.total_ms)}</Num>
+                </div>
+              ))}
+            </>
+          ))}
+
+        {/* ── Failures ──────────────────────────────────────────────────── */}
+        {tab === "failures" &&
+          (!fails?.failures?.length ? (
+            <Empty>No failed actions recorded this run.</Empty>
+          ) : (
+            <>
+              <div
+                style={{
+                  padding: "12px 14px",
+                  fontSize: 12,
+                  color: T.dim,
+                  borderBottom: `1px solid ${T.line}`,
+                  lineHeight: 1.5,
+                }}
+              >
+                The full story behind each failure, including the traceback. Passwords and typed
+                text are stripped before anything is stored.
+              </div>
+              {fails.failures.map((f) => (
+                <div
+                  key={`${f.at}-${f.component}`}
+                  style={{ borderBottom: `1px solid rgba(255,255,255,0.03)` }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFail(openFail === f.at ? null : f.at)}
+                    style={{
+                      display: "flex",
+                      gap: 12,
+                      width: "100%",
+                      padding: "9px 14px",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      alignItems: "baseline",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ color: T.red, fontSize: 12 }}>✕</span>
+                    <span style={{ fontSize: 12, color: T.text, width: 190, flexShrink: 0 }}>
+                      {f.component}
+                    </span>
+                    <span style={{ fontSize: 12, color: T.dim, flex: 1, minWidth: 0 }}>
+                      {f.summary}
+                    </span>
+                  </button>
+                  {openFail === f.at && (
+                    <div style={{ padding: "0 14px 12px 38px" }}>
+                      {Object.keys(f.context || {}).length > 0 && (
+                        <div style={{ fontSize: 11.5, color: T.dim, marginBottom: 6 }}>
+                          {Object.entries(f.context).map(([k, v]) => (
+                            <span key={k} style={{ marginRight: 14 }}>
+                              {k}=<span style={{ color: T.text }}>{v}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <pre
+                        style={{
+                          fontSize: 11,
+                          color: T.dim,
+                          background: "rgba(0,0,0,0.35)",
+                          border: `1px solid ${T.line}`,
+                          borderRadius: 8,
+                          padding: 10,
+                          margin: 0,
+                          overflowX: "auto",
+                          whiteSpace: "pre",
+                        }}
+                      >
+                        {f.detail ||
+                          "(no traceback — the action reported failure " + "rather than raising)"}
+                      </pre>
                     </div>
                   )}
                 </div>
@@ -351,4 +518,18 @@ export default function Logs({ live = [] }) {
 
 function Empty({ children }) {
   return <div style={{ padding: 24, fontSize: 12.5, color: T.dim }}>{children}</div>;
+}
+
+/** Milliseconds, read at a glance. 41000 is unreadable; 41.0s is not. */
+function ms(v) {
+  return v >= 1000 ? `${(v / 1000).toFixed(1)}s` : `${v}ms`;
+}
+
+function Num({ label, children }) {
+  return (
+    <span style={{ width: 72, flexShrink: 0, textAlign: "right", color: T.dim }}>
+      <span style={{ fontSize: 9.5, opacity: 0.65, marginRight: 4 }}>{label}</span>
+      <span style={{ color: T.text, fontVariantNumeric: "tabular-nums" }}>{children}</span>
+    </span>
+  );
 }
