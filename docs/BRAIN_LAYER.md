@@ -1,4 +1,9 @@
-# Jarvis architecture (foundational layer)
+# The brain layer
+
+> Renamed from a root-level `ARCHITECTURE.md`. Two files with that name saying
+> different things is exactly the "two sources that disagree" problem this
+> project keeps hitting — see [ARCHITECTURE.md](ARCHITECTURE.md) for the whole
+> system. This document covers one layer of it: the Brain and what feeds it.
 
 This is the layer the roadmap docs kept asking for. It sits *under* the existing
 agents/pipeline — additive, nothing old was deleted (the legacy orchestrator
