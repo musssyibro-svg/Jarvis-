@@ -29,15 +29,12 @@ SYSTEM_PROMPT = (
     "designed to assist freelancers'."
 )
 
-try:
-    import ollama as _ollama
-except ImportError:
-    _ollama = None
-
-try:
-    from anthropic import Anthropic as _Anthropic
-except ImportError:
-    _Anthropic = None
+# NOTE: this module used to import ollama and anthropic here and call them
+# directly. call_model() now delegates to services/ai_router.ask(), so both
+# imports were dead — but they left this file looking like a provider, which is
+# exactly the "which provider does Jarvis use?" ambiguity the router exists to
+# remove. Ruff couldn't see them as unused (they're bound in a try/except), so
+# they survived every previous cleanup. Found by .semgrep/jarvis.yml.
 
 
 def _resolve_chat_model(fast: bool, task: str | None = None) -> str:

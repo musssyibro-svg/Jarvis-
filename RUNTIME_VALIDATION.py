@@ -51,7 +51,8 @@ def _shot(name):
         src = r.get("path")
         if src and os.path.exists(src):
             dst = os.path.join(OUT, name + ".png")
-            import shutil; shutil.copy(src, dst)
+            import shutil
+            shutil.copy(src, dst)
             return dst
         return f"(no screenshot path returned: {r})"
     except Exception as e:
@@ -70,7 +71,8 @@ def run_cmd(label, message):
     except Exception:
         entry["error"] = traceback.format_exc()
         entry["ok"] = False
-    import time; time.sleep(2)   # let the action settle
+    import time
+    time.sleep(2)   # let the action settle
     entry["after_shot"] = _shot(f"{label}_after")
     return entry
 

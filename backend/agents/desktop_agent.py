@@ -1087,6 +1087,10 @@ def close_window(title_contains: str) -> dict:
         # Fallback: Alt+F4 on focused window
         return hotkey("alt", "f4")
     try:
+        # The caller names a specific window to close/minimise/maximise;
+        # there is no app to resolve. Focus and launch, which DO take an
+        # app name, go through process matching instead.
+        # nosemgrep: jarvis-window-matched-by-title
         wins = gw.getWindowsWithTitle(title_contains)
         if not wins:
             return {"success": False, "error": f"No window with '{title_contains}'"}
@@ -1314,6 +1318,10 @@ def minimize_window(title_contains: str) -> dict:
     if not HAS_WINDOWS:
         return {"success": False, "error": "pygetwindow not available"}
     try:
+        # The caller names a specific window to close/minimise/maximise;
+        # there is no app to resolve. Focus and launch, which DO take an
+        # app name, go through process matching instead.
+        # nosemgrep: jarvis-window-matched-by-title
         wins = gw.getWindowsWithTitle(title_contains)
         if not wins:
             return {"success": False, "error": f"No window with '{title_contains}'"}
@@ -1328,6 +1336,10 @@ def maximize_window(title_contains: str) -> dict:
     if not HAS_WINDOWS:
         return {"success": False, "error": "pygetwindow not available"}
     try:
+        # The caller names a specific window to close/minimise/maximise;
+        # there is no app to resolve. Focus and launch, which DO take an
+        # app name, go through process matching instead.
+        # nosemgrep: jarvis-window-matched-by-title
         wins = gw.getWindowsWithTitle(title_contains)
         if not wins:
             return {"success": False, "error": f"No window with '{title_contains}'"}

@@ -90,15 +90,20 @@ def _requirement_ok(req: str) -> bool:
     """Best-effort check whether a requirement is currently satisfiable."""
     try:
         if req == "pyautogui":
-            from agents.desktop_agent import HAS_PYAUTOGUI; return HAS_PYAUTOGUI
+            from agents.desktop_agent import HAS_PYAUTOGUI
+            return HAS_PYAUTOGUI
         if req == "mss":
-            from agents.vision_agent import HAS_MSS, HAS_PIL; return HAS_MSS or HAS_PIL
+            from agents.vision_agent import HAS_MSS, HAS_PIL
+            return HAS_MSS or HAS_PIL
         if req in ("ocr", "ocr_or_llava"):
-            from agents.vision_agent import HAS_OCR; return HAS_OCR or True  # llava path may exist
+            from agents.vision_agent import HAS_OCR
+            return HAS_OCR or True  # llava path may exist
         if req == "playwright":
-            import importlib.util; return importlib.util.find_spec("playwright") is not None
+            import importlib.util
+            return importlib.util.find_spec("playwright") is not None
         if req == "llm":
-            import importlib.util; return importlib.util.find_spec("ollama") is not None
+            import importlib.util
+            return importlib.util.find_spec("ollama") is not None
         if req == "login":
             from services import session_manager
             return bool(session_manager.logged_in_platforms())

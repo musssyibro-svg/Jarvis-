@@ -323,10 +323,24 @@ def root(): return {"app": "Jarvis OS", "version": JARVIS_VERSION, "running": Tr
 
 @app.get("/health")
 def health():
+    # Through ollama_manager, not the SDK directly. Same probe, one door — and
+    # ollama_manager already knows the host, the approved model set, and how to
+    # turn a failure into a reason a human can act on. Found by
+    # .semgrep/jarvis.yml (jarvis-ollama-outside-providers).
+    #
+    # Two things about this endpoint are still wrong and are NOT changed here,
+    # because they alter what it reports; see docs/CODE_HEALTH.md:
+    #   * "model" comes from a module-level env constant, so it can disagree
+    #     with the model the router actually picked.
+    #   * the probe has no timeout, and START.bat polls /health to decide
+    #     whether the backend is up — a slow Ollama can make a working backend
+    #     look offline.
     ollama_ok = False
     try:
-        import ollama as _ol; _ol.list(); ollama_ok = True
-    except Exception: pass
+        from services.ollama_manager import health as _ollama_health
+        ollama_ok = bool(_ollama_health().get("ok"))
+    except Exception:
+        pass    # a health endpoint must answer even when the probe itself breaks
     return {
         "status":    "online",
         "version":   JARVIS_VERSION,
