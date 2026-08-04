@@ -54,7 +54,20 @@
         // keyboard by one person. The a11y rules that matter stay on; the ones
         // that only make sense for a public website are off.
         "useKeyWithClickEvents": "off",
-        "noSvgWithoutTitle": "off"
+        "noSvgWithoutTitle": "off",
+
+        // `<button>` without type="button" defaults to type="submit" INSIDE A
+        // FORM. There is not one <form> element in this app, so all 83 of
+        // these are latent, not live. Warn, don't error: it flags every new
+        // button, but doesn't hold CI red over 83 sites that cannot currently
+        // misbehave, and doesn't tempt anyone into a blind mass rewrite.
+        "useButtonType": "warn",
+
+        // Two <div>s carry onClick as expand/collapse toggles (JarvisOS.jsx
+        // trace rows, Planner step rows). Doing this properly means turning
+        // them into <button>s, which changes layout and styling — a UI change,
+        // not a lint fix. Warn and track it in docs/CODE_HEALTH.md.
+        "noStaticElementInteractions": "warn"
       }
     }
   },

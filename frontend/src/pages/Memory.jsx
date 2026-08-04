@@ -19,25 +19,42 @@
  * The search box runs the real retrieval, not a text filter — what you see here
  * is what the model would be given.
  */
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API } from "../config.js";
 import { T } from "../theme.js";
 
 const card = {
-  background: "#0d1220", border: `1px solid ${T.line}`, borderRadius: 14,
-  padding: 18, marginBottom: 16,
+  background: "#0d1220",
+  border: `1px solid ${T.line}`,
+  borderRadius: 14,
+  padding: 18,
+  marginBottom: 16,
 };
 const label = {
-  fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
-  color: T.dim, marginBottom: 12, fontWeight: 600,
+  fontSize: 10,
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  color: T.dim,
+  marginBottom: 12,
+  fontWeight: 600,
 };
 const input = {
-  background: "rgba(0,0,0,0.35)", color: T.text, border: `1px solid ${T.line}`,
-  borderRadius: 8, padding: "8px 12px", fontSize: 12.5, outline: "none",
+  background: "rgba(0,0,0,0.35)",
+  color: T.text,
+  border: `1px solid ${T.line}`,
+  borderRadius: 8,
+  padding: "8px 12px",
+  fontSize: 12.5,
+  outline: "none",
 };
 const btn = (color) => ({
-  background: `${color}1f`, border: `1px solid ${color}55`, color,
-  borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 600,
+  background: `${color}1f`,
+  border: `1px solid ${color}55`,
+  color,
+  borderRadius: 8,
+  padding: "7px 14px",
+  fontSize: 12,
+  fontWeight: 600,
   cursor: "pointer",
 });
 
@@ -59,13 +76,17 @@ export default function Memory() {
 
   const load = useCallback(async () => {
     const get = async (p, set, pick = (x) => x) => {
-      try { set(pick(await fetch(`${API}${p}`).then((r) => r.json()))); } catch {}
+      try {
+        set(pick(await fetch(`${API}${p}`).then((r) => r.json())));
+      } catch {}
     };
     get("/os/persona", setPersona);
     get("/brain/documents", setDocs, (j) => j.documents || j || []);
     get("/brain/status", setStatus);
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const search = async () => {
     if (!q.trim()) return setHits(null);
@@ -73,7 +94,9 @@ export default function Memory() {
     try {
       const r = await fetch(`${API}/brain/search?q=${encodeURIComponent(q)}&k=6`);
       setHits(await r.json());
-    } catch { setHits({ results: [], error: "couldn't reach the backend" }); }
+    } catch {
+      setHits({ results: [], error: "couldn't reach the backend" });
+    }
     setBusy(false);
   };
 
@@ -92,15 +115,20 @@ export default function Memory() {
     setNote("");
     try {
       const r = await fetch(`${API}/brain/ingest`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newNote.title || "note", text: newNote.body,
-                               source: "you" }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newNote.title || "note", text: newNote.body, source: "you" }),
       });
       const j = await r.json().catch(() => ({}));
-      setNote(r.ok ? `Saved — split into ${j.chunks ?? "?"} searchable piece(s).`
-                   : (j.detail || "Couldn't save that."));
+      setNote(
+        r.ok
+          ? `Saved — split into ${j.chunks ?? "?"} searchable piece(s).`
+          : j.detail || "Couldn't save that."
+      );
       if (r.ok) setNewNote({ title: "", body: "" });
-    } catch { setNote("Backend didn't answer."); }
+    } catch {
+      setNote("Backend didn't answer.");
+    }
     load();
   };
 
@@ -108,14 +136,12 @@ export default function Memory() {
 
   return (
     <div style={{ padding: 22, maxWidth: 900 }}>
-
       {/* ── Facts ──────────────────────────────────────────────────────── */}
       <section style={card}>
         <div style={label}>Facts it always knows</div>
         <div style={{ fontSize: 12, color: T.dim, marginBottom: 14, lineHeight: 1.5 }}>
-          These go into every answer without being retrieved. Kept short on
-          purpose — a prompt stuffed with remembered trivia produces answers
-          about the trivia.
+          These go into every answer without being retrieved. Kept short on purpose — a prompt
+          stuffed with remembered trivia produces answers about the trivia.
         </div>
         {known.length === 0 && (
           <div style={{ fontSize: 12.5, color: T.dim }}>
@@ -123,9 +149,16 @@ export default function Memory() {
           </div>
         )}
         {known.map((f) => (
-          <div key={f.field} style={{ display: "flex", gap: 12, alignItems: "baseline",
-                                      padding: "8px 0",
-                                      borderBottom: `1px solid ${T.line}` }}>
+          <div
+            key={f.field}
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "baseline",
+              padding: "8px 0",
+              borderBottom: `1px solid ${T.line}`,
+            }}
+          >
             <div style={{ width: 130, fontSize: 11.5, color: T.dim, flexShrink: 0 }}>
               {f.field.replace(/_/g, " ")}
             </div>
@@ -136,8 +169,10 @@ export default function Memory() {
                 {f.evidence ? ` — ${f.evidence}` : ""}
               </div>
             </div>
-            <button onClick={() => forget(f.field)}
-                    style={{ ...btn(T.dim), padding: "3px 10px", fontSize: 10.5 }}>
+            <button
+              onClick={() => forget(f.field)}
+              style={{ ...btn(T.dim), padding: "3px 10px", fontSize: 10.5 }}
+            >
               Forget
             </button>
           </div>
@@ -148,14 +183,17 @@ export default function Memory() {
       <section style={card}>
         <div style={label}>What would it recall?</div>
         <div style={{ fontSize: 12, color: T.dim, marginBottom: 12, lineHeight: 1.5 }}>
-          This runs the real retrieval. What comes back is exactly what the model
-          would be handed if you asked this in chat.
+          This runs the real retrieval. What comes back is exactly what the model would be handed if
+          you asked this in chat.
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <input value={q} onChange={(e) => setQ(e.target.value)}
-                 onKeyDown={(e) => e.key === "Enter" && search()}
-                 placeholder="try: my rate, freelance profile, what I decided about…"
-                 style={{ ...input, flex: 1 }} />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && search()}
+            placeholder="try: my rate, freelance profile, what I decided about…"
+            style={{ ...input, flex: 1 }}
+          />
           <button style={btn(T.cyan)} onClick={search} disabled={busy}>
             {busy ? "…" : "Search"}
           </button>
@@ -176,8 +214,7 @@ export default function Memory() {
               </div>
             )}
             {(hits.results || []).map((h, i) => (
-              <div key={i} style={{ padding: "10px 0",
-                                    borderTop: `1px solid ${T.line}` }}>
+              <div key={i} style={{ padding: "10px 0", borderTop: `1px solid ${T.line}` }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
                   <span style={{ fontSize: 12.5, color: T.text, flex: 1 }}>
                     {h.title || h.source || "untitled"}
@@ -202,19 +239,32 @@ export default function Memory() {
       <section style={card}>
         <div style={label}>Tell it something longer</div>
         <div style={{ fontSize: 12, color: T.dim, marginBottom: 12, lineHeight: 1.5 }}>
-          For anything too long to be a fact — your rates and terms, how you like
-          proposals written, notes on a client. Retrieved when relevant.
+          For anything too long to be a fact — your rates and terms, how you like proposals written,
+          notes on a client. Retrieved when relevant.
         </div>
-        <input value={newNote.title} placeholder="what is this? e.g. my rates"
-               onChange={(e) => setNewNote((n) => ({ ...n, title: e.target.value }))}
-               style={{ ...input, width: "100%", marginBottom: 8 }} />
-        <textarea value={newNote.body} rows={5}
-                  placeholder="write it here…"
-                  onChange={(e) => setNewNote((n) => ({ ...n, body: e.target.value }))}
-                  style={{ ...input, width: "100%", resize: "vertical",
-                           fontFamily: "inherit", lineHeight: 1.5 }} />
+        <input
+          value={newNote.title}
+          placeholder="what is this? e.g. my rates"
+          onChange={(e) => setNewNote((n) => ({ ...n, title: e.target.value }))}
+          style={{ ...input, width: "100%", marginBottom: 8 }}
+        />
+        <textarea
+          value={newNote.body}
+          rows={5}
+          placeholder="write it here…"
+          onChange={(e) => setNewNote((n) => ({ ...n, body: e.target.value }))}
+          style={{
+            ...input,
+            width: "100%",
+            resize: "vertical",
+            fontFamily: "inherit",
+            lineHeight: 1.5,
+          }}
+        />
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 10 }}>
-          <button style={btn(T.green)} onClick={addNote}>Remember this</button>
+          <button style={btn(T.green)} onClick={addNote}>
+            Remember this
+          </button>
           {note && <span style={{ fontSize: 12, color: T.dim }}>{note}</span>}
         </div>
       </section>
@@ -226,13 +276,18 @@ export default function Memory() {
           <div style={{ fontSize: 12.5, color: T.dim }}>Nothing stored yet.</div>
         )}
         {docs.map((d) => (
-          <div key={d.id} style={{ display: "flex", gap: 12, alignItems: "baseline",
-                                   padding: "8px 0",
-                                   borderBottom: `1px solid ${T.line}` }}>
+          <div
+            key={d.id}
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "baseline",
+              padding: "8px 0",
+              borderBottom: `1px solid ${T.line}`,
+            }}
+          >
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, color: T.text }}>
-                {d.title || "untitled"}
-              </div>
+              <div style={{ fontSize: 12.5, color: T.text }}>{d.title || "untitled"}</div>
               <div style={{ fontSize: 10.5, color: T.dim, marginTop: 2 }}>
                 {d.source || "note"}
                 {d.project ? ` · ${d.project}` : ""}
@@ -240,8 +295,10 @@ export default function Memory() {
                 {d.created_at ? ` · ${String(d.created_at).slice(0, 10)}` : ""}
               </div>
             </div>
-            <button onClick={() => removeDoc(d.id)}
-                    style={{ ...btn(T.red), padding: "3px 10px", fontSize: 10.5 }}>
+            <button
+              onClick={() => removeDoc(d.id)}
+              style={{ ...btn(T.red), padding: "3px 10px", fontSize: 10.5 }}
+            >
               Delete
             </button>
           </div>

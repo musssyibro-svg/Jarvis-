@@ -18,11 +18,11 @@
  * a slightly-wrong shade is always better than an unreadable control.
  */
 
-const NEUTRAL = 'rgba(120,160,190,0.10)';
+const NEUTRAL = "rgba(120,160,190,0.10)";
 
 /** Parse any common CSS colour into [r,g,b], or null if we can't. */
 export function toRgb(color) {
-  const c = String(color || '').trim();
+  const c = String(color || "").trim();
   if (!c) return null;
 
   // #rgb / #rgba
@@ -36,7 +36,11 @@ export function toRgb(color) {
   // rgb() / rgba(), with either comma or space separators
   const m = c.match(/^rgba?\(([^)]+)\)$/i);
   if (m) {
-    const parts = m[1].split(/[\s,/]+/).filter(Boolean).slice(0, 3).map(Number);
+    const parts = m[1]
+      .split(/[\s,/]+/)
+      .filter(Boolean)
+      .slice(0, 3)
+      .map(Number);
     if (parts.length === 3 && parts.every((n) => Number.isFinite(n))) {
       return parts.map((n) => Math.max(0, Math.min(255, Math.round(n))));
     }
@@ -64,21 +68,21 @@ export function edge(color, a = 0.32) {
  * Standard control style. Every button in Jarvis should come from here, so the
  * white-button class of bug can only ever be fixed in one place.
  */
-export function btn(color = '#00d4ff', opts = {}) {
-  const { active = false, disabled = false, size = 'sm' } = opts;
-  const pad = size === 'lg' ? '10px 20px' : '7px 16px';
-  const fs = size === 'lg' ? 11 : 9;
+export function btn(color = "#00d4ff", opts = {}) {
+  const { active = false, disabled = false, size = "sm" } = opts;
+  const pad = size === "lg" ? "10px 20px" : "7px 16px";
+  const fs = size === "lg" ? 11 : 9;
   return {
     padding: pad,
     borderRadius: 3,
     border: `1px solid ${edge(color, active ? 0.9 : 0.55)}`,
     background: tint(color, active ? 0.22 : 0.09),
     color,
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
     fontSize: fs,
-    letterSpacing: '0.1em',
-    cursor: disabled ? 'not-allowed' : 'pointer',
+    letterSpacing: "0.1em",
+    cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.45 : 1,
-    transition: 'background 120ms ease, border-color 120ms ease',
+    transition: "background 120ms ease, border-color 120ms ease",
   };
 }

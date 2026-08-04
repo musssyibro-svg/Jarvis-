@@ -1,58 +1,164 @@
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html, body, #root { height: 100%; }
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
 body {
   /* Calm, flat dark surface — no drifting glows, no fake HUD. */
   background: #0a0e14;
   color: #c8d2dc;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   overflow: hidden;
 }
-::selection { background: rgba(0,212,255,0.30); color: #eaffff; }
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.24); }
+::selection {
+  background: rgba(0, 212, 255, 0.3);
+  color: #eaffff;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
 
 /* The only motion kept: a gentle fade for newly-mounted content, and a small
    spinner for genuine "working" states. Everything decorative is gone — the
    user found the animated core/HUD fake, so status is shown as plain text. */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@keyframes spin   { to { transform: rotate(360deg); } }
-@keyframes livedot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes livedot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
 
-.fade-in { animation: fadeIn 0.2s ease; }
-.spin    { animation: spin 0.9s linear infinite; }
+.fade-in {
+  animation: fadeIn 0.2s ease;
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}
 /* a single small "live" dot is honest signal, not decoration */
-.livedot { animation: livedot 1.6s ease-in-out infinite; }
+.livedot {
+  animation: livedot 1.6s ease-in-out infinite;
+}
 
-button { transition: background 0.12s ease, border-color 0.12s ease; cursor: pointer; }
-input, textarea, select { transition: border-color 0.12s ease; }
-input:focus, textarea:focus, select:focus { border-color: rgba(0,212,255,0.5) !important; }
+button {
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+  cursor: pointer;
+}
+input,
+textarea,
+select {
+  transition: border-color 0.12s ease;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(0, 212, 255, 0.5) !important;
+}
 
 /* ── Purposeful motion — these animate ONLY when Jarvis is actually working ── */
 
 /* A thin sweep across the state banner while busy; static (no animation) idle. */
-@keyframes sweep { 0% { background-position: -140% 0; } 100% { background-position: 240% 0; } }
+@keyframes sweep {
+  0% {
+    background-position: -140% 0;
+  }
+  100% {
+    background-position: 240% 0;
+  }
+}
 .busy-sweep {
-  background-image: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 70%
+  );
   background-size: 200% 100%;
   animation: sweep 1.6s linear infinite;
 }
 /* Rotating processing ring — only rendered when a real task is running. */
-@keyframes ring-rot { to { transform: rotate(360deg); } }
+@keyframes ring-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .think-ring {
-  width: 14px; height: 14px; border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.12);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.12);
   border-top-color: currentColor;
   animation: ring-rot 0.8s linear infinite;
   display: inline-block;
 }
 /* Smoothly grow/shrink progress + stat changes so numbers feel alive. */
-.progress-fill { transition: width 0.6s cubic-bezier(.4,0,.2,1); }
-.smooth { transition: all 0.3s ease; }
+.progress-fill {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.smooth {
+  transition: all 0.3s ease;
+}
 /* Timeline rows slide in as activity arrives. */
-@keyframes rowin { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
-.tl-row { animation: rowin 0.25s ease; }
+@keyframes rowin {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tl-row {
+  animation: rowin 0.25s ease;
+}
 /* A soft glow that breathes on an actively-working card. */
-@keyframes breathe { 0%,100% { box-shadow: 0 0 0 rgba(0,212,255,0); } 50% { box-shadow: 0 0 18px rgba(0,212,255,0.18); } }
-.alive { animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(0, 212, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(0, 212, 255, 0.18);
+  }
+}
+.alive {
+  animation: breathe 2.4s ease-in-out infinite;
+}

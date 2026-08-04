@@ -17,22 +17,26 @@
  * spins when nothing is happening is the same lie as a progress bar that
  * reaches 90% and waits.
  */
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { API } from "../config.js";
 import { T } from "../theme.js";
 
 const card = { background: "#0d1220", border: `1px solid ${T.line}`, borderRadius: 14 };
 const label = {
-  fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
-  color: T.dim, marginBottom: 10, fontWeight: 600,
+  fontSize: 10,
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  color: T.dim,
+  marginBottom: 10,
+  fontWeight: 600,
 };
 
 const STATUS = {
-  pending: { c: T.dim,    mark: "○", word: "waiting"  },
-  running: { c: T.cyan,   mark: "◐", word: "running"  },
-  done:    { c: T.green,  mark: "●", word: "done"     },
-  failed:  { c: T.red,    mark: "✕", word: "failed"   },
-  skipped: { c: T.amber,  mark: "⊘", word: "skipped"  },
+  pending: { c: T.dim, mark: "○", word: "waiting" },
+  running: { c: T.cyan, mark: "◐", word: "running" },
+  done: { c: T.green, mark: "●", word: "done" },
+  failed: { c: T.red, mark: "✕", word: "failed" },
+  skipped: { c: T.amber, mark: "⊘", word: "skipped" },
 };
 
 function btn(color, disabled) {
@@ -40,8 +44,12 @@ function btn(color, disabled) {
     background: disabled ? "rgba(255,255,255,0.04)" : `${color}1f`,
     border: `1px solid ${disabled ? T.line : `${color}55`}`,
     color: disabled ? T.dim : color,
-    borderRadius: 8, padding: "5px 11px", fontSize: 11, fontWeight: 600,
-    cursor: disabled ? "default" : "pointer", letterSpacing: "0.04em",
+    borderRadius: 8,
+    padding: "5px 11px",
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: disabled ? "default" : "pointer",
+    letterSpacing: "0.04em",
   };
 }
 
@@ -50,13 +58,13 @@ const secs = (ms) => (ms == null ? "" : ms < 1000 ? `${ms}ms` : `${(ms / 1000).t
 /* How alarming is a step? Only three tiers, because a legend nobody reads is
    the same as no legend. Safe steps are grey and get out of the way. */
 const RISK = {
-  safe:      { c: T.dim,    mark: "·" },
-  visible:   { c: T.cyan,   mark: "·" },
-  network:   { c: T.cyan,   mark: "·" },
-  writes:    { c: T.amber,  mark: "!" },
-  disruptive:{ c: T.amber,  mark: "!" },
-  sensitive: { c: T.red,    mark: "!!" },
-  unknown:   { c: T.amber,  mark: "?" },
+  safe: { c: T.dim, mark: "·" },
+  visible: { c: T.cyan, mark: "·" },
+  network: { c: T.cyan, mark: "·" },
+  writes: { c: T.amber, mark: "!" },
+  disruptive: { c: T.amber, mark: "!" },
+  sensitive: { c: T.red, mark: "!!" },
+  unknown: { c: T.amber, mark: "?" },
 };
 
 function Simulation({ sim }) {
@@ -67,9 +75,15 @@ function Simulation({ sim }) {
   const steps = sim.would || [];
 
   return (
-    <div style={{ marginTop: 14, padding: 14, borderRadius: 11,
-                  background: "rgba(169,139,255,0.06)",
-                  border: `1px solid rgba(169,139,255,0.25)` }}>
+    <div
+      style={{
+        marginTop: 14,
+        padding: 14,
+        borderRadius: 11,
+        background: "rgba(169,139,255,0.06)",
+        border: `1px solid rgba(169,139,255,0.25)`,
+      }}
+    >
       <div style={{ ...label, color: T.violet, marginBottom: 10 }}>
         {earning ? "If you start earning now" : "If you run that"}
       </div>
@@ -83,15 +97,13 @@ function Simulation({ sim }) {
       {steps.map((s, i) => {
         const r = RISK[s.level] || RISK.unknown;
         return (
-          <div key={i} style={{ display: "flex", gap: 10, padding: "5px 0",
-                                alignItems: "baseline" }}>
-            <span style={{ color: r.c, width: 18, fontSize: 12, flexShrink: 0 }}>
-              {r.mark}
-            </span>
+          <div
+            key={i}
+            style={{ display: "flex", gap: 10, padding: "5px 0", alignItems: "baseline" }}
+          >
+            <span style={{ color: r.c, width: 18, fontSize: 12, flexShrink: 0 }}>{r.mark}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, color: T.text }}>
-                {s.text || s.would}
-              </div>
+              <div style={{ fontSize: 12.5, color: T.text }}>{s.text || s.would}</div>
               {s.effect && (
                 <div style={{ fontSize: 11, color: r.c, marginTop: 2 }}>
                   {s.effect} · ~{s.seconds}s ({s.basis})
@@ -112,13 +124,15 @@ function Simulation({ sim }) {
       )}
 
       {(sim.blockers || []).map((b, i) => (
-        <div key={i} style={{ fontSize: 11.5, marginTop: 7,
-                              color: b.fatal ? T.red : T.amber }}>
-          {b.fatal ? "Stops it: " : "Heads up: "}{b.what} — {b.fix}
+        <div key={i} style={{ fontSize: 11.5, marginTop: 7, color: b.fatal ? T.red : T.amber }}>
+          {b.fatal ? "Stops it: " : "Heads up: "}
+          {b.what} — {b.fix}
         </div>
       ))}
       {(sim.warnings || []).map((w, i) => (
-        <div key={i} style={{ fontSize: 11.5, color: T.amber, marginTop: 7 }}>{w}</div>
+        <div key={i} style={{ fontSize: 11.5, color: T.amber, marginTop: 7 }}>
+          {w}
+        </div>
       ))}
       {(sim.unresolved || []).map((u, i) => (
         <div key={i} style={{ fontSize: 11.5, color: T.amber, marginTop: 7 }}>
@@ -126,8 +140,15 @@ function Simulation({ sim }) {
         </div>
       ))}
 
-      <div style={{ fontSize: 11, color: T.dim, marginTop: 12,
-                    borderTop: `1px solid ${T.line}`, paddingTop: 9 }}>
+      <div
+        style={{
+          fontSize: 11,
+          color: T.dim,
+          marginTop: 12,
+          borderTop: `1px solid ${T.line}`,
+          paddingTop: 9,
+        }}
+      >
         {sim.note}
       </div>
     </div>
@@ -150,8 +171,12 @@ export default function Planner({ live = [] }) {
     try {
       const p = await fetch(`${API}/os/plan`).then((r) => r.json());
       setPlan(p);
-    } catch { /* the next tick retries */ }
-    try { setTeach(await fetch(`${API}/os/teach`).then((r) => r.json())); } catch {}
+    } catch {
+      /* the next tick retries */
+    }
+    try {
+      setTeach(await fetch(`${API}/os/teach`).then((r) => r.json()));
+    } catch {}
   }, []);
 
   /* Poll fast while something is running, slowly when idle. A fixed 1s poll
@@ -170,23 +195,33 @@ export default function Planner({ live = [] }) {
   }, [plan?.status]);
 
   const loadWhy = useCallback(async () => {
-    try { setWhy(await fetch(`${API}/os/why`).then((r) => r.json())); } catch {}
+    try {
+      setWhy(await fetch(`${API}/os/why`).then((r) => r.json()));
+    } catch {}
   }, []);
   const loadEval = useCallback(async () => {
-    try { setEvalx(await fetch(`${API}/os/selfeval`).then((r) => r.json())); } catch {}
+    try {
+      setEvalx(await fetch(`${API}/os/selfeval`).then((r) => r.json()));
+    } catch {}
   }, []);
-  useEffect(() => { loadWhy(); loadEval(); }, [plan?.status, loadWhy, loadEval]);
+  useEffect(() => {
+    loadWhy();
+    loadEval();
+  }, [plan?.status, loadWhy, loadEval]);
 
   const control = async (cmd, step) => {
     setNote("");
     try {
       const r = await fetch(`${API}/os/plan/${cmd}`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ step }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) setNote(j.detail || j.error || "Couldn't do that.");
-    } catch { setNote("Backend didn't answer."); }
+    } catch {
+      setNote("Backend didn't answer.");
+    }
     load();
   };
 
@@ -199,11 +234,14 @@ export default function Planner({ live = [] }) {
     setPreview(null);
     try {
       const r = await fetch(`${API}/os/plan/preview`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ command: draft }),
       });
       setPreview(await r.json());
-    } catch { setPreview({ plan: [], unresolved: [draft] }); }
+    } catch {
+      setPreview({ plan: [], unresolved: [draft] });
+    }
   };
 
   const doSimulate = async (command) => {
@@ -211,11 +249,14 @@ export default function Planner({ live = [] }) {
     setSim({ loading: true });
     try {
       const r = await fetch(`${API}/os/simulate`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(command ? { command } : {}),
       });
       setSim(await r.json());
-    } catch { setSim({ possible: false, reason: "backend didn't answer" }); }
+    } catch {
+      setSim({ possible: false, reason: "backend didn't answer" });
+    }
   };
 
   const teachToggle = async () => {
@@ -223,16 +264,22 @@ export default function Planner({ live = [] }) {
     const on = teach?.recording;
     try {
       const r = await fetch(`${API}/os/teach/${on ? "stop" : "start"}`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(on ? { save: true } : { name: teachName || "untitled task" }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) setNote(j.detail || "Couldn't start recording.");
-      else if (on) setNote(j.ok
-        ? `Learned "${j.name}" — ${j.step_count} steps. Say "run my ${j.name}".`
-        : (j.error || "Nothing replayable was captured."));
+      else if (on)
+        setNote(
+          j.ok
+            ? `Learned "${j.name}" — ${j.step_count} steps. Say "run my ${j.name}".`
+            : j.error || "Nothing replayable was captured."
+        );
       setTeachName("");
-    } catch { setNote("Backend didn't answer."); }
+    } catch {
+      setNote("Backend didn't answer.");
+    }
     load();
   };
 
@@ -241,13 +288,19 @@ export default function Planner({ live = [] }) {
   /* Feed entries from the executor and planner only — the whole point is to see
      this plan's activity next to the plan, not the entire system's chatter. */
   const relevant = (live || []).filter((f) =>
-    ["planner", "executor", "desktop", "vision", "selfeval", "teach"].includes(f.agent));
+    ["planner", "executor", "desktop", "vision", "selfeval", "teach"].includes(f.agent)
+  );
 
   return (
-    <div style={{ padding: 22, display: "grid", gap: 16,
-                  gridTemplateColumns: "minmax(0,1.35fr) minmax(280px,1fr)",
-                  alignItems: "start" }}>
-
+    <div
+      style={{
+        padding: 22,
+        display: "grid",
+        gap: 16,
+        gridTemplateColumns: "minmax(0,1.35fr) minmax(280px,1fr)",
+        alignItems: "start",
+      }}
+    >
       {/* ── The plan ─────────────────────────────────────────────────────── */}
       <section style={{ ...card, padding: 18, gridColumn: "1 / 2" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
@@ -259,23 +312,42 @@ export default function Planner({ live = [] }) {
           )}
           <div style={{ flex: 1 }} />
           {plan?.status && plan.status !== "none" && (
-            <button style={btn(T.red, !running)} disabled={!running}
-                    onClick={() => control("stop")}>Stop</button>
+            <button
+              style={btn(T.red, !running)}
+              disabled={!running}
+              onClick={() => control("stop")}
+            >
+              Stop
+            </button>
           )}
         </div>
 
         <div style={{ fontSize: 14, color: T.text, marginBottom: 14, lineHeight: 1.4 }}>
-          {plan?.goal || <span style={{ color: T.dim }}>
-            Nothing running. Type a command below to see the plan before it runs.
-          </span>}
+          {plan?.goal || (
+            <span style={{ color: T.dim }}>
+              Nothing running. Type a command below to see the plan before it runs.
+            </span>
+          )}
         </div>
 
         {plan?.total > 0 && (
-          <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 2,
-                        overflow: "hidden", marginBottom: 16 }}>
-            <div style={{ height: "100%", width: `${plan.progress}%`,
-                          background: plan.status === "failed" ? T.red : T.green,
-                          transition: "width .35s ease" }} />
+          <div
+            style={{
+              height: 3,
+              background: "rgba(255,255,255,0.06)",
+              borderRadius: 2,
+              overflow: "hidden",
+              marginBottom: 16,
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${plan.progress}%`,
+                background: plan.status === "failed" ? T.red : T.green,
+                transition: "width .35s ease",
+              }}
+            />
           </div>
         )}
 
@@ -283,11 +355,19 @@ export default function Planner({ live = [] }) {
           const st = STATUS[s.status] || STATUS.pending;
           const isNow = s.status === "running";
           return (
-            <div key={s.i}
-                 style={{ display: "flex", gap: 11, padding: "9px 10px", borderRadius: 10,
-                          alignItems: "flex-start", marginBottom: 3,
-                          background: isNow ? "rgba(84,214,255,0.07)" : "transparent",
-                          border: `1px solid ${isNow ? "rgba(84,214,255,0.22)" : "transparent"}` }}>
+            <div
+              key={s.i}
+              style={{
+                display: "flex",
+                gap: 11,
+                padding: "9px 10px",
+                borderRadius: 10,
+                alignItems: "flex-start",
+                marginBottom: 3,
+                background: isNow ? "rgba(84,214,255,0.07)" : "transparent",
+                border: `1px solid ${isNow ? "rgba(84,214,255,0.22)" : "transparent"}`,
+              }}
+            >
               <span style={{ color: st.c, fontSize: 13, lineHeight: "18px", width: 14 }}>
                 {st.mark}
               </span>
@@ -296,8 +376,7 @@ export default function Planner({ live = [] }) {
                   {s.text}
                 </div>
                 {(s.error || s.detail) && (
-                  <div style={{ fontSize: 11, marginTop: 3,
-                                color: s.error ? T.red : T.dim }}>
+                  <div style={{ fontSize: 11, marginTop: 3, color: s.error ? T.red : T.dim }}>
                     {s.error || s.detail}
                   </div>
                 )}
@@ -309,10 +388,14 @@ export default function Planner({ live = [] }) {
               </div>
               <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
                 {s.status === "pending" && running && (
-                  <button style={btn(T.amber)} onClick={() => control("skip", s.i)}>Skip</button>
+                  <button style={btn(T.amber)} onClick={() => control("skip", s.i)}>
+                    Skip
+                  </button>
                 )}
                 {(s.status === "failed" || s.status === "skipped") && (
-                  <button style={btn(T.cyan)} onClick={() => control("retry", s.i)}>Retry</button>
+                  <button style={btn(T.cyan)} onClick={() => control("retry", s.i)}>
+                    Retry
+                  </button>
                 )}
               </div>
             </div>
@@ -320,30 +403,61 @@ export default function Planner({ live = [] }) {
         })}
 
         {note && (
-          <div style={{ marginTop: 12, fontSize: 12, color: T.amber,
-                        background: "rgba(245,181,68,0.08)", padding: "8px 11px",
-                        borderRadius: 8 }}>{note}</div>
+          <div
+            style={{
+              marginTop: 12,
+              fontSize: 12,
+              color: T.amber,
+              background: "rgba(245,181,68,0.08)",
+              padding: "8px 11px",
+              borderRadius: 8,
+            }}
+          >
+            {note}
+          </div>
         )}
 
         {/* Dry run — see how a sentence will be understood before it acts. */}
         <div style={{ marginTop: 18, borderTop: `1px solid ${T.line}`, paddingTop: 14 }}>
           <div style={label}>Check a command first</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <input value={draft} onChange={(e) => setDraft(e.target.value)}
-                   onKeyDown={(e) => e.key === "Enter" && doPreview()}
-                   placeholder="open browser and search BMW M4 and analyze the page"
-                   style={{ flex: 1, background: "rgba(0,0,0,0.35)", color: T.text,
-                            border: `1px solid ${T.line}`, borderRadius: 8,
-                            padding: "8px 11px", fontSize: 12, outline: "none" }} />
-            <button style={btn(T.cyan)} onClick={doPreview}>Show plan</button>
-            <button style={btn(T.violet)} onClick={() => doSimulate(draft)}>Simulate</button>
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && doPreview()}
+              placeholder="open browser and search BMW M4 and analyze the page"
+              style={{
+                flex: 1,
+                background: "rgba(0,0,0,0.35)",
+                color: T.text,
+                border: `1px solid ${T.line}`,
+                borderRadius: 8,
+                padding: "8px 11px",
+                fontSize: 12,
+                outline: "none",
+              }}
+            />
+            <button style={btn(T.cyan)} onClick={doPreview}>
+              Show plan
+            </button>
+            <button style={btn(T.violet)} onClick={() => doSimulate(draft)}>
+              Simulate
+            </button>
           </div>
           <div style={{ fontSize: 11, color: T.dim, marginTop: 7 }}>
-            Simulate also shows what each step would touch, how long it would
-            take on this PC, and what would stop it. It runs nothing.{" "}
-            <button onClick={() => doSimulate("")}
-                    style={{ background: "none", border: "none", color: T.violet,
-                             cursor: "pointer", fontSize: 11, padding: 0 }}>
+            Simulate also shows what each step would touch, how long it would take on this PC, and
+            what would stop it. It runs nothing.{" "}
+            <button
+              onClick={() => doSimulate("")}
+              style={{
+                background: "none",
+                border: "none",
+                color: T.violet,
+                cursor: "pointer",
+                fontSize: 11,
+                padding: 0,
+              }}
+            >
               Simulate a freelance run instead
             </button>
           </div>
@@ -352,7 +466,8 @@ export default function Planner({ live = [] }) {
             <div style={{ marginTop: 10, fontSize: 12 }}>
               {(preview.plan || []).map((p, i) => (
                 <div key={i} style={{ color: T.text, padding: "3px 0" }}>
-                  <span style={{ color: T.dim, marginRight: 8 }}>{i + 1}.</span>{p}
+                  <span style={{ color: T.dim, marginRight: 8 }}>{i + 1}.</span>
+                  {p}
                 </div>
               ))}
               {!preview.plan?.length && (
@@ -372,20 +487,19 @@ export default function Planner({ live = [] }) {
 
       {/* ── Right column ─────────────────────────────────────────────────── */}
       <div style={{ display: "grid", gap: 16 }}>
-
         {/* Why */}
         <section style={{ ...card, padding: 16 }}>
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ ...label, marginBottom: 0, flex: 1 }}>Why</div>
-            <button style={btn(T.violet)} onClick={loadWhy}>Refresh</button>
+            <button style={btn(T.violet)} onClick={loadWhy}>
+              Refresh
+            </button>
           </div>
           <div style={{ fontSize: 12.5, color: T.text, marginTop: 10, lineHeight: 1.5 }}>
             {why?.headline || "Nothing to explain yet."}
           </div>
           {why?.cause && (
-            <div style={{ marginTop: 10, fontSize: 12, color: T.red }}>
-              Cause: {why.cause}
-            </div>
+            <div style={{ marginTop: 10, fontSize: 12, color: T.red }}>Cause: {why.cause}</div>
           )}
           {why?.machine_reason && (
             <div style={{ marginTop: 6, fontSize: 12, color: T.amber }}>
@@ -393,9 +507,7 @@ export default function Planner({ live = [] }) {
             </div>
           )}
           {why?.fix && (
-            <div style={{ marginTop: 6, fontSize: 12, color: T.green }}>
-              Fix: {why.fix}
-            </div>
+            <div style={{ marginTop: 6, fontSize: 12, color: T.green }}>Fix: {why.fix}</div>
           )}
           {why?.code_path?.length > 0 && (
             <details style={{ marginTop: 12 }}>
@@ -404,8 +516,14 @@ export default function Planner({ live = [] }) {
               </summary>
               <div style={{ marginTop: 8 }}>
                 {why.code_path.map((c, i) => (
-                  <div key={i} style={{ fontSize: 11, color: c.ok === false ? T.red : T.dim,
-                                        padding: "2px 0" }}>
+                  <div
+                    key={i}
+                    style={{
+                      fontSize: 11,
+                      color: c.ok === false ? T.red : T.dim,
+                      padding: "2px 0",
+                    }}
+                  >
                     {c.text} {c.detail ? `— ${c.detail}` : ""}
                   </div>
                 ))}
@@ -422,11 +540,18 @@ export default function Planner({ live = [] }) {
           ) : (
             <>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <div style={{ fontSize: 30, fontWeight: 700,
-                              color: evalx.average_confidence >= 70 ? T.green : T.amber }}>
+                <div
+                  style={{
+                    fontSize: 30,
+                    fontWeight: 700,
+                    color: evalx.average_confidence >= 70 ? T.green : T.amber,
+                  }}
+                >
                   {evalx.average_confidence}%
                 </div>
-                <div style={{ fontSize: 11, color: T.dim }}>average, last {evalx.runs.length} runs</div>
+                <div style={{ fontSize: 11, color: T.dim }}>
+                  average, last {evalx.runs.length} runs
+                </div>
               </div>
               {evalx.runs.slice(0, 4).map((r, i) => (
                 <div key={i} style={{ marginTop: 9, fontSize: 11.5 }}>
@@ -462,17 +587,26 @@ export default function Planner({ live = [] }) {
           ) : (
             <>
               <div style={{ fontSize: 12, color: T.dim, lineHeight: 1.5, marginBottom: 10 }}>
-                Press record, do the task once the way you want it done, then stop.
-                Jarvis saves it as a workflow you can run by name.
-                Passwords are never recorded.
+                Press record, do the task once the way you want it done, then stop. Jarvis saves it
+                as a workflow you can run by name. Passwords are never recorded.
               </div>
               {!teach?.recording && (
-                <input value={teachName} onChange={(e) => setTeachName(e.target.value)}
-                       placeholder="name it, e.g. apply for a job"
-                       style={{ width: "100%", background: "rgba(0,0,0,0.35)", color: T.text,
-                                border: `1px solid ${T.line}`, borderRadius: 8,
-                                padding: "8px 11px", fontSize: 12, outline: "none",
-                                marginBottom: 9 }} />
+                <input
+                  value={teachName}
+                  onChange={(e) => setTeachName(e.target.value)}
+                  placeholder="name it, e.g. apply for a job"
+                  style={{
+                    width: "100%",
+                    background: "rgba(0,0,0,0.35)",
+                    color: T.text,
+                    border: `1px solid ${T.line}`,
+                    borderRadius: 8,
+                    padding: "8px 11px",
+                    fontSize: 12,
+                    outline: "none",
+                    marginBottom: 9,
+                  }}
+                />
               )}
               <button style={btn(teach?.recording ? T.red : T.green)} onClick={teachToggle}>
                 {teach?.recording
@@ -486,15 +620,16 @@ export default function Planner({ live = [] }) {
         {/* This plan's activity, right next to the plan. */}
         <section style={{ ...card, padding: 16 }}>
           <div style={label}>Activity</div>
-          {relevant.length === 0 && (
-            <div style={{ fontSize: 12, color: T.dim }}>Quiet.</div>
-          )}
+          {relevant.length === 0 && <div style={{ fontSize: 12, color: T.dim }}>Quiet.</div>}
           {relevant.slice(0, 14).map((f) => (
             <div key={f._k} style={{ display: "flex", gap: 8, padding: "5px 0" }}>
               <span style={{ fontSize: 9, color: T.dim, width: 52, flexShrink: 0 }}>{f.ts}</span>
-              <span style={{ fontSize: 11.5,
-                             color: f.level === "error" ? T.red
-                                  : f.level === "warning" ? T.amber : T.text }}>
+              <span
+                style={{
+                  fontSize: 11.5,
+                  color: f.level === "error" ? T.red : f.level === "warning" ? T.amber : T.text,
+                }}
+              >
                 {f.msg}
               </span>
             </div>
