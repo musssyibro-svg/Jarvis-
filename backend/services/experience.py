@@ -231,6 +231,17 @@ def classify(error: str, action: str = "", result: dict | None = None) -> dict:
             kind = "ocr_timeout"
 
     cause, remedy, retryable, recovery = KINDS[kind]
+
+    # If nothing matched but the action TOLD us what went wrong, say that
+    # instead of "Jarvis couldn't determine why this failed." The generic line
+    # is for when we genuinely don't know; printing it over a perfectly good
+    # explanation — "never saw an edge process" — is a lie by omission, and it
+    # sends the user to the diagnostics screen to read what we already had.
+    said = (error or (result or {}).get("verify_reason")
+            or (result or {}).get("error") or "").strip()
+    if kind == "unknown" and len(said) > 12:
+        cause = said[:300]
+
     return {"kind": kind, "cause": cause, "remedy": remedy,
             "retryable": retryable, "recovery": recovery,
             "raw": (error or "")[:300]}

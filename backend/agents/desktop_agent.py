@@ -774,7 +774,11 @@ def _run_action(action: str, params: dict) -> dict:
     }
     fn = ACTIONS.get(action)
     if fn is None:
-        return {"success": False, "error": f"unknown action '{action}'"}
+        # Through the contract as well — an unknown action is still a result,
+        # and a caller reading `verified` must not get a KeyError on the one
+        # path that skipped normalisation.
+        return _contract({"success": False,
+                          "error": f"unknown action '{action}'"}, action)
     started = time.time()
     try:
         out = fn(params) or {"success": False, "error": "no result"}
@@ -790,9 +794,56 @@ def _run_action(action: str, params: dict) -> dict:
         rec = trace.failure(f"desktop.{action}", f"{type(e).__name__}: {e}",
                             detail=traceback.format_exc(), **(params or {}))
         trace.record_cost(f"desktop.{action}", (time.time() - started) * 1000)
-        return {"success": False, "error": str(e) or type(e).__name__,
-                "exception": type(e).__name__, "diagnostic": rec["at"]}
+        return _contract({"success": False, "error": str(e) or type(e).__name__,
+                          "exception": type(e).__name__, "diagnostic": rec["at"]},
+                         action, time.time() - started)
     trace.record_cost(f"desktop.{action}", (time.time() - started) * 1000)
+    return _contract(out, action, time.time() - started)
+
+
+# ── One shape for every result ───────────────────────────────────────────────
+
+# What every action reports, whatever it did.
+#
+# Three independent reviews said the same thing and they were right: some
+# primitives returned {success, verified, verify_reason}, others just
+# {success}, open_url returned a third shape and run_command a fourth. "success"
+# therefore meant different things in different places, which is exactly how a
+# false ✓ survives — a caller reading `verified` got None from half the system
+# and could not tell "not verified" from "this action doesn't report it".
+#
+# Applied HERE rather than by rewriting twenty primitives, because this is the
+# single function every desktop action already passes through. A primitive that
+# knows more (click observes the screen, type_text reads the clipboard back)
+# still sets its own richer values; this only fills what is missing, and never
+# overwrites a real answer with a guess.
+_CONTRACT_KEYS = ("success", "verified", "confidence", "proof",
+                  "duration_ms", "explanation")
+
+
+def _contract(result: dict, action: str = "", elapsed_s: float = 0.0) -> dict:
+    out = dict(result or {})
+    out.setdefault("action", action)
+    out["duration_ms"] = int(elapsed_s * 1000)
+
+    ok = bool(out.get("success"))
+    # verified is left as None when the action genuinely cannot tell. None is
+    # not False: "I didn't check" and "I checked and it hadn't happened" send
+    # the user to completely different places, and collapsing them was half of
+    # the original complaint.
+    if "verified" not in out:
+        out["verified"] = None if ok else False
+
+    if "confidence" not in out:
+        out["confidence"] = (1.0 if out["verified"] is True
+                             else 0.0 if not ok
+                             else 0.5)          # ran, unconfirmed
+    if "explanation" not in out:
+        out["explanation"] = (out.get("verify_reason") or out.get("error")
+                              or ("done" if ok else "failed"))
+    out.setdefault("proof", {k: out[k] for k in
+                             ("path", "screenshot", "url", "app", "resolved", "title")
+                             if out.get(k)} or None)
     return out
 
 
@@ -896,7 +947,17 @@ def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
         return False, ("typed but the text isn't in the focused field — the window "
                        "probably didn't have keyboard focus")
 
-    # no cheap post-hoc check — trust the primitive's own success flag.
+    # A primitive that checked for itself is the better authority — it was
+    # there. open_url watches for the browser process; overriding that with a
+    # blanket "assumed" was how a navigation that never happened still came
+    # back verified.
+    if result.get("verified") is True:
+        return True, result.get("verify_reason", "confirmed by the action itself")
+    if result.get("verified") is False and result.get("verify_reason"):
+        return False, result["verify_reason"]
+
+    # Nothing checked it, and there is no cheap way to. Say that, rather than
+    # implying a check happened.
     return True, "assumed (no cheap verification)"
 
 
@@ -939,7 +1000,15 @@ def _read_focused_text() -> str | None:
 
 # Actions that must NOT be blindly re-run on a failed verify (retyping would
 # duplicate text / re-click). They get one honest attempt.
-_NO_RETRY = {"type_text", "compose", "click", "click_text", "press", "hotkey"}
+# Actions where a retry REPEATS the side effect instead of recovering from it.
+#
+# open_url joined this list the moment it started verifying: a retry re-runs
+# webbrowser.open() and the user gets three tabs of the same page. Exactly the
+# type_text duplication bug wearing a different hat — the failure was never
+# "it didn't open", it was "I couldn't confirm it opened", and doing it again
+# cannot answer that question.
+_NO_RETRY = {"type_text", "compose", "click", "click_text", "press", "hotkey",
+             "open_url"}
 
 
 def _classify(error: str, action: str, result: dict | None = None) -> dict:
@@ -1373,16 +1442,62 @@ def open_url(url: str, browser: str = "", query: str = "") -> dict:
         else:
             import webbrowser
             webbrowser.open(url)
-        # Give the page a moment so a following screenshot/analyze sees content
-        # rather than a blank tab.
-        time.sleep(2.0)
-        if browser:
-            focus_window(browser)
-        return {"success": True, "action": "open_url", "url": url,
-                "browser": browser or "system default",
+
+        # VERIFY WHAT IS ACTUALLY VERIFIABLE HERE, and be explicit about what
+        # isn't. This used to sleep 2s and return success unconditionally: a
+        # browser that never launched, a dead profile, a crash on start — all
+        # came back as "opened it ✓". Three separate reviews called this out
+        # and all three were right.
+        #
+        # What we CAN observe: a browser process exists and its window came to
+        # the front. What we CANNOT observe: the page content — this is the
+        # SYSTEM browser, launched by handle-less Popen/webbrowser, so there is
+        # no DOM to read. Saying so is the honest half; pretending otherwise is
+        # what made this an issue. When content matters the chain follows with
+        # screenshot+analyze, which IS the content check.
+        from services.tool_registry import default_browser
+        target = browser or default_browser()
+        appeared = False
+        deadline = time.time() + 8.0
+        while time.time() < deadline:
+            if _running_process_for(target):
+                appeared = True
+                break
+            time.sleep(0.25)
+
+        if not appeared:
+            # NOT a hard failure. webbrowser.open() may have launched something
+            # whose process name we don't map, and calling that "the browser
+            # never started" would break a working setup to satisfy a check.
+            # success=True because the request was made; verified=False because
+            # we could not confirm it, which is precisely the distinction the
+            # contract exists to carry.
+            return {"success": True, "verified": False, "action": "open_url",
+                    "url": url, "browser": browser or "system default",
+                    "verify_reason": (f"asked {target} to open the page but never saw "
+                                      f"a {target} process — it may have failed to "
+                                      f"start, or it runs under a name Jarvis "
+                                      f"doesn't recognise"),
+                    **({"query": query} if query else {})}
+
+        focus_window(target)
+        time.sleep(1.2)          # let the page paint before anyone screenshots it
+        front = _is_foreground(target)
+        # Verified on the PROCESS, not the foreground check. The process check
+        # is reliable; foreground is not, and hanging the verdict on the flakier
+        # of the two signals would fail navigations that plainly worked.
+        return {"success": True, "verified": True, "action": "open_url",
+                "url": url, "browser": browser or "system default",
+                "verify_reason": (
+                    f"{target} is running and in front — page CONTENT not checked, "
+                    f"Jarvis has no handle on the system browser"
+                    if front else
+                    f"{target} is running but isn't in front; the page may be "
+                    f"behind another window"),
                 **({"query": query} if query else {})}
     except Exception as e:
-        return {"success": False, "action": "open_url", "url": url, "error": str(e)}
+        return {"success": False, "verified": False, "action": "open_url",
+                "url": url, "error": str(e)}
 
 
 def close_window(title_contains: str) -> dict:

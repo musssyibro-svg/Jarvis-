@@ -277,3 +277,90 @@ def test_chain_steps_carry_their_own_time_not_the_whole_run():
 
     assert steps[0]["took_ms"] == 2328
     assert steps[1]["took_ms"] == 55115, "the slow step is still invisible"
+
+
+# ── What three independent reviews converged on ──────────────────────────────
+
+
+def test_agent_invented_navigation_is_risky():
+    """
+    All three reviews flagged this and all three were right: "browse" is the
+    path the LLM parser and the executor's own decision loop emit, and it was
+    not in RISKY_ACTIONS — so a URL nobody typed could drive a browser signed
+    in to the user's accounts without asking.
+    """
+    from agents.executor_agent import ExecutorAgent
+
+    assert ExecutorAgent().is_risky("browse")
+
+
+def test_typing_a_url_yourself_is_not_gated():
+    """
+    The other half of the same decision. Naming a destination IS the approval;
+    prompting for it would be noise that trains you to click yes without
+    reading. open_url is gated by check_url instead.
+    """
+    from agents.executor_agent import ExecutorAgent
+
+    assert not ExecutorAgent().is_risky("open_url")
+
+
+def test_opening_a_url_is_never_retried():
+    """
+    A retry re-runs webbrowser.open() and you get three tabs of the same page.
+    The failure was never "it didn't open" — it was "I couldn't confirm it
+    opened", and doing it again cannot answer that question.
+
+    Caught by a test going red the moment open_url started verifying, which is
+    the only reason it isn't a live bug.
+    """
+    from agents.desktop_agent import _NO_RETRY
+
+    assert "open_url" in _NO_RETRY
+
+
+def test_every_action_result_has_one_shape():
+    """
+    Some primitives returned {success, verified, verify_reason}, others just
+    {success}, open_url a third shape. A caller reading `verified` got None
+    from half the system and could not tell "not verified" from "this action
+    doesn't report it".
+    """
+    from agents import desktop_agent as da
+
+    for action, params in [
+        ("wait", {"seconds": 0.01}),
+        ("teleport", {}),  # unknown action
+        ("hotkey", {"keys": None}),
+    ]:  # raises inside
+        r = da._run_action(action, params)
+        missing = [k for k in da._CONTRACT_KEYS if k not in r]
+        assert not missing, f"{action} is missing {missing} from the contract"
+
+
+def test_unverified_is_not_the_same_as_failed():
+    """
+    verified=None means "I didn't check"; False means "I checked and it hadn't
+    happened". They send the user to completely different places, and
+    collapsing them into one boolean was half the original complaint.
+    """
+    from agents.desktop_agent import _contract
+
+    assert _contract({"success": True}, "wait")["verified"] is None
+    assert _contract({"success": False, "error": "x"}, "wait")["verified"] is False
+    assert _contract({"success": True, "verified": True}, "click")["verified"] is True
+
+
+def test_a_known_reason_is_never_reported_as_unknown():
+    """
+    "Jarvis couldn't determine why this failed" printed over a perfectly good
+    explanation is a lie by omission — and it sends the user to the diagnostics
+    screen to read something we already had in hand.
+    """
+    from services import experience
+
+    fail = experience.classify(
+        "asked edge to open the page but never saw an edge process", action="open_url", result={}
+    )
+    assert "edge" in fail["cause"], f"the real reason was dropped: {fail['cause']!r}"
+    assert "couldn't determine" not in fail["cause"]

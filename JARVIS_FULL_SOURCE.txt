@@ -3866,7 +3866,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-168 source files · 662 public symbols
+168 source files · 668 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -4395,7 +4395,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/tests/test_decompose.py`
 
 **`test_felt_behaviour.py`** — The three complaints that are actually about how Jarvis FEELS to use.
-  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`
+  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`, `test_agent_invented_navigation_is_risky`, `test_typing_a_url_yourself_is_not_gated`, `test_opening_a_url_is_never_retried`, `test_every_action_result_has_one_shape` _(+2 more)_
   <br>`backend/tests/test_felt_behaviour.py`
 
 **`test_headless.py`** — Jarvis must survive a machine with no display.
@@ -7925,7 +7925,11 @@ def _run_action(action: str, params: dict) -> dict:
     }
     fn = ACTIONS.get(action)
     if fn is None:
-        return {"success": False, "error": f"unknown action '{action}'"}
+        # Through the contract as well — an unknown action is still a result,
+        # and a caller reading `verified` must not get a KeyError on the one
+        # path that skipped normalisation.
+        return _contract({"success": False,
+                          "error": f"unknown action '{action}'"}, action)
     started = time.time()
     try:
         out = fn(params) or {"success": False, "error": "no result"}
@@ -7941,9 +7945,56 @@ def _run_action(action: str, params: dict) -> dict:
         rec = trace.failure(f"desktop.{action}", f"{type(e).__name__}: {e}",
                             detail=traceback.format_exc(), **(params or {}))
         trace.record_cost(f"desktop.{action}", (time.time() - started) * 1000)
-        return {"success": False, "error": str(e) or type(e).__name__,
-                "exception": type(e).__name__, "diagnostic": rec["at"]}
+        return _contract({"success": False, "error": str(e) or type(e).__name__,
+                          "exception": type(e).__name__, "diagnostic": rec["at"]},
+                         action, time.time() - started)
     trace.record_cost(f"desktop.{action}", (time.time() - started) * 1000)
+    return _contract(out, action, time.time() - started)
+
+
+# ── One shape for every result ───────────────────────────────────────────────
+
+# What every action reports, whatever it did.
+#
+# Three independent reviews said the same thing and they were right: some
+# primitives returned {success, verified, verify_reason}, others just
+# {success}, open_url returned a third shape and run_command a fourth. "success"
+# therefore meant different things in different places, which is exactly how a
+# false ✓ survives — a caller reading `verified` got None from half the system
+# and could not tell "not verified" from "this action doesn't report it".
+#
+# Applied HERE rather than by rewriting twenty primitives, because this is the
+# single function every desktop action already passes through. A primitive that
+# knows more (click observes the screen, type_text reads the clipboard back)
+# still sets its own richer values; this only fills what is missing, and never
+# overwrites a real answer with a guess.
+_CONTRACT_KEYS = ("success", "verified", "confidence", "proof",
+                  "duration_ms", "explanation")
+
+
+def _contract(result: dict, action: str = "", elapsed_s: float = 0.0) -> dict:
+    out = dict(result or {})
+    out.setdefault("action", action)
+    out["duration_ms"] = int(elapsed_s * 1000)
+
+    ok = bool(out.get("success"))
+    # verified is left as None when the action genuinely cannot tell. None is
+    # not False: "I didn't check" and "I checked and it hadn't happened" send
+    # the user to completely different places, and collapsing them was half of
+    # the original complaint.
+    if "verified" not in out:
+        out["verified"] = None if ok else False
+
+    if "confidence" not in out:
+        out["confidence"] = (1.0 if out["verified"] is True
+                             else 0.0 if not ok
+                             else 0.5)          # ran, unconfirmed
+    if "explanation" not in out:
+        out["explanation"] = (out.get("verify_reason") or out.get("error")
+                              or ("done" if ok else "failed"))
+    out.setdefault("proof", {k: out[k] for k in
+                             ("path", "screenshot", "url", "app", "resolved", "title")
+                             if out.get(k)} or None)
     return out
 
 
@@ -8047,7 +8098,17 @@ def _verify_action(action: str, params: dict, result: dict) -> tuple[bool, str]:
         return False, ("typed but the text isn't in the focused field — the window "
                        "probably didn't have keyboard focus")
 
-    # no cheap post-hoc check — trust the primitive's own success flag.
+    # A primitive that checked for itself is the better authority — it was
+    # there. open_url watches for the browser process; overriding that with a
+    # blanket "assumed" was how a navigation that never happened still came
+    # back verified.
+    if result.get("verified") is True:
+        return True, result.get("verify_reason", "confirmed by the action itself")
+    if result.get("verified") is False and result.get("verify_reason"):
+        return False, result["verify_reason"]
+
+    # Nothing checked it, and there is no cheap way to. Say that, rather than
+    # implying a check happened.
     return True, "assumed (no cheap verification)"
 
 
@@ -8090,7 +8151,15 @@ def _read_focused_text() -> str | None:
 
 # Actions that must NOT be blindly re-run on a failed verify (retyping would
 # duplicate text / re-click). They get one honest attempt.
-_NO_RETRY = {"type_text", "compose", "click", "click_text", "press", "hotkey"}
+# Actions where a retry REPEATS the side effect instead of recovering from it.
+#
+# open_url joined this list the moment it started verifying: a retry re-runs
+# webbrowser.open() and the user gets three tabs of the same page. Exactly the
+# type_text duplication bug wearing a different hat — the failure was never
+# "it didn't open", it was "I couldn't confirm it opened", and doing it again
+# cannot answer that question.
+_NO_RETRY = {"type_text", "compose", "click", "click_text", "press", "hotkey",
+             "open_url"}
 
 
 def _classify(error: str, action: str, result: dict | None = None) -> dict:
@@ -8524,16 +8593,62 @@ def open_url(url: str, browser: str = "", query: str = "") -> dict:
         else:
             import webbrowser
             webbrowser.open(url)
-        # Give the page a moment so a following screenshot/analyze sees content
-        # rather than a blank tab.
-        time.sleep(2.0)
-        if browser:
-            focus_window(browser)
-        return {"success": True, "action": "open_url", "url": url,
-                "browser": browser or "system default",
+
+        # VERIFY WHAT IS ACTUALLY VERIFIABLE HERE, and be explicit about what
+        # isn't. This used to sleep 2s and return success unconditionally: a
+        # browser that never launched, a dead profile, a crash on start — all
+        # came back as "opened it ✓". Three separate reviews called this out
+        # and all three were right.
+        #
+        # What we CAN observe: a browser process exists and its window came to
+        # the front. What we CANNOT observe: the page content — this is the
+        # SYSTEM browser, launched by handle-less Popen/webbrowser, so there is
+        # no DOM to read. Saying so is the honest half; pretending otherwise is
+        # what made this an issue. When content matters the chain follows with
+        # screenshot+analyze, which IS the content check.
+        from services.tool_registry import default_browser
+        target = browser or default_browser()
+        appeared = False
+        deadline = time.time() + 8.0
+        while time.time() < deadline:
+            if _running_process_for(target):
+                appeared = True
+                break
+            time.sleep(0.25)
+
+        if not appeared:
+            # NOT a hard failure. webbrowser.open() may have launched something
+            # whose process name we don't map, and calling that "the browser
+            # never started" would break a working setup to satisfy a check.
+            # success=True because the request was made; verified=False because
+            # we could not confirm it, which is precisely the distinction the
+            # contract exists to carry.
+            return {"success": True, "verified": False, "action": "open_url",
+                    "url": url, "browser": browser or "system default",
+                    "verify_reason": (f"asked {target} to open the page but never saw "
+                                      f"a {target} process — it may have failed to "
+                                      f"start, or it runs under a name Jarvis "
+                                      f"doesn't recognise"),
+                    **({"query": query} if query else {})}
+
+        focus_window(target)
+        time.sleep(1.2)          # let the page paint before anyone screenshots it
+        front = _is_foreground(target)
+        # Verified on the PROCESS, not the foreground check. The process check
+        # is reliable; foreground is not, and hanging the verdict on the flakier
+        # of the two signals would fail navigations that plainly worked.
+        return {"success": True, "verified": True, "action": "open_url",
+                "url": url, "browser": browser or "system default",
+                "verify_reason": (
+                    f"{target} is running and in front — page CONTENT not checked, "
+                    f"Jarvis has no handle on the system browser"
+                    if front else
+                    f"{target} is running but isn't in front; the page may be "
+                    f"behind another window"),
                 **({"query": query} if query else {})}
     except Exception as e:
-        return {"success": False, "action": "open_url", "url": url, "error": str(e)}
+        return {"success": False, "verified": False, "action": "open_url",
+                "url": url, "error": str(e)}
 
 
 def close_window(title_contains: str) -> dict:
@@ -9154,6 +9269,16 @@ class ExecutorAgent(BaseAgent):
     RISKY_ACTIONS = {
         "delete_file", "close_app", "kill_app", "run_command",
         "submit_application", "purchase", "payment",
+        # Driving a browser that is already signed in as the user is an action
+        # with the user's authority, wherever the URL came from. "browse" is
+        # the AGENT-invented path — the LLM parser and the executor's own
+        # decision loop both emit it — so it is exactly the one that must ask.
+        #
+        # Deliberately NOT open_url, which is the path a typed "go to github.com"
+        # takes: the user naming a destination IS the approval, and prompting
+        # for it would be noise that trains them to click yes without reading.
+        # open_url is gated by check_url instead.
+        "browse",
         "browser_submit", "shutdown", "execute_shell",
     }
 
@@ -24205,6 +24330,17 @@ def classify(error: str, action: str = "", result: dict | None = None) -> dict:
             kind = "ocr_timeout"
 
     cause, remedy, retryable, recovery = KINDS[kind]
+
+    # If nothing matched but the action TOLD us what went wrong, say that
+    # instead of "Jarvis couldn't determine why this failed." The generic line
+    # is for when we genuinely don't know; printing it over a perfectly good
+    # explanation — "never saw an edge process" — is a lie by omission, and it
+    # sends the user to the diagnostics screen to read what we already had.
+    said = (error or (result or {}).get("verify_reason")
+            or (result or {}).get("error") or "").strip()
+    if kind == "unknown" and len(said) > 12:
+        cause = said[:300]
+
     return {"kind": kind, "cause": cause, "remedy": remedy,
             "retryable": retryable, "recovery": recovery,
             "raw": (error or "")[:300]}
@@ -33114,6 +33250,93 @@ def test_chain_steps_carry_their_own_time_not_the_whole_run():
 
     assert steps[0]["took_ms"] == 2328
     assert steps[1]["took_ms"] == 55115, "the slow step is still invisible"
+
+
+# ── What three independent reviews converged on ──────────────────────────────
+
+
+def test_agent_invented_navigation_is_risky():
+    """
+    All three reviews flagged this and all three were right: "browse" is the
+    path the LLM parser and the executor's own decision loop emit, and it was
+    not in RISKY_ACTIONS — so a URL nobody typed could drive a browser signed
+    in to the user's accounts without asking.
+    """
+    from agents.executor_agent import ExecutorAgent
+
+    assert ExecutorAgent().is_risky("browse")
+
+
+def test_typing_a_url_yourself_is_not_gated():
+    """
+    The other half of the same decision. Naming a destination IS the approval;
+    prompting for it would be noise that trains you to click yes without
+    reading. open_url is gated by check_url instead.
+    """
+    from agents.executor_agent import ExecutorAgent
+
+    assert not ExecutorAgent().is_risky("open_url")
+
+
+def test_opening_a_url_is_never_retried():
+    """
+    A retry re-runs webbrowser.open() and you get three tabs of the same page.
+    The failure was never "it didn't open" — it was "I couldn't confirm it
+    opened", and doing it again cannot answer that question.
+
+    Caught by a test going red the moment open_url started verifying, which is
+    the only reason it isn't a live bug.
+    """
+    from agents.desktop_agent import _NO_RETRY
+
+    assert "open_url" in _NO_RETRY
+
+
+def test_every_action_result_has_one_shape():
+    """
+    Some primitives returned {success, verified, verify_reason}, others just
+    {success}, open_url a third shape. A caller reading `verified` got None
+    from half the system and could not tell "not verified" from "this action
+    doesn't report it".
+    """
+    from agents import desktop_agent as da
+
+    for action, params in [
+        ("wait", {"seconds": 0.01}),
+        ("teleport", {}),  # unknown action
+        ("hotkey", {"keys": None}),
+    ]:  # raises inside
+        r = da._run_action(action, params)
+        missing = [k for k in da._CONTRACT_KEYS if k not in r]
+        assert not missing, f"{action} is missing {missing} from the contract"
+
+
+def test_unverified_is_not_the_same_as_failed():
+    """
+    verified=None means "I didn't check"; False means "I checked and it hadn't
+    happened". They send the user to completely different places, and
+    collapsing them into one boolean was half the original complaint.
+    """
+    from agents.desktop_agent import _contract
+
+    assert _contract({"success": True}, "wait")["verified"] is None
+    assert _contract({"success": False, "error": "x"}, "wait")["verified"] is False
+    assert _contract({"success": True, "verified": True}, "click")["verified"] is True
+
+
+def test_a_known_reason_is_never_reported_as_unknown():
+    """
+    "Jarvis couldn't determine why this failed" printed over a perfectly good
+    explanation is a lie by omission — and it sends the user to the diagnostics
+    screen to read something we already had in hand.
+    """
+    from services import experience
+
+    fail = experience.classify(
+        "asked edge to open the page but never saw an edge process", action="open_url", result={}
+    )
+    assert "edge" in fail["cause"], f"the real reason was dropped: {fail['cause']!r}"
+    assert "couldn't determine" not in fail["cause"]
 ```
 
 ################################################################################
@@ -42781,7 +43004,7 @@ pause
 # FILE 211/221: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-05T16:31:22.835315
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-05T18:11:45.197470
 platform: linux  python: 3.11.15
 26 passed · 0 failed · 1 skipped
 
@@ -42837,7 +43060,7 @@ platform: linux  python: 3.11.15
 
 [PASS] memory_pressure — Low RAM is explained, not just endured
     RAM pressure is measured, explained, and actionable.
-    · 15.7 GB free — plenty. (level=ok)
+    · 15.9 GB free — plenty. (level=ok)
     · 1GB -> critical, 2.5GB -> not ok, 8GB -> ok
     · free-memory action answers: Ollama wasn't holding any models — nothing to free. The memory is goin
 
@@ -42897,8 +43120,8 @@ platform: linux  python: 3.11.15
     · ordinary typing is still captured normally
 
 [PASS] missing_app — Opening an app that isn't installed
-    Stopped after 1 attempt in 0.0s with a usable message.
-    · took 0.0s, 1 attempt(s), kind=app_not_found
+    Stopped after 1 attempt in 0.2s with a usable message.
+    · took 0.2s, 1 attempt(s), kind=app_not_found
 
 [SKIP] clipboard — Typing must not destroy what you had copied
     clipboard unavailable: Pyperclip could not find a copy/paste mechanism for your sys
@@ -42913,7 +43136,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785947480' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1785953497' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -42926,7 +43149,7 @@ platform: linux  python: 3.11.15
 
 [PASS] model_pressure — keep_alive adapts to memory pressure
     Scaling is correct: big=90s, small=5m.
-    · free RAM 15.6GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
+    · free RAM 15.5GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
     · skipped the live unload (needs --include-destructive)
 
 [PASS] classification — Real errors map to the right cause

@@ -31,6 +31,16 @@ class ExecutorAgent(BaseAgent):
     RISKY_ACTIONS = {
         "delete_file", "close_app", "kill_app", "run_command",
         "submit_application", "purchase", "payment",
+        # Driving a browser that is already signed in as the user is an action
+        # with the user's authority, wherever the URL came from. "browse" is
+        # the AGENT-invented path — the LLM parser and the executor's own
+        # decision loop both emit it — so it is exactly the one that must ask.
+        #
+        # Deliberately NOT open_url, which is the path a typed "go to github.com"
+        # takes: the user naming a destination IS the approval, and prompting
+        # for it would be noise that trains them to click yes without reading.
+        # open_url is gated by check_url instead.
+        "browse",
         "browser_submit", "shutdown", "execute_shell",
     }
 
