@@ -76,33 +76,89 @@ def _get_ollama():
         return None
 
 
+# How long to wait for Ollama to say what it has installed. Deliberately short:
+# this question is asked from the UI's status poll, and the answer is a list of
+# names Ollama already has in memory. A slow answer means the daemon is busy
+# loading a model, not that the list is hard to produce — and waiting for it
+# helps nobody.
+_LIST_TIMEOUT_S = 2.5
+
+
+def _bounded_client():
+    """
+    An Ollama client that gives up. `import ollama; ollama.list()` uses the
+    module-level client, which has NO timeout at all.
+
+    That is not a theoretical risk here. On a 16 GB machine loading a 6 GB
+    vision model, list() blocks for as long as the daemon is busy, and it is
+    called from the UI's status poll — so the whole console freezes, then
+    reports Ollama as OFFLINE, while Ollama is plainly running. Both halves of
+    "it feels slow and it says Ollama is offline" are this one call.
+    """
+    o = _get_ollama()
+    if o is None:
+        return None
+    try:
+        return o.Client(host=OLLAMA_HOST, timeout=_LIST_TIMEOUT_S)
+    except Exception:
+        return o          # very old ollama package: better bare than nothing
+
+
 # ── Health + validation ──────────────────────────────────────────────────────
 
 # The installed-model list changes rarely but is queried before EVERY chat
 # call (an extra HTTP round-trip per message). Cache it briefly.
-_INSTALLED_CACHE = {"at": 0.0, "names": []}
+_INSTALLED_CACHE = {"at": 0.0, "names": [], "failed_at": 0.0, "reason": ""}
 _INSTALLED_TTL = 60  # seconds
+
+# How long a FAILED probe is remembered. Without this the cache only stored
+# successes, so an Ollama that was down or busy got asked again on every single
+# UI poll — an unbounded blocking call in a hot loop, which is the opposite of
+# what a cache is for.
+_FAILED_TTL = 10
+
+
+def probe_reason() -> str:
+    """Why the last model-list attempt failed, or '' if it didn't."""
+    return _INSTALLED_CACHE["reason"]
 
 
 def _list_installed(force: bool = False) -> list:
-    """Return the list of installed model names, or [] if Ollama unreachable."""
-    if not force and _INSTALLED_CACHE["names"] and \
-            time.time() - _INSTALLED_CACHE["at"] < _INSTALLED_TTL:
-        return list(_INSTALLED_CACHE["names"])
-    o = _get_ollama()
-    if not o:
+    """
+    Installed model names, or [] if Ollama can't be reached in time.
+
+    [] is ambiguous on purpose here — callers that need to tell "no models" from
+    "couldn't ask" should read probe_reason(). os_state does, so the console can
+    say "checking…" instead of drawing a red OFFLINE at a daemon that is running
+    perfectly well and merely busy.
+    """
+    now = time.time()
+    if not force:
+        if _INSTALLED_CACHE["names"] and now - _INSTALLED_CACHE["at"] < _INSTALLED_TTL:
+            return list(_INSTALLED_CACHE["names"])
+        if _INSTALLED_CACHE["failed_at"] and now - _INSTALLED_CACHE["failed_at"] < _FAILED_TTL:
+            return []          # asked recently, it didn't answer; don't block again
+    client = _bounded_client()
+    if not client:
+        _INSTALLED_CACHE.update(failed_at=now,
+                                reason="the python 'ollama' package isn't installed")
         return []
     try:
-        listed = o.list()
-        names = []
-        for m in listed.get("models", []):
-            names.append(m.get("name") or m.get("model") or "")
+        listed = client.list()
+        names = [m.get("name") or m.get("model") or "" for m in listed.get("models", [])]
         names = [n for n in names if n]
         if names:
-            _INSTALLED_CACHE["at"] = time.time()
-            _INSTALLED_CACHE["names"] = list(names)
+            _INSTALLED_CACHE.update(at=now, names=list(names), failed_at=0.0, reason="")
+        else:
+            _INSTALLED_CACHE.update(failed_at=now,
+                                    reason="Ollama is running but has no models. "
+                                           "Run: ollama pull qwen2.5:3b")
         return names
-    except Exception:
+    except Exception as e:
+        _INSTALLED_CACHE.update(
+            failed_at=now,
+            reason=(f"Ollama didn't answer within {_LIST_TIMEOUT_S:.0f}s "
+                    f"({str(e)[:60]}). It is usually busy loading a model."))
         return []
 
 
@@ -184,22 +240,17 @@ def resolve_models() -> dict:
 
 def health() -> dict:
     """Is the Ollama daemon reachable and which approved models are present?"""
-    o = _get_ollama()
-    if not o:
-        return {"ok": False, "reason": "python 'ollama' package not installed",
+    # Through the shared, CACHED, BOUNDED path. This used to call the bare
+    # module's list() a second time, so a busy daemon was waited on twice per
+    # status refresh and neither wait had a timeout.
+    names = _list_installed()
+    if not names:
+        return {"ok": False, "reason": probe_reason() or "no models installed",
                 "installed_models": [], "approved_present": {}}
-    try:
-        listed = o.list()
-        names = []
-        for m in listed.get("models", []):
-            names.append(m.get("name") or m.get("model") or "")
-        present = {m: any(m == n or n.startswith(m.split(":")[0] + ":") for n in names)
-                   for m in APPROVED}
-        return {"ok": True, "host": OLLAMA_HOST, "installed_models": names,
-                "approved_present": present}
-    except Exception as e:
-        return {"ok": False, "reason": f"cannot reach ollama daemon: {e}",
-                "installed_models": [], "approved_present": {}}
+    present = {m: any(m == n or n.startswith(m.split(":")[0] + ":") for n in names)
+               for m in APPROVED}
+    return {"ok": True, "host": OLLAMA_HOST, "installed_models": names,
+            "approved_present": present}
 
 
 def validate_model(model: str) -> dict:

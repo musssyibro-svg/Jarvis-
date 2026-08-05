@@ -457,9 +457,18 @@ export default function JarvisOS() {
         <div style={{ flex: 1 }} />
         <Metric label="CPU" value={os?.system?.cpu} unit="%" danger={os?.system?.cpu > 85} />
         <Metric label="RAM" value={os?.system?.ram} unit="%" danger={os?.system?.ram > 85} />
-        <div style={{ fontSize: 11, color: T.dim }}>
+        {/*
+          Three states, not two. "Couldn't ask" is not "it's off": while Ollama
+          loads a 6GB model it stops answering the model-list call for a few
+          seconds, and this pill used to go red and say OFFLINE at a daemon
+          that was running perfectly well — the "Ollama is offline for a while
+          before connecting" complaint, in one line of JSX.
+        */}
+        <div style={{ fontSize: 11, color: T.dim }} title={os?.ollama?.reason || ""}>
           {os?.ollama?.online ? (
             <span>{(os.ollama.fast || "model").split(":")[0]}</span>
+          ) : os?.ollama?.reachable === false && os?.ollama?.reason ? (
+            <span style={{ color: T.amber }}>ollama busy…</span>
           ) : (
             <span style={{ color: T.red }}>ollama offline</span>
           )}

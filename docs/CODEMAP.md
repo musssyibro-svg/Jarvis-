@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-167 source files · 651 public symbols
+168 source files · 658 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -420,7 +420,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/services/narrate.py`
 
 **`ollama_manager.py`** — Jarvis V8
-  <br>`fast_model`, `reasoning_model`, `vision_model`, `resolve_models`, `health`, `validate_model`, `fast`, `reason`, `vision`, `status`
+  <br>`fast_model`, `reasoning_model`, `vision_model`, `probe_reason`, `resolve_models`, `health`, `validate_model`, `fast`, `reason`, `vision`, `status`
   <br>`backend/services/ollama_manager.py`
 
 **`os_state.py`** — ONE live snapshot of the whole system.
@@ -534,6 +534,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`test_decompose.py`** — Regression tests for command understanding.
   <br>`plan`, `actions`, `typed`, `test_notepad_question_is_answered_not_transcribed`, `test_question_to_a_chat_app_stays_literal`, `test_composed_prose_is_not_followed_by_enter`, `test_type_stays_literal`, `test_write_composes`, `test_comma_is_a_step_boundary`, `test_comma_inside_literal_text_is_not_a_boundary`, `test_and_inside_a_search_query_is_not_a_boundary`, `test_search_stops_at_a_follow_on_verb`, `test_three_clauses_stay_in_order`, `test_unhandled_clause_is_reported_not_dropped` _(+3 more)_
   <br>`backend/tests/test_decompose.py`
+
+**`test_felt_behaviour.py`** — The three complaints that are actually about how Jarvis FEELS to use.
+  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`
+  <br>`backend/tests/test_felt_behaviour.py`
 
 **`test_headless.py`** — Jarvis must survive a machine with no display.
   <br>`test_desktop_agent_imports_without_a_display`, `test_vision_agent_imports_without_a_display`, `test_input_refuses_with_a_reason_that_is_true`, `test_a_genuinely_missing_package_still_says_install_it`

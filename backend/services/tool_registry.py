@@ -157,8 +157,28 @@ def _wants_composition(verb: str, text: str, app: str = "") -> bool:
     return len(t.split()) >= 5
 
 
+# Words people put in front of an app name that are not part of it.
+#
+# "open new notepad" searched the Start Menu for the literal string "new
+# notepad" and found nothing — a command that plainly means "open notepad"
+# failing for a reason no user could guess. Same for "open a calculator" and
+# "open another chrome". These are how people actually talk, and every one of
+# them was a hard failure.
+#
+# Only stripped when something REMAINS, so an app genuinely called "new" is
+# still reachable, and only from the front, so "notepad new" is untouched.
+_QUALIFIERS = ("new", "another", "a", "an", "the", "my", "some", "up")
+
+
+def _strip_qualifiers(word: str) -> str:
+    parts = (word or "").strip().lower().split()
+    while len(parts) > 1 and parts[0] in _QUALIFIERS:
+        parts.pop(0)
+    return " ".join(parts)
+
+
 def _canon_app(word: str) -> str:
-    w = (word or "").strip().lower()
+    w = _strip_qualifiers(word)
     if w == "browser":
         return default_browser()      # what's installed, not what we assumed
     return _APP_ALIASES.get(w, w)

@@ -671,26 +671,34 @@ export default function Earn() {
             </div>
           )}
           {queue.slice(0, 25).map((q) => {
-            const c =
-              {
-                done: T.green,
-                ready: T.cyan,
-                pending: T.violet,
-                needs_login: T.amber,
-                failed: T.red,
-                approved: T.green,
-                executing: T.amber,
-              }[q.status] || T.dim;
-            const what =
-              {
-                done: "submitted",
-                ready: "ready — apply via link",
-                pending: "proposal drafted",
-                needs_login: "needs login",
-                failed: "failed",
-                approved: "approved",
-                executing: "submitting…",
-              }[q.status] || q.status;
+            // A row is only green when the SITE confirmed it. "done" alone
+            // means the click landed — the receipt records whether anything on
+            // the page said the bid was received, and a submission nobody
+            // acknowledged must not wear the same tick as one that was.
+            const unconfirmed =
+              q.status === "done" && q.payload?.receipt?.confirmed_by_site === false;
+            const c = unconfirmed
+              ? T.amber
+              : {
+                  done: T.green,
+                  ready: T.cyan,
+                  pending: T.violet,
+                  needs_login: T.amber,
+                  failed: T.red,
+                  approved: T.green,
+                  executing: T.amber,
+                }[q.status] || T.dim;
+            const what = unconfirmed
+              ? "sent — site never confirmed"
+              : {
+                  done: "submitted ✓ confirmed",
+                  ready: "ready — apply via link",
+                  pending: "proposal drafted",
+                  needs_login: "needs login",
+                  failed: "failed",
+                  approved: "approved",
+                  executing: "submitting…",
+                }[q.status] || q.status;
             const link = q.payload?.job?.link;
             return (
               <div

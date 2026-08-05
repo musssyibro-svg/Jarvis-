@@ -193,7 +193,16 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
 
         STATE.emit("executor", "Submitted, but the site did not confirm it - "
                                "check the proof screenshot", "warning")
-        return {"success": True, "confirmed": False, "evidence": evidence,
+        # success=True, verified=False. The two are different questions and this
+        # is precisely the case that separates them: the click landed and the
+        # page moved, but nothing on it said the bid was received.
+        #
+        # success stays True on purpose. Flipping it to False would put this
+        # item back in the retry path, and a second submission to a real client
+        # is worse than an unconfirmed first one — see _NO_RETRY. What has to
+        # change is the REPORTING, not the outcome.
+        return {"success": True, "verified": False, "confirmed": False,
+                "evidence": evidence,
                 "message": "Submitted, but the page showed no confirmation. "
                            "Open the proof screenshot to see what happened.",
                 **proof}
@@ -419,7 +428,14 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
         "page_title": result.get("page_title"),
         "proof_screenshot": result.get("proof_screenshot"),
         "confirmed_by_site": result.get("confirmed"),
-        "outcome": "sent" if result.get("success") else "failed",
+        # THREE outcomes, not two. This said "sent" whenever the function
+        # returned without failing — so a bid the site never acknowledged was
+        # recorded, in the permanent receipt, as sent. That is the "Approve All
+        # reported success and I have no idea what happened" complaint written
+        # into the database.
+        "outcome": ("sent" if result.get("confirmed")
+                    else "unconfirmed" if result.get("success")
+                    else "failed"),
         "message": result.get("message", ""),
     }
 

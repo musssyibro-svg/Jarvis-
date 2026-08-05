@@ -46,10 +46,18 @@ def snapshot(timeline_limit: int = 40) -> dict:
     system = _safe(_sys, {"cpu": 0, "ram": 0, "disk": 0})
 
     def _ollama():
-        from services.ollama_manager import resolve_models
+        from services.ollama_manager import probe_reason, resolve_models
         info = resolve_models()
-        out = {"online": bool(info.get("installed")),
-               "models": info.get("installed", [])[:8],
+        installed = info.get("installed") or []
+        # "I couldn't ask" is not "it's off", and the console must not draw a
+        # red OFFLINE for the first. A daemon busy loading a 6 GB model fails
+        # the probe while running perfectly well; saying it is offline sends
+        # the user to restart something that isn't broken.
+        why = probe_reason()
+        out = {"online": bool(installed),
+               "reachable": bool(installed) or not why,
+               "reason": why,
+               "models": installed[:8],
                "fast": info.get("resolved", {}).get("fast"),
                "reasoning": info.get("resolved", {}).get("reasoning"),
                "vision": info.get("resolved", {}).get("vision")}
@@ -70,7 +78,8 @@ def snapshot(timeline_limit: int = 40) -> dict:
         except Exception:
             pass
         return out
-    ollama = _safe(_ollama, {"online": False, "models": []})
+    ollama = _safe(_ollama, {"online": False, "reachable": False, "models": [],
+                             "reason": "the model check itself failed"})
 
     world = _safe(lambda: __import__("services.world_model", fromlist=["get_cached"]).get_cached(), {}) or {}
     income = _safe(lambda: __import__("services.income_engine", fromlist=["status"]).status(), {}) or {}

@@ -165,6 +165,11 @@ export default function Planner({ live = [] }) {
   const [sim, setSim] = useState(null);
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
+  /* What the last demonstration actually captured. Teaching used to end with a
+     sentence — "Learned X, 5 steps" — and no way to see the five steps or try
+     them. You could not tell a good recording from a useless one until the day
+     you needed it. */
+  const [taught, setTaught] = useState(null);
   const timer = useRef(null);
 
   const load = useCallback(async () => {
@@ -270,13 +275,38 @@ export default function Planner({ live = [] }) {
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) setNote(j.detail || "Couldn't start recording.");
-      else if (on)
+      else if (on) {
         setNote(
           j.ok
-            ? `Learned "${j.name}" — ${j.step_count} steps. Say "run my ${j.name}".`
+            ? `Learned "${j.name}" — ${j.step_count} steps.`
             : j.error || "Nothing replayable was captured."
         );
+        // teach.stop already returns the distilled steps. Showing them is the
+        // difference between "trust me" and "here is what I will do".
+        setTaught(j.ok ? j : null);
+      } else setTaught(null);
       setTeachName("");
+    } catch {
+      setNote("Backend didn't answer.");
+    }
+    load();
+  };
+
+  /* Run the thing that was just demonstrated, through the SAME verified
+     execution engine as everything else — so it reports verified/unverified per
+     step like any other command, instead of a second replay path that could
+     disagree with the first. */
+  const replayTaught = async () => {
+    if (!taught?.name) return;
+    setNote(`Replaying "${taught.name}" — watch the steps below.`);
+    try {
+      const r = await fetch(`${API}/workflows/${encodeURIComponent(taught.name)}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const j = await r.json().catch(() => ({}));
+      setNote(r.ok ? j.error || `Replaying "${taught.name}"…` : j.detail || "Couldn't replay it.");
     } catch {
       setNote("Backend didn't answer.");
     }
@@ -613,6 +643,68 @@ export default function Planner({ live = [] }) {
                   ? `Stop — ${teach.events} things seen in ${Math.round(teach.seconds)}s`
                   : "Watch me do it"}
               </button>
+
+              {/*
+                What was actually captured, and a button to try it.
+
+                Teaching used to end at a sentence: "Learned X — 5 steps." You
+                could not see the five steps, and the only way to find out
+                whether the recording was any good was to need it later and
+                discover it wasn't. Showing the steps and offering to run them
+                turns a promise into something checkable in ten seconds.
+              */}
+              {taught?.steps?.length > 0 && !teach?.recording && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    padding: 12,
+                    border: `1px solid ${T.line}`,
+                    borderRadius: 10,
+                    background: "rgba(0,0,0,0.25)",
+                  }}
+                >
+                  <div style={{ fontSize: 11.5, color: T.dim, marginBottom: 8 }}>
+                    What I understood from the demonstration — check it before trusting it:
+                  </div>
+                  {taught.steps.slice(0, 12).map((s, i) => (
+                    <div key={i} style={{ fontSize: 11.5, color: T.text, padding: "3px 0" }}>
+                      <span style={{ color: T.dim, marginRight: 8 }}>{i + 1}.</span>
+                      {s.action === "credential"
+                        ? "enter a saved credential (the password itself was never recorded)"
+                        : `${(s.action || "").replace(/_/g, " ")}${
+                            s.params?.text
+                              ? ` — "${String(s.params.text).slice(0, 34)}"`
+                              : s.params?.name_or_path
+                                ? ` — ${s.params.name_or_path}`
+                                : ""
+                          }`}
+                    </div>
+                  ))}
+                  {taught.steps.length > 12 && (
+                    <div style={{ fontSize: 11, color: T.dim, paddingTop: 4 }}>
+                      + {taught.steps.length - 12} more
+                    </div>
+                  )}
+                  {taught.redacted > 0 && (
+                    <div style={{ fontSize: 11, color: T.amber, marginTop: 6 }}>
+                      {taught.redacted} password keystroke(s) were seen and deliberately not
+                      recorded.
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                    <button style={btn(T.cyan)} onClick={replayTaught}>
+                      Can you do it? — replay now
+                    </button>
+                    <button style={btn(T.dim)} onClick={() => setTaught(null)}>
+                      Dismiss
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 11, color: T.dim, marginTop: 8 }}>
+                    Replays through the same verified engine as every other command, so each step
+                    reports whether it was confirmed — watch Activity below.
+                  </div>
+                </div>
+              )}
             </>
           )}
         </section>
