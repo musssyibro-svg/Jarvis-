@@ -45,6 +45,20 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
     Navigate to a Freelancer project page and submit a bid.
     Returns {"success": bool, "message": str, "screenshot": optional path}
     """
+    # job_url came off a SCRAPED listing. Everything else in this file treats
+    # the listing as untrusted text; the URL is untrusted too, and it is the
+    # one field that gets handed straight to a browser holding the user's
+    # logins — on the unattended path, with no human watching.
+    #
+    # Not in the review that prompted the rest of this work. Found by asking
+    # which navigations take an address from outside, rather than which file
+    # the review named.
+    from agents.browser_agent import check_url
+    job_url, why = check_url(job_url)
+    if why:
+        return {"success": False, "blocked": True,
+                "message": f"Refused to open that job's link — {why}"}
+
     ctx  = await _get_context(headless=headless)
     page = await ctx.new_page()
     await page.add_init_script("Object.defineProperty(navigator,'webdriver',{get:()=>undefined})")

@@ -202,3 +202,38 @@ rules:
       - pattern-not-inside: |
           class $C:
               ...
+
+  # ── The browser is signed in as the user ───────────────────────────────────
+  #
+  # Added after an external review found the chat adapter's browser branch
+  # ungated. The branch was real; it was also not the path that runs. "go to
+  # <x>" is resolved into open_url and opens the SYSTEM DEFAULT browser, and a
+  # review that stopped at the first match would have left the wider door open.
+  #
+  # So the rule guards the primitives, not one caller: any new way to open a
+  # URL has to go through check_url first.
+  - id: jarvis-url-opened-without-check
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A URL is being opened without browser_agent.check_url() first. That
+      browser is signed in to the user's real accounts, so "go to
+      192.168.1.1" reaches the router's admin page with every cookie
+      attached, and file:// reaches the disk. Call check_url(url) and refuse
+      when it gives a reason. If this really is a fixed internal address,
+      exclude the file here and say why.
+    paths:
+      include: ["backend/**"]
+      exclude:
+        # The two doors themselves — they call check_url, so matching them
+        # would report the fix as the bug.
+        - "backend/agents/browser_agent.py"
+        - "backend/agents/desktop_agent.py"
+    # webbrowser.open ONLY. page.goto was in this rule for about ten minutes
+    # and would have fired on six legitimate call sites — the income engine
+    # navigating to job boards from constants in our own source. A rule whose
+    # output you have to ignore is worse than no rule, because you stop
+    # reading it. Scraped URLs reaching goto are handled at their own call
+    # site (see bid_executor) rather than by a pattern that cannot tell a
+    # constant from a scrape.
+    pattern: webbrowser.open(...)

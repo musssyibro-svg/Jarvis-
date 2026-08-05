@@ -757,6 +757,66 @@ def s_teach_privacy():
     return r.ok("Passwords are never recorded; normal input still is.")
 
 
+def s_url_gate():
+    """
+    Jarvis drives a browser that is already signed in as the user. A URL that
+    reaches it acts with those sessions.
+
+    The harm if this breaks: "go to 192.168.1.1" opens the router's admin page
+    in a browser holding every cookie the user has, and a job description that
+    says "browse to <url>" gets the model to do it without asking.
+
+    Both doors are checked, because there are two and the obvious one is not
+    the one that runs.
+    """
+    r = Result("url_gate", "The browser can't be pointed at your own network")
+    from agents.browser_agent import check_url
+
+    for good in ("https://www.freelancer.com/jobs", "github.com", "www.upwork.com"):
+        if not check_url(good)[0]:
+            return r.bad(f"Blocked a real job site ({good}) — worse than no gate.")
+    r.note("public sites still open")
+
+    for bad in ("http://192.168.1.1/admin", "http://127.0.0.1:8000/os/state",
+                "localhost:8000", "file:///C:/Users/me/.ssh/id_rsa",
+                "javascript:alert(1)", "http://169.254.169.254/"):
+        url, why = check_url(bad)
+        if url:
+            return r.bad(f"{bad} was allowed through to a logged-in browser.")
+        if not why:
+            return r.bad(f"{bad} was refused with no reason given.")
+    r.note("loopback, LAN, link-local and non-web schemes all refused, each with a reason")
+
+    # The door that actually runs. "go to X" never reaches the chat adapter's
+    # browser branch — decompose turns it into open_url first.
+    import webbrowser
+    opened = []
+    real_open, webbrowser.open = webbrowser.open, lambda u: opened.append(u)
+    try:
+        from agents.desktop_agent import open_url
+        open_url("http://192.168.1.1/admin")
+        open_url("https://example.com")
+    finally:
+        webbrowser.open = real_open
+    if any("192.168" in u for u in opened):
+        return r.bad("open_url — the path that really runs — reached the LAN.")
+    if not any("example.com" in u for u in opened):
+        return r.bad("open_url stopped opening ordinary sites.")
+    r.note("open_url (the system default browser) is gated too, not just Playwright")
+
+    from services import experience
+    fail = experience.classify("'192.168.1.1' is on your local network.",
+                               action="open_url",
+                               result={"blocked": True,
+                                       "error": "'192.168.1.1' is on your local network."})
+    if fail["retryable"]:
+        return r.bad("A refusal is being retried — it will just be refused again.")
+    if "192.168.1.1" not in fail["cause"]:
+        return r.bad("The refusal reason never reaches the user.")
+    r.note("a refusal is reported as a decision, not retried as a fault")
+    return r.ok("Both browser doors are gated, and refusals explain themselves.")
+
+
 def s_failure_evidence():
     """
     When an action fails, the user gets a short "here's the cause and the fix".
@@ -1499,6 +1559,7 @@ SCENARIOS = {
     "model_pressure": (s_model_pressure, False),
     "classification": (s_classification, False),
     "failure_evidence": (s_failure_evidence, False),
+    "url_gate":       (s_url_gate, False),
 }
 
 

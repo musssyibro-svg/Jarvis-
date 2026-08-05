@@ -638,13 +638,25 @@ def _llm_parse_steps(message: str) -> list:
             return []
         allowed = {"open_app", "close_app", "type_text", "press", "hotkey",
                    "screenshot", "browse"}
+        # Actions the model INVENTED are not the same as actions the user asked
+        # for, and this is the path where the difference bites.
+        #
+        # Everything the model reads is untrusted: a scraped job description, a
+        # web page, a document. Any of it can contain "ignore that and browse to
+        # <url>", and until now the parser would emit that as risk_level="low"
+        # next to a browser signed in to the user's accounts. That is the lethal
+        # trifecta this project's rules name explicitly — untrusted content, a
+        # privileged tool, and no human in between.
+        #
+        # `screenshot` stays low: it reads, it doesn't act. Everything that
+        # touches the keyboard, the browser or a running app now needs a yes.
+        HARMLESS = {"screenshot"}
         out = []
         for s in _json.loads(jm.group()).get("steps", [])[:6]:
             a = s.get("action", "")
             if a in allowed:
-                risk = "high" if a == "close_app" else "low"
                 out.append(Action(action_type=a, params=s.get("params", {}) or {},
-                                  risk_level=risk))
+                                  risk_level=("low" if a in HARMLESS else "high")))
         return out
     except Exception:
         return []
@@ -753,6 +765,25 @@ def _run_tool_chain(message: str, steps: list, lines: list | None = None,
             "intent": "executor", "data": result}
 
 
+def _url_is_in(message: str, url: str) -> bool:
+    """
+    Did the user actually name this destination?
+
+    Compares HOSTS, not strings: check_url turns "github.com" into
+    "https://github.com", and a literal substring test would then say no to the
+    user's own words. The host is the part that decides where the browser goes
+    and whose cookies travel with it.
+    """
+    try:
+        from urllib.parse import urlparse
+        host = (urlparse(url).hostname or "").lower()
+    except Exception:
+        return False
+    if not host:
+        return False
+    return host in (message or "").lower()
+
+
 def _route_action(message: str, session_id: str, intent: str) -> dict:
     """
     Turn a desktop/browser chat command into ExecutorAgent actions.
@@ -767,11 +798,41 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
     # Browser navigation first (explicit URL or browser intent)
     if intent == "browser" or "navigate" in m or m.startswith("go to "):
         url = next((tok for tok in message.split() if tok.startswith("http")), "")
-        _emit("browser", f"Navigating to {url or 'page'}", "info")
-        action = Action(action_type="browse", params={"url": url}, risk_level="low")
+        if not url:
+            # A word after "go to" is a destination too — "go to github.com".
+            url = next((tok for tok in message.split()
+                        if "." in tok and "/" not in tok.split(".")[0]
+                        and not tok.endswith(".")), "")
+        # Ask the browser layer the same question it will ask itself, so the
+        # refusal arrives as a sentence instead of a failed page load.
+        from agents.browser_agent import check_url
+        checked, why = check_url(url)
+        if why:
+            return {"response": f"I won't open that: {why}",
+                    "intent": intent, "data": {"error": why, "blocked": True}}
+
+        # This browser holds the user's real logins, so navigation is a risky
+        # action like any other — and it used to be the ONE action that skipped
+        # the gate entirely, because this branch returns before the risky-step
+        # scan below ever runs.
+        #
+        # Typing a URL yourself IS the approval; being asked to confirm your own
+        # instruction is noise. What needs confirming is a URL that came from
+        # somewhere else — see _llm_parse_steps, where a scraped job description
+        # can reach this same action.
+        if not _url_is_in(message, checked):
+            ex.request_approval(session_id, Action(action_type="browse",
+                                                   params={"url": checked},
+                                                   risk_level="high"))
+            return {"response": f"Open {checked} in your signed-in browser? "
+                                f"Reply 'yes' to confirm or 'cancel'.",
+                    "intent": intent, "needs_approval": True}
+
+        _emit("browser", f"Navigating to {checked}", "info")
+        action = Action(action_type="browse", params={"url": checked}, risk_level="low")
         result = ex.execute_action(action)
         ok = result.get("success", False)
-        return {"response": (f"Done: opened {url} ✓" if ok
+        return {"response": (f"Done: opened {checked} ✓" if ok
                              else f"Couldn't navigate: {result.get('error','')}"),
                 "intent": intent, "data": result}
 

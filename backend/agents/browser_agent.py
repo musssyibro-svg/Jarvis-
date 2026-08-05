@@ -210,6 +210,104 @@ def _emit_retry(label: str, msg: str) -> None:
         pass
 
 
+# ── Where a URL is allowed to point ──────────────────────────────────────────
+#
+# This browser is signed in to the user's real accounts. A URL that reaches it
+# is a URL acting with those sessions, so the check belongs HERE, at the one
+# door every caller goes through, rather than in each caller — the chat path,
+# the executor and the income engine would each have to remember, and one of
+# them eventually wouldn't.
+
+_ALLOWED_SCHEMES = ("http", "https")
+
+# Loopback. Jarvis's own API is on 127.0.0.1 behind a token the browser doesn't
+# have, but the rest of the home network has no such gate, and a router admin
+# page reached from a logged-in browser is a real target. Link-local and RFC1918
+# are caught by _is_private_host, which says something accurate about each.
+_BLOCKED_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"}
+
+
+def check_url(raw: str) -> tuple[str, str]:
+    """
+    Decide whether a URL may be opened. Returns (url, "") or ("", reason).
+
+    Kept public and separate so the approval gate can ask the same question
+    before it prompts, and so the answer is testable without a browser.
+    """
+    from urllib.parse import urlparse
+
+    url = (raw or "").strip()
+    if not url:
+        return "", "no URL given"
+
+    # Check the scheme BEFORE prefixing. Prefixing first turns "javascript:x"
+    # into "https://javascript:x", which fails for the wrong reason and leaves
+    # nothing to tell the user.
+    #
+    # "localhost:8000" is a host and a port, not a scheme — telling someone
+    # that "'localhost:' links are not allowed" would be a true refusal with a
+    # false reason, which sends them looking for the wrong problem. A colon
+    # followed by digits is a port; anything else is a scheme.
+    if ":" in url:
+        head, rest = url.split(":", 1)
+        looks_like_port = rest.split("/")[0].isdigit()
+        if (head and "/" not in head and not looks_like_port
+                and head.lower() not in _ALLOWED_SCHEMES):
+            return "", f"'{head}:' links are not allowed — only http and https"
+
+    # A second scheme after the first. decompose prefixes bare text with
+    # https://, so "file:///C:/…" arrives here as "https://file:///C:/…" —
+    # which parses cleanly, has the plausible-looking host "file", and would
+    # sail through every check below. Whatever it is, it isn't an address.
+    if url.count("://") > 1:
+        return "", "that looks like two addresses stuck together, not one"
+
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    try:
+        parsed = urlparse(url)
+    except Exception as e:
+        return "", f"that isn't a URL I can parse ({e})"
+
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return "", "that URL has no host"
+    if host in _BLOCKED_HOSTS or host.endswith(".localhost"):
+        return "", (f"'{host}' is this machine. Jarvis won't drive your "
+                    f"logged-in browser at its own control panel.")
+    private = _is_private_host(host)
+    if private:
+        return "", f"'{host}' {private}. Open it yourself if you meant to."
+    return url, ""
+
+
+def _is_private_host(host: str) -> str:
+    """
+    Why this address is off-limits, or "" if it isn't. Names are left alone.
+
+    Returns the REASON rather than True/False so the refusal can name what the
+    address actually is — "on your local network" and "a cloud metadata
+    address" send someone to very different places.
+    """
+    import ipaddress
+    try:
+        ip = ipaddress.ip_address(host.strip("[]"))
+    except ValueError:
+        return ""           # a hostname; DNS could still resolve inward, but
+                            # refusing every name would block the real web
+    if ip.is_loopback:
+        return "is this machine"
+    if ip.is_link_local:
+        return "is a link-local address — on some machines that reaches a " \
+               "cloud metadata service holding credentials"
+    if ip.is_private:
+        return "is on your local network, not the internet"
+    if ip.is_reserved or ip.is_multicast:
+        return "is a reserved address, not a website"
+    return ""
+
+
 # ── The function that was missing ─────────────────────────────────────────────
 
 def navigate(url: str, domain: str = "research", headless: bool = False,
@@ -218,10 +316,9 @@ def navigate(url: str, domain: str = "research", headless: bool = False,
     Open a URL in the managed browser and report what actually loaded.
     Returns {success, url, title, error}. Never raises.
     """
-    if not url:
-        return {"success": False, "error": "no URL given"}
-    if not url.startswith(("http://", "https://")):
-        url = "https://" + url
+    url, why = check_url(url)
+    if why:
+        return {"success": False, "error": why, "blocked": True}
 
     async def _go():
         ctx = await _get_context(headless=headless, domain=domain)

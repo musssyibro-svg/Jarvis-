@@ -146,6 +146,14 @@ KINDS = {
         "Emergency stop is engaged.",
         "Clear it from the Computer screen before Jarvis can control the desktop.",
         False, "needs_setup"),
+    # A refusal, not a failure. Retrying is pointless and would only repeat the
+    # refusal; the cause is filled in from the check that said no, because a
+    # blocked URL has ONE specific reason and a generic "it failed" would send
+    # the user hunting for a bug that isn't there.
+    "blocked": (
+        "Jarvis refused to open that address.",
+        "If you meant it, open it in your browser yourself.",
+        False, "none"),
     "unknown": (
         "Jarvis couldn't determine why this failed.",
         "The full error is in the runtime report on the Diagnostics screen.",
@@ -185,6 +193,16 @@ def classify(error: str, action: str = "", result: dict | None = None) -> dict:
         (result or {}).get("verify_reason", ""),
         (result or {}).get("message", ""),
     ]).lower()
+
+    # A deliberate refusal carries its own explanation and must not be pattern-
+    # matched into something else — "is on your local network" contains the word
+    # "network", which would classify a security decision as a connection fault
+    # and then retry it.
+    if (result or {}).get("blocked"):
+        cause, remedy, retryable, recovery = KINDS["blocked"]
+        raw = (result or {}).get("error") or error or ""
+        return {"kind": "blocked", "cause": raw[:300] or cause, "remedy": remedy,
+                "retryable": retryable, "recovery": recovery, "raw": raw[:300]}
 
     kind = "unknown"
     for name, pattern in _PATTERNS:

@@ -1313,9 +1313,29 @@ def open_url(url: str, browser: str = "", query: str = "") -> dict:
     the user asked for or even one that is installed. Naming the executable
     means "open browser and search X" lands in the browser Jarvis actually
     resolved rather than whatever Windows happens to be configured with.
+
+    WHERE THE URL IS ALLOWED TO POINT. This is the path that opens the user's
+    REAL browser — the everyday one, signed in to everything — so it needs the
+    same check as the Playwright one, and it is the one that actually runs:
+    "go to <x>" is resolved by decompose into open_url long before the chat
+    adapter's browser branch is reached. A review that only looked at the
+    adapter would leave this door open.
+
+    Two things specific to this door and not the other:
+      - `webbrowser.open` will happily open file:// — the whole local disk.
+      - a "URL" starting with "-" becomes a command-line FLAG to the browser
+        executable in the Popen call below, not an address.
     """
     if not url:
         return {"success": False, "action": "open_url", "error": "no URL"}
+    if url.startswith("-"):
+        return {"success": False, "action": "open_url",
+                "error": "that starts with '-', so the browser would read it as "
+                         "a command-line option rather than an address"}
+    from agents.browser_agent import check_url
+    url, why = check_url(url)
+    if why:
+        return {"success": False, "action": "open_url", "error": why, "blocked": True}
     exe = None
     if browser:
         try:

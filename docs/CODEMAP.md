@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-166 source files · 643 public symbols
+168 source files · 652 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -52,7 +52,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/agents/base_agent.py`
 
 **`browser_agent.py`** — persistent browser sessions, login-once, reuse forever.
-  <br>`classify_browser_error`, `with_retry`, `navigate`, `current_page_text`, `reap`, `close_domain`, `status`, `BrowserAgent`
+  <br>`classify_browser_error`, `with_retry`, `check_url`, `navigate`, `current_page_text`, `reap`, `close_domain`, `status`, `BrowserAgent`
   <br>`backend/agents/browser_agent.py`
 
 **`commander.py`** — CommanderAgent: the single entry point for ALL Jarvis actions.
@@ -298,6 +298,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 
 **`__init__.py`**
   <br>`backend/services/__init__.py`
+
+**`_semgrep_fixture_delete_me.py`** — TEMPORARY. Exists to prove jarvis-url-opened-without-check actually fires.
+  <br>`open_it`
+  <br>`backend/services/_semgrep_fixture_delete_me.py`
 
 **`ai_router.py`** — one door for every AI call in Jarvis.
   <br>`invalidate`, `route_for`, `chain_for`, `ask`, `ask_stream`, `status`
@@ -555,6 +559,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`FakePage`, `verdict`, `test_a_click_that_did_nothing_is_never_called_submitted`, `test_form_closing_and_navigating_counts_as_sent_without_words`, `test_refusal_wins_over_a_success_word_in_the_same_page`, `test_a_submission_is_never_retried`, `test_the_unchanged_verdict_reaches_the_user_as_a_failure`
   <br>`backend/tests/test_submission_confirmation.py`
 
+**`test_url_gate.py`** — Where Jarvis is allowed to point a browser that is already signed in as you.
+  <br>`test_a_doubly_prefixed_url_is_refused`, `test_localhost_with_a_port_is_refused_for_the_RIGHT_reason`, `test_chat_can_still_open_an_ordinary_site`, `test_a_refusal_says_why_and_is_not_retried`, `test_llm_parsed_actions_need_approval`, `test_screenshot_from_the_model_stays_cheap`
+  <br>`backend/tests/test_url_gate.py`
+
 ## `frontend/`
 
 **`vite.config.js`**
@@ -645,7 +653,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`tools/dump_source.py`
 
 **`failure_injection.py`** — Phase 0. Break Jarvis on purpose, in two minutes,
-  <br>`Result`, `s_missing_app`, `s_clipboard`, `s_no_model`, `s_queue_load`, `s_browser_death`, `s_estop`, `s_learning`, `s_model_pressure`, `s_classification`, `s_control`, `s_decompose`, `s_plan_visibility`, `s_selfeval` _(+14 more)_
+  <br>`Result`, `s_missing_app`, `s_clipboard`, `s_no_model`, `s_queue_load`, `s_browser_death`, `s_estop`, `s_learning`, `s_model_pressure`, `s_classification`, `s_control`, `s_decompose`, `s_plan_visibility`, `s_selfeval` _(+15 more)_
   <br>`tools/failure_injection.py`
 
 **`setup.py`** — install everything Jarvis needs, then say what's left.
