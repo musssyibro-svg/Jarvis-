@@ -396,7 +396,21 @@ def analyze_screen(question: str = "") -> dict:
         if b64 and validate_model(VISION_MODEL).get("valid"):
             # Send a DOWNSCALED image: llava doesn't need 4K, and full-res
             # payloads are the difference between seconds and minutes.
-            small = _downscale_b64(b64, 1280)
+            #
+            # 1280 -> 900 on measured evidence. The 2026-08-05 runtime report
+            # put desktop.analyze at 189s across 3 calls — median 55s, max 89.8s
+            # against a 90s ceiling. It is the single slowest thing in Jarvis by
+            # a factor of two.
+            #
+            # llava's encoder tiles the image into 336px patches regardless, so
+            # most of the width sent at 1280 is detail it discards after paying
+            # to encode it. 900 still resolves window titles and button text at
+            # 1080p, which is what the questions are actually about.
+            #
+            # The 90s ceiling stays until a report shows the new median. Cutting
+            # it now, with a 55s median, would time out roughly half of all
+            # analyses — trading slow for broken.
+            small = _downscale_b64(b64, 900)
             r = llava_vision(q, small or b64)
             if r.get("ok"):
                 answer = r["text"]

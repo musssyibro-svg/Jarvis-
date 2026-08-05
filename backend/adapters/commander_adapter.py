@@ -732,9 +732,13 @@ def _run_tool_chain(message: str, steps: list, lines: list | None = None,
         from agents.desktop_agent import execute_chain
         result = execute_chain(steps, goal=message)
         for st in result.get("steps", []):
+            # The step's OWN duration. execute_chain timed each one; without
+            # passing it here the first step is credited with the whole chain,
+            # because these are all recorded after the run has finished.
             trace.step(f"desktop.{st.get('action','?')}",
                        st.get("verify_reason") or st.get("error", ""),
-                       ok=st.get("verified", st.get("success")))
+                       ok=st.get("verified", st.get("success")),
+                       took_ms=int(float(st.get("duration_s") or 0) * 1000))
     except Exception as e:
         trace.step("desktop.execute_chain", str(e), ok=False)
         trace.finish(f"exception: {e}", ok=False)
@@ -887,9 +891,13 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
         from agents.desktop_agent import execute_chain
         result = execute_chain(chain)
         for st in result.get("steps", []):
+            # The step's OWN duration. execute_chain timed each one; without
+            # passing it here the first step is credited with the whole chain,
+            # because these are all recorded after the run has finished.
             trace.step(f"desktop.{st.get('action','?')}",
                        st.get("verify_reason") or st.get("error", ""),
-                       ok=st.get("verified", st.get("success")))
+                       ok=st.get("verified", st.get("success")),
+                       took_ms=int(float(st.get("duration_s") or 0) * 1000))
     except Exception as e:
         trace.step("desktop.execute_chain", str(e), ok=False)
         trace.finish(f"exception: {e}", ok=False)

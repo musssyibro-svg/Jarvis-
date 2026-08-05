@@ -1101,6 +1101,29 @@ def _execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
             # window as the answer to a question about this one.
             if looking and not _is_foreground(last_opened):
                 focus_unconfirmed = last_opened
+                # A LOOK at the wrong window is the worst thing Jarvis produces,
+                # because it comes back as a confident answer. The runtime report
+                # of 2026-08-05 caught it exactly: focus_window failed twice for
+                # 'qq', the chain carried on, and the whole request was recorded
+                # as [OK] — "screen analysed". It analysed Edge.
+                #
+                # Typing gets to continue on an unconfirmed focus because the
+                # clipboard read-back is the real arbiter. Looking has no such
+                # arbiter, so it stops here instead of guessing.
+                fw = focus_window(last_opened)
+                if not fw.get("success"):
+                    why = fw.get("error") or f"could not bring {last_opened} to the front"
+                    results.append({"step": i + 1, "action": action, "success": False,
+                                    "verified": False, "error": why,
+                                    "focus_unconfirmed": last_opened})
+                    if live_plan:
+                        live_plan.step_end(i, False, error=why)
+                        live_plan.finish(False, why)
+                    return {"success": False, "steps": results, "failed_at": i + 1,
+                            "error": why,
+                            "what_to_do": ("Bring the app up yourself and ask again — "
+                                           "I won't describe a window I can't confirm "
+                                           "is the right one.")}
 
         # Pause/cancel lands BETWEEN steps. Never inside one: stopping halfway
         # through typing leaves half a sentence in the user's document.
@@ -1439,6 +1462,20 @@ def _win32_focus(title_contains: str) -> bool:
         k32 = ctypes.windll.kernel32
 
         target = {"hwnd": None, "by": None}
+        # A window hidden in the SYSTEM TRAY, kept as a weaker candidate.
+        #
+        # This is the "check my QQ messages" bug, finally. QQ and WeChat close
+        # to the tray rather than exiting: the process keeps running and its
+        # main window becomes INVISIBLE. open_app then sees the process and
+        # says "already running, verified"; focus_window enumerated only
+        # visible windows and said "no window found for 'qq'" — and the chain
+        # screenshotted whatever was in front and answered confidently about
+        # the wrong app. The two calls disagreed because they were asking
+        # different questions: "is the process alive" and "is a window shown".
+        #
+        # A tray window is still a real HWND and ShowWindow(SW_RESTORE) brings
+        # it back. We were skipping it before ever trying.
+        tray = {"hwnd": None}
         needle = (title_contains or "").lower()
         want_procs = _process_names_for(title_contains)
 
@@ -1454,23 +1491,35 @@ def _win32_focus(title_contains: str) -> bool:
 
         @ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
         def _enum(hwnd, _):
-            if not u32.IsWindowVisible(hwnd):
-                return True
             n = u32.GetWindowTextLengthW(hwnd)
             if n <= 0:
                 return True            # no title = tool window, not ours
             buf = ctypes.create_unicode_buffer(n + 1)
             u32.GetWindowTextW(hwnd, buf, n + 1)
-            if needle and needle in buf.value.lower():
+            titled = bool(needle) and needle in buf.value.lower()
+            owned = bool(want_procs) and _proc_name(hwnd) in want_procs
+            if not (titled or owned):
+                return True
+            if not u32.IsWindowVisible(hwnd):
+                # Titled, ours, and hidden — that is what living in the tray
+                # looks like. Remembered rather than taken, so a genuinely
+                # visible window always wins.
+                if owned and tray["hwnd"] is None:
+                    tray["hwnd"] = hwnd
+                return True
+            if titled:
                 target["hwnd"], target["by"] = hwnd, "title"
                 return False           # exact-ish title match wins outright
-            if want_procs and _proc_name(hwnd) in want_procs:
-                target["hwnd"], target["by"] = hwnd, "process"
-                # keep enumerating in case a title match exists further on
-            return True
+            target["hwnd"], target["by"] = hwnd, "process"
+            return True                # keep looking for a title match
 
         u32.EnumWindows(_enum, 0)
         hwnd = target["hwnd"]
+        if not hwnd and tray["hwnd"]:
+            hwnd = tray["hwnd"]
+            target["by"] = "tray"
+            u32.ShowWindow(hwnd, 9)    # SW_RESTORE — un-hide it before focusing
+            time.sleep(0.25)
         if not hwnd:
             return False
 
@@ -1499,12 +1548,33 @@ def _win32_focus(title_contains: str) -> bool:
         return False
 
 
+def _window_titled(name: str) -> bool:
+    """Is there any VISIBLE window whose title mentions this? Never raises."""
+    if not HAS_WINDOWS or not name:
+        return False
+    try:
+        return any(w.title and name.lower() in w.title.lower() for w in gw.getAllWindows())
+    except Exception:
+        return False
+
+
 def focus_window(title_contains: str) -> dict:
     """Bring a window to the foreground, robustly, and CONFIRM it worked."""
     # Try the real Win32 path FIRST — it's the one that actually works on Windows.
     if _win32_focus(title_contains):
         return {"success": True, "action": "focus_window", "title": title_contains,
                 "confirmed": True, "method": "win32"}
+
+    # Checked BEFORE the pygetwindow guard. The tray explanation is the most
+    # useful thing we can say about this failure and it must not depend on
+    # which optional package happens to be importable.
+    running = _running_process_for(title_contains)
+    if running and not _window_titled(title_contains):
+        return {"success": False, "tray_suspected": True,
+                "error": f"{title_contains} is running as {running}, but it has no "
+                         f"window on screen — it is almost certainly minimised to "
+                         f"the system tray (bottom-right, by the clock). Click it "
+                         f"there once, then ask me again."}
     if not HAS_WINDOWS:
         return {"success": False, "error": "pygetwindow not available"}
     try:

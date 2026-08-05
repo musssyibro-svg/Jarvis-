@@ -97,12 +97,22 @@ def step(component: str, detail: str = "", ok: bool | None = None, **extra) -> N
         return
     try:
         at = int((time.time() - t.started) * 1000)
+        # An explicit took_ms wins over the gap.
+        #
+        # The gap is only the step's cost when steps are recorded AS they
+        # happen. A chain runs to completion and THEN records all its steps in
+        # a loop, so the first one absorbed the entire run and the rest showed
+        # 0ms. The 2026-08-05 report has it exactly: open_url [62406ms], wait
+        # [0ms], analyze [0ms] — while the cost table, which measures the calls
+        # themselves, said open_url 2.3s and analyze 55s. The trace was
+        # pointing at the wrong step, which is worse than pointing nowhere.
+        took = extra.pop("took_ms", None)
         t.steps.append({
             "component": component,
             "detail": str(detail)[:200],
             "ok": ok,
             "at_ms": at,
-            "took_ms": max(0, at - t.last_ms),
+            "took_ms": int(took) if took is not None else max(0, at - t.last_ms),
             **{k: str(v)[:120] for k, v in extra.items()},
         })
         t.last_ms = at

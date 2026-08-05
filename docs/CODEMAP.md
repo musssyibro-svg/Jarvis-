@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-168 source files · 658 public symbols
+168 source files · 662 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -536,7 +536,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/tests/test_decompose.py`
 
 **`test_felt_behaviour.py`** — The three complaints that are actually about how Jarvis FEELS to use.
-  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`
+  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`
   <br>`backend/tests/test_felt_behaviour.py`
 
 **`test_headless.py`** — Jarvis must survive a machine with no display.

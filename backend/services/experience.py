@@ -210,6 +210,17 @@ def classify(error: str, action: str = "", result: dict | None = None) -> dict:
             kind = name
             break
 
+    # The ACTION overrules a pattern that can't apply to it.
+    #
+    # From the 2026-08-05 report: launching "new notepad" failed with "no
+    # matching window opened", the substring "no match" hit element_not_found,
+    # and the user was told "the site's layout may have changed, or the page
+    # hadn't finished loading" — a BROWSER remedy for a desktop app launch.
+    # A confidently wrong fix is worse than "unknown": it sends someone to look
+    # at the wrong thing entirely.
+    if action == "open_app" and kind in ("element_not_found", "unknown"):
+        kind = "app_not_found"
+
     # Action context sharpens a few otherwise-ambiguous cases.
     if kind == "unknown":
         if action in ("type_text", "press", "hotkey"):

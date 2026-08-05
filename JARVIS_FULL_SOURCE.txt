@@ -3866,7 +3866,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-168 source files · 658 public symbols
+168 source files · 662 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -4395,7 +4395,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/tests/test_decompose.py`
 
 **`test_felt_behaviour.py`** — The three complaints that are actually about how Jarvis FEELS to use.
-  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`
+  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`
   <br>`backend/tests/test_felt_behaviour.py`
 
 **`test_headless.py`** — Jarvis must survive a machine with no display.
@@ -6274,9 +6274,13 @@ def _run_tool_chain(message: str, steps: list, lines: list | None = None,
         from agents.desktop_agent import execute_chain
         result = execute_chain(steps, goal=message)
         for st in result.get("steps", []):
+            # The step's OWN duration. execute_chain timed each one; without
+            # passing it here the first step is credited with the whole chain,
+            # because these are all recorded after the run has finished.
             trace.step(f"desktop.{st.get('action','?')}",
                        st.get("verify_reason") or st.get("error", ""),
-                       ok=st.get("verified", st.get("success")))
+                       ok=st.get("verified", st.get("success")),
+                       took_ms=int(float(st.get("duration_s") or 0) * 1000))
     except Exception as e:
         trace.step("desktop.execute_chain", str(e), ok=False)
         trace.finish(f"exception: {e}", ok=False)
@@ -6429,9 +6433,13 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
         from agents.desktop_agent import execute_chain
         result = execute_chain(chain)
         for st in result.get("steps", []):
+            # The step's OWN duration. execute_chain timed each one; without
+            # passing it here the first step is credited with the whole chain,
+            # because these are all recorded after the run has finished.
             trace.step(f"desktop.{st.get('action','?')}",
                        st.get("verify_reason") or st.get("error", ""),
-                       ok=st.get("verified", st.get("success")))
+                       ok=st.get("verified", st.get("success")),
+                       took_ms=int(float(st.get("duration_s") or 0) * 1000))
     except Exception as e:
         trace.step("desktop.execute_chain", str(e), ok=False)
         trace.finish(f"exception: {e}", ok=False)
@@ -8244,6 +8252,29 @@ def _execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
             # window as the answer to a question about this one.
             if looking and not _is_foreground(last_opened):
                 focus_unconfirmed = last_opened
+                # A LOOK at the wrong window is the worst thing Jarvis produces,
+                # because it comes back as a confident answer. The runtime report
+                # of 2026-08-05 caught it exactly: focus_window failed twice for
+                # 'qq', the chain carried on, and the whole request was recorded
+                # as [OK] — "screen analysed". It analysed Edge.
+                #
+                # Typing gets to continue on an unconfirmed focus because the
+                # clipboard read-back is the real arbiter. Looking has no such
+                # arbiter, so it stops here instead of guessing.
+                fw = focus_window(last_opened)
+                if not fw.get("success"):
+                    why = fw.get("error") or f"could not bring {last_opened} to the front"
+                    results.append({"step": i + 1, "action": action, "success": False,
+                                    "verified": False, "error": why,
+                                    "focus_unconfirmed": last_opened})
+                    if live_plan:
+                        live_plan.step_end(i, False, error=why)
+                        live_plan.finish(False, why)
+                    return {"success": False, "steps": results, "failed_at": i + 1,
+                            "error": why,
+                            "what_to_do": ("Bring the app up yourself and ask again — "
+                                           "I won't describe a window I can't confirm "
+                                           "is the right one.")}
 
         # Pause/cancel lands BETWEEN steps. Never inside one: stopping halfway
         # through typing leaves half a sentence in the user's document.
@@ -8582,6 +8613,20 @@ def _win32_focus(title_contains: str) -> bool:
         k32 = ctypes.windll.kernel32
 
         target = {"hwnd": None, "by": None}
+        # A window hidden in the SYSTEM TRAY, kept as a weaker candidate.
+        #
+        # This is the "check my QQ messages" bug, finally. QQ and WeChat close
+        # to the tray rather than exiting: the process keeps running and its
+        # main window becomes INVISIBLE. open_app then sees the process and
+        # says "already running, verified"; focus_window enumerated only
+        # visible windows and said "no window found for 'qq'" — and the chain
+        # screenshotted whatever was in front and answered confidently about
+        # the wrong app. The two calls disagreed because they were asking
+        # different questions: "is the process alive" and "is a window shown".
+        #
+        # A tray window is still a real HWND and ShowWindow(SW_RESTORE) brings
+        # it back. We were skipping it before ever trying.
+        tray = {"hwnd": None}
         needle = (title_contains or "").lower()
         want_procs = _process_names_for(title_contains)
 
@@ -8597,23 +8642,35 @@ def _win32_focus(title_contains: str) -> bool:
 
         @ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
         def _enum(hwnd, _):
-            if not u32.IsWindowVisible(hwnd):
-                return True
             n = u32.GetWindowTextLengthW(hwnd)
             if n <= 0:
                 return True            # no title = tool window, not ours
             buf = ctypes.create_unicode_buffer(n + 1)
             u32.GetWindowTextW(hwnd, buf, n + 1)
-            if needle and needle in buf.value.lower():
+            titled = bool(needle) and needle in buf.value.lower()
+            owned = bool(want_procs) and _proc_name(hwnd) in want_procs
+            if not (titled or owned):
+                return True
+            if not u32.IsWindowVisible(hwnd):
+                # Titled, ours, and hidden — that is what living in the tray
+                # looks like. Remembered rather than taken, so a genuinely
+                # visible window always wins.
+                if owned and tray["hwnd"] is None:
+                    tray["hwnd"] = hwnd
+                return True
+            if titled:
                 target["hwnd"], target["by"] = hwnd, "title"
                 return False           # exact-ish title match wins outright
-            if want_procs and _proc_name(hwnd) in want_procs:
-                target["hwnd"], target["by"] = hwnd, "process"
-                # keep enumerating in case a title match exists further on
-            return True
+            target["hwnd"], target["by"] = hwnd, "process"
+            return True                # keep looking for a title match
 
         u32.EnumWindows(_enum, 0)
         hwnd = target["hwnd"]
+        if not hwnd and tray["hwnd"]:
+            hwnd = tray["hwnd"]
+            target["by"] = "tray"
+            u32.ShowWindow(hwnd, 9)    # SW_RESTORE — un-hide it before focusing
+            time.sleep(0.25)
         if not hwnd:
             return False
 
@@ -8642,12 +8699,33 @@ def _win32_focus(title_contains: str) -> bool:
         return False
 
 
+def _window_titled(name: str) -> bool:
+    """Is there any VISIBLE window whose title mentions this? Never raises."""
+    if not HAS_WINDOWS or not name:
+        return False
+    try:
+        return any(w.title and name.lower() in w.title.lower() for w in gw.getAllWindows())
+    except Exception:
+        return False
+
+
 def focus_window(title_contains: str) -> dict:
     """Bring a window to the foreground, robustly, and CONFIRM it worked."""
     # Try the real Win32 path FIRST — it's the one that actually works on Windows.
     if _win32_focus(title_contains):
         return {"success": True, "action": "focus_window", "title": title_contains,
                 "confirmed": True, "method": "win32"}
+
+    # Checked BEFORE the pygetwindow guard. The tray explanation is the most
+    # useful thing we can say about this failure and it must not depend on
+    # which optional package happens to be importable.
+    running = _running_process_for(title_contains)
+    if running and not _window_titled(title_contains):
+        return {"success": False, "tray_suspected": True,
+                "error": f"{title_contains} is running as {running}, but it has no "
+                         f"window on screen — it is almost certainly minimised to "
+                         f"the system tray (bottom-right, by the clock). Click it "
+                         f"there once, then ask me again."}
     if not HAS_WINDOWS:
         return {"success": False, "error": "pygetwindow not available"}
     try:
@@ -12052,7 +12130,21 @@ def analyze_screen(question: str = "") -> dict:
         if b64 and validate_model(VISION_MODEL).get("valid"):
             # Send a DOWNSCALED image: llava doesn't need 4K, and full-res
             # payloads are the difference between seconds and minutes.
-            small = _downscale_b64(b64, 1280)
+            #
+            # 1280 -> 900 on measured evidence. The 2026-08-05 runtime report
+            # put desktop.analyze at 189s across 3 calls — median 55s, max 89.8s
+            # against a 90s ceiling. It is the single slowest thing in Jarvis by
+            # a factor of two.
+            #
+            # llava's encoder tiles the image into 336px patches regardless, so
+            # most of the width sent at 1280 is detail it discards after paying
+            # to encode it. 900 still resolves window titles and button text at
+            # 1080p, which is what the questions are actually about.
+            #
+            # The 90s ceiling stays until a report shows the new median. Cutting
+            # it now, with a 55s median, would time out roughly half of all
+            # analyses — trading slow for broken.
+            small = _downscale_b64(b64, 900)
             r = llava_vision(q, small or b64)
             if r.get("ok"):
                 answer = r["text"]
@@ -24092,6 +24184,17 @@ def classify(error: str, action: str = "", result: dict | None = None) -> dict:
             kind = name
             break
 
+    # The ACTION overrules a pattern that can't apply to it.
+    #
+    # From the 2026-08-05 report: launching "new notepad" failed with "no
+    # matching window opened", the substring "no match" hit element_not_found,
+    # and the user was told "the site's layout may have changed, or the page
+    # hadn't finished loading" — a BROWSER remedy for a desktop app launch.
+    # A confidently wrong fix is worse than "unknown": it sends someone to look
+    # at the wrong thing entirely.
+    if action == "open_app" and kind in ("element_not_found", "unknown"):
+        kind = "app_not_found"
+
     # Action context sharpens a few otherwise-ambiguous cases.
     if kind == "unknown":
         if action in ("type_text", "press", "hotkey"):
@@ -30901,12 +31004,22 @@ def step(component: str, detail: str = "", ok: bool | None = None, **extra) -> N
         return
     try:
         at = int((time.time() - t.started) * 1000)
+        # An explicit took_ms wins over the gap.
+        #
+        # The gap is only the step's cost when steps are recorded AS they
+        # happen. A chain runs to completion and THEN records all its steps in
+        # a loop, so the first one absorbed the entire run and the rest showed
+        # 0ms. The 2026-08-05 report has it exactly: open_url [62406ms], wait
+        # [0ms], analyze [0ms] — while the cost table, which measures the calls
+        # themselves, said open_url 2.3s and analyze 55s. The trace was
+        # pointing at the wrong step, which is worse than pointing nowhere.
+        took = extra.pop("took_ms", None)
         t.steps.append({
             "component": component,
             "detail": str(detail)[:200],
             "ok": ok,
             "at_ms": at,
-            "took_ms": max(0, at - t.last_ms),
+            "took_ms": int(took) if took is not None else max(0, at - t.last_ms),
             **{k: str(v)[:120] for k, v in extra.items()},
         })
         t.last_ms = at
@@ -32881,6 +32994,126 @@ def test_the_unconfirmed_branch_says_success_but_not_verified():
     src = inspect.getsource(bid_executor)
     marker = '"success": True, "verified": False, "confirmed": False'
     assert marker in src, "the unconfirmed branch no longer distinguishes the two"
+
+
+# ── What the 2026-08-05 runtime report caught ────────────────────────────────
+
+
+def test_a_look_at_an_unfocusable_app_fails_instead_of_answering():
+    """
+    The worst thing in the report. Asked to check QQ:
+
+        OK  desktop.open_app     window/process present  [46671ms]
+        ERR desktop.focus_window No window found for 'qq'
+        OK  desktop.screenshot   captured
+        ERR desktop.focus_window No window found for 'qq'
+        OK  desktop.analyze      analysis produced
+        -> screen analysed                       <- reported as SUCCESS
+
+    It analysed whatever was in front — Edge — and answered about QQ. Worse,
+    experience recorded qq at 100% success, so the learning loop was being
+    taught that this works.
+
+    Typing may proceed on unconfirmed focus because the clipboard read-back
+    settles it afterwards. Looking has no such arbiter, so it must stop.
+    """
+    from agents import desktop_agent as da
+
+    original_fg, original_focus = da._is_foreground, da.focus_window
+    original_open, original_vis = da.open_app, da._app_visible
+    da._is_foreground = lambda *a, **k: False
+    da.focus_window = lambda *a, **k: {
+        "success": False,
+        "error": "qq is running as qq.exe, but it has no window on screen",
+    }
+    # QQ opens fine — that is the whole point. The process IS there; what
+    # cannot be confirmed is that its window is in front.
+    da.open_app = lambda *a, **k: {
+        "success": True,
+        "action": "open_app",
+        "app": "qq",
+        "verified": True,
+    }
+    da._app_visible = lambda *a, **k: True  # the PROCESS is there
+    try:
+        out = da._execute_chain(
+            [
+                {"action": "open_app", "params": {"name_or_path": "qq"}},
+                {"action": "screenshot", "params": {}},
+                {"action": "analyze", "params": {"question": "any messages?"}},
+            ],
+            goal="check my qq messages",
+        )
+    finally:
+        da._is_foreground, da.focus_window = original_fg, original_focus
+        da.open_app, da._app_visible = original_open, original_vis
+
+    assert out["success"] is False, "answered about a window it could not confirm"
+    assert "no window on screen" in out["error"] or "front" in out["error"]
+    succeeded = [s.get("action") for s in out["steps"] if s.get("success")]
+    assert "analyze" not in succeeded, "an analyze step still reported success"
+
+
+def test_a_tray_app_is_not_reported_as_missing():
+    """
+    "No window found for 'qq'" reads as "QQ isn't running" — and QQ was running
+    the whole time, minimised to the tray. The message has to name the real
+    situation, because the two have completely different fixes.
+    """
+    from agents import desktop_agent as da
+
+    original = da._running_process_for
+    da._running_process_for = lambda name: "qq.exe" if name == "qq" else None
+    try:
+        out = da.focus_window("qq")
+    finally:
+        da._running_process_for = original
+
+    if out.get("success"):
+        return  # a real window existed on this machine; nothing to assert
+    assert out.get("tray_suspected"), f"tray case not recognised: {out.get('error')}"
+    assert "tray" in out["error"].lower()
+
+
+def test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one():
+    """
+    The report's remedy for a failed Start Menu launch was "the site's layout
+    may have changed, or the page hadn't finished loading" — because the
+    substring "no match" in "no matching window opened" hit element_not_found.
+    A confidently wrong fix sends you to look at the wrong thing entirely.
+    """
+    from services import experience
+
+    fail = experience.classify(
+        "Searched the Start Menu for 'notepad' but no matching window opened "
+        "— it may not be installed, or its window title differs.",
+        action="open_app",
+    )
+    assert fail["kind"] == "app_not_found"
+    assert "site" not in fail["remedy"].lower() and "page" not in fail["remedy"].lower()
+
+    # ...without breaking the case the pattern is actually for.
+    click = experience.classify("could not find Submit on screen", action="click_text")
+    assert click["kind"] == "element_not_found"
+
+
+def test_chain_steps_carry_their_own_time_not_the_whole_run():
+    """
+    The report showed open_url [62406ms], wait [0ms], analyze [0ms] — while the
+    cost table said open_url 2.3s and analyze 55s. Chain steps are recorded
+    after the run, so the first absorbed everything. A trace that points at the
+    wrong step is worse than one that points nowhere.
+    """
+    from services import trace
+
+    trace.start("test", "chain")
+    trace.step("desktop.open_url", "", ok=True, took_ms=2328)
+    trace.step("desktop.analyze", "", ok=True, took_ms=55115)
+    steps = trace.recent(1)[0]["steps"]
+    trace.finish("done")
+
+    assert steps[0]["took_ms"] == 2328
+    assert steps[1]["took_ms"] == 55115, "the slow step is still invisible"
 ```
 
 ################################################################################
@@ -42548,7 +42781,7 @@ pause
 # FILE 211/221: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-05T16:23:09.419961
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-05T16:31:22.835315
 platform: linux  python: 3.11.15
 26 passed · 0 failed · 1 skipped
 
@@ -42604,7 +42837,7 @@ platform: linux  python: 3.11.15
 
 [PASS] memory_pressure — Low RAM is explained, not just endured
     RAM pressure is measured, explained, and actionable.
-    · 15.8 GB free — plenty. (level=ok)
+    · 15.7 GB free — plenty. (level=ok)
     · 1GB -> critical, 2.5GB -> not ok, 8GB -> ok
     · free-memory action answers: Ollama wasn't holding any models — nothing to free. The memory is goin
 
@@ -42664,8 +42897,8 @@ platform: linux  python: 3.11.15
     · ordinary typing is still captured normally
 
 [PASS] missing_app — Opening an app that isn't installed
-    Stopped after 1 attempt in 0.5s with a usable message.
-    · took 0.5s, 1 attempt(s), kind=app_not_found
+    Stopped after 1 attempt in 0.0s with a usable message.
+    · took 0.0s, 1 attempt(s), kind=app_not_found
 
 [SKIP] clipboard — Typing must not destroy what you had copied
     clipboard unavailable: Pyperclip could not find a copy/paste mechanism for your sys
@@ -42680,7 +42913,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1785946987' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1785947480' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -42693,7 +42926,7 @@ platform: linux  python: 3.11.15
 
 [PASS] model_pressure — keep_alive adapts to memory pressure
     Scaling is correct: big=90s, small=5m.
-    · free RAM 15.4GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
+    · free RAM 15.6GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
     · skipped the live unload (needs --include-destructive)
 
 [PASS] classification — Real errors map to the right cause
