@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-168 source files · 652 public symbols
+167 source files · 651 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -298,10 +298,6 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 
 **`__init__.py`**
   <br>`backend/services/__init__.py`
-
-**`_semgrep_fixture_delete_me.py`** — TEMPORARY. Exists to prove jarvis-url-opened-without-check actually fires.
-  <br>`open_it`
-  <br>`backend/services/_semgrep_fixture_delete_me.py`
 
 **`ai_router.py`** — one door for every AI call in Jarvis.
   <br>`invalidate`, `route_for`, `chain_for`, `ask`, `ask_stream`, `status`
