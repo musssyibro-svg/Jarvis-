@@ -62,15 +62,35 @@ def _emit(msg: str, level: str = "info"):
 
 # ── Persisted config ──────────────────────────────────────────────────────────
 
-def get_config() -> dict:
+class UnreadableConfig(RuntimeError):
+    """Saved engine config exists but couldn't be read. NOT 'no config yet'."""
+
+
+def get_config(strict: bool = False) -> dict:
+    """
+    Engine settings — platforms, interval, enabled.
+
+    `strict` matters more here than anywhere else because DEFAULTS["enabled"]
+    is True and _loop() calls this on EVERY tick. A single unreadable read
+    turned a paused engine back on, and _run_cycle's own save then persisted
+    enabled=True — so it stayed on. An engine you stopped resumes scanning
+    platforms unattended, having told you "Income engine paused."
+
+    The loop passes strict=True and treats an unreadable config as "stay
+    stopped": doing nothing is always recoverable, doing something you were
+    told not to do is not.
+    """
     try:
         with conn() as db:
             row = db.execute("SELECT value FROM settings WHERE key=?", (SETTINGS_KEY,)).fetchone()
         if row and row["value"]:
             return {**DEFAULTS, **json.loads(row["value"])}
-    except Exception:
-        pass
-    return dict(DEFAULTS)
+        return dict(DEFAULTS)
+    except Exception as e:
+        if strict:
+            raise UnreadableConfig(
+                f"couldn't read the engine settings ({str(e)[:80]})") from e
+        return dict(DEFAULTS)
 
 
 def _save_config(cfg: dict):
@@ -242,7 +262,18 @@ def _loop():
     # Small delay so startup finishes before the first sweep.
     _wake.wait(timeout=20)
     while True:
-        cfg = get_config()
+        try:
+            cfg = get_config(strict=True)
+        except UnreadableConfig as e:
+            # Fail CLOSED. An unreadable config used to fall back to DEFAULTS,
+            # where enabled=True — so an engine you had stopped started itself
+            # again and went scanning platforms unattended. Waiting is always
+            # recoverable; doing what you were told not to do is not.
+            _emit(f"Holding — {e}. Not scanning until the settings can be read.",
+                  "warning")
+            _wake.clear()
+            _wake.wait(timeout=300)
+            continue
         if not cfg.get("enabled"):
             # Idle until re-enabled (or process exit).
             _wake.clear()

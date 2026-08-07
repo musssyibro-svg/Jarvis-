@@ -231,16 +231,33 @@ _REFUSED_WORDS = ("could not be placed", "could not be submitted", "failed to su
                   "required field", "verify your", "not enough bids")
 
 
-async def _bid_form_present(page) -> bool:
-    """Is the bid form still on screen? A form that's gone is a strong signal."""
+async def _bid_form_present(page) -> bool | None:
+    """
+    Is the bid form still on screen? True / False / None for "couldn't look".
+
+    THE THIRD ANSWER IS THE POINT. This used to swallow the exception and
+    return False — and False here means "the form is GONE", which
+    _wait_for_confirmation reads as positive evidence the bid went through.
+    So "I could not check" was being counted as proof of submission.
+
+    That is not a hypothetical: Playwright raises "Execution context was
+    destroyed" on a query issued during navigation, which is exactly the
+    instant after a Submit click. A page showing nothing but a captcha
+    interstitial produced verdict='sent', a receipt saying the bid was
+    delivered, and a queue row marked done — with the site having confirmed
+    nothing at all.
+
+    None makes the unknown case unusable as evidence, which is the only
+    honest thing it can be.
+    """
     try:
         for sel in ("textarea[name='description']", "textarea[data-qa-description-input]",
                     "button:has-text('Place Bid')", "[data-qa-submit-bid]"):
             if await page.query_selector(sel):
                 return True
+        return False
     except Exception:
-        pass
-    return False
+        return None          # could not look — NOT "the form is gone"
 
 
 async def _wait_for_confirmation(page, url_before: str, form_before: bool,
@@ -277,12 +294,18 @@ async def _wait_for_confirmation(page, url_before: str, form_before: bool,
             return "sent", f"the page says “{hit}”"
 
         # No words, but the structure moved: form gone AND we navigated.
-        if page.url != url_before and not await _bid_form_present(page):
+        #
+        # `is False` and not `not ...` — the difference is the whole fix. The
+        # form check now returns None when it COULDN'T look, and `not None` is
+        # True, which would turn "I don't know" back into "the form is gone"
+        # and from there into "sent". Only a positive observation that the form
+        # is absent counts as evidence.
+        if page.url != url_before and await _bid_form_present(page) is False:
             return "sent", f"the bid form closed and the page moved to {page.url[:60]}"
 
     # Time is up. Distinguish "nothing happened" from "something did".
     still_there = await _bid_form_present(page)
-    if still_there and page.url == url_before and form_before:
+    if still_there is True and page.url == url_before and form_before:
         return "unchanged", "the bid form is still open and the URL never changed"
     return "unknown", "the page changed but said nothing Jarvis recognises"
 

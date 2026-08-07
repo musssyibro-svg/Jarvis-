@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-169 source files · 675 public symbols
+170 source files · 684 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -396,7 +396,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/services/hubstaff_service.py`
 
 **`income_engine.py`** — the always-on freelance loop.
-  <br>`get_config`, `status`, `start`, `stop`, `run_once_now`, `start_watchdog`
+  <br>`UnreadableConfig`, `get_config`, `status`, `start`, `stop`, `run_once_now`, `start_watchdog`
   <br>`backend/services/income_engine.py`
 
 **`live_plan.py`** — the plan, visible while it runs.
@@ -428,7 +428,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/services/os_state.py`
 
 **`persona.py`** — what Jarvis knows about YOU, permanently.
-  <br>`remember`, `forget`, `all_facts`, `get`, `sync_from_environment`, `prompt_block`, `style_hint`, `status`, `learn_from_text`, `start`
+  <br>`UnreadableFacts`, `remember`, `forget`, `all_facts`, `get`, `sync_from_environment`, `prompt_block`, `style_hint`, `status`, `learn_from_text`, `start`
   <br>`backend/services/persona.py`
 
 **`planner_service.py`** — Long-term project planner (Brain-linked).
@@ -444,7 +444,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/services/platform_meta.py`
 
 **`profile_service.py`** — Persistent freelance profile.
-  <br>`get_profile`, `save_profile`, `prompt_block`
+  <br>`UnreadableProfile`, `get_profile`, `save_profile`, `prompt_block`
   <br>`backend/services/profile_service.py`
 
 **`providers.py`** — "what do I use for THIS, on THIS machine?"
@@ -546,6 +546,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`test_llm_budgets.py`** — Two ways a model call goes wrong on a 16 GB machine, and neither looks like a bug.
   <br>`test_every_kind_has_a_budget`, `test_every_kind_resolves_to_a_model_role`, `test_planning_is_cheaper_than_general_chat`, `test_the_planner_actually_asks_for_the_planner_budget`
   <br>`backend/tests/test_llm_budgets.py`
+
+**`test_no_silent_data_loss.py`** — Four handlers that swallowed a READ and then wrote back over what they hadn't read.
+  <br>`test_a_failed_read_never_wipes_your_remembered_facts`, `test_forget_refuses_on_an_unreadable_store`, `test_readers_still_degrade_quietly`, `test_a_failed_read_never_reverts_your_name_and_rate`, `test_an_unreadable_config_does_not_restart_a_paused_engine`, `test_couldnt_check_the_form_is_not_evidence_of_submission`
+  <br>`backend/tests/test_no_silent_data_loss.py`
 
 **`test_profiling_and_failures.py`** — "It didn't work" and "it feels slow" were both unanswerable.
   <br>`test_a_raising_action_records_the_traceback_not_just_the_message`, `test_an_unknown_action_is_not_recorded_as_a_crash`, `test_typed_text_is_reduced_to_its_length`, `test_ordinary_context_survives`, `test_the_buffer_is_bounded`, `test_the_profile_names_the_slowest_component`, `test_ranking_is_by_total_time_not_by_the_worst_single_call`, `test_a_call_that_throws_is_still_measured`, `test_every_chat_closes_its_trace`, `test_steps_carry_their_own_cost`

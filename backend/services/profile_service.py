@@ -29,7 +29,21 @@ DEFAULT_PROFILE = {
 }
 
 
-def get_profile() -> dict:
+class UnreadableProfile(RuntimeError):
+    """Saved profile exists but couldn't be read. NOT the same as 'no profile'."""
+
+
+def get_profile(strict: bool = False) -> dict:
+    """
+    Your freelance identity — name, rate, portfolio, skills.
+
+    `strict` is for WRITERS, and the blast radius here is the worst of the
+    three: save_profile() is get_profile() + patch + write, so one failed read
+    silently reverted a real name and rate to the hardcoded DEFAULT_PROFILE —
+    and this profile is what goes into every proposal sent to a real client.
+    You would be bidding under the wrong name at the wrong rate, with the save
+    reporting success.
+    """
     try:
         with conn() as db:
             row = db.execute("SELECT value FROM settings WHERE key=?",
@@ -37,13 +51,22 @@ def get_profile() -> dict:
         if row and row["value"]:
             saved = json.loads(row["value"])
             return {**DEFAULT_PROFILE, **saved}
-    except Exception:
-        pass
-    return dict(DEFAULT_PROFILE)
+        return dict(DEFAULT_PROFILE)
+    except Exception as e:
+        if strict:
+            raise UnreadableProfile(
+                f"couldn't read your saved profile ({str(e)[:80]}), so I won't "
+                f"overwrite it with defaults") from e
+        return dict(DEFAULT_PROFILE)
 
 
 def save_profile(patch: dict) -> dict:
-    profile = get_profile()
+    try:
+        profile = get_profile(strict=True)
+    except UnreadableProfile as e:
+        return {"ok": False, "error": str(e),
+                "what_to_do": "Try again in a moment — something else was using "
+                              "the database."}
     for k, v in (patch or {}).items():
         if k in DEFAULT_PROFILE and v is not None:
             profile[k] = v

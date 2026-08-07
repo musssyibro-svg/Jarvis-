@@ -63,15 +63,40 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _load() -> dict:
+class UnreadableFacts(RuntimeError):
+    """The saved facts exist but could not be read. NOT the same as 'none yet'."""
+
+
+def _load(strict: bool = False) -> dict:
+    """
+    Everything Jarvis remembers about you.
+
+    `strict` exists because of a read-modify-WRITE that quietly destroys data.
+    remember() does _load() -> facts[field] = value -> _save(facts). When the
+    read failed it returned {}, the new fact was merged into that empty dict,
+    and INSERT OR REPLACE wrote it back — so ONE unreadable read replaced every
+    fact you had ever stated with the single one you just said, and reported
+    "Got it, I'll remember that."
+
+    A locked database is enough to trigger it: several background pollers share
+    one connection with a 5s busy timeout.
+
+    Readers may still take {} and carry on — a missing fact is a small thing.
+    A WRITER must pass strict=True and refuse, because writing back a store you
+    failed to read is how you lose the lot.
+    """
     try:
         with conn() as db:
             row = db.execute("SELECT value FROM settings WHERE key=?", (KEY,)).fetchone()
         if row and row["value"]:
             return json.loads(row["value"])
-    except Exception:
-        pass
-    return {}
+        return {}
+    except Exception as e:
+        if strict:
+            raise UnreadableFacts(
+                f"couldn't read your saved facts ({str(e)[:80]}), so I won't "
+                f"overwrite them") from e
+        return {}
 
 
 def _save(facts: dict) -> None:
@@ -99,7 +124,12 @@ def remember(field: str, value: str, source: str = STATED,
         return {"ok": False, "error": "empty value"}
 
     with _lock:
-        facts = _load()
+        try:
+            facts = _load(strict=True)      # never merge onto an empty read
+        except UnreadableFacts as e:
+            return {"ok": False, "error": str(e),
+                    "what_to_do": "Try again in a moment — something else was "
+                                  "using the database."}
         old = facts.get(field)
         if old and _RANK.get(source, 0) < _RANK.get(old.get("source", OBSERVED), 0):
             return {"ok": False, "skipped": True,
@@ -120,7 +150,10 @@ def remember(field: str, value: str, source: str = STATED,
 
 def forget(field: str) -> dict:
     with _lock:
-        facts = _load()
+        try:
+            facts = _load(strict=True)      # same write-back trap as remember()
+        except UnreadableFacts as e:
+            return {"ok": False, "error": str(e)}
         gone = facts.pop((field or "").strip().lower(), None)
         _save(facts)
     return {"ok": bool(gone), "removed": gone}
