@@ -420,6 +420,37 @@ export default function Earn() {
             <div style={{ fontSize: 13, color: submitting ? T.cyan : T.text, lineHeight: 1.5 }}>
               {outcome.headline}
             </div>
+            {/*
+              Whether this configuration can send anything AT ALL.
+
+              A real setup drafted 15 proposals and could submit none of them:
+              the platforms being scanned hardest were job boards, and the two
+              that accept bids had no login. The overlap was empty. The page
+              showed a green "earning for you" over a queue that could never be
+              sent — which is what "the freelance section is just an advert"
+              meant, and it was true. Scanning was working; submitting was
+              impossible; nothing said so.
+            */}
+            {outcome.readiness?.headline && (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  fontSize: 12.5,
+                  lineHeight: 1.5,
+                  color: outcome.readiness.can_submit ? T.green : T.amber,
+                  background: outcome.readiness.can_submit
+                    ? "rgba(80,220,150,0.07)"
+                    : "rgba(255,190,90,0.08)",
+                  border: `1px solid ${
+                    outcome.readiness.can_submit ? "rgba(80,220,150,0.25)" : "rgba(255,190,90,0.3)"
+                  }`,
+                }}
+              >
+                {outcome.readiness.headline}
+              </div>
+            )}
             {(outcome.recent || []).length > 0 && (
               <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
                 {outcome.recent.slice(0, 4).map((r) => (

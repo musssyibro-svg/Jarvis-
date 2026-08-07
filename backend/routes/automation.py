@@ -231,8 +231,36 @@ def queue_outcome():
         if counts.get("pending"):
             bits.append(f"{counts['pending']} drafted, awaiting your approval")
         headline = " · ".join(bits) or "Nothing has happened yet."
+
+    # CAN this configuration send anything at all?
+    #
+    # A real setup produced 15 drafted proposals and zero possible submissions:
+    # the two platforms being scanned most were job boards, and the two that
+    # accept bids had no login. The overlap was empty, and Jarvis showed a green
+    # "earning for you" over a queue that could never be sent. That is what
+    # "the freelance section is just an advert" meant, and it was correct.
+    #
+    # Answered here rather than in the engine because it is a question about
+    # CONFIGURATION, and this is the endpoint the page already asks for the
+    # truth about what has happened.
+    ready = {}
+    try:
+        from services import income_engine, platform_meta, session_manager
+        cfg = income_engine.get_config()
+        try:
+            # refresh=False: read the CACHED session state. This endpoint is
+            # polled by the page, and re-probing five sites through Playwright
+            # on every poll is exactly the kind of blocking call that made the
+            # console feel frozen elsewhere.
+            sessions = (session_manager.check_status(refresh=False) or {}).get("platforms", [])
+        except Exception:
+            sessions = []          # never block the answer on a slow login probe
+        ready = platform_meta.readiness(cfg.get("platforms") or [], sessions)
+    except Exception:
+        ready = {}
+
     return {"running": bool(ex.get("running")), "counts": counts,
-            "headline": headline, "recent": recent}
+            "headline": headline, "recent": recent, "readiness": ready}
 
 
 @router.post("/queue/{qid}/approve")

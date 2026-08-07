@@ -364,3 +364,73 @@ def test_a_known_reason_is_never_reported_as_unknown():
     )
     assert "edge" in fail["cause"], f"the real reason was dropped: {fail['cause']!r}"
     assert "couldn't determine" not in fail["cause"]
+
+
+# ── "The freelance section is just an advert" ────────────────────────────────
+
+
+def test_a_config_that_can_never_submit_says_so():
+    """
+    The real setup behind that complaint, from the 2026-08-05 report:
+
+        scanning : remoteok(board) peopleperhour(bid) freelancer(bid) weworkremotely(board)
+        logged in: upwork fiverr hubstaff contra wellfound
+
+    The two platforms that accept a bid were the two with no session; the two
+    scanned hardest were boards that never accept one. The overlap was EMPTY.
+    Jarvis drafted 15 proposals, could send none of them, and showed a green
+    "earning for you" over the pile.
+
+    Scanning was working. Submitting was impossible. Nothing said so, and that
+    silence is the whole complaint.
+    """
+    from services.platform_meta import readiness
+
+    r = readiness(
+        ["remoteok", "peopleperhour", "freelancer", "weworkremotely"],
+        [
+            {"platform": p, "logged_in": True}
+            for p in ("upwork", "fiverr", "hubstaff", "contra", "wellfound")
+        ],
+    )
+    assert r["can_submit"] is False
+    assert set(r["need_login"]) == {"peopleperhour", "freelancer"}
+    assert "not logged in" in r["headline"]
+
+
+def test_logging_in_to_one_bid_site_changes_the_answer():
+    """The message has to become good news the moment the situation does."""
+    from services.platform_meta import readiness
+
+    r = readiness(["remoteok", "freelancer"], [{"platform": "freelancer", "logged_in": True}])
+    assert r["can_submit"] is True
+    assert "freelancer" in r["ready"]
+
+
+def test_boards_only_is_explained_not_reported_as_broken():
+    """
+    Scanning boards is a perfectly good thing to do — the proposal is still
+    worth having when you apply by hand. It must read as a limit, not a fault.
+    """
+    from services.platform_meta import readiness
+
+    r = readiness(["remoteok", "weworkremotely"], [])
+    assert r["can_submit"] is False
+    assert r["scanning_is_useful"] is True
+    assert "job board" in r["headline"]
+
+
+def test_a_compound_command_names_the_half_it_could_not_do():
+    """
+    "open qq and send message to john saying hello" opens QQ and stops, because
+    there is no send-a-message capability. That is a missing FEATURE, not a lie
+    — but the reply has to say which half was skipped, or it reads as Jarvis
+    ignoring you.
+    """
+    from services import decompose
+
+    out = decompose.decompose("open qq and send message to john saying hello")
+    actions = [s["action"] for s in out["steps"]]
+    assert "open_app" in actions
+    assert out.get("unresolved"), "the unhandled clause vanished silently"
+    assert "send message" in " ".join(out["unresolved"]).lower()

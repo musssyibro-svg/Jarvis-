@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-168 source files · 668 public symbols
+169 source files · 675 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -440,7 +440,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/services/platform_health.py`
 
 **`platform_meta.py`** — what KIND each platform is, and how you apply there.
-  <br>`kind`, `submittable`, `needs_login`, `apply_note`
+  <br>`kind`, `submittable`, `needs_login`, `apply_note`, `readiness`
   <br>`backend/services/platform_meta.py`
 
 **`profile_service.py`** — Persistent freelance profile.
@@ -536,7 +536,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/tests/test_decompose.py`
 
 **`test_felt_behaviour.py`** — The three complaints that are actually about how Jarvis FEELS to use.
-  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`, `test_agent_invented_navigation_is_risky`, `test_typing_a_url_yourself_is_not_gated`, `test_opening_a_url_is_never_retried`, `test_every_action_result_has_one_shape` _(+2 more)_
+  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`, `test_agent_invented_navigation_is_risky`, `test_typing_a_url_yourself_is_not_gated`, `test_opening_a_url_is_never_retried`, `test_every_action_result_has_one_shape` _(+6 more)_
   <br>`backend/tests/test_felt_behaviour.py`
 
 **`test_headless.py`** — Jarvis must survive a machine with no display.
@@ -655,6 +655,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`failure_injection.py`** — Phase 0. Break Jarvis on purpose, in two minutes,
   <br>`Result`, `s_missing_app`, `s_clipboard`, `s_no_model`, `s_queue_load`, `s_browser_death`, `s_estop`, `s_learning`, `s_model_pressure`, `s_classification`, `s_control`, `s_decompose`, `s_plan_visibility`, `s_selfeval` _(+15 more)_
   <br>`tools/failure_injection.py`
+
+**`mutate.py`**
+  <br>`run_file`, `main`
+  <br>`tools/mutate.py`
 
 **`setup.py`** — install everything Jarvis needs, then say what's left.
   <br>`say`, `step`, `run`, `check_prereqs`, `install_python_packages`, `install_browser`, `install_frontend`, `setup_models`, `main`
