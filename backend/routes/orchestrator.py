@@ -4,7 +4,7 @@ Orchestrator API + SSE live feed endpoint.
 """
 import json
 import queue as _queue
-from typing import List, Optional
+
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 class PipelineRequest(BaseModel):
-    platforms:         List[str] = ["remoteok", "weworkremotely", "hubstaff"]
+    platforms:         list[str] = ["remoteok", "weworkremotely", "hubstaff"]
     your_name:         str       = "Ibrahim"
     your_skills:       str       = "Python, automation, web scraping, AI integration, FastAPI"
     max_per_platform:  int       = 10
@@ -29,30 +29,59 @@ def start_pipeline(req: PipelineRequest):
     The legacy agents.orchestrator.start_pipeline thread-pipeline is no longer
     invoked. STATE (the SSE feed) in agents.orchestrator is preserved and reused.
     """
+    from fastapi import HTTPException
+
+    from agents.orchestrator_core import AgentState, get_core
     from agents.v9_models import Goal
-    from agents.orchestrator_core import OrchestratorCore
+
+    core = get_core()          # the SHARED instance, not a throwaway local
+    if core.state not in (AgentState.IDLE, AgentState.COMPLETE,
+                          AgentState.FAILED, AgentState.STOPPED):
+        # Silently doing nothing here is why pressing Start twice looked broken.
+        raise HTTPException(409, f"A pipeline is already running ({core.state.name.lower()}). "
+                                 f"Stop it first, or wait for it to finish.")
+
+    # Pass EVERY field. This used to read `req.max_jobs`, which does not exist
+    # on PipelineRequest — getattr silently returned the default 5, so the
+    # per-platform limit you set was thrown away, and min_score, max_generate,
+    # your_name and your_skills never reached the Goal at all.
     goal = Goal(
         goal_type="freelance_application",
         objective=f"Pipeline across {', '.join(req.platforms)}",
-        constraints={"platforms": req.platforms, "max_jobs": getattr(req, "max_jobs", 5),
-                     "auto_apply": False},
+        constraints={
+            "platforms":        req.platforms,
+            "max_per_platform": req.max_per_platform,
+            "max_jobs":         req.max_per_platform,   # legacy readers
+            "min_score":        req.min_score,
+            "max_generate":     req.max_generate,
+            "your_name":        getattr(req, "your_name", ""),
+            "your_skills":      getattr(req, "your_skills", ""),
+            "auto_apply":       False,
+        },
         approval_required=True,
         success_condition={"min_applied": 0},
     )
-    core = OrchestratorCore()
     core.set_goal(goal)
     import threading
     threading.Thread(target=core.run_full_workflow, daemon=True).start()
-    return {"message": "Pipeline started (OrchestratorCore)", "platforms": req.platforms,
+    return {"message": "Pipeline started", "platforms": req.platforms,
+            "max_per_platform": req.max_per_platform,
+            "min_score": req.min_score, "max_generate": req.max_generate,
             "goal_id": goal.goal_id}
 
 
 @router.post("/stop")
 def stop_pipeline():
-    from agents.orchestrator import STATE
-    STATE.set(running=False, stage="stopped")
-    STATE.emit("orchestrator", "Pipeline stop requested")
-    return {"message": "Stop signal sent"}
+    """
+    Actually stop the running pipeline.
+
+    This used to set a flag on STATE that the core never read, so Stop was
+    decorative. It now asks the core to halt at the next safe point — the step
+    in flight finishes first, so a bid submission is never cut in half.
+    """
+    from agents.orchestrator_core import get_core
+    res = get_core().request_stop("stop pressed")
+    return {"message": "Stopping - the current step will finish first.", **res}
 
 
 @router.get("/status")
@@ -110,7 +139,7 @@ def platform_memory():
 # ── AutoMode scheduling (V8.5) ────────────────────────────────────────────────
 
 class ScheduleRequest(BaseModel):
-    platforms:        List[str] = ["remoteok", "weworkremotely", "hubstaff"]
+    platforms:        list[str] = ["remoteok", "weworkremotely", "hubstaff"]
     your_name:        str = "Ibrahim"
     your_skills:      str = "Python, automation, web scraping, AI integration, FastAPI"
     max_per_platform: int = 10

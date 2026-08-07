@@ -140,7 +140,7 @@ def _check_playwright() -> dict:
 
 def _check_brain_embeddings() -> dict:
     try:
-        from services.brain_service import embeddings_available, EMBED_MODEL
+        from services.brain_service import EMBED_MODEL, embeddings_available
         ok = embeddings_available(force=True)
         return {"name": "Brain semantic search", "ok": ok,
                 "detail": f"{EMBED_MODEL} ready" if ok else "keyword-only (still works)",

@@ -6,11 +6,12 @@ test_health.py — Full system health check.
 - Required directories present
 - RAM monitoring at start and end
 """
+import json
 import os
 import sys
-import json
 from pathlib import Path
-from _harness import TestRun, guard, dump_ollama_status, save_ram_artifact, ROOT, ARTIFACTS
+
+from _harness import ARTIFACTS, ROOT, TestRun, dump_ollama_status, guard, save_ram_artifact
 
 BACKEND_URL = "http://127.0.0.1:8000"
 REQUIRED_TABLES = [
@@ -92,7 +93,7 @@ def run() -> dict:
 
     # ── 4. Database ─────────────────────────────────────────────────────────────
     try:
-        from models.db import conn, init_db, DB_PATH
+        from models.db import DB_PATH, conn, init_db
         t.log(f"DB_PATH: {DB_PATH}")
 
         db_exists = Path(str(DB_PATH)).exists()

@@ -14,6 +14,13 @@ anthropic>=0.25.0
 pyautogui>=0.9.54
 pygetwindow>=0.0.9
 pyperclip>=1.8.2
+# Windows UI Automation — lets Jarvis READ an app's interface (element names,
+# values, positions) instead of screenshotting it and asking a vision model.
+# Windows-only and optional: agents/ui_agent.py degrades to the screenshot path
+# and says so when it isn't there. Chosen over wxauto (WeChat-only, pins itself
+# to particular WeChat builds) and pywinauto (re-implements window finding,
+# which this repo already does correctly for Chinese Windows).
+uiautomation>=2.0.18; sys_platform == "win32"
 
 # ── V5 Vision ──
 mss>=9.0.1

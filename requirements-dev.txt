@@ -1,0 +1,25 @@
+# Developer tooling. NOT needed to run Jarvis — START.bat installs
+# requirements.txt only, and the user's machine never needs this file.
+#
+# Everything here is offline-capable once installed, because the machine this
+# project ships to is in mainland China with no VPN.
+
+# Lint + format for Python. One tool instead of flake8 + isort + black.
+ruff>=0.15
+
+# Tests. See pyproject.toml for why pytest is pointed at backend/tests only.
+pytest>=8.0
+
+# AST pattern matching against the rules in .semgrep/jarvis.yml.
+# Local rules only — the registry rulesets need a round trip to semgrep.dev.
+semgrep>=1.170
+
+# Parses Python AND .jsx with one API, for tools/codemap.py. Python's stdlib
+# `ast` cannot read the React frontend.
+tree-sitter>=0.24
+tree-sitter-language-pack>=0.7
+
+# Serena (semantic code navigation over MCP) is NOT listed here on purpose.
+# .mcp.json runs it with `uvx --from serena-agent`, which fetches it into an
+# isolated environment — it never enters this project's site-packages, so its
+# dependency tree can't collide with Jarvis's.

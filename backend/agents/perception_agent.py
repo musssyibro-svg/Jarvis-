@@ -14,7 +14,6 @@ extraction obviously requires a live browser / display on the target machine.
 """
 from agents.base_agent import BaseAgent
 
-
 # JS evaluated in the page to extract a structured, clickable-aware element tree.
 _DOM_EXTRACT_JS = r"""
 () => {
@@ -71,13 +70,14 @@ class PerceptionAgent(BaseAgent):
             return PerceptionAgent._available_cache
         ok = False
         try:
-            import agents.vision_agent  # noqa: F401 — configures tesseract_cmd path
             import pytesseract
+
+            import agents.vision_agent  # noqa: F401 — configures tesseract_cmd path
             pytesseract.get_tesseract_version()  # runs the binary; raises if absent
             ok = True
         except Exception:
             try:
-                from services.ollama_manager import validate_model, VISION_MODEL
+                from services.ollama_manager import VISION_MODEL, validate_model
                 ok = bool(validate_model(VISION_MODEL).get("valid"))
             except Exception:
                 ok = False
@@ -90,15 +90,23 @@ class PerceptionAgent(BaseAgent):
         try:
             from agents.vision_agent import analyze_screen
             r = analyze_screen(question or "Describe the current screen state")
+            # analyze_screen returns the LLM result under 'answer'/'ai_answer' and
+            # the raw OCR under 'screen_text'. The old code read 'text'/'analysis'/
+            # 'ocr_text' — none of which exist — so it always returned "" and the
+            # vision path looked broken. Read the real keys, preferring the AI
+            # analysis over raw OCR.
+            answer = r.get("answer") or r.get("ai_answer") or r.get("screen_text", "")
             return {
                 "ok":          bool(r.get("success", r.get("ok", False))),
-                "screen_text": r.get("text") or r.get("analysis") or r.get("ocr_text", ""),
+                "analysis":    r.get("answer") or r.get("ai_answer") or "",
+                "screen_text": answer,
+                "raw_text":    r.get("screen_text", ""),
                 "method":      r.get("method", "unknown"),
                 "error":       r.get("error"),
                 "elements":    [],
             }
         except Exception as e:
-            return {"ok": False, "screen_text": "", "method": "none",
+            return {"ok": False, "screen_text": "", "analysis": "", "method": "none",
                     "error": str(e), "elements": []}
 
     # ── Stage 2: structured browser perception (DOM + bbox + clickable) ─────────
@@ -109,8 +117,9 @@ class PerceptionAgent(BaseAgent):
         bbox is [x, y, width, height] in CSS pixels relative to the viewport.
         """
         try:
-            from agents.browser_agent import _get_context, _new_loop
             import asyncio
+
+            from agents.browser_agent import _get_context, _new_loop
 
             async def _extract():
                 ctx = await _get_context(headless)

@@ -5,6 +5,7 @@ All tables created on first startup. Never drops existing data.
 import os
 import sqlite3
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent

@@ -1,4 +1,10 @@
-# JARVIS OS V4 — Autonomous Freelance Agent
+# Jarvis OS — autonomous desktop assistant + freelance income engine
+
+Version 14. One file to run: **`START.bat`** — it installs anything missing,
+then starts the backend, the UI, and opens Jarvis in your browser.
+
+If it won't start: **`DOCTOR.bat`**. If you want to check it recovers from
+failure before a long run: **`RUN_FAILURE_TEST.bat`** (see `TESTING_STAGES.md`).
 
 ## What it does
 1. **Scans** job platforms (Hubstaff, RemoteOK, WWR, PeoplePerHour, Wellfound, Contra)

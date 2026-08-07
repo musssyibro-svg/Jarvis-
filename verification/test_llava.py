@@ -6,11 +6,12 @@ test_llava.py — Verify vision pipeline (final).
 - OCR fallback path documented
 """
 import base64
+import json
 import struct
 import zlib
-import json
-from _harness import (TestRun, guard, dump_ollama_status,
-                      ram_snapshot, save_ram_artifact, ARTIFACTS)
+
+from _harness import ARTIFACTS, TestRun, dump_ollama_status, guard, ram_snapshot, save_ram_artifact
+
 
 # ── Known test image: 50x50 solid red square (stdlib only) ────────────────────
 def _make_red_png(size=50) -> bytes:

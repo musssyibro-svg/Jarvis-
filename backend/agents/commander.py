@@ -9,12 +9,10 @@ Flow:
 Commander routes by intent, coordinates multi-step plans,
 emits to the live feed, and records outcomes to memory.
 """
-import json
 import threading
 from datetime import datetime, timezone
 
 from agents.orchestrator import STATE
-from agents.memory_agent  import MemoryAgent
 
 _running_task = threading.Event()
 _task_lock    = threading.Lock()
@@ -39,15 +37,25 @@ INTENT_MAP = {
                 "take a screenshot", "screenshot", "screen shot", "window",
                 "file", "folder", "notepad", "calculator", "chrome", "edge",
                 "explorer", "run ", "launch ", "launching ", "start ",
-                "starting ", "hotkey", "rename", "delete file", "move file"],
+                "starting ", "hotkey", "rename", "delete file", "move file",
+                # Apps the user actually runs. Without these, "check my qq
+                # messages" scored freelance (on the word "message") and desktop
+                # zero — the intent said "go find me a job" for a request to
+                # look at a chat window.
+                "qq", "wechat", "weixin", "doubao", "kimi", "dingtalk", "tim"],
     "memory":  ["remember", "recall", "what did", "why did", "why do we",
                 "why we", "decision", "history", "learn",
                 "pattern", "forgot", "store this", "memorize"],
     "plan":    ["plan ", "how to", "steps to", "automate", "task list",
                 "achieve", "do this for me", "build ", "build me", "set up "],
     "browser": ["browse", "navigate to", "go to website", "open url", "open http"],
+    # "message", "reply" and "inbox" were in here and had to come out. They are
+    # the ordinary words for using a chat app, so "check my qq messages" and
+    # "reply to Ahmed" were classified as freelance work. Freelance keywords now
+    # have to actually be about freelancing.
     "freelance": ["job", "proposal", "bid", "freelancer", "hubstaff",
-                  "scan jobs", "message", "reply", "analytics", "inbox"],
+                  "scan jobs", "upwork", "fiverr", "client", "analytics",
+                  "earn", "apply for"],
     "chat":    [],  # fallthrough — handled by AI directly
 }
 
@@ -122,7 +130,7 @@ def normalize_goal(message: str, session_id: str = "default"):
 
 def get_status() -> dict:
     from agents.desktop_agent import get_status as ds
-    from agents.vision_agent  import get_status as vs
+    from agents.vision_agent import get_status as vs
     return {
         "commander":   "online",
         "desktop":     ds(),

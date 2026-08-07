@@ -3,7 +3,6 @@ platforms/peopleperhour.py
 PeoplePerHour — scrapes public project listings.
 """
 
-import re
 import traceback
 
 import requests
@@ -52,7 +51,7 @@ class PeoplePerHourPlatform(BasePlatform):
                 })
             print(f"[PeoplePerHour] Got {len(jobs)} jobs")
             return jobs
-        except Exception as exc:
+        except Exception:
             traceback.print_exc()
             return []
 
@@ -66,8 +65,8 @@ Budget: {job.get('budget','not specified')}
 Description: {job.get('description','')}
 
 Applicant: {your_name} | Skills: {your_skills}
-Under 160 words. Start by proving you understand the problem. 
-Propose a solution and timeline. Mention relevant experience. 
+Under 160 words. Start by proving you understand the problem.
+Propose a solution and timeline. Mention relevant experience.
 Clear CTA. Sign as {your_name}.
 Output ONLY the proposal."""
         return call_model(prompt)

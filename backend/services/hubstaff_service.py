@@ -5,10 +5,9 @@ Application message generation via DeepSeek-R1.
 """
 
 import asyncio
+import concurrent.futures
 import sys
 import traceback
-import concurrent.futures
-from datetime import datetime, timezone
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -144,7 +143,7 @@ def _http_hubstaff(max_jobs: int) -> list[dict]:
             })
         print(f"[HubstaffHTTP] Got {len(jobs)} jobs")
         return jobs
-    except Exception as exc:
+    except Exception:
         traceback.print_exc()
         return []
 

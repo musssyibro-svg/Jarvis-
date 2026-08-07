@@ -1,0 +1,239 @@
+# Semgrep rules for Jarvis.
+#
+# WHY THESE AND NOT THE REGISTRY RULESETS (p/python, p/security-audit, …):
+# those are fetched from semgrep.dev at scan time. This machine's egress policy
+# denies it, and more importantly the machine Jarvis RUNS on is in mainland
+# China with no VPN — a lint step that needs to phone a US host is a lint step
+# that will not run where it matters. These rules live in the repo and work
+# offline, forever.
+#
+# They also do something the generic rulesets cannot: they enforce the
+# decisions in CLAUDE.md. Generic rules find generic bugs. These find "someone
+# re-introduced the thing we already fixed", which is the failure mode this
+# project actually has.
+#
+# Run:  semgrep scan --config .semgrep
+rules:
+
+  # ── One door to the AI ─────────────────────────────────────────────────────
+  - id: jarvis-ollama-outside-providers
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Direct use of the ollama SDK outside backend/providers/. Every model call
+      goes through services/ai_router.py, which owns the provider chain, the
+      RAM-aware model choice, and the token/context caps. A direct call skips
+      all three — that is how /chat/stream ended up ignoring the model router
+      and rambling for minutes on a machine that could not afford it.
+      Use services.ai_router.ask() or ask_stream().
+    paths:
+      include: ["backend/**"]
+      exclude:
+        - "backend/providers/*"
+        - "backend/services/ollama_manager.py"
+        - "backend/services/model_router.py"
+        - "backend/services/memory_pressure.py"
+        - "backend/services/diagnostics.py"
+        # Scans the machine to find out what is installed. Asking "is ollama
+        # here, and which models?" is a capability probe, not a model call —
+        # there is no generation to route.
+        - "backend/services/environment.py"
+    # NOTE: `from ollama import ...` (with an ellipsis) parses but matches
+    # nothing, and silently takes the whole pattern-either down with it — the
+    # rule then reports zero findings and looks like it passed. Use $Y.
+    pattern-either:
+      - pattern: import ollama
+      - pattern: import ollama as $X
+      - pattern: from ollama import $Y
+      - pattern: import openai
+      - pattern: import openai as $X
+      - pattern: from openai import $Y
+      - pattern: import anthropic
+      - pattern: from anthropic import $Y
+
+  # ── Bind to loopback. Always. ──────────────────────────────────────────────
+  - id: jarvis-listens-on-all-interfaces
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Binding to 0.0.0.0 exposes a service that can type on the user's keyboard
+      and drive a browser already signed in to their accounts, to the whole
+      network. Bind 127.0.0.1. There is no "just for testing" exception —
+      CLAUDE.md says so explicitly.
+    pattern-either:
+      - pattern: uvicorn.run(..., host="0.0.0.0", ...)
+      - pattern: $APP.run(..., host="0.0.0.0", ...)
+      - pattern: $S.bind(("0.0.0.0", ...))
+      - pattern: |
+          $HOST = "0.0.0.0"
+
+  # ── Shells ─────────────────────────────────────────────────────────────────
+  - id: jarvis-subprocess-shell-true
+    languages: [python]
+    severity: ERROR
+    message: >-
+      shell=True lets any string that reaches this call run as a command. Job
+      descriptions scraped from freelance sites are untrusted text sitting next
+      to a logged-in browser and a shell — the lethal trifecta. This was
+      removed once already (PART A2); it stays removed. Pass a list of args.
+    pattern-either:
+      - pattern: subprocess.run(..., shell=True, ...)
+      - pattern: subprocess.Popen(..., shell=True, ...)
+      - pattern: subprocess.call(..., shell=True, ...)
+      - pattern: subprocess.check_output(..., shell=True, ...)
+      - pattern: os.system(...)
+
+  # ── Windows may be in Chinese ──────────────────────────────────────────────
+  - id: jarvis-window-matched-by-title
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Matching a window by its title breaks on a Chinese Windows install, where
+      Notepad is 记事本 and Calculator is 计算器. Match by PROCESS name — see
+      desktop_agent._process_names_for. If you genuinely need the title (for
+      display, or the teach recorder's secret check), that is fine; suppress
+      this with a nosemgrep and say which.
+    paths:
+      include: ["backend/**"]
+    pattern-either:
+      - pattern: gw.getWindowsWithTitle(...)
+      - pattern: pygetwindow.getWindowsWithTitle(...)
+
+  # ── Never swallow an exception to make a path look like it worked ──────────
+  - id: jarvis-bare-except-pass
+    languages: [python]
+    severity: WARNING
+    message: >-
+      A bare `except: pass` hides the cause AND catches KeyboardInterrupt and
+      SystemExit. If this failure is genuinely ignorable, name the exception
+      type and say in a comment why ignoring it is correct. Silent partial
+      execution that still reports success is the worst class of bug in this
+      project.
+    paths:
+      include: ["backend/**"]
+    pattern: |
+      try:
+        ...
+      except:
+        pass
+
+  # ── Credentials ────────────────────────────────────────────────────────────
+  - id: jarvis-credential-in-output
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A credential is being written somewhere the user can send to someone
+      else. Runtime reports get emailed to me; logs get pasted into chat. Keys
+      live in the encrypted vault (services/vault.py) and are masked by
+      config.is_secret()/_mask() before they reach any report.
+    paths:
+      include: ["backend/**"]
+      exclude: ["backend/services/vault.py"]
+    pattern-either:
+      - pattern: print(..., $X.password, ...)
+      - pattern: print(..., $X.api_key, ...)
+      - pattern: logger.$LEVEL(..., $X["password"], ...)
+      - pattern: logger.$LEVEL(..., $X["api_key"], ...)
+      - pattern: logging.$LEVEL(..., $X["password"], ...)
+
+  - id: jarvis-hardcoded-api-key
+    languages: [python, javascript, typescript]
+    severity: ERROR
+    message: >-
+      A literal API key in source. It will be committed, and it will end up in
+      JARVIS_FULL_SOURCE.txt, which is regenerated and pushed on every change.
+      Put it in backend/.env (gitignored) or the vault.
+    pattern-regex: '["''](sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|AIza[A-Za-z0-9_\-]{30,})["'']'
+
+  # ── Every network call is bounded ──────────────────────────────────────────
+  - id: jarvis-request-without-timeout
+    languages: [python]
+    severity: WARNING
+    message: >-
+      An HTTP call with no timeout. Default is to wait forever, and this runs
+      in mainland China where a blocked host does not refuse — it hangs. Jarvis
+      then looks frozen with no reason given. Pass timeout=.
+    paths:
+      include: ["backend/**"]
+    pattern-either:
+      - patterns:
+          - pattern: requests.get($URL, ...)
+          - pattern-not: requests.get(..., timeout=$T, ...)
+      - patterns:
+          - pattern: requests.post($URL, ...)
+          - pattern-not: requests.post(..., timeout=$T, ...)
+
+  # ── Capabilities, not app names ────────────────────────────────────────────
+  - id: jarvis-hardcoded-browser
+    languages: [python]
+    severity: WARNING
+    message: >-
+      A hardcoded browser executable. This machine has Edge and no Chrome, so
+      "open browser and search X" tried to launch something that isn't
+      installed. Ask providers.provider_for("web_search") instead — the code
+      adapts to the machine rather than expecting the machine to match the
+      code.
+    paths:
+      include: ["backend/**"]
+      exclude:
+        - "backend/services/providers.py"
+        - "backend/services/app_resolver.py"
+        - "backend/services/environment.py"
+        - "backend/agents/desktop_agent.py"
+    pattern-regex: '["'']chrome\.exe["'']'
+
+  # ── Read settings at call time ─────────────────────────────────────────────
+  - id: jarvis-config-read-at-import
+    languages: [python]
+    severity: WARNING
+    message: >-
+      config.get() at module scope freezes the value at import. The setting
+      then cannot change without a restart, which from the outside is
+      indistinguishable from a setting that does not work — the exact "I set
+      it, I saved it, nothing changed" bug. Read it inside the function.
+    paths:
+      include: ["backend/**"]
+    patterns:
+      - pattern: |
+          $VAR = config.get(...)
+      - pattern-not-inside: |
+          def $F(...):
+              ...
+      - pattern-not-inside: |
+          class $C:
+              ...
+
+  # ── The browser is signed in as the user ───────────────────────────────────
+  #
+  # Added after an external review found the chat adapter's browser branch
+  # ungated. The branch was real; it was also not the path that runs. "go to
+  # <x>" is resolved into open_url and opens the SYSTEM DEFAULT browser, and a
+  # review that stopped at the first match would have left the wider door open.
+  #
+  # So the rule guards the primitives, not one caller: any new way to open a
+  # URL has to go through check_url first.
+  - id: jarvis-url-opened-without-check
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A URL is being opened without browser_agent.check_url() first. That
+      browser is signed in to the user's real accounts, so "go to
+      192.168.1.1" reaches the router's admin page with every cookie
+      attached, and file:// reaches the disk. Call check_url(url) and refuse
+      when it gives a reason. If this really is a fixed internal address,
+      exclude the file here and say why.
+    paths:
+      include: ["backend/**"]
+      exclude:
+        # The two doors themselves — they call check_url, so matching them
+        # would report the fix as the bug.
+        - "backend/agents/browser_agent.py"
+        - "backend/agents/desktop_agent.py"
+    # webbrowser.open ONLY. page.goto was in this rule for about ten minutes
+    # and would have fired on six legitimate call sites — the income engine
+    # navigating to job boards from constants in our own source. A rule whose
+    # output you have to ignore is worse than no rule, because you stop
+    # reading it. Scraped URLs reaching goto are handled at their own call
+    # site (see bid_executor) rather than by a pattern that cannot tell a
+    # constant from a scrape.
+    pattern: webbrowser.open(...)

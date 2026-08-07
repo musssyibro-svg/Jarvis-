@@ -1,8 +1,9 @@
 """routes/zuodao.py"""
 from datetime import datetime, timezone
-from typing import Optional
-from fastapi import APIRouter, HTTPException
+
+from fastapi import APIRouter
 from pydantic import BaseModel
+
 from models.db import conn
 
 router = APIRouter()
@@ -42,7 +43,7 @@ def fetch_tasks(max_tasks: int = 20):
     return {"tasks": [dict(r) for r in rows], "fetched": len(tasks), "saved": saved}
 
 @router.get("/tasks")
-def list_tasks(status: Optional[str] = None):
+def list_tasks(status: str | None = None):
     with conn() as db:
         if status:
             rows = db.execute("SELECT * FROM zuodao_tasks WHERE status=? ORDER BY id DESC", (status,)).fetchall()

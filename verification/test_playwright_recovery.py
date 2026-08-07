@@ -11,8 +11,8 @@ import json
 import sys
 import time
 from pathlib import Path
-from _harness import (TestRun, guard, ram_snapshot, save_ram_artifact,
-                      register_temp, ARTIFACTS)
+
+from _harness import ARTIFACTS, TestRun, guard, ram_snapshot, register_temp, save_ram_artifact
 
 
 async def _test(profile_dir: str) -> dict:

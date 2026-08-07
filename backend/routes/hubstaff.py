@@ -5,7 +5,6 @@ Hubstaff Talent job discovery + application tracking.
 
 import json
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
@@ -37,8 +36,8 @@ class ApplicationIn(BaseModel):
 
 class AppStatusUpdate(BaseModel):
     status: str          # sent | interviewing | rejected | hired
-    employer_reply: Optional[str] = None
-    got_reply: Optional[bool] = None
+    employer_reply: str | None = None
+    got_reply: bool | None = None
 
 
 # ── Scrape routes ─────────────────────────────────────────────────────────────

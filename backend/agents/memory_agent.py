@@ -4,6 +4,7 @@ Stores: proposals, outcomes, patterns, client responses, automation history.
 """
 import json
 from datetime import datetime, timezone
+
 from models.db import conn
 
 

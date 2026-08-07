@@ -4,7 +4,6 @@ Wellfound (AngelList Talent) — scrapes public job listings.
 Note: Heavy JS site. Falls back to their public sitemap + individual pages.
 """
 
-import re
 import traceback
 
 import requests

@@ -26,3 +26,18 @@ schedule>=1.2.0
 # ── V10 Brain ──
 python-multipart>=0.0.9
 pypdf>=4.0.0
+
+# ── V12 Sessions + Credential Vault ──
+cryptography>=42.0.0
+
+# ── V16 Teach by demonstration ──
+# Records clicks and keystrokes so a task can be learned by watching it once.
+# Jarvis runs fine without this; the teach feature reports that it's missing
+# rather than pretending to record.
+pynput>=1.7.6
+
+# ── V16 MCP (optional) ──
+# Lets Claude Desktop / Cherry Studio / Cline drive Jarvis. Nothing in Jarvis
+# depends on it — backend/mcp_server.py is a separate process you may never run.
+# Uncomment to install:
+# fastmcp>=2.10.0

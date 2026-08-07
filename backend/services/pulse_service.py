@@ -161,6 +161,36 @@ def _probe_system() -> None:
               dedupe_key="system:ollama")
 
 
+def _probe_queue() -> None:
+    """Nudge when generated proposals are sitting unapproved in the queue."""
+    try:
+        with conn() as db:
+            n = db.execute("SELECT COUNT(*) AS n FROM automation_queue "
+                           "WHERE status='pending'").fetchone()["n"]
+        if n:
+            _emit("queue",
+                  f"{n} proposal(s) drafted and waiting for your yes/no — "
+                  f"Freelance ▸ Auto Mode ▸ Queue.",
+                  "warning", dedupe_key=f"queue:pending:{n}")
+    except Exception:
+        pass
+
+
+def _probe_replies() -> None:
+    """Tell the user the moment a client reply is sitting unread."""
+    try:
+        with conn() as db:
+            n = db.execute("SELECT COUNT(*) AS n FROM messages "
+                           "WHERE is_read=0").fetchone()["n"]
+        if n:
+            _emit("replies",
+                  f"📨 {n} unread client message(s) — a proposal may have been "
+                  f"answered. Freelance ▸ Messages.",
+                  "success", dedupe_key=f"replies:{n}")
+    except Exception:
+        pass
+
+
 def briefing() -> str:
     """One-shot situational summary, emitted at startup ('good morning' moment)."""
     parts = []
@@ -192,7 +222,7 @@ def briefing() -> str:
 
 def tick() -> None:
     """Run every probe once; each is independently best-effort."""
-    for probe in (_probe_plans, _probe_jobs, _probe_system):
+    for probe in (_probe_plans, _probe_jobs, _probe_system, _probe_queue, _probe_replies):
         try:
             probe()
         except Exception as e:

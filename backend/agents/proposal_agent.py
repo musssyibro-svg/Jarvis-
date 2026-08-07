@@ -1,9 +1,15 @@
 """
 agents/proposal_agent.py
 ProposalAgent — generates proposals, applications, and reply drafts.
-Uses DeepSeek-R1 via Ollama. Respects rate limiting via sleep.
+Uses the local LLM via Ollama. Respects rate limiting via sleep.
+
+Contract: run(context) accepts EITHER
+  {"qualified_jobs": [job, ...]}   — batch mode (orchestrator pipeline)
+  {"job": job}                     — single-job mode (V9 core calls per job)
+Both paths generate, save to the proposals table, and return the entries.
+The old mismatch (core passing "job", agent reading "qualified_jobs") was the
+root cause of the permanent "ProposalAgent complete: 0 generated" log line.
 """
-import time
 from agents.base_agent import BaseAgent
 
 
@@ -11,17 +17,45 @@ class ProposalAgent(BaseAgent):
     name = "proposal"
 
     def run(self, context: dict) -> dict:
-        jobs        = context.get("qualified_jobs", [])
-        your_name   = context.get("your_name", "Ibrahim")
-        your_skills = context.get("your_skills", "Python, automation, web scraping, AI integration, FastAPI")
-        max_generate = context.get("max_generate", 5)
+        jobs = context.get("qualified_jobs")
+        if jobs is None:
+            single = context.get("job")
+            jobs = [single] if single else []
+        profile = self._profile(context)
+        max_generate = int(context.get("max_generate", profile.get("max_generate", 10)))
         feed        = []
         generated   = []
 
-        for job in jobs[:max_generate]:
-            feed.append(self.log(f"Generating for: {job.get('title','')[:50]}"))
+        wanted = jobs[:max_generate]
+
+        # Write them in BATCHES, not one call each.
+        #
+        # This loop used to make one LLM call per job with a 1-second sleep
+        # between. On this machine that is the single slowest thing Jarvis does:
+        # free RAM sits low enough that keep_alive_for() correctly returns "0",
+        # so the model is released after every call and RELOADED for the next
+        # one. Thirteen jobs meant thirteen model loads — five to ten minutes to
+        # draft proposals that take seconds to generate once the model is warm.
+        #
+        # Note this is the opposite of the usual advice to set
+        # OLLAMA_KEEP_ALIVE=0 globally: that setting is already in effect here
+        # and it is part of what makes the loop slow. The fix is to stop making
+        # so many calls, not to make each one cheaper.
+        #
+        # The sleep is gone too. It was labelled "rate limit — don't hammer
+        # Ollama", but Ollama is a local process with a queue; there is no
+        # remote quota to respect and nothing to be polite to.
+        texts = self._generate_batched(wanted, profile, feed)
+
+        for job in wanted:
             try:
-                text = self._generate(job, your_name, your_skills)
+                text = texts.get(id(job)) or ""
+                if not text or text.startswith(("[No AI available", "[Ollama error",
+                                                "[AI router", "[No AI provider")):
+                    feed.append(self.log(
+                        f"LLM unavailable — used template for: {job.get('title','')[:40]}",
+                        "warning"))
+                    text = self._template(job, profile)
                 entry = {
                     "job_id":           job.get("job_id"),
                     "platform":         job.get("platform"),
@@ -38,39 +72,187 @@ class ProposalAgent(BaseAgent):
                 self._save(entry)
                 generated.append(entry)
                 feed.append(self.log(f"Generated proposal for: {job.get('title','')[:40]}"))
-                time.sleep(1)  # rate limit — don't hammer Ollama
             except Exception as e:
                 feed.append(self.log(f"Failed {job.get('title','')[:30]}: {e}", "error"))
 
         feed.append(self.log(f"ProposalAgent complete: {len(generated)} generated"))
         return {"generated": generated, "feed": feed}
 
-    def _generate(self, job: dict, your_name: str, your_skills: str) -> str:
+    def _profile(self, context: dict) -> dict:
+        """Persistent profile, with any per-run overrides from the caller."""
+        try:
+            from services.profile_service import get_profile
+            profile = get_profile()
+        except Exception:
+            profile = {"name": "Ibrahim",
+                       "skills": "Python, automation, web scraping, AI integration, FastAPI"}
+        if context.get("your_name"):
+            profile["name"] = context["your_name"]
+        if context.get("your_skills"):
+            profile["skills"] = context["your_skills"]
+        return profile
+
+    # How many proposals to ask for in one call. Four × ~180 words lands well
+    # inside the "batch" token budget with room to spare; larger batches start
+    # getting truncated, and a truncated proposal is worse than a slow one.
+    BATCH_SIZE = 4
+
+    def _generate_batched(self, jobs: list, profile: dict, feed: list) -> dict:
+        """
+        Write several proposals per LLM call. Returns {id(job): text}.
+
+        Falls back to one-at-a-time for any batch whose reply can't be split
+        cleanly. That fallback is the important part: a clever batching scheme
+        that silently returns four copies of the same proposal, or three
+        proposals for four jobs, would be far worse than the slow loop it
+        replaced — these go to real clients under the user's name.
+        """
+        out: dict = {}
+        if not jobs:
+            return out
+
+        for start in range(0, len(jobs), self.BATCH_SIZE):
+            group = jobs[start:start + self.BATCH_SIZE]
+            if len(group) == 1:
+                out[id(group[0])] = self._generate(group[0], profile)
+                continue
+
+            feed.append(self.log(
+                f"Writing {len(group)} proposals in one pass "
+                f"({start + 1}-{start + len(group)} of {len(jobs)})"))
+            try:
+                raw = self._ask_batch(group, profile)
+                parsed = self._parse_batch(raw, len(group))
+            except Exception as e:
+                feed.append(self.log(f"Batch write failed ({e}) — falling back to "
+                                     f"one at a time", "warning"))
+                parsed = []
+
+            if len(parsed) == len(group) and all(p.strip() for p in parsed):
+                for job, text in zip(group, parsed, strict=True):
+                    out[id(job)] = text.strip()
+            else:
+                # Any doubt at all: do them individually. Slower, but every job
+                # provably gets its own proposal.
+                feed.append(self.log(
+                    f"Batch reply didn't split cleanly ({len(parsed)}/{len(group)}) "
+                    f"— writing these {len(group)} individually", "warning"))
+                for job in group:
+                    out[id(job)] = self._generate(job, profile)
+        return out
+
+    _SEP = "###PROPOSAL"
+
+    def _ask_batch(self, group: list, profile: dict) -> str:
+        from services.ai_router import ask
+        from services.profile_service import prompt_block
+
+        blocks = []
+        for i, job in enumerate(group, 1):
+            blocks.append(
+                f"--- JOB {i} ---\n"
+                f"Platform: {job.get('platform', 'freelance')}\n"
+                f"Title: {job.get('title', '')}\n"
+                f"Company: {job.get('company', 'the company')}\n"
+                f"Role type: {job.get('job_type') or 'unknown'}\n"
+                f"Budget: {job.get('budget', 'not specified')}\n"
+                f"Description: {(job.get('description', '') or '')[:900]}")
+
+        prompt = (
+            f"Write {len(group)} SEPARATE freelance proposals — one for each job "
+            f"below. They are different jobs; do not reuse wording between them.\n\n"
+            + "\n\n".join(blocks)
+            + f"\n\n{prompt_block(profile)}\n\n"
+            f"Rules for EVERY proposal:\n"
+            f"- Under 180 words, plain and human, no corporate filler.\n"
+            f"- BANNED: \"I am confident in my ability\", \"I am the perfect fit\", "
+            f"\"proven track record\", \"leverage my skills\".\n"
+            f"- The first sentence must reference a concrete detail from THAT "
+            f"specific job description.\n"
+            f"- If the role is not a software job, do not pitch coding or "
+            f"automation unless the post asks for it.\n"
+            f"- End with a realistic next step, signed off as "
+            f"{profile.get('name', '')}.\n\n"
+            f"FORMAT — this matters, the output is parsed automatically:\n"
+            f"Start each proposal with a line containing only {self._SEP} N\n"
+            f"(N is the job number). Output nothing else — no titles, no notes.")
+
+        # task="batch" raises the token ceiling for this deliberate, counted
+        # request. See ollama_manager.LIMITS for why that's not a loophole.
+        return ask(task="batch", prompt=prompt, max_tokens=360 * len(group))
+
+    def _parse_batch(self, raw: str, expected: int) -> list:
+        """Split the reply back into one proposal per job."""
+        import re as _re
+        if not raw or raw.strip().startswith("["):
+            return []
+        parts = _re.split(rf"{self._SEP}\s*\d*\s*", raw)
+        parts = [p.strip() for p in parts if p.strip()]
+        if len(parts) == expected:
+            return parts
+        # The model ignored the separator. Rather than guess at boundaries and
+        # risk pairing a proposal with the wrong job, give up and let the caller
+        # fall back — sending the wrong pitch to a real client is unrecoverable.
+        return []
+
+    def _generate(self, job: dict, profile: dict) -> str:
         from services.deepseek_service import call_model
+        from services.profile_service import prompt_block
         platform = job.get("platform", "freelance")
-        prompt = f"""Write a professional job application for {platform}.
+        job_type = job.get("job_type", "")
+
+        # Tailor the angle to the role so a technical profile doesn't dump
+        # "Python automation" into an admin/non-technical posting.
+        if job_type in ("dev", "data"):
+            angle = ("This is a technical role — lead with the concrete technical "
+                     "approach and the specific tools you'd use.")
+        elif job_type in ("admin", "writing", "design", "other"):
+            angle = (f"This is a '{job_type or 'general'}' role, NOT a software job. "
+                     f"Do NOT pitch Python/automation/coding unless the post explicitly "
+                     f"asks for it. Focus on reliability, communication, organisation, "
+                     f"and directly relevant transferable strengths.")
+        else:
+            angle = "Match the proposal to exactly what the post asks for."
+
+        prompt = f"""Write a specific, winning freelance proposal for {platform}.
 
 Job Title: {job.get('title','')}
 Company: {job.get('company','the company')}
 Description: {job.get('description','')}
 Budget: {job.get('budget','not specified')}
+Detected role type: {job_type or 'unknown'}
 
-Applicant: {your_name}
-Skills: {your_skills}
+{prompt_block(profile)}
+
+{angle}
 
 Rules:
-- Under 200 words
-- Open by proving you understand the specific problem
-- Mention 1-2 directly relevant skills
-- Include a realistic timeline
-- End with a confident call to action
-- Sign off as: {your_name}
-Output ONLY the application/proposal text."""
-        return call_model(prompt)
+- Under 180 words, plain and human — no corporate filler.
+- BANNED phrases (never use): "I am confident in my ability", "I am the perfect
+  fit", "I have a proven track record", "leverage my skills". They read as spam.
+- First sentence MUST reference a concrete detail from THIS job description.
+- Name 1-2 skills that are actually relevant to THIS role (see role type above).
+- Give a realistic next step or timeline.
+- Sign off as: {profile.get('name','')}
+Output ONLY the proposal text."""
+        # fast model: proposals are short and the prompt is tightly constrained,
+        # so the light model is plenty — and far quicker than deepseek-r1's
+        # <think> passes, which is a big part of why the pipeline felt slow.
+        return call_model(prompt, fast=True)
+
+    def _template(self, job: dict, profile: dict) -> str:
+        """Offline fallback so a missing LLM never produces zero output."""
+        name = profile.get("name", "")
+        return (f"Hi,\n\nI read your post \"{job.get('title','')}\" and it lines up "
+                f"directly with what I do: {profile.get('skills','')}. "
+                f"I can start right away and will share progress early so you can "
+                f"course-correct before anything is final.\n\n"
+                f"When would you like to see a first result?\n\n— {name}")
 
     def _save(self, entry: dict):
-        from models.db import conn
         from datetime import datetime, timezone
+
+        from models.db import conn
         now = datetime.now(timezone.utc).isoformat()
         with conn() as db:
             # Check if already generated for this job_id

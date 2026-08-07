@@ -5,14 +5,14 @@ test_chat_persistence.py — Chat persistence (final).
 - Playwright refresh test: SKIP if frontend not running
 - RAM monitoring
 """
+import asyncio
 import os
 import sys
-import asyncio
-import time
 import tempfile
+import time
 from pathlib import Path
-from _harness import (TestRun, guard, ram_snapshot, save_ram_artifact,
-                      register_temp, ROOT, ARTIFACTS)
+
+from _harness import ARTIFACTS, ROOT, TestRun, guard, ram_snapshot, register_temp, save_ram_artifact
 
 
 async def _playwright_refresh(chat_url: str) -> dict:

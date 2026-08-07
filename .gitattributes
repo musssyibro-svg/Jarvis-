@@ -1,0 +1,34 @@
+# Line endings.
+#
+# This file exists because of a real failure. Every .bat in this repo was
+# authored on Linux and therefore had Unix (LF) line endings. cmd.exe parses
+# batch files by byte offset, and with LF-only endings it loses its place and
+# eats the first characters of lines. The user sees this:
+#
+#     'tle' is not recognized...          <- "title" lost "ti"
+#     'tlocal' is not recognized...       <- "setlocal" lost "se"
+#     'ho' is not recognized...           <- "echo" lost "ec"
+#     [X] Python not found on PATH.       <- ...even though Python IS on PATH
+#
+# which reads as "the launcher is broken" and is impossible to diagnose from
+# the error text. Batch files MUST ship with CRLF.
+#
+# `-text` (rather than `text eol=crlf`) means git stores and checks out these
+# bytes EXACTLY as committed, with no normalisation in either direction. That
+# matters because `text eol=crlf` only converts on clone — anyone downloading
+# the ZIP from GitHub, or a single raw file, would still get LF and hit the
+# same wall. The cost is that git shows .bat diffs as binary. Worth it.
+*.bat   -text
+*.cmd   -text
+*.ps1   -text
+
+# Shell scripts must stay LF or bash fails with "\r: command not found".
+*.sh    text eol=lf
+
+# Everything else: normalise to LF in the repo, leave checkout to the platform.
+*.py    text eol=lf
+*.js    text
+*.jsx   text
+*.json  text
+*.md    text
+*.txt   text

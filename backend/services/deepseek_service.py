@@ -4,11 +4,11 @@ Unified AI service — Ollama (DeepSeek-R1 + Qwen) with Anthropic fallback.
 Thread-safe. Handles timeouts and missing models gracefully.
 """
 
+import json
 import os
 import re
-import json
-import traceback
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,32 +29,37 @@ SYSTEM_PROMPT = (
     "designed to assist freelancers'."
 )
 
-try:
-    import ollama as _ollama
-except ImportError:
-    _ollama = None
-
-try:
-    from anthropic import Anthropic as _Anthropic
-except ImportError:
-    _Anthropic = None
+# NOTE: this module used to import ollama and anthropic here and call them
+# directly. call_model() now delegates to services/ai_router.ask(), so both
+# imports were dead — but they left this file looking like a provider, which is
+# exactly the "which provider does Jarvis use?" ambiguity the router exists to
+# remove. Ruff couldn't see them as unused (they're bound in a try/except), so
+# they survived every previous cleanup. Found by .semgrep/jarvis.yml.
 
 
-def _resolve_chat_model(fast: bool) -> str:
+def _resolve_chat_model(fast: bool, task: str | None = None) -> str:
     """
-    Resolve to an actually-installed model. Uses ollama_manager auto-detection
-    so we never request a model that isn't pulled (root cause of
-    'model deepseek-r1:1.5b not found').
+    Ask the model router for the best INSTALLED model that fits in free RAM.
+
+    Previously this trusted the configured name, which is how a 0.5B model ended
+    up doing everything — it was "resolved" successfully and nothing complained.
+    The router ranks by real quality and memory headroom instead.
     """
+    try:
+        from services import model_router
+        chosen = model_router.pick_model(task or ("chat" if fast else "reasoning"))
+        if chosen:
+            return chosen
+    except Exception:
+        pass
+    # Fallbacks: role resolution, then whatever is configured.
     preferred = OLLAMA_FAST_MODEL if fast else OLLAMA_MODEL
     try:
         from services.ollama_manager import resolve_models
         info = resolve_models()
-        key = "fast" if fast else "reasoning"
-        resolved = info["resolved"].get(key)
+        resolved = info["resolved"].get("fast" if fast else "reasoning")
         if resolved:
             return resolved
-        # nothing matched by role — use any installed model
         if info["installed"]:
             return info["installed"][0]
     except Exception:
@@ -62,62 +67,45 @@ def _resolve_chat_model(fast: bool) -> str:
     return preferred
 
 
-def call_model(prompt: str, history: list | None = None, fast: bool = False) -> str:
+# How a caller's (fast, task) pair maps to a router task. `fast` is a legacy
+# way of saying "this doesn't need deep thought", which is what "chat" means.
+_ROUTER_TASK = {
+    "planning": "planner", "planner": "planner",
+    "reasoning": "reasoning", "coding": "coding",
+    "proposal": "proposal", "summary": "memory", "memory": "memory",
+    "vision": "vision", "chat": "chat", "routing": "chat",
+}
+
+
+def call_model(prompt: str, history: list | None = None, fast: bool = False,
+               task: str | None = None) -> str:
     """
-    Call the AI model. fast=True prefers the lighter model.
-    Auto-detects installed Ollama models; never hardcodes an unpulled name.
-    Returns string response. Never raises — returns error message on failure.
+    Ask the AI. Kept as the name ~30 modules already import.
+
+    THE BODY NOW DELEGATES to services/ai_router.ask(). It used to call
+    ollama.chat() directly, which made this file a provider as well as a
+    service — and made "which provider does Jarvis use?" a question with thirty
+    possible answers.
+
+    Rewriting all thirty call sites at once was the alternative. This is better:
+    one change routes every existing caller through the gate immediately, with
+    no chance of missing one and no thirty-file diff to review. Callers can move
+    to ai_router.ask() at their own pace; nothing forces a flag day.
+
+    Still never raises. Errors come back as readable '[...]' text, because
+    callers all over Jarvis show this string to the user directly.
     """
-    history = history or []
-    model   = _resolve_chat_model(fast)
+    routed = _ROUTER_TASK.get((task or "").lower(), "chat" if fast else "reasoning")
+    try:
+        from services.ai_router import ask
+    except Exception as e:
+        return f"[AI router unavailable: {e}]"
 
-    # ── Ollama ────────────────────────────────────────────────────────────────
-    if _ollama:
-        try:
-            msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
-            msgs += [{"role": m["role"], "content": m["content"]} for m in history[-10:]]
-            msgs.append({"role": "user", "content": prompt})
-            print(f"[deepseek_service] using model: {model}")
-            resp = _ollama.chat(model=model, messages=msgs)
-            text = resp["message"]["content"]
-            text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
-            return text
-        except Exception as exc:
-            traceback.print_exc()
-            # Fallback: try ANY installed model before giving up
-            try:
-                from services.ollama_manager import _list_installed
-                for alt in _list_installed():
-                    if alt == model:
-                        continue
-                    try:
-                        resp = _ollama.chat(model=alt,
-                                            messages=[{"role":"user","content":prompt}])
-                        print(f"[deepseek_service] fell back to: {alt}")
-                        return re.sub(r"<think>.*?</think>", "",
-                                      resp["message"]["content"], flags=re.DOTALL).strip()
-                    except Exception:
-                        continue
-            except Exception:
-                pass
-            return (f"[Ollama error: {exc}. Models installed but none responded. "
-                    f"Try: ollama pull qwen2.5:0.5b]")
-
-    # ── Anthropic fallback ────────────────────────────────────────────────────
-    if ANTHROPIC_API_KEY and _Anthropic:
-        try:
-            client   = _Anthropic(api_key=ANTHROPIC_API_KEY)
-            response = client.messages.create(
-                model="claude-haiku-4-5",
-                max_tokens=1024,
-                system=SYSTEM_PROMPT,
-                messages=history + [{"role": "user", "content": prompt}],
-            )
-            return "".join(b.text for b in response.content if getattr(b, "type", "") == "text")
-        except Exception as exc:
-            return f"[Claude error: {exc}]"
-
-    return "[No AI available. Run: ollama serve && ollama pull deepseek-r1:latest]"
+    text = ask(task=routed, prompt=prompt, history=(history or [])[-10:],
+               fast=fast, system_prompt=SYSTEM_PROMPT)
+    # Reasoning models emit their scratchpad in <think> tags. Showing that to
+    # the user is noise, and pasting it into a client proposal would be worse.
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
 
 def generate_proposal(
@@ -177,13 +165,15 @@ Can AI complete this? Reply ONLY with JSON:
 {{"workable": true/false, "reason": "...", "job_type": "writing|code|research|other"}}""",
         fast=True,
     )
-    workable, job_type = False, "other"
+    # KNOWN GAP — the model also returns job_type, and it is parsed and then
+    # thrown away. Nothing downstream receives it, so the classification is
+    # paid for on every call and never used. Tracked in docs/CODE_HEALTH.md.
+    workable = False
     try:
         m = re.search(r"\{.*\}", assess, re.DOTALL)
         if m:
             d = json.loads(m.group())
-            workable  = bool(d.get("workable"))
-            job_type  = d.get("job_type", "other")
+            workable = bool(d.get("workable"))
     except Exception:
         pass
 

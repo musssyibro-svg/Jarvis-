@@ -17,7 +17,10 @@ This file performs REAL actions (opens Notepad/Chrome, screenshots your screen).
 It is the proof artifact your checkpoint requires — produced by YOU running it on
 the real machine, because that evidence cannot be generated anywhere else.
 """
-import sys, os, json, traceback
+import json
+import os
+import sys
+import traceback
 from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
@@ -48,7 +51,8 @@ def _shot(name):
         src = r.get("path")
         if src and os.path.exists(src):
             dst = os.path.join(OUT, name + ".png")
-            import shutil; shutil.copy(src, dst)
+            import shutil
+            shutil.copy(src, dst)
             return dst
         return f"(no screenshot path returned: {r})"
     except Exception as e:
@@ -67,7 +71,8 @@ def run_cmd(label, message):
     except Exception:
         entry["error"] = traceback.format_exc()
         entry["ok"] = False
-    import time; time.sleep(2)   # let the action settle
+    import time
+    time.sleep(2)   # let the action settle
     entry["after_shot"] = _shot(f"{label}_after")
     return entry
 

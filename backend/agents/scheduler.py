@@ -17,6 +17,9 @@ from agents.orchestrator import STATE
 
 _thread: threading.Thread | None = None
 _stop_evt = threading.Event()
+# Set while a scheduled cycle is in flight, so the next tick skips instead of
+# stacking a second pipeline on top of the first.
+_cycle_running = threading.Event()
 _state = {"enabled": False, "every_minutes": 0, "config": None, "next_run": None}
 
 
@@ -44,13 +47,48 @@ def start_schedule(config: dict, every_minutes: int = 60) -> dict:
         # V9: scheduler drives the OrchestratorCore state machine, not the
         # legacy automation_engine pipeline.
         from agents.orchestrator_core import OrchestratorCore
+        from agents.v9_models import Goal
+
+        # Never start a second cycle on top of a running one.
+        #
+        # A scan-and-draft pass can easily run past the tick interval on a busy
+        # machine, and without this guard the next tick starts another whole
+        # pipeline: two Playwright browsers, two sets of model loads, on a PC
+        # that is already short of memory. That doesn't just slow things down,
+        # it makes the first cycle slower too, which makes an overlap more
+        # likely on the tick after — the failure feeds itself.
+        if _cycle_running.is_set():
+            STATE.emit("scheduler",
+                       "Previous run is still going — skipping this tick rather "
+                       "than starting a second one on top of it.", "warning")
+            return
+        _cycle_running.set()
+
         STATE.emit("scheduler", f"Scheduled run triggered (every {every_minutes}m)")
-        goal = dict(config)
-        goal.setdefault("goal_type", "freelance_application")
-        goal.setdefault("auto_apply", False)   # scheduled runs default to safe (queue, don't auto-submit)
-        core = OrchestratorCore()
-        core.set_goal(goal)
-        core.run()
+        c = dict(config)
+        # set_goal requires a typed Goal — passing the raw config dict crashed
+        # every scheduled run with AttributeError on goal.goal_type.
+        goal = Goal(
+            goal_type="freelance_application",
+            objective=f"Scheduled auto mode across {', '.join(c.get('platforms', []))}",
+            constraints={"platforms": c.get("platforms", ["remoteok"]),
+                         "your_name": c.get("your_name", ""),
+                         "your_skills": c.get("your_skills", ""),
+                         "max_jobs": c.get("max_per_platform", 10),
+                         "min_score": c.get("min_score", 30),
+                         "auto_apply": False},  # scheduled runs queue, never auto-submit
+            approval_required=True,
+            success_condition={"min_applied": 0},
+        )
+        try:
+            core = OrchestratorCore()
+            core.set_goal(goal)
+            core.run()
+        finally:
+            # In a finally block, so a crashed cycle doesn't wedge the flag and
+            # block every future run — that would be a worse bug than the one
+            # being fixed, and a silent one.
+            _cycle_running.clear()
 
     _schedule.every(every_minutes).minutes.do(_job).tag("automode")
     _state.update(enabled=True, every_minutes=every_minutes, config=config)

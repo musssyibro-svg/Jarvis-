@@ -1,13 +1,16 @@
 """platforms/weworkremotely.py — We Work Remotely RSS feeds"""
-import re, requests
+import re
+
+import requests
 from bs4 import BeautifulSoup
+
 from platforms.base import BasePlatform
 
 RSS = ["https://weworkremotely.com/remote-jobs.rss",
        "https://weworkremotely.com/categories/remote-programming-jobs.rss"]
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; JarvisBot/3.0)"}
 
-def _clean(t): return re.sub(r"\s+"," ",re.sub(r"<[^>]+"," ",t)).strip()
+def _clean(t): return re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",t)).strip()
 
 class WeWorkRemotelyPlatform(BasePlatform):
     name = "weworkremotely"

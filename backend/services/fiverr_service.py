@@ -4,9 +4,9 @@ Fiverr inbox monitoring via Playwright + AI reply/offer generation.
 """
 
 import asyncio
+import concurrent.futures
 import sys
 import traceback
-import concurrent.futures
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -110,7 +110,6 @@ def fetch_fiverr_inbox() -> list[dict]:
 
 def sync_fiverr_inbox() -> int:
     from models.db import conn
-    from services.deepseek_service import call_model
 
     messages = fetch_fiverr_inbox()
     new_count = 0

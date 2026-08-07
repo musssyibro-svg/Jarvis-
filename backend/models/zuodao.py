@@ -1,6 +1,7 @@
 """models/zuodao.py"""
 from models.db import conn
 
+
 def init_zuodao_tables():
     with conn() as db:
         db.executescript("""

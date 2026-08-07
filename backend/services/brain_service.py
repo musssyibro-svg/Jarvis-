@@ -16,7 +16,6 @@ becomes retrievable context for chat. Design constraints (deliberate):
 Embedding vectors are stored as float32 blobs via array('f') — stdlib only,
 no numpy required at ingest/search time.
 """
-import json
 import logging
 import math
 import os
@@ -120,7 +119,7 @@ def _unpack(blob: bytes) -> array:
 
 def _cosine(a, b) -> float:
     dot = na = nb = 0.0
-    for x, y in zip(a, b):
+    for x, y in zip(a, b, strict=False):   # mismatched dims truncate rather than raise
         dot += x * y
         na += x * x
         nb += y * y
@@ -253,7 +252,9 @@ def _backfill_embeddings(limit: int = 64) -> int:
     if not embs:
         return 0
     with conn() as db:
-        for r, e in zip(rows, embs):
+        # strict=True: a short embedding list would silently leave later chunks
+        # un-embedded and the backfill would still report success.
+        for r, e in zip(rows, embs, strict=True):
             db.execute("UPDATE brain_chunks SET embedding=? WHERE id=?",
                        (_pack(e), r["id"]))
     logger.info(f"brain: backfilled embeddings for {len(rows)} chunks")
@@ -300,7 +301,7 @@ def search(query: str, k: int = 4, project: str | None = None) -> dict:
     # never-embedded chunks in vector mode (scaled to stay comparable).
     bm25 = _bm25_scores(query, [r["text"] for r in rows])
     max_bm25 = max(bm25) or 1.0
-    for r, s in zip(rows, bm25):
+    for r, s in zip(rows, bm25, strict=True):
         if r["id"] not in scored:
             scored[r["id"]] = (s / max_bm25) * (0.5 if mode == "vector" else 1.0)
 

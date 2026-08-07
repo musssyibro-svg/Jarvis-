@@ -18,7 +18,7 @@ ExecutorAgent, which OrchestratorCore owns. Approval lifecycle lives in the
 ExecutorAgent, never here.
 """
 from agents.orchestrator import STATE
-from agents.v9_models import Goal, Action
+from agents.v9_models import Action
 
 
 def _emit(agent: str, msg: str, level: str = "info"):
@@ -37,20 +37,102 @@ def _memory_context(message: str) -> dict:
 
 def handle_chat(message: str, session_id: str = "default") -> dict:
     """
-    Single chat entry point. Returns:
-      {response, intent, needs_approval, data}
-    Never executes desktop/browser directly.
+    Single chat entry point. Returns {response, intent, needs_approval, data}.
+
+    Thin wrapper so the turn is REMEMBERED however the work below returns —
+    and there are a dozen return points. Doing it at each one guarantees that
+    the next person to add a thirteenth forgets, and then "close it" silently
+    stops working for that path only, which is a horrible bug to track down.
+
+    Resolving follow-ups happens here too, for a reason worth stating: what
+    gets remembered has to be the RESOLVED text, not what was typed. Remember
+    "close it" and then "do it again" replays the pronoun, which resolves
+    against itself and means nothing. Remember "close qq" and it replays the
+    action.
+    """
+    spoken = message
+    try:
+        from services import conversation
+        res = conversation.resolve(session_id, message)
+        if res["changed"]:
+            message = res["text"]
+            _emit("commander", f"Understood as: {message}  ({res['why']})")
+    except Exception:
+        pass        # a follow-up we can't resolve still runs as typed
+
+    out = _handle_chat(message, session_id, spoken=spoken)
+
+    # Close the trace if the path we took didn't. Only 8 of 41 return points
+    # called trace.finish, so most requests left a trace open — shown in the
+    # diagnostics panel as "…" forever, counted by trace.summary() as
+    # not-yet-completed, and therefore never counted as FAILED. A failure
+    # dashboard that under-reports failures is worse than not having one.
+    #
+    # The open trace also stayed bound to this thread until its next request,
+    # so a background thread calling trace.step() appended to a trace that had
+    # already been answered — steps from one request appearing inside another.
+    try:
+        from services import trace
+        if trace.current_id():
+            data = out.get("data") or {}
+            ok = data.get("success", out.get("intent") != "error")
+            trace.finish(str(out.get("response", ""))[:200], ok=bool(ok))
+    except Exception:
+        pass
+
+    try:
+        from services import conversation
+        data = out.get("data") or {}
+        conversation.remember(
+            session_id, message,
+            steps=data.get("steps") or data.get("plan") or [],
+            ok=data.get("success", out.get("intent") != "error"),
+            reply=out.get("response", ""))
+    except Exception:
+        pass        # remembering is a convenience; never fail a reply over it
+    return out
+
+
+def _handle_chat(message: str, session_id: str = "default", spoken: str = "") -> dict:
+    """
+    The actual work. See handle_chat for why it's wrapped.
+
+    `message` is what we're going to run; `spoken` is what the user typed,
+    which differs when a follow-up was resolved. The trace records both so a
+    surprising action can be traced back to the pronoun that caused it.
     """
     if not message or not message.strip():
         return {"response": "Say something and I'll get to work.", "intent": "chat"}
 
+    # A stop from an earlier command must not kill this one.
+    #
+    # Cancel is global on purpose — one Stop button has to halt whatever is
+    # running. But nothing cleared it on the chat path, so a single press left
+    # every later command dying at its first checkpoint with "Cancelled" and no
+    # further explanation, for the rest of the session. clear_stale() refuses to
+    # act while work is genuinely in flight, so a real stop still works.
+    try:
+        from services import control
+        control.clear_stale()
+    except Exception:
+        pass
+
+    # Trace this request end-to-end so the exact path is visible (diagnostics).
+    from services import trace
+    trace.start("chat", message)
+    if spoken and spoken != message:
+        # "close it" -> "close qq". Recorded so that when Jarvis closes the
+        # wrong thing, the trace shows WHY it thought that, instead of showing
+        # a command the user never typed.
+        trace.step("conversation.resolve", f"“{spoken}” → “{message}”", ok=True)
+
     from agents.commander import detect_intent  # pure intent detection only
     intent = detect_intent(message)
+    trace.step("commander.detect_intent", f"intent={intent}", ok=True)
     _emit("commander", f"Message received -> intent: {intent}")
 
     # ── Confirm / cancel: delegate to ExecutorAgent's approval lifecycle ────────
     if intent == "confirm":
-        from agents.executor_agent import ExecutorAgent
         ex = _shared_executor()
         if not ex.has_pending(session_id):
             return {"response": "No pending action to confirm.", "intent": "chat"}
@@ -66,6 +148,146 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
         ex = _shared_executor()
         result = ex.cancel(session_id)
         return {"response": result.get("message", "Cancelled."), "intent": "chat"}
+
+    # ── "what can you do?" / "what's my status?" answered from the Brain ────────
+    low = message.lower().strip()
+    if low in ("what can you do", "what can you do?", "what are your capabilities",
+               "help", "capabilities", "what can you do for me"):
+        try:
+            from services import capability_registry
+            return {"response": "Here's what I can do right now:\n\n"
+                                + capability_registry.describe()
+                                + "\n\nTeach me more with \"teach <name>: <steps>\".",
+                    "intent": "brain"}
+        except Exception:
+            pass
+    if low in ("status", "what's your status", "whats your status", "what's going on",
+               "what are you doing", "system status"):
+        try:
+            from services import world_model
+            return {"response": "Right now: " + world_model.summary(), "intent": "brain"}
+        except Exception:
+            pass
+
+    # ── "why?" — the chain of what actually happened ──────────────────────────
+    # Checked early because "why did that fail" contains "fail" and would
+    # otherwise score as a memory lookup and get answered from the wrong place.
+    if low.rstrip("?") in ("why", "why did that happen", "why did you fail",
+                           "why did that fail", "what happened", "what went wrong",
+                           "explain that", "why not", "what are you doing",
+                           "what are you doing now"):
+        try:
+            from services import narrate
+            return {"response": narrate.as_text(), "intent": "why",
+                    "data": narrate.why()}
+        except Exception:
+            pass
+
+    # ── "what would you do?" — show the whole plan, run none of it ────────────
+    # Checked before every execution path, because a simulation request that
+    # falls through and EXECUTES is the one bug this feature cannot have.
+    try:
+        from services import simulate
+        sim_req = simulate.match(message)
+    except Exception:
+        sim_req = None
+    if sim_req:
+        from services import simulate
+        sim = (simulate.earning() if sim_req["what"] == "earning"
+               else simulate.task(sim_req["command"]))
+        return {"response": simulate.as_text(sim), "intent": "simulation",
+                "data": sim}
+
+    # ── Teach by demonstration: "watch me ..." / "that's it" ──────────────────
+    try:
+        from services import teach
+        cmd = teach.match(message)
+    except Exception:
+        cmd = None
+    if cmd:
+        from services import teach
+        if cmd["command"] == "start":
+            r = teach.start(cmd["name"])
+            if not r.get("ok"):
+                return {"response": f"Can't record: {r.get('error')}"
+                                    + (f"\nFix: {r['fix']}" if r.get("fix") else ""),
+                        "intent": "teach", "data": r}
+            return {"response": (f"Watching. Do \"{cmd['name']}\" now, exactly how you "
+                                 f"want it done, then say \"that's it\".\n\n"
+                                 f"Anything you type into a login or password box is "
+                                 f"NOT recorded — I'll use the vault for those, or ask "
+                                 f"you."),
+                    "intent": "teach", "data": r}
+        r = teach.stop()
+        if not r.get("ok"):
+            return {"response": r.get("error", "Nothing to save."), "intent": "teach",
+                    "data": r}
+        body = "\n".join(f"  {i + 1}. {_step_line(s)}"
+                         for i, s in enumerate(r["steps"][:14]))
+        more = f"\n  … and {len(r['steps']) - 14} more" if len(r["steps"]) > 14 else ""
+        return {"response": (f"Learned \"{r['name']}\" — {r['step_count']} steps from "
+                             f"{r['seconds']}s of watching:\n{body}{more}\n\n"
+                             f"Say \"run my {r['name']}\" and I'll do it."
+                             + (f"\n\n{r['note']}" if r.get("note") else "")),
+                "intent": "teach", "data": r}
+
+    # ── Durable facts about the user ("remember that I live in Shenzhen") ─────
+    try:
+        from services import persona
+        learned = persona.learn_from_text(message)
+    except Exception:
+        learned = []
+    if learned:
+        what = "; ".join(f"{l['field']} = {l['value']}" for l in learned)
+        return {"response": f"Got it — I'll remember that ({what}). It'll be in "
+                            f"context from now on without you repeating it.",
+                "intent": "persona", "data": {"learned": learned}}
+
+    # ── Learned workflows: "teach <name>: <steps>" and "run my <name>" ─────────
+    taught = _maybe_teach_workflow(message)
+    if taught is not None:
+        return taught
+    if not _is_question(message):
+        try:
+            from services.workflow_service import find_run_command
+            from services.workflow_service import run as run_wf
+            wf_name = find_run_command(message)
+        except Exception:
+            wf_name = None
+        if wf_name:
+            import threading
+            threading.Thread(target=run_wf, args=(wf_name,), daemon=True).start()
+            return {"response": f"Running your saved workflow '{wf_name}' — watch the "
+                                f"live feed. I'll verify each step.",
+                    "intent": "workflow", "data": {"workflow": wf_name}}
+
+    # ── Tool Registry FIRST (the qq fix): known commands run directly as a
+    #    desktop chain instead of being handed to the LLM planner, which would
+    #    hallucinate ("open Telegram, search qq…"). Deterministic before
+    #    generative. Skipped for explicit "plan project …" phrasing.
+    if not _is_question(message) and not _re.match(
+            r"^\s*(?:plan|new|start|track|create)\s+(?:a\s+)?project\b", message, _re.I):
+        try:
+            from services.decompose import decompose
+            plan = decompose(message)
+        except Exception as e:
+            trace.step("decompose", str(e), ok=False)
+            plan = {"ok": False, "steps": [], "plan": [], "unresolved": []}
+        if plan.get("ok"):
+            trace.step(f"decompose[{plan.get('source', '?')}]",
+                       f"{len(plan['clauses'])} clause(s) -> {len(plan['steps'])} steps: "
+                       + ", ".join(plan["plan"])[:200], ok=True)
+            # Part of a sentence understood and part not is the dangerous case:
+            # running half a command and reporting success is exactly the
+            # "it said done and did nothing" complaint. Say what was dropped.
+            note = ""
+            if plan.get("unresolved"):
+                note = ("\n\nI didn't understand: "
+                        + "; ".join(f'"{c}"' for c in plan["unresolved"])
+                        + " — so I skipped that part.")
+            return _run_tool_chain(message, plan["steps"],
+                                   lines=plan.get("plan"), note=note)
+        trace.step("decompose", "no deterministic match", ok=None)
 
     # ── Long-term project planner (V10): "plan project X to ..." / "new project X"
     #    Checked BEFORE keyword-based desktop routing: the explicit "plan
@@ -92,8 +314,8 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
             k in message.lower() for k in ("job", "proposal", "bid", "freelanc", "apply")):
         return _plan_goal(message)
     if intent in ("plan", "freelance"):
-        from agents.orchestrator_core import OrchestratorCore
         from agents.commander import normalize_goal
+        from agents.orchestrator_core import OrchestratorCore
         goal = normalize_goal(message, session_id)
         _emit("orchestrator", f"Starting goal: {goal.objective}", "info")
         core = OrchestratorCore()
@@ -105,12 +327,15 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
                             f"Watch the live feed for progress.",
                 "intent": "orchestrator", "data": {"goal_id": goal.goal_id}}
 
-    # ── Vision: perception only ────────────────────────────────────────────────
+    # ── Vision: real screen understanding (screenshot -> analyze) ──────────────
+    #   Route through the verified chain so it screenshots + runs the vision LLM
+    #   and returns the actual analysis (not raw OCR). This is the same path as
+    #   "what's on my screen", now used for ALL vision-intent phrasings.
     if intent == "vision":
-        from agents.perception_agent import perception
-        state = perception.observe(message)
-        return {"response": state.get("screen_text", "") or "I couldn't read the screen.",
-                "intent": "vision", "data": state}
+        return _run_tool_chain(message, [
+            {"action": "screenshot", "params": {}},
+            {"action": "analyze",    "params": {"question": message}},
+        ])
 
     # ── Memory: the Brain (V10) — save and recall personal knowledge ───────────
     if intent == "memory":
@@ -121,10 +346,20 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
     from services.deepseek_service import call_model
     knowledge = _brain_context(message)
     profile = _profile()
-    if knowledge or profile:
+    # Who the user is, where they are, what's on their machine — always present,
+    # so Jarvis stops asking things it already knows and stops recommending
+    # Chrome to someone who doesn't have it.
+    try:
+        from services import persona
+        who = persona.prompt_block()
+    except Exception:
+        who = ""
+    if knowledge or profile or who:
         if knowledge:
             _emit("brain", "Found relevant knowledge in your brain", "info")
         parts = []
+        if who:
+            parts.append(who)
         if profile:
             parts.append(f"Facts about the user:\n{profile}")
         if knowledge:
@@ -136,7 +371,7 @@ def handle_chat(message: str, session_id: str = "default") -> dict:
             # No LLM installed — the brain itself is still useful: answer with
             # the retrieved knowledge instead of a dead error.
             reply = ("(No AI model installed — showing what your brain knows.)\n\n"
-                     + (knowledge or profile))
+                     + (knowledge or profile or who))
         return {"response": reply, "intent": "chat",
                 "data": {"brain_used": bool(knowledge)}}
     reply = call_model(message, fast=True)
@@ -293,6 +528,7 @@ def _is_question(message: str) -> bool:
 
 # ── Action routing through ExecutorAgent ──────────────────────────────────────
 import threading
+
 _EXECUTOR = None
 _executor_lock = threading.Lock()
 
@@ -341,6 +577,15 @@ def _parse_command_steps(message: str) -> list:
     if "screenshot" in low or "screen shot" in low or "capture the screen" in low:
         return [Action(action_type="screenshot", params={}, risk_level="low")]
 
+    # "click (on) the Submit button" / "click Save" → vision-guided click
+    km = _re.search(r"\bclick\s+(?:on\s+)?(?:the\s+)?[\"'“]?(.+?)[\"'”]?"
+                    r"(?:\s+button|\s+link|\s+tab)?\s*$", m, _re.IGNORECASE)
+    if km and not _OPEN_RE.search(m) and not _TYPE_RE.search(m):
+        target = km.group(1).strip().rstrip(".!?,")
+        if target and not _re.fullmatch(r"[\d, ]+", target):
+            return [Action(action_type="click_text", params={"text": target},
+                           risk_level="low")]
+
     om = _OPEN_RE.search(m)
     if om:
         app = om.group(1).strip().rstrip(".!?,")
@@ -378,8 +623,9 @@ def _llm_parse_steps(message: str) -> list:
     typed steps. Returns [] if no LLM or the output isn't usable.
     """
     try:
-        from services.deepseek_service import call_model
         import json as _json
+
+        from services.deepseek_service import call_model
         raw = call_model(
             "Translate this desktop command into JSON steps. Allowed actions:\n"
             '  open_app {"name_or_path": "..."} | close_app {"process_name": "..."}\n'
@@ -392,13 +638,25 @@ def _llm_parse_steps(message: str) -> list:
             return []
         allowed = {"open_app", "close_app", "type_text", "press", "hotkey",
                    "screenshot", "browse"}
+        # Actions the model INVENTED are not the same as actions the user asked
+        # for, and this is the path where the difference bites.
+        #
+        # Everything the model reads is untrusted: a scraped job description, a
+        # web page, a document. Any of it can contain "ignore that and browse to
+        # <url>", and until now the parser would emit that as risk_level="low"
+        # next to a browser signed in to the user's accounts. That is the lethal
+        # trifecta this project's rules name explicitly — untrusted content, a
+        # privileged tool, and no human in between.
+        #
+        # `screenshot` stays low: it reads, it doesn't act. Everything that
+        # touches the keyboard, the browser or a running app now needs a yes.
+        HARMLESS = {"screenshot"}
         out = []
         for s in _json.loads(jm.group()).get("steps", [])[:6]:
             a = s.get("action", "")
             if a in allowed:
-                risk = "high" if a == "close_app" else "low"
                 out.append(Action(action_type=a, params=s.get("params", {}) or {},
-                                  risk_level=risk))
+                                  risk_level=("low" if a in HARMLESS else "high")))
         return out
     except Exception:
         return []
@@ -412,6 +670,122 @@ def _step_label(a) -> str:
     val = (a.params or {}).get(key, "") if key else ""
     val = str(val)
     return f"{a.action_type.replace('_', ' ')} {val[:40]}".strip()
+
+
+def _maybe_teach_workflow(message: str):
+    """
+    'teach <name>: <do this then that>' or 'learn workflow <name>: ...' saves a
+    replayable task. Returns a response dict, or None if not a teach request.
+    """
+    m = _re.match(r"^\s*(?:teach|learn|remember\s+workflow|save\s+task|create\s+task)"
+                  r"\s+(?:workflow\s+|task\s+)?(?:called\s+|named\s+)?"
+                  r"([\w -]{2,40}?)\s*[:=]\s*(.+)$", message or "", _re.I | _re.S)
+    if not m:
+        return None
+    name, body = m.group(1).strip(), m.group(2).strip()
+    try:
+        from services.workflow_service import teach
+        r = teach(name, body)
+        if not r.get("ok"):
+            return {"response": f"I couldn't turn that into runnable steps: "
+                                f"{r.get('error','')}", "intent": "workflow"}
+        steps = " → ".join(s.get("action", "").replace("_", " ") for s in r["steps"])
+        _emit("workflow", f"Learned workflow '{r['name']}' ({r['step_count']} steps)", "success")
+        return {"response": f"Learned **{r['name']}** ({r['step_count']} steps: {steps}). "
+                            f"Say \"run my {r['name']}\" anytime and I'll do it.",
+                "intent": "workflow", "data": r}
+    except Exception as e:
+        return {"response": f"Couldn't save that task: {e}", "intent": "workflow"}
+
+
+def _step_line(step: dict) -> str:
+    """One readable line for a step, so a demonstration can be checked by eye."""
+    try:
+        from services.decompose import describe
+        return describe(step)
+    except Exception:
+        return (step or {}).get("action", "step").replace("_", " ")
+
+
+def _run_tool_chain(message: str, steps: list, lines: list | None = None,
+                    note: str = "") -> dict:
+    """
+    Execute a decomposed chain (open app, wait, screenshot, analyze…) and return
+    a chat response. If the chain includes an 'analyze' step, its answer becomes
+    the reply — so "check my qq messages" comes back with the actual summary,
+    not just "done".
+
+    The plan is PUBLISHED before the first step runs, so the planner screen shows
+    what is about to happen rather than only what already did.
+    """
+    from services import trace
+    _emit("commander", "Recognised a direct command — running it (no planning needed)", "info")
+    # Human wording where decomposition produced it; action names otherwise.
+    labels = " → ".join(lines or [s.get("action", "").replace("_", " ") for s in steps])
+    try:
+        from services import live_plan
+        live_plan.begin(message, steps, lines, source="chat")
+    except Exception:
+        pass
+    _emit("executor", labels, "info")
+    try:
+        from agents.desktop_agent import execute_chain
+        result = execute_chain(steps, goal=message)
+        for st in result.get("steps", []):
+            # The step's OWN duration. execute_chain timed each one; without
+            # passing it here the first step is credited with the whole chain,
+            # because these are all recorded after the run has finished.
+            trace.step(f"desktop.{st.get('action','?')}",
+                       st.get("verify_reason") or st.get("error", ""),
+                       ok=st.get("verified", st.get("success")),
+                       took_ms=int(float(st.get("duration_s") or 0) * 1000))
+    except Exception as e:
+        trace.step("desktop.execute_chain", str(e), ok=False)
+        trace.finish(f"exception: {e}", ok=False)
+        return {"response": f"Couldn't run that: {e}", "intent": "executor",
+                "data": {"error": str(e)}}
+
+    # Surface an analyze answer if present.
+    answer = None
+    for s in result.get("steps", []):
+        if s.get("action") == "analyze" and (s.get("answer") or s.get("ai_answer")):
+            answer = s.get("answer") or s.get("ai_answer")
+    if not result.get("success"):
+        fa = result.get("failed_at")
+        trace.finish(result.get("error", "chain failed"), ok=False)
+        # The remedy is the useful half of a failure report. Saying what broke
+        # without saying what to do about it is how "Failed" got its reputation.
+        fix = result.get("what_to_do") or ""
+        return {"response": (f"Ran {fa-1 if fa else 0}/{len(steps)} steps, then hit: "
+                             f"{result.get('error','')}. {fix} {answer or ''}"
+                             f"{note}\n\nAsk \"why?\" for the full chain.").strip(),
+                "intent": "executor", "data": result}
+    if answer:
+        _emit("vision", "Screen read complete", "success")
+        trace.finish("screen analysed", ok=True)
+        return {"response": (answer + note).strip(), "intent": "vision", "data": result}
+    trace.finish(f"done: {labels}", ok=True)
+    return {"response": (f"Done ✓ — {labels}" + note).strip(),
+            "intent": "executor", "data": result}
+
+
+def _url_is_in(message: str, url: str) -> bool:
+    """
+    Did the user actually name this destination?
+
+    Compares HOSTS, not strings: check_url turns "github.com" into
+    "https://github.com", and a literal substring test would then say no to the
+    user's own words. The host is the part that decides where the browser goes
+    and whose cookies travel with it.
+    """
+    try:
+        from urllib.parse import urlparse
+        host = (urlparse(url).hostname or "").lower()
+    except Exception:
+        return False
+    if not host:
+        return False
+    return host in (message or "").lower()
 
 
 def _route_action(message: str, session_id: str, intent: str) -> dict:
@@ -428,11 +802,41 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
     # Browser navigation first (explicit URL or browser intent)
     if intent == "browser" or "navigate" in m or m.startswith("go to "):
         url = next((tok for tok in message.split() if tok.startswith("http")), "")
-        _emit("browser", f"Navigating to {url or 'page'}", "info")
-        action = Action(action_type="browse", params={"url": url}, risk_level="low")
+        if not url:
+            # A word after "go to" is a destination too — "go to github.com".
+            url = next((tok for tok in message.split()
+                        if "." in tok and "/" not in tok.split(".")[0]
+                        and not tok.endswith(".")), "")
+        # Ask the browser layer the same question it will ask itself, so the
+        # refusal arrives as a sentence instead of a failed page load.
+        from agents.browser_agent import check_url
+        checked, why = check_url(url)
+        if why:
+            return {"response": f"I won't open that: {why}",
+                    "intent": intent, "data": {"error": why, "blocked": True}}
+
+        # This browser holds the user's real logins, so navigation is a risky
+        # action like any other — and it used to be the ONE action that skipped
+        # the gate entirely, because this branch returns before the risky-step
+        # scan below ever runs.
+        #
+        # Typing a URL yourself IS the approval; being asked to confirm your own
+        # instruction is noise. What needs confirming is a URL that came from
+        # somewhere else — see _llm_parse_steps, where a scraped job description
+        # can reach this same action.
+        if not _url_is_in(message, checked):
+            ex.request_approval(session_id, Action(action_type="browse",
+                                                   params={"url": checked},
+                                                   risk_level="high"))
+            return {"response": f"Open {checked} in your signed-in browser? "
+                                f"Reply 'yes' to confirm or 'cancel'.",
+                    "intent": intent, "needs_approval": True}
+
+        _emit("browser", f"Navigating to {checked}", "info")
+        action = Action(action_type="browse", params={"url": checked}, risk_level="low")
         result = ex.execute_action(action)
         ok = result.get("success", False)
-        return {"response": (f"Done: opened {url} ✓" if ok
+        return {"response": (f"Done: opened {checked} ✓" if ok
                              else f"Couldn't navigate: {result.get('error','')}"),
                 "intent": intent, "data": result}
 
@@ -456,26 +860,64 @@ def _route_action(message: str, session_id: str, intent: str) -> dict:
                             f"Reply 'yes' to confirm or 'cancel' to abort.",
                 "intent": intent, "needs_approval": True}
 
-    # Execute the sequence in order; brief settle time after opening an app so
-    # a follow-up type_text lands in the newly opened window, not the browser.
-    import time
-    results, failed = [], None
-    for i, action in enumerate(steps):
-        _emit("executor", _step_label(action).capitalize(), "info")
-        result = ex.execute_action(action)
-        results.append({"step": _step_label(action), **result})
-        if not result.get("success", False):
-            failed = (action, result)
-            break
-        if action.action_type == "open_app" and i + 1 < len(steps):
-            time.sleep(1.5)
+    # Run through the VERIFIED execution engine (execute_chain): each step is
+    # confirmed against real OS/screen state and retried, so we never claim a
+    # step succeeded when it didn't. Convert typed Actions to the chain schema.
+    chain = [{"action": a.action_type, "params": a.params or {}} for a in steps]
+    labels = " → ".join(_step_label(a) for a in steps)
+    _emit("executor", labels, "info")
+    from services import trace
 
-    if failed:
-        action, result = failed
-        _emit("executor", f"{action.action_type} failed", "error")
-        return {"response": f"Couldn't {_step_label(action)}: {result.get('error','')}",
-                "intent": intent, "data": {"steps": results}}
-    done = " → ".join(_step_label(a) for a in steps)
-    _emit("executor", f"Done: {done}", "success")
-    return {"response": f"Done: {done} ✓", "intent": intent,
-            "data": {"steps": results}}
+    # Say up front whether this is likely to work. If something makes it
+    # impossible — emergency stop engaged, no model installed — say so NOW
+    # instead of spending two minutes discovering it one failed step at a time.
+    conf = {}
+    try:
+        from services import experience
+        conf = experience.confidence(chain)
+    except Exception:
+        conf = {}
+    if conf.get("blockers"):
+        blocked = "; ".join(conf["blockers"])
+        _emit("executor", f"Can't run this: {blocked}", "error")
+        trace.finish(f"blocked: {blocked}", ok=False)
+        return {"response": f"I can't do that right now — {blocked}",
+                "intent": intent, "data": {"blocked": conf["blockers"]}}
+    if conf.get("score", 1) < 0.5 and conf.get("factors"):
+        # Worth warning about, not worth refusing over.
+        _emit("executor", f"Heads up: {conf['factors'][0]}", "warning")
+
+    try:
+        from agents.desktop_agent import execute_chain
+        result = execute_chain(chain)
+        for st in result.get("steps", []):
+            # The step's OWN duration. execute_chain timed each one; without
+            # passing it here the first step is credited with the whole chain,
+            # because these are all recorded after the run has finished.
+            trace.step(f"desktop.{st.get('action','?')}",
+                       st.get("verify_reason") or st.get("error", ""),
+                       ok=st.get("verified", st.get("success")),
+                       took_ms=int(float(st.get("duration_s") or 0) * 1000))
+    except Exception as e:
+        trace.step("desktop.execute_chain", str(e), ok=False)
+        trace.finish(f"exception: {e}", ok=False)
+        return {"response": f"Couldn't run that: {e}", "intent": intent,
+                "data": {"error": str(e)}}
+
+    if not result.get("success"):
+        fa = result.get("failed_at", 0)
+        done_n = max(0, fa - 1)
+        f = result.get("failure") or {}
+        # Tell the user WHY and WHAT TO DO, not just which step index broke.
+        cause = f.get("cause") or result.get("error", "step failed")
+        remedy = f.get("remedy") or result.get("what_to_do") or ""
+        _emit("executor", cause, "error")
+        trace.finish(cause, ok=False)
+        msg = (f"I got {done_n} of {len(steps)} steps done, then stopped. {cause}")
+        if remedy:
+            msg += f"\n\n{remedy}"
+        msg += "\n\nI haven't marked it done, because it didn't actually complete."
+        return {"response": msg, "intent": intent, "data": result}
+    _emit("executor", f"Verified done: {labels}", "success")
+    trace.finish(f"verified: {labels}", ok=True)
+    return {"response": f"Done ✓ (verified: {labels})", "intent": intent, "data": result}

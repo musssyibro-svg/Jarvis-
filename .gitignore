@@ -22,3 +22,27 @@ frontend/dist/
 
 # OS
 .DS_Store
+
+# local runtime artifacts (never commit — secrets/state)
+backend/vault.key
+backend/browser-profile/
+backend/screenshots/
+backend/agents/custom/*.py
+!backend/agents/custom/__init__.py
+
+# scratch workspace (local only)
+scratchpad/
+
+# Phase 0 failure-injection output (machine-specific, regenerate with tools/failure_injection.py)
+failure_injection_report.txt
+fi_test.db*
+backend/fi_*.db*
+
+# ── Developer tooling ────────────────────────────────────────────────────────
+# Serena's LSP symbol cache. The project CONFIG (.serena/project.yml) IS
+# committed — it's the shared setup — but the cache is machine-specific and
+# regenerates in about four seconds via `serena project index .`.
+.serena/cache/
+.serena/memories/
+.ruff_cache/
+.pytest_cache/

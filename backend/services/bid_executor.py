@@ -23,13 +23,11 @@ no code path that sets status='approved' automatically.
 """
 import asyncio
 import json
-import sys
 import threading
 from datetime import datetime, timezone
-from pathlib import Path
 
+from agents.browser_agent import _get_context, _new_loop
 from agents.orchestrator import STATE
-from agents.browser_agent import _get_context, _new_loop, PROFILE_DIR
 from models.db import conn
 
 _executor_lock = threading.Lock()
@@ -47,6 +45,20 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
     Navigate to a Freelancer project page and submit a bid.
     Returns {"success": bool, "message": str, "screenshot": optional path}
     """
+    # job_url came off a SCRAPED listing. Everything else in this file treats
+    # the listing as untrusted text; the URL is untrusted too, and it is the
+    # one field that gets handed straight to a browser holding the user's
+    # logins — on the unattended path, with no human watching.
+    #
+    # Not in the review that prompted the rest of this work. Found by asking
+    # which navigations take an address from outside, rather than which file
+    # the review named.
+    from agents.browser_agent import check_url
+    job_url, why = check_url(job_url)
+    if why:
+        return {"success": False, "blocked": True,
+                "message": f"Refused to open that job's link — {why}"}
+
     ctx  = await _get_context(headless=headless)
     page = await ctx.new_page()
     await page.add_init_script("Object.defineProperty(navigator,'webdriver',{get:()=>undefined})")
@@ -57,7 +69,10 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         await asyncio.sleep(2.5)
 
         if "login" in page.url.lower():
-            return {"success": False, "message": "NOT_LOGGED_IN — open Edge/Chromium profile and log into Freelancer first"}
+            return {"success": False, "message":
+                    "NOT_LOGGED_IN — use Freelance ▸ Auto Mode ▸ Platform Logins "
+                    "(or POST /sessions/open-login/freelancer) to log in once; "
+                    "Jarvis reuses that session afterwards"}
 
         # Try to open the bid form if it's behind a button
         BID_BUTTON_SELECTORS = [
@@ -124,27 +139,202 @@ async def _submit_bid_async(job_url: str, proposal_text: str, headless: bool = T
         if not submit_btn:
             return {"success": False, "message": "Filled proposal text but could not find submit button. Bid NOT submitted — review manually."}
 
+        # What the page looked like BEFORE we clicked. Without this there is no
+        # way to tell "the page never changed" (the click did nothing) from
+        # "the page changed but says nothing recognisable".
+        url_before = page.url
+        form_before = await _bid_form_present(page)
+
         STATE.emit("executor", "Clicking submit…")
         await submit_btn.click()
-        await asyncio.sleep(3)
 
-        # Heuristic success check: URL change, success toast, or bid list update
-        success_indicators = [
-            "bid placed", "bid submitted", "your bid", "successfully",
-        ]
-        page_text = (await page.content()).lower()
-        if any(ind in page_text for ind in success_indicators) or "manage" in page.url.lower():
-            STATE.emit("executor", "✓ Bid submitted successfully", "success")
-            return {"success": True, "message": "Bid submitted"}
+        # THIS IS NOT RETRIED, EVER, and that is deliberate. A submit that times
+        # out may well have ARRIVED — only the response was lost. Clicking again
+        # puts a second proposal in front of a real client under the user's name.
+        # browser_agent.with_retry() exists for idempotent things; this is not
+        # one. Instead we WAIT and then READ, which is safe to do as often as
+        # we like.
+        confirmed, evidence = await _wait_for_confirmation(page, url_before,
+                                                           form_before)
 
-        STATE.emit("executor", "Submitted, but could not confirm success — please verify manually", "warning")
-        return {"success": True, "message": "Submitted (unconfirmed) — verify on Freelancer"}
+        # PROOF. "It said it submitted" is not evidence, and the user is right
+        # to distrust it: a screenshot of the page after the click, plus the URL
+        # we ended on, is the only thing that shows what actually reached the
+        # site. Captured for success AND failure — a failed submit is exactly
+        # when you most want to see what the page looked like.
+        proof = await _capture_proof(page)
+
+        if confirmed == "sent":
+            STATE.emit("executor", f"Bid submitted — {evidence}", "success")
+            return {"success": True, "message": f"Bid submitted ({evidence})",
+                    "confirmed": True, "evidence": evidence, **proof}
+
+        if confirmed == "rejected":
+            STATE.emit("executor", f"The site refused it — {evidence}", "error")
+            return {"success": False, "confirmed": False, "evidence": evidence,
+                    "message": f"The site rejected this bid: {evidence}",
+                    "what_to_do": "Open the proof screenshot — usually a missing "
+                                  "field, a duplicate bid, or an expired job.",
+                    **proof}
+
+        if confirmed == "unchanged":
+            # The form is still sitting there and the URL never moved. The click
+            # did not take. Calling that "submitted" is the exact false Done
+            # this project exists to avoid.
+            STATE.emit("executor", "Submit did nothing — the form is still open",
+                       "error")
+            return {"success": False, "confirmed": False, "evidence": evidence,
+                    "message": "Clicked Submit and nothing happened — the bid "
+                               "form is still on screen and the page never "
+                               "changed. Nothing was sent.",
+                    "what_to_do": "Open the proof screenshot. The button may be "
+                                  "disabled pending a required field.",
+                    **proof}
+
+        STATE.emit("executor", "Submitted, but the site did not confirm it - "
+                               "check the proof screenshot", "warning")
+        # success=True, verified=False. The two are different questions and this
+        # is precisely the case that separates them: the click landed and the
+        # page moved, but nothing on it said the bid was received.
+        #
+        # success stays True on purpose. Flipping it to False would put this
+        # item back in the retry path, and a second submission to a real client
+        # is worse than an unconfirmed first one — see _NO_RETRY. What has to
+        # change is the REPORTING, not the outcome.
+        return {"success": True, "verified": False, "confirmed": False,
+                "evidence": evidence,
+                "message": "Submitted, but the page showed no confirmation. "
+                           "Open the proof screenshot to see what happened.",
+                **proof}
 
     except Exception as e:
         STATE.emit("executor", f"Error: {e}", "error")
-        return {"success": False, "message": str(e)}
+        proof = {}
+        try:
+            proof = await _capture_proof(page)
+        except Exception:
+            pass
+        return {"success": False, "message": str(e), **proof}
     finally:
         await page.close()
+
+
+# Phrases that mean the site TOOK it, and phrases that mean it REFUSED.
+# Refusal is checked first: "your bid could not be placed" contains "your bid".
+_SENT_WORDS = ("bid placed", "bid submitted", "proposal submitted", "bid was placed",
+               "successfully submitted", "application sent", "thanks for applying",
+               "we've received", "we have received", "your bid is", "投标成功")
+_REFUSED_WORDS = ("could not be placed", "could not be submitted", "failed to submit",
+                  "already bid", "already applied", "already submitted",
+                  "duplicate", "no longer accepting", "this project is closed",
+                  "insufficient", "you need to", "please complete",
+                  "required field", "verify your", "not enough bids")
+
+
+async def _bid_form_present(page) -> bool | None:
+    """
+    Is the bid form still on screen? True / False / None for "couldn't look".
+
+    THE THIRD ANSWER IS THE POINT. This used to swallow the exception and
+    return False — and False here means "the form is GONE", which
+    _wait_for_confirmation reads as positive evidence the bid went through.
+    So "I could not check" was being counted as proof of submission.
+
+    That is not a hypothetical: Playwright raises "Execution context was
+    destroyed" on a query issued during navigation, which is exactly the
+    instant after a Submit click. A page showing nothing but a captcha
+    interstitial produced verdict='sent', a receipt saying the bid was
+    delivered, and a queue row marked done — with the site having confirmed
+    nothing at all.
+
+    None makes the unknown case unusable as evidence, which is the only
+    honest thing it can be.
+    """
+    try:
+        for sel in ("textarea[name='description']", "textarea[data-qa-description-input]",
+                    "button:has-text('Place Bid')", "[data-qa-submit-bid]"):
+            if await page.query_selector(sel):
+                return True
+        return False
+    except Exception:
+        return None          # could not look — NOT "the form is gone"
+
+
+async def _wait_for_confirmation(page, url_before: str, form_before: bool,
+                                 seconds: float = 12.0) -> tuple[str, str]:
+    """
+    Watch the page after Submit and decide what actually happened.
+
+    Returns (verdict, evidence) where verdict is one of:
+        "sent"       the site said so, or the form went away and the URL moved
+        "rejected"   the site said no, and why
+        "unchanged"  nothing moved at all — the click did not take
+        "unknown"    something changed but nothing recognisable was said
+
+    POLLS rather than sleeping a fixed 3 seconds. The old code waited exactly
+    3s and then read once: a site that confirmed at 3.5s was recorded as
+    "submitted, unconfirmed" every single time, which trained the user to
+    ignore that warning — and it is the same warning that appears when a
+    submission genuinely failed.
+    """
+    deadline = asyncio.get_event_loop().time() + seconds
+    last_text = ""
+    while asyncio.get_event_loop().time() < deadline:
+        await asyncio.sleep(0.75)
+        try:
+            last_text = (await page.content()).lower()
+        except Exception:
+            return "unknown", "the page went away before it could be read"
+
+        hit = next((w for w in _REFUSED_WORDS if w in last_text), None)
+        if hit:
+            return "rejected", f"the page says “{hit}”"
+        hit = next((w for w in _SENT_WORDS if w in last_text), None)
+        if hit:
+            return "sent", f"the page says “{hit}”"
+
+        # No words, but the structure moved: form gone AND we navigated.
+        #
+        # `is False` and not `not ...` — the difference is the whole fix. The
+        # form check now returns None when it COULDN'T look, and `not None` is
+        # True, which would turn "I don't know" back into "the form is gone"
+        # and from there into "sent". Only a positive observation that the form
+        # is absent counts as evidence.
+        if page.url != url_before and await _bid_form_present(page) is False:
+            return "sent", f"the bid form closed and the page moved to {page.url[:60]}"
+
+    # Time is up. Distinguish "nothing happened" from "something did".
+    still_there = await _bid_form_present(page)
+    if still_there is True and page.url == url_before and form_before:
+        return "unchanged", "the bid form is still open and the URL never changed"
+    return "unknown", "the page changed but said nothing Jarvis recognises"
+
+
+async def _capture_proof(page) -> dict:
+    """
+    Save what the page actually looked like, and where we ended up.
+
+    Without this the only record of a submission is Jarvis's own claim that it
+    worked. That is precisely the thing the user cannot verify and should not
+    have to take on trust.
+    """
+    out = {}
+    try:
+        out["final_url"] = page.url
+        out["page_title"] = (await page.title())[:120]
+    except Exception:
+        pass
+    try:
+        from datetime import datetime as _dt
+        from pathlib import Path as _P
+        shots = _P(__file__).resolve().parent.parent / "screenshots" / "receipts"
+        shots.mkdir(parents=True, exist_ok=True)
+        name = f"bid-{_dt.now().strftime('%Y%m%d-%H%M%S')}.png"
+        await page.screenshot(path=str(shots / name), full_page=False)
+        out["proof_screenshot"] = f"receipts/{name}"
+    except Exception as e:
+        out["proof_error"] = str(e)[:100]
+    return out
 
 
 def _run_submit(job_url: str, proposal_text: str, headless: bool = True) -> dict:
@@ -157,7 +347,7 @@ def _run_submit(job_url: str, proposal_text: str, headless: bool = True) -> dict
 
 # ── Queue execution ────────────────────────────────────────────────────────────
 
-def execute_queue_item(qid: int, headless: bool = True) -> dict:
+def execute_queue_item(qid: int, headless: bool | None = None) -> dict:
     """
     Execute a single APPROVED queue item.
     Safe to call repeatedly — re-checks status before acting.
@@ -175,7 +365,7 @@ def execute_queue_item(qid: int, headless: bool = True) -> dict:
         release("bid_executor")
 
 
-def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
+def _execute_queue_item_locked(qid: int, headless: bool | None = None) -> dict:
     with conn() as db:
         row = db.execute("SELECT * FROM automation_queue WHERE id=?", (qid,)).fetchone()
 
@@ -194,6 +384,42 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
     job          = payload.get("job", {})
     proposal_txt = payload.get("application", "")
     job_url      = job.get("link") or job.get("url") or ""
+    platform     = item.get("platform", "")
+
+    # ── Platform-kind gate — the root fix for the RemoteOK FAILED cascade ───────
+    # RemoteOK / WeWorkRemotely / Remote.co are job BOARDS: there is no on-site
+    # bid form to fill, so a "bid" there could only ever fail. Talent platforms
+    # (Contra/Hubstaff/Fiverr) don't take bids either. For all of these, mark the
+    # item 'ready' (a SUCCESS state meaning "apply externally"), attach the link
+    # and note — never 'failed'.
+    from services import platform_meta
+    if not platform_meta.submittable(platform):
+        note = platform_meta.apply_note(platform)
+        with conn() as db:
+            db.execute("UPDATE automation_queue SET status='ready',processed_at=? WHERE id=?",
+                       (_now(), qid))
+        STATE.emit("executor",
+                   f"'{item['job_title'][:45]}' is on a {platform_meta.KIND_LABEL[platform_meta.kind(platform)]} — "
+                   f"proposal ready, apply via the job link", "info")
+        return {"success": True, "status": "ready", "external": True,
+                "message": note or "Ready to apply externally", "link": job_url}
+
+    # Bid platform: the session MUST be valid before we try, or we get the
+    # logged-out failure cascade. Validate first; skip (not fail) if logged out.
+    try:
+        from services import session_manager
+        logged = session_manager.is_logged_in(platform)
+    except Exception:
+        logged = None
+    if logged is False:
+        with conn() as db:
+            db.execute("UPDATE automation_queue SET status='needs_login',processed_at=? WHERE id=?",
+                       (_now(), qid))
+        STATE.emit("executor",
+                   f"Skipped '{item['job_title'][:45]}' — not logged in to {platform}. "
+                   f"Log in via Platform Logins, then re-submit.", "warning")
+        return {"success": False, "status": "needs_login",
+                "message": f"Not logged in to {platform} — log in and retry"}
 
     if not job_url:
         with conn() as db:
@@ -211,12 +437,40 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
     with conn() as db:
         db.execute("UPDATE automation_queue SET status='executing',processed_at=? WHERE id=?", (_now(), qid))
 
+    # None means "nobody said" — ask the setting. Explicit True/False wins, so
+    # a caller that genuinely needs headless (a test, a background retry) can
+    # still say so.
+    if headless is None:
+        headless = not watch_submissions()
     result = _run_submit(job_url, proposal_txt, headless=headless)
     now = _now()
 
+    # Keep the receipt with the queue item: what was sent, where it landed, and
+    # a screenshot. This is what turns "it says it did it" into something you
+    # can actually check.
+    payload["receipt"] = {
+        "at": now,
+        "submitted_text": proposal_txt,
+        "job_url": job_url,
+        "final_url": result.get("final_url"),
+        "page_title": result.get("page_title"),
+        "proof_screenshot": result.get("proof_screenshot"),
+        "confirmed_by_site": result.get("confirmed"),
+        # THREE outcomes, not two. This said "sent" whenever the function
+        # returned without failing — so a bid the site never acknowledged was
+        # recorded, in the permanent receipt, as sent. That is the "Approve All
+        # reported success and I have no idea what happened" complaint written
+        # into the database.
+        "outcome": ("sent" if result.get("confirmed")
+                    else "unconfirmed" if result.get("success")
+                    else "failed"),
+        "message": result.get("message", ""),
+    }
+
     if result.get("success"):
         with conn() as db:
-            db.execute("UPDATE automation_queue SET status='done',processed_at=? WHERE id=?", (now, qid))
+            db.execute("UPDATE automation_queue SET status='done',processed_at=?,payload=? "
+                       "WHERE id=?", (now, json.dumps(payload), qid))
 
             # Create/update a proposals row so MemoryAgent tracks this bid
             existing = db.execute(
@@ -242,13 +496,38 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
         STATE.emit("executor", f"✓ Done: {item['job_title'][:50]}", "success")
     else:
         with conn() as db:
-            db.execute("UPDATE automation_queue SET status='failed',processed_at=? WHERE id=?", (now, qid))
+            db.execute("UPDATE automation_queue SET status='failed',processed_at=?,payload=? "
+                       "WHERE id=?", (now, json.dumps(payload), qid))
         STATE.emit("executor", f"✗ Failed: {item['job_title'][:50]} — {result.get('message','')}", "error")
 
     return result
 
 
-def execute_all_approved(headless: bool = True) -> dict:
+def watch_submissions() -> bool:
+    """
+    Should the browser be VISIBLE while it submits?
+
+    Default YES, and this is the single most requested thing on this page:
+    "show me the page, show me it sending it — that's the proof I want."
+
+    A screenshot afterwards is evidence, but it arrives after the fact and it
+    is one frame. Watching Chromium open the real project page, fill the real
+    box and click the real button is the difference between believing Jarvis
+    and taking its word. It is your desktop; there is nothing to hide behind
+    headless here, and headless was only ever the default because it is the
+    default everywhere else.
+
+    Settable, because once you DO trust it you will want it out of your way:
+    Settings -> freelance_watch_browser = false.
+    """
+    try:
+        from services import config
+        return str(config.get("freelance_watch_browser", "true")).lower() != "false"
+    except Exception:
+        return True
+
+
+def execute_all_approved(headless: bool | None = None) -> dict:
     """
     Process every queue item currently marked 'approved'.
     Runs sequentially in a background thread so the live feed stays smooth.
@@ -265,12 +544,18 @@ def execute_all_approved(headless: bool = True) -> dict:
             with conn() as db:
                 rows = db.execute("SELECT id FROM automation_queue WHERE status='approved' ORDER BY id ASC").fetchall()
             ids = [r["id"] for r in rows]
-            STATE.emit("executor", f"Starting execution of {len(ids)} approved item(s)")
+            # Decided ONCE for the batch, not per item — flipping mid-run would
+            # open a second browser window halfway through.
+            show = (watch_submissions() if headless is None else not headless)
+            STATE.emit("executor",
+                       f"Starting execution of {len(ids)} approved item(s)"
+                       + (" - a browser window will open so you can watch each one"
+                          if show else ""))
             for qid in ids:
                 # Re-check running flag each loop in case user wants to stop
                 if not _executor_running:
                     break
-                execute_queue_item(qid, headless=headless)
+                execute_queue_item(qid, headless=not show)
             STATE.emit("executor", "Execution batch complete")
         finally:
             with _executor_lock:
@@ -278,7 +563,7 @@ def execute_all_approved(headless: bool = True) -> dict:
 
     t = threading.Thread(target=_worker, daemon=True)
     t.start()
-    return {"message": f"Executor started"}
+    return {"message": "Executor started"}
 
 
 def stop_executor():

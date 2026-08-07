@@ -1,0 +1,81 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.6/schema.json",
+
+  // Biome replaces ESLint + Prettier. There was NEITHER in this repo, so this
+  // is an addition, not a migration — nothing to remove.
+  //
+  // .jsonc rather than .json so the reasoning can live next to the settings:
+  // Biome's strict parser rejects "//" keys in plain .json.
+  //
+  // Formatting matches THE CODE THAT EXISTS, not Biome's defaults. Out of the
+  // box it wanted tabs and reported 150 errors across 15 files, every one of
+  // them "this working file is indented with spaces". A formatter that
+  // rewrites every file on first run destroys git blame and buries the next
+  // real diff — the same mistake as a linter nobody reads.
+  "files": {
+    "includes": ["src/**", "*.js"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "jsxQuoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "es5",
+      "arrowParentheses": "always"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+
+      "correctness": {
+        // The blank white page was a correctness bug that `npm run build`
+        // passed and a real browser failed on. These are the rules nearest to
+        // that class of failure.
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error",
+        "useExhaustiveDependencies": "warn"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn"
+      },
+      "style": {
+        "useTemplate": "warn"
+      },
+      "a11y": {
+        // A single-user console bound to 127.0.0.1, driven with a mouse and a
+        // keyboard by one person. The a11y rules that matter stay on; the ones
+        // that only make sense for a public website are off.
+        "useKeyWithClickEvents": "off",
+        "noSvgWithoutTitle": "off",
+
+        // `<button>` without type="button" defaults to type="submit" INSIDE A
+        // FORM. There is not one <form> element in this app, so all 83 of
+        // these are latent, not live. Warn, don't error: it flags every new
+        // button, but doesn't hold CI red over 83 sites that cannot currently
+        // misbehave, and doesn't tempt anyone into a blind mass rewrite.
+        "useButtonType": "warn",
+
+        // Two <div>s carry onClick as expand/collapse toggles (JarvisOS.jsx
+        // trace rows, Planner step rows). Doing this properly means turning
+        // them into <button>s, which changes layout and styling — a UI change,
+        // not a lint fix. Warn and track it in docs/CODE_HEALTH.md.
+        "noStaticElementInteractions": "warn"
+      }
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}

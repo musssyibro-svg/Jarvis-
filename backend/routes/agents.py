@@ -3,10 +3,8 @@ backend/routes/agents.py
 Agent API: Commander, Desktop, Vision, Planner, Memory
 All heavy work routes through CommanderAgent.
 """
-import threading
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 
 router = APIRouter()
 
@@ -40,14 +38,14 @@ class OutcomeRequest(BaseModel):
 
 class DesktopActionRequest(BaseModel):
     action: str   # click, type, hotkey, open_app, etc.
-    x:      Optional[int]   = None
-    y:      Optional[int]   = None
-    text:   Optional[str]   = None
-    keys:   Optional[list]  = None
-    app:    Optional[str]   = None
-    url:    Optional[str]   = None
-    path:   Optional[str]   = None
-    content:Optional[str]   = None
+    x:      int | None   = None
+    y:      int | None   = None
+    text:   str | None   = None
+    keys:   list | None  = None
+    app:    str | None   = None
+    url:    str | None   = None
+    path:   str | None   = None
+    content:str | None   = None
 
 
 # ── Commander ─────────────────────────────────────────────────────────────────
@@ -118,6 +116,50 @@ def desktop_open_app(body: DesktopActionRequest):
     if not body.app:
         raise HTTPException(400, "app required")
     return open_app(body.app)
+
+# ── Reading an app's interface ───────────────────────────────────────────────
+#
+# Same doorway as everything else. These are HTTP because the React console,
+# Cherry Studio and the MCP server are all clients of the same backend and none
+# of them may be the only way to reach a capability.
+
+@router.get("/desktop/ui/available")
+def ui_available():
+    """Can Jarvis read interfaces here, and if not, why — before anyone tries."""
+    from agents.ui_agent import available
+    return available()
+
+
+@router.post("/desktop/ui/read")
+def ui_read(body: dict):
+    """Everything an app's window says, as text."""
+    from agents.ui_agent import read_text
+    return read_text(body.get("app", ""))
+
+
+@router.post("/desktop/ui/messages")
+def ui_messages(body: dict):
+    """The open conversation, as real text. Falls back to looking at the screen
+    and says which of the two answered."""
+    from agents.desktop_agent import read_messages
+    return read_messages(body.get("app", ""), body.get("question", ""))
+
+
+@router.post("/desktop/ui/send-message")
+def ui_send_message(body: dict):
+    """
+    Compose a message into a named person's chat.
+
+    `send` is absent or false by default: the message is typed into the real
+    input box of the real conversation and left there, and the response carries
+    the composed text plus which chat it is sitting in. Approving is the same
+    call with send=true — a second, deliberate request, which is the point.
+    """
+    from agents.desktop_agent import send_message
+    if not body.get("text"):
+        raise HTTPException(400, "text required")
+    return send_message(body)
+
 
 @router.post("/desktop/close-app")
 def desktop_close_app(body: dict):
@@ -225,6 +267,38 @@ def vision_analyze(body: dict):
     result.pop("b64", None)
     return result
 
+@router.post("/vision/locate-text")
+def vision_locate_text(body: dict):
+    """Word-level OCR: returns screen coordinates of the text (for clicking)."""
+    from agents.vision_agent import locate_text_coords
+    return locate_text_coords(body.get("text",""))
+
+@router.post("/vision/click-text")
+def vision_click_text(body: dict):
+    """See → act: find the text on screen and click it."""
+    from agents.vision_agent import click_text
+    if not body.get("text"):
+        raise HTTPException(400, "text required")
+    return click_text(body["text"])
+
+
+# ── Chained desktop execution (multi-step, atomic) ───────────────────────────
+
+@router.post("/desktop/chain")
+def desktop_chain(body: dict):
+    """
+    Run a SEQUENCE of desktop steps as one task:
+      {"steps": [{"action":"open_app","params":{"name_or_path":"notepad"}},
+                 {"action":"type_text","params":{"text":"hello"}},
+                 {"action":"hotkey","params":{"keys":["ctrl","s"]}}]}
+    Waits for windows between steps; stops and reports on first failure.
+    """
+    from agents.desktop_agent import execute_chain
+    steps = body.get("steps") or []
+    if not steps:
+        raise HTTPException(400, "steps required")
+    return execute_chain(steps)
+
 
 # ── Planner ───────────────────────────────────────────────────────────────────
 
@@ -234,15 +308,19 @@ def create_plan(body: PlanRequest, background_tasks: BackgroundTasks):
     V9: planning is no longer a separate one-shot planner. A goal is handed to
     OrchestratorCore, which owns PLANNING as a state. planner.py is being retired.
     """
+    from agents.orchestrator_core import get_core
     from agents.v9_models import Goal
-    from agents.orchestrator_core import OrchestratorCore
     goal = Goal(goal_type="task", objective=body.goal,
                 constraints={"context": body.context},
                 approval_required=False)
-    core = OrchestratorCore()
+    core = get_core()          # shared instance so /v9/state reflects this run
     core.set_goal(goal)
     if body.execute:
-        background_tasks.add_task(core.run_full_workflow)
+        # A real thread, not BackgroundTasks: BackgroundTasks runs AFTER the
+        # response is sent and holds a response worker for the whole multi-minute
+        # run, so the server stops answering while a scan is in progress.
+        import threading
+        threading.Thread(target=core.run_full_workflow, daemon=True).start()
         return {"goal_id": goal.goal_id, "goal": goal.to_dict(), "executing": True}
     return {"goal_id": goal.goal_id, "goal": goal.to_dict(), "executing": False}
 
@@ -294,7 +372,7 @@ def memory_insights():
     return MemoryAgent.generate_insights()
 
 @router.get("/memory/patterns")
-def memory_patterns(won: Optional[bool] = None):
+def memory_patterns(won: bool | None = None):
     from agents.memory_agent import MemoryAgent
     if won is True:
         return {"patterns": MemoryAgent.get_win_patterns()}
@@ -312,7 +390,7 @@ def record_outcome(body: OutcomeRequest):
     return {"success": True}
 
 @router.get("/memory/history")
-def action_history(agent: Optional[str] = None, limit: int = 50):
+def action_history(agent: str | None = None, limit: int = 50):
     from agents.memory_agent import MemoryAgent
     return {"history": MemoryAgent.get_action_history(agent, limit)}
 
@@ -334,6 +412,78 @@ def memory_recall(key: str):
 def memory_all():
     from agents.memory_agent import MemoryAgent
     return MemoryAgent.get_all_kv()
+
+# ── Agent Registry: add/remove/run custom agents at runtime ───────────────────
+
+class InstallAgentRequest(BaseModel):
+    name: str
+    code: str
+    description: str = ""
+
+@router.get("/registry")
+def registry_list():
+    """All registered agents (built-in + custom) with metadata + enabled state."""
+    from agents.registry import AGENT_TEMPLATE, registry
+    out = []
+    for name, entry in registry.list_agents().items():
+        meta = dict(entry["metadata"])
+        out.append({"name": name, "enabled": entry["enabled"],
+                    "source": meta.get("source", "internal"),
+                    "kind": meta.get("kind", ""),
+                    "description": meta.get("description", ""),
+                    "permissions": meta.get("permissions", []),
+                    "registered_at": meta.get("registered_at", "")})
+    return {"agents": out, "template": AGENT_TEMPLATE}
+
+@router.post("/registry/install")
+def registry_install(body: InstallAgentRequest):
+    """Paste Python code → live agent. Persisted to agents/custom/ + DB."""
+    from agents.registry import registry
+    r = registry.install_from_code(body.name, body.code, body.description)
+    if not r.get("ok"):
+        raise HTTPException(400, r.get("error", "install failed"))
+    return r
+
+@router.post("/registry/{name}/toggle")
+def registry_toggle(name: str, body: dict = None):
+    from agents.registry import registry
+    entry = registry.list_agents().get(name)
+    if not entry:
+        raise HTTPException(404, f"agent '{name}' not found")
+    on = not entry["enabled"] if body is None or "enabled" not in (body or {}) \
+         else bool(body["enabled"])
+    registry.enable(name, on)
+    if entry["metadata"].get("source") == "custom":
+        try:
+            from models.db import conn
+            with conn() as db:
+                db.execute("UPDATE custom_agents SET enabled=? WHERE name=?",
+                           (1 if on else 0, name))
+        except Exception:
+            pass
+    return {"ok": True, "name": name, "enabled": on}
+
+@router.delete("/registry/{name}")
+def registry_uninstall(name: str):
+    from agents.registry import registry
+    r = registry.uninstall(name)
+    if not r.get("ok"):
+        raise HTTPException(400, r.get("error", "uninstall failed"))
+    return r
+
+@router.post("/registry/{name}/run")
+def registry_run(name: str, body: dict = None):
+    """Run any registered agent directly with a context dict."""
+    from agents.registry import registry
+    return registry.run_agent(name, (body or {}).get("context", body or {}))
+
+
+@router.get("/tools")
+def list_tools():
+    """Deterministic action shortcuts the Tool Registry resolves without the LLM."""
+    from services.tool_registry import list_tools
+    return {"tools": list_tools()}
+
 
 # ── Ollama health + model management (V8) ────────────────────────────────────
 @router.get("/ollama/status")

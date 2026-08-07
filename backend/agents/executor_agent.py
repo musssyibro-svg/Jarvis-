@@ -31,6 +31,16 @@ class ExecutorAgent(BaseAgent):
     RISKY_ACTIONS = {
         "delete_file", "close_app", "kill_app", "run_command",
         "submit_application", "purchase", "payment",
+        # Driving a browser that is already signed in as the user is an action
+        # with the user's authority, wherever the URL came from. "browse" is
+        # the AGENT-invented path — the LLM parser and the executor's own
+        # decision loop both emit it — so it is exactly the one that must ask.
+        #
+        # Deliberately NOT open_url, which is the path a typed "go to github.com"
+        # takes: the user naming a destination IS the approval, and prompting
+        # for it would be noise that trains them to click yes without reading.
+        # open_url is gated by check_url instead.
+        "browse",
         "browser_submit", "shutdown", "execute_shell",
     }
 
@@ -294,8 +304,10 @@ class ExecutorAgent(BaseAgent):
         """
         if self._plan is None:
             try:
+                import json as _json
+                import re as _re
+
                 from services.deepseek_service import call_model
-                import json as _json, re as _re
                 prompt = (f"Break this into a JSON list of desktop steps. Goal: "
                          f"{task.get('objective','')}\nEach step: "
                          f'{{"action":"open_app|type_text|hotkey|press|screenshot",'
@@ -322,17 +334,17 @@ class ExecutorAgent(BaseAgent):
         p = action.params or {}
         try:
             if t == "browse":
-                # Real navigation is wired in Phase 5 (browser-use). Until then,
-                # do NOT report success for work that didn't happen.
-                try:
-                    from agents.browser_agent import navigate
-                    ok = navigate(p.get("url"))
-                    self._emit(f"[Browser] Navigated to {p.get('url','page')}", "success")
-                    return {"success": bool(ok), "action": "browse"}
-                except Exception as e:
-                    self._emit(f"[Browser] navigation not available: {e}", "warning")
-                    return {"success": False, "action": "browse",
-                            "error": "browser navigation not implemented (Phase 5)"}
+                # navigate() now exists (it didn't before — every browse failed).
+                from agents.browser_agent import navigate
+                r = navigate(p.get("url", ""), domain=p.get("domain", "research"),
+                             headless=p.get("headless", False))
+                if r.get("success"):
+                    self._emit(f"[Browser] Opened {r.get('title') or p.get('url','page')}",
+                               "success")
+                else:
+                    self._emit(f"[Browser] Couldn't open {p.get('url','')}: "
+                               f"{r.get('error','')}", "error")
+                return {"success": bool(r.get("success")), "action": "browse", **r}
             if t == "submit_application":
                 return self._submit_application(p)
 
@@ -367,6 +379,21 @@ class ExecutorAgent(BaseAgent):
                 cx, cy = el["click_point"]
                 self._emit(f"[Executor] Clicking '{el.get('text')}' at ({cx},{cy})")
                 return da.click(cx, cy)
+            if t == "click_text":
+                # Vision-guided click: OCR the screen, find the text, click it.
+                target = p.get("text", "")
+                self._emit(f"[Executor] Looking for '{target}' on screen")
+                from agents import vision_agent as va
+                r = va.click_text(target)
+                if r.get("success"):
+                    self._emit(f"[Executor] Clicked '{target}' at ({r.get('x')},{r.get('y')})",
+                               "success")
+                return r
+            if t == "wait_for_window":
+                # No timeout given → let experience decide how long this app needs.
+                return da.wait_for_window(
+                    p.get("title", ""),
+                    float(p["timeout"]) if p.get("timeout") is not None else None)
             if t == "type_text":
                 self._emit("[Executor] Typing text")
                 return da.type_text(p.get("text", ""))
@@ -445,7 +472,8 @@ class ExecutorAgent(BaseAgent):
         return True
 
     def _recover(self, action: Action, state: dict, attempt: int = 1):
-        import time, os
+        import os
+        import time
         backoff = min(2 * attempt, 6)
         self._emit(f"Recovery: retry {action.action_type} in {backoff}s "
                    f"(attempt {attempt}/{self.MAX_RETRIES})", "info")
