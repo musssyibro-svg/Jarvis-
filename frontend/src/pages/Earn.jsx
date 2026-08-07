@@ -62,6 +62,8 @@ export default function Earn() {
   });
   const [switching, setSwitching] = useState(false);
   const [receipt, setReceipt] = useState(null); // "what did it actually send?"
+  // Whether the submission browser is visible. Default true — see the toggle.
+  const [watchBrowser, setWatchBrowser] = useState(true);
   // "I press approve all but I don't know what's going on, if it sent it."
   // One line of live truth about the queue, always on screen.
   const [outcome, setOutcome] = useState(null);
@@ -179,6 +181,20 @@ export default function Earn() {
       return;
     }
     load();
+  };
+
+  const setWatch = async (want) => {
+    setWatchBrowser(want); // instant feedback; the setting is read at send time
+    try {
+      await fetch(`${API}/settings/freelance_watch_browser`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value: want ? "true" : "false" }),
+      });
+    } catch {
+      setWatchBrowser(!want); // revert, don't lie
+      setMsg("Couldn't save that setting.");
+    }
   };
 
   const addPlatform = async () => {
@@ -532,6 +548,36 @@ export default function Earn() {
           />
           Also submit bids automatically (no approval step). Only applies to bid sites you're logged
           into.
+        </label>
+
+        {/*
+          "Show me the page — show me it sending it. That's the proof I want."
+
+          A screenshot afterwards is evidence, but it arrives after the fact and
+          it is one frame. Watching the real project page open, the real box
+          fill and the real button get clicked is the difference between
+          believing Jarvis and taking its word. On by default for exactly that
+          reason; headless was only ever the default because it is the default
+          everywhere else.
+        */}
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 9,
+            marginTop: 10,
+            fontSize: 12.5,
+            color: watchBrowser ? T.cyan : T.dim,
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={watchBrowser}
+            onChange={(e) => setWatch(e.target.checked)}
+            style={{ accentColor: T.cyan }}
+          />
+          Open a visible browser while submitting, so you can watch each bid go in.
         </label>
       </div>
 

@@ -347,7 +347,7 @@ def _run_submit(job_url: str, proposal_text: str, headless: bool = True) -> dict
 
 # ── Queue execution ────────────────────────────────────────────────────────────
 
-def execute_queue_item(qid: int, headless: bool = True) -> dict:
+def execute_queue_item(qid: int, headless: bool | None = None) -> dict:
     """
     Execute a single APPROVED queue item.
     Safe to call repeatedly — re-checks status before acting.
@@ -365,7 +365,7 @@ def execute_queue_item(qid: int, headless: bool = True) -> dict:
         release("bid_executor")
 
 
-def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
+def _execute_queue_item_locked(qid: int, headless: bool | None = None) -> dict:
     with conn() as db:
         row = db.execute("SELECT * FROM automation_queue WHERE id=?", (qid,)).fetchone()
 
@@ -437,6 +437,11 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
     with conn() as db:
         db.execute("UPDATE automation_queue SET status='executing',processed_at=? WHERE id=?", (_now(), qid))
 
+    # None means "nobody said" — ask the setting. Explicit True/False wins, so
+    # a caller that genuinely needs headless (a test, a background retry) can
+    # still say so.
+    if headless is None:
+        headless = not watch_submissions()
     result = _run_submit(job_url, proposal_txt, headless=headless)
     now = _now()
 
@@ -498,7 +503,31 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
     return result
 
 
-def execute_all_approved(headless: bool = True) -> dict:
+def watch_submissions() -> bool:
+    """
+    Should the browser be VISIBLE while it submits?
+
+    Default YES, and this is the single most requested thing on this page:
+    "show me the page, show me it sending it — that's the proof I want."
+
+    A screenshot afterwards is evidence, but it arrives after the fact and it
+    is one frame. Watching Chromium open the real project page, fill the real
+    box and click the real button is the difference between believing Jarvis
+    and taking its word. It is your desktop; there is nothing to hide behind
+    headless here, and headless was only ever the default because it is the
+    default everywhere else.
+
+    Settable, because once you DO trust it you will want it out of your way:
+    Settings -> freelance_watch_browser = false.
+    """
+    try:
+        from services import config
+        return str(config.get("freelance_watch_browser", "true")).lower() != "false"
+    except Exception:
+        return True
+
+
+def execute_all_approved(headless: bool | None = None) -> dict:
     """
     Process every queue item currently marked 'approved'.
     Runs sequentially in a background thread so the live feed stays smooth.
@@ -515,12 +544,18 @@ def execute_all_approved(headless: bool = True) -> dict:
             with conn() as db:
                 rows = db.execute("SELECT id FROM automation_queue WHERE status='approved' ORDER BY id ASC").fetchall()
             ids = [r["id"] for r in rows]
-            STATE.emit("executor", f"Starting execution of {len(ids)} approved item(s)")
+            # Decided ONCE for the batch, not per item — flipping mid-run would
+            # open a second browser window halfway through.
+            show = (watch_submissions() if headless is None else not headless)
+            STATE.emit("executor",
+                       f"Starting execution of {len(ids)} approved item(s)"
+                       + (" - a browser window will open so you can watch each one"
+                          if show else ""))
             for qid in ids:
                 # Re-check running flag each loop in case user wants to stop
                 if not _executor_running:
                     break
-                execute_queue_item(qid, headless=headless)
+                execute_queue_item(qid, headless=not show)
             STATE.emit("executor", "Execution batch complete")
         finally:
             with _executor_lock:

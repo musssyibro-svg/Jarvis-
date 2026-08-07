@@ -434,3 +434,45 @@ def test_a_compound_command_names_the_half_it_could_not_do():
     assert "open_app" in actions
     assert out.get("unresolved"), "the unhandled clause vanished silently"
     assert "send message" in " ".join(out["unresolved"]).lower()
+
+
+# ── "Show me the page — show me it sending it" ───────────────────────────────
+
+
+def test_the_submission_browser_is_visible_by_default():
+    """
+    Every submission ran headless=True, so nothing was ever visible and the
+    only evidence was a screenshot after the fact — which is why "proof" felt
+    like a letter Jarvis wrote to itself.
+
+    Watching the real page open, fill and submit is the difference between
+    believing it and taking its word.
+    """
+    from services.bid_executor import watch_submissions
+
+    assert watch_submissions() is True
+
+
+def test_it_can_be_turned_off_once_you_trust_it(monkeypatch):
+    """Watching is the default, not a sentence. It must get out of the way."""
+    from services import bid_executor, config
+
+    monkeypatch.setattr(
+        config, "get", lambda k, d=None: "false" if k == "freelance_watch_browser" else d
+    )
+    assert bid_executor.watch_submissions() is False
+
+
+def test_an_explicit_headless_caller_still_wins():
+    """
+    A test or a background retry that genuinely needs headless must be able to
+    say so — the setting answers "nobody said", not "always".
+    """
+    import inspect
+
+    from services import bid_executor
+
+    src = inspect.getsource(bid_executor._execute_queue_item_locked)
+    assert "if headless is None:" in src, (
+        "the setting overrides an explicit caller instead of filling a blank"
+    )

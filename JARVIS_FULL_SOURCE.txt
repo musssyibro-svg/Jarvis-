@@ -3868,7 +3868,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-170 source files · 684 public symbols
+170 source files · 688 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -4177,7 +4177,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/services/auth.py`
 
 **`bid_executor.py`** — Executes APPROVED automation_queue items.
-  <br>`execute_queue_item`, `execute_all_approved`, `stop_executor`, `executor_status`
+  <br>`execute_queue_item`, `watch_submissions`, `execute_all_approved`, `stop_executor`, `executor_status`
   <br>`backend/services/bid_executor.py`
 
 **`brain_core.py`** — the coordinator that makes the parts feel like one mind.
@@ -4397,7 +4397,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/tests/test_decompose.py`
 
 **`test_felt_behaviour.py`** — The three complaints that are actually about how Jarvis FEELS to use.
-  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`, `test_agent_invented_navigation_is_risky`, `test_typing_a_url_yourself_is_not_gated`, `test_opening_a_url_is_never_retried`, `test_every_action_result_has_one_shape` _(+6 more)_
+  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`, `test_agent_invented_navigation_is_risky`, `test_typing_a_url_yourself_is_not_gated`, `test_opening_a_url_is_never_retried`, `test_every_action_result_has_one_shape` _(+9 more)_
   <br>`backend/tests/test_felt_behaviour.py`
 
 **`test_headless.py`** — Jarvis must survive a machine with no display.
@@ -19929,7 +19929,7 @@ def _run_submit(job_url: str, proposal_text: str, headless: bool = True) -> dict
 
 # ── Queue execution ────────────────────────────────────────────────────────────
 
-def execute_queue_item(qid: int, headless: bool = True) -> dict:
+def execute_queue_item(qid: int, headless: bool | None = None) -> dict:
     """
     Execute a single APPROVED queue item.
     Safe to call repeatedly — re-checks status before acting.
@@ -19947,7 +19947,7 @@ def execute_queue_item(qid: int, headless: bool = True) -> dict:
         release("bid_executor")
 
 
-def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
+def _execute_queue_item_locked(qid: int, headless: bool | None = None) -> dict:
     with conn() as db:
         row = db.execute("SELECT * FROM automation_queue WHERE id=?", (qid,)).fetchone()
 
@@ -20019,6 +20019,11 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
     with conn() as db:
         db.execute("UPDATE automation_queue SET status='executing',processed_at=? WHERE id=?", (_now(), qid))
 
+    # None means "nobody said" — ask the setting. Explicit True/False wins, so
+    # a caller that genuinely needs headless (a test, a background retry) can
+    # still say so.
+    if headless is None:
+        headless = not watch_submissions()
     result = _run_submit(job_url, proposal_txt, headless=headless)
     now = _now()
 
@@ -20080,7 +20085,31 @@ def _execute_queue_item_locked(qid: int, headless: bool = True) -> dict:
     return result
 
 
-def execute_all_approved(headless: bool = True) -> dict:
+def watch_submissions() -> bool:
+    """
+    Should the browser be VISIBLE while it submits?
+
+    Default YES, and this is the single most requested thing on this page:
+    "show me the page, show me it sending it — that's the proof I want."
+
+    A screenshot afterwards is evidence, but it arrives after the fact and it
+    is one frame. Watching Chromium open the real project page, fill the real
+    box and click the real button is the difference between believing Jarvis
+    and taking its word. It is your desktop; there is nothing to hide behind
+    headless here, and headless was only ever the default because it is the
+    default everywhere else.
+
+    Settable, because once you DO trust it you will want it out of your way:
+    Settings -> freelance_watch_browser = false.
+    """
+    try:
+        from services import config
+        return str(config.get("freelance_watch_browser", "true")).lower() != "false"
+    except Exception:
+        return True
+
+
+def execute_all_approved(headless: bool | None = None) -> dict:
     """
     Process every queue item currently marked 'approved'.
     Runs sequentially in a background thread so the live feed stays smooth.
@@ -20097,12 +20126,18 @@ def execute_all_approved(headless: bool = True) -> dict:
             with conn() as db:
                 rows = db.execute("SELECT id FROM automation_queue WHERE status='approved' ORDER BY id ASC").fetchall()
             ids = [r["id"] for r in rows]
-            STATE.emit("executor", f"Starting execution of {len(ids)} approved item(s)")
+            # Decided ONCE for the batch, not per item — flipping mid-run would
+            # open a second browser window halfway through.
+            show = (watch_submissions() if headless is None else not headless)
+            STATE.emit("executor",
+                       f"Starting execution of {len(ids)} approved item(s)"
+                       + (" - a browser window will open so you can watch each one"
+                          if show else ""))
             for qid in ids:
                 # Re-check running flag each loop in case user wants to stop
                 if not _executor_running:
                     break
-                execute_queue_item(qid, headless=headless)
+                execute_queue_item(qid, headless=not show)
             STATE.emit("executor", "Execution batch complete")
         finally:
             with _executor_lock:
@@ -33615,6 +33650,48 @@ def test_a_compound_command_names_the_half_it_could_not_do():
     assert "open_app" in actions
     assert out.get("unresolved"), "the unhandled clause vanished silently"
     assert "send message" in " ".join(out["unresolved"]).lower()
+
+
+# ── "Show me the page — show me it sending it" ───────────────────────────────
+
+
+def test_the_submission_browser_is_visible_by_default():
+    """
+    Every submission ran headless=True, so nothing was ever visible and the
+    only evidence was a screenshot after the fact — which is why "proof" felt
+    like a letter Jarvis wrote to itself.
+
+    Watching the real page open, fill and submit is the difference between
+    believing it and taking its word.
+    """
+    from services.bid_executor import watch_submissions
+
+    assert watch_submissions() is True
+
+
+def test_it_can_be_turned_off_once_you_trust_it(monkeypatch):
+    """Watching is the default, not a sentence. It must get out of the way."""
+    from services import bid_executor, config
+
+    monkeypatch.setattr(
+        config, "get", lambda k, d=None: "false" if k == "freelance_watch_browser" else d
+    )
+    assert bid_executor.watch_submissions() is False
+
+
+def test_an_explicit_headless_caller_still_wins():
+    """
+    A test or a background retry that genuinely needs headless must be able to
+    say so — the setting answers "nobody said", not "always".
+    """
+    import inspect
+
+    from services import bid_executor
+
+    src = inspect.getsource(bid_executor._execute_queue_item_locked)
+    assert "if headless is None:" in src, (
+        "the setting overrides an explicit caller instead of filling a blank"
+    )
 ```
 
 ################################################################################
@@ -38912,6 +38989,8 @@ export default function Earn() {
   });
   const [switching, setSwitching] = useState(false);
   const [receipt, setReceipt] = useState(null); // "what did it actually send?"
+  // Whether the submission browser is visible. Default true — see the toggle.
+  const [watchBrowser, setWatchBrowser] = useState(true);
   // "I press approve all but I don't know what's going on, if it sent it."
   // One line of live truth about the queue, always on screen.
   const [outcome, setOutcome] = useState(null);
@@ -39029,6 +39108,20 @@ export default function Earn() {
       return;
     }
     load();
+  };
+
+  const setWatch = async (want) => {
+    setWatchBrowser(want); // instant feedback; the setting is read at send time
+    try {
+      await fetch(`${API}/settings/freelance_watch_browser`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value: want ? "true" : "false" }),
+      });
+    } catch {
+      setWatchBrowser(!want); // revert, don't lie
+      setMsg("Couldn't save that setting.");
+    }
   };
 
   const addPlatform = async () => {
@@ -39382,6 +39475,36 @@ export default function Earn() {
           />
           Also submit bids automatically (no approval step). Only applies to bid sites you're logged
           into.
+        </label>
+
+        {/*
+          "Show me the page — show me it sending it. That's the proof I want."
+
+          A screenshot afterwards is evidence, but it arrives after the fact and
+          it is one frame. Watching the real project page open, the real box
+          fill and the real button get clicked is the difference between
+          believing Jarvis and taking its word. On by default for exactly that
+          reason; headless was only ever the default because it is the default
+          everywhere else.
+        */}
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 9,
+            marginTop: 10,
+            fontSize: 12.5,
+            color: watchBrowser ? T.cyan : T.dim,
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={watchBrowser}
+            onChange={(e) => setWatch(e.target.checked)}
+            style={{ accentColor: T.cyan }}
+          />
+          Open a visible browser while submitting, so you can watch each bid go in.
         </label>
       </div>
 
@@ -43455,7 +43578,7 @@ pause
 # FILE 212/223: failure_injection_report.txt
 ################################################################################
 ```txt
-JARVIS PHASE 0 FAILURE INJECTION — 2026-08-07T10:15:35.465818
+JARVIS PHASE 0 FAILURE INJECTION — 2026-08-07T12:52:34.557068
 platform: linux  python: 3.11.15
 26 passed · 0 failed · 1 skipped
 
@@ -43587,7 +43710,7 @@ platform: linux  python: 3.11.15
 
 [PASS] browser_death — Browser dies while holding the lock
     Dead owner reclaimed, live owner protected, dead handle dropped.
-    · lease reclaimed from the dead owner: 'fi-test-1786097727' stopped responding for over 120s and its lease ex
+    · lease reclaimed from the dead owner: 'fi-test-1786107146' stopped responding for over 120s and its lease ex
     · a live, heart-beating owner is correctly left alone
 
 [PASS] estop — Emergency stop actually blocks input
@@ -43600,7 +43723,7 @@ platform: linux  python: 3.11.15
 
 [PASS] model_pressure — keep_alive adapts to memory pressure
     Scaling is correct: big=90s, small=5m.
-    · free RAM 15.4GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
+    · free RAM 15.5GB · llava:7b -> 90s · qwen2.5:1.5b -> 5m
     · skipped the live unload (needs --include-destructive)
 
 [PASS] classification — Real errors map to the right cause
