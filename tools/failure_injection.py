@@ -1227,14 +1227,42 @@ def s_looking_at_the_right_window():
                      "confident answer about the app you asked about.")
     r.note("an unconfirmed focus attaches a caveat to the answer")
 
-    # And the plan for "check my qq messages" must still be the right four steps.
+    # The plan for "check my qq messages" must open the app and then READ IT.
+    # It used to end in screenshot + analyze; it now ends in read_messages,
+    # which asks Windows for the window's text and only photographs the screen
+    # when the app exposes none. Whichever step does the looking has to be
+    # covered by the guard above — that's what the loop below checks, rather
+    # than pinning a particular step list that will change again.
     from services import decompose
     steps = decompose.decompose("check my qq messages")["steps"]
     actions = [s["action"] for s in steps]
-    for want in ("open_app", "wait_for_window", "screenshot", "analyze"):
+    for want in ("open_app", "wait_for_window"):
         if want not in actions:
             return r.bad(f"'check my qq messages' produced {actions} — no {want}.")
+    lookers = [a for a in actions if a in ("screenshot", "analyze", "read_messages")]
+    if not lookers:
+        return r.bad(f"'check my qq messages' produced {actions} — nothing in "
+                     f"there actually looks at QQ.")
+    guarded = re.search(r'looking = action in \(([^)]*)\)', src)
+    for a in lookers:
+        if not guarded or f'"{a}"' not in guarded.group(1):
+            return r.bad(f"'{a}' answers questions about a specific app but isn't "
+                         f"treated as LOOKING, so it can run without that app in "
+                         f"front and describe a different window.")
     r.note(f"'check my qq messages' -> {' -> '.join(actions)}")
+
+    # read_messages ends in a screenshot when the app exposes no text. That is
+    # fine ONLY if the app was in front — otherwise it photographs whatever was.
+    if "read_messages" in actions:
+        rm = re.search(r"def read_messages.*?\n(?=\ndef |\n# )", src, re.S)
+        body = rm.group(0) if rm else ""
+        if 'stage") == "focus"' not in body:
+            return r.bad("read_messages falls back to a screenshot without first "
+                         "checking WHY the read failed. A read that failed "
+                         "because the app wouldn't come forward must not become "
+                         "a photo of a different window.")
+        r.note("the screenshot fallback refuses to run on an unfocused app")
+
     return r.ok("Jarvis looks at the window it was asked about, or says it couldn't.")
 
 
@@ -1532,7 +1560,159 @@ def s_launchers():
     return r.ok("Launchers are valid Windows batch and there's only one to press.")
 
 
+def s_wrong_person():
+    """
+    A message must never reach the wrong person, and an unconfirmed send must
+    never be reported as sent.
+
+    This is the scenario with the worst user-visible harm in the whole harness.
+    The others cost time; this one sends words to a real human under the user's
+    name, and cannot be taken back. It breaks the messaging chain four ways and
+    checks that each one stops before Enter rather than pressing on.
+    """
+    r = Result("wrong_person", "A message never goes to the wrong person")
+    from agents import ui_agent
+
+    original = {"load": ui_agent._load, "allowed": ui_agent._input_allowed,
+                "click": ui_agent.click, "type": ui_agent.type_into,
+                "read": ui_agent.read_messages, "field": ui_agent._field_value}
+    try:
+        ui_agent._load = lambda: True
+        ui_agent._input_allowed = lambda: ""
+        pressed = []
+        import agents.desktop_agent as da
+        real_press = da.press
+        da.press = lambda k: (pressed.append(k), {"success": True})[1]
+
+        # 1. Two contacts answer to the name. Nothing may be typed or sent.
+        ui_agent.click = lambda app, name, role="": {
+            "success": False, "ambiguous": True,
+            "error": f"'{name}' matches 2 different things here: Ahmed Ali, Ahmed Bakr",
+            "candidates": [{"name": "Ahmed Ali"}, {"name": "Ahmed Bakr"}]}
+        typed = []
+        ui_agent.type_into = lambda *a, **k: (typed.append(a), {"success": True})[1]
+        out = ui_agent.send_message("wechat", "Ahmed", "see you at 6", send=True)
+        if out.get("sent") or typed or pressed:
+            return r.bad("Two people matched 'Ahmed' and Jarvis picked one anyway. "
+                         "This is a real message to the wrong human.")
+        if not out.get("ambiguous"):
+            return r.bad("It refused, but didn't say the name was ambiguous — the "
+                         "user can't fix what they aren't told.")
+        r.note("ambiguous contact -> refused, nothing typed, nothing sent")
+
+        # 2. The click was issued but the window didn't change. We cannot tell
+        #    whose chat is open, so typing into it is guessing.
+        typed.clear()
+        ui_agent.click = lambda app, name, role="": {"success": True,
+                                                     "verified": False,
+                                                     "clicked": name}
+        out = ui_agent.send_message("wechat", "Ahmed", "see you at 6", send=True)
+        if typed or pressed or out.get("sent"):
+            return r.bad("The chat didn't visibly open and Jarvis typed into it "
+                         "anyway — that is the wrong-chat bug with an extra step.")
+        r.note("unconfirmed chat -> stopped before typing")
+
+        # 3. Typing didn't land in the box. Enter must not follow.
+        ui_agent.click = lambda app, name, role="": {"success": True, "verified": True}
+        ui_agent.type_into = lambda app, f, t, submit=False: {
+            "success": True, "verified": False, "field": "compose",
+            "field_value": "", "verify_reason": "the field is now empty"}
+        out = ui_agent.send_message("wechat", "Ahmed", "see you at 6", send=True)
+        if pressed or out.get("sent"):
+            return r.bad("The input box was empty and Jarvis pressed Enter anyway.")
+        r.note("text didn't land -> Enter not pressed")
+
+        # 4. Sent, but nothing can confirm it. Must NOT claim it sent, and must
+        #    NOT offer to try again — a retry sends it twice.
+        ui_agent.type_into = lambda app, f, t, submit=False: {
+            "success": True, "verified": True, "field": "compose", "field_value": t}
+        ui_agent.read_messages = lambda app, limit=30: {"success": True, "messages": []}
+        ui_agent._field_value = lambda app: None
+        out = ui_agent.send_message("wechat", "Ahmed", "see you at 6", send=True)
+        if out.get("verified") is not False:
+            return r.bad("Nothing confirmed the message arrived and Jarvis still "
+                         "reported it verified. This is a false ✓ on a real send.")
+        if "retry" not in (out.get("what_to_do") or "").lower():
+            return r.bad("It admitted it couldn't confirm the send but didn't say "
+                         "it won't retry — a retry here sends the message twice.")
+        r.note("unconfirmed send -> verified=False, refuses to retry")
+
+        # 5. And the approval gate itself.
+        pressed.clear()
+        out = ui_agent.send_message("wechat", "Ahmed", "see you at 6", send=False)
+        if pressed or out.get("sent"):
+            return r.bad("send=False still pressed Enter. The approval gate is "
+                         "decorative.")
+        if not out.get("awaiting_approval") or not out.get("composed"):
+            return r.bad("Nothing was sent, but the user isn't shown what would be "
+                         "— that's the 'show me the composition' complaint again.")
+        r.note("send=False -> composed, visible, unsent")
+    finally:
+        ui_agent._load = original["load"]
+        ui_agent._input_allowed = original["allowed"]
+        ui_agent.click = original["click"]
+        ui_agent.type_into = original["type"]
+        ui_agent.read_messages = original["read"]
+        ui_agent._field_value = original["field"]
+        da.press = real_press
+
+    return r.ok("Every way the chain can be uncertain stops it before a person "
+                "is messaged.")
+
+
+def s_unreadable_app():
+    """
+    An app whose interface Windows cannot read must never produce "no new
+    messages".
+
+    QQ NT is Electron: it draws its chat on a canvas and exposes nothing to the
+    accessibility layer. An empty read there is a fact about the READ, not about
+    the inbox, and reporting it as an empty inbox is the exact class of lie this
+    project is built to eliminate.
+    """
+    r = Result("unreadable_app", "A silent app is not an empty inbox")
+    from agents import ui_agent
+
+    real = ui_agent._read_nodes
+    try:
+        # A window with structure but no text — what Electron looks like here.
+        ui_agent._read_nodes = lambda app, *a, **k: {
+            "ok": True, "cut": "", "window": "QQ",
+            "nodes": [ui_agent.UINode(name="", role="pane", path=()),
+                      ui_agent.UINode(name="", role="pane", path=(0,))]}
+        out = ui_agent.read_messages("qq")
+        if out.get("verified") is True:
+            return r.bad("Claimed a verified read of a window that said nothing.")
+        if out.get("messages"):
+            return r.bad("Invented messages from an unreadable window.")
+        blurb = (out.get("error", "") + " " + out.get("what_to_do", "")).lower()
+        if "empty" in blurb and "not claim" not in blurb:
+            return r.bad("Told the user their inbox is empty on the strength of a "
+                         "failed read.")
+        if "screenshot" not in blurb:
+            return r.bad("Couldn't read the app and didn't mention the way that "
+                         "does work — the user is left with a dead end.")
+        r.note("unreadable window -> refuses to claim an empty inbox")
+        r.note("names the screenshot fallback instead of stopping")
+    finally:
+        ui_agent._read_nodes = real
+
+    # And the desktop-level wrapper must SAY which of the two answered.
+    import inspect
+
+    from agents import desktop_agent
+    src = inspect.getsource(desktop_agent.read_messages)
+    if "fell_back_because" not in src or '"method"' not in src:
+        return r.bad("read_messages can fall back to a screenshot without saying "
+                     "it did — a 55s vision answer and an instant exact one would "
+                     "look identical in the log.")
+    r.note("the fallback reports method + why")
+    return r.ok("A window that says nothing is reported as unreadable, not empty.")
+
+
 SCENARIOS = {
+    "wrong_person":   (s_wrong_person, False),
+    "unreadable_app": (s_unreadable_app, False),
     "control":        (s_control, False),
     "stale_stop":     (s_stale_stop, False),
     "looking":        (s_looking_at_the_right_window, False),

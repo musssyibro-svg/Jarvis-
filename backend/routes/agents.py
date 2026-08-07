@@ -117,6 +117,50 @@ def desktop_open_app(body: DesktopActionRequest):
         raise HTTPException(400, "app required")
     return open_app(body.app)
 
+# ── Reading an app's interface ───────────────────────────────────────────────
+#
+# Same doorway as everything else. These are HTTP because the React console,
+# Cherry Studio and the MCP server are all clients of the same backend and none
+# of them may be the only way to reach a capability.
+
+@router.get("/desktop/ui/available")
+def ui_available():
+    """Can Jarvis read interfaces here, and if not, why — before anyone tries."""
+    from agents.ui_agent import available
+    return available()
+
+
+@router.post("/desktop/ui/read")
+def ui_read(body: dict):
+    """Everything an app's window says, as text."""
+    from agents.ui_agent import read_text
+    return read_text(body.get("app", ""))
+
+
+@router.post("/desktop/ui/messages")
+def ui_messages(body: dict):
+    """The open conversation, as real text. Falls back to looking at the screen
+    and says which of the two answered."""
+    from agents.desktop_agent import read_messages
+    return read_messages(body.get("app", ""), body.get("question", ""))
+
+
+@router.post("/desktop/ui/send-message")
+def ui_send_message(body: dict):
+    """
+    Compose a message into a named person's chat.
+
+    `send` is absent or false by default: the message is typed into the real
+    input box of the real conversation and left there, and the response carries
+    the composed text plus which chat it is sitting in. Approving is the same
+    call with send=true — a second, deliberate request, which is the point.
+    """
+    from agents.desktop_agent import send_message
+    if not body.get("text"):
+        raise HTTPException(400, "text required")
+    return send_message(body)
+
+
 @router.post("/desktop/close-app")
 def desktop_close_app(body: dict):
     from agents.desktop_agent import close_app

@@ -7,7 +7,7 @@ removing a module.
 This is the file to read FIRST. `JARVIS_FULL_SOURCE.txt` is the
 complete source and is 1.4 MB; it answers a different question.
 
-170 source files · 688 public symbols
+172 source files · 728 public symbols
 
 Descriptions come from each module's own docstring. A module with no
 description here has no docstring — in this project that is a gap, not
@@ -60,7 +60,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/agents/commander.py`
 
 **`desktop_agent.py`** — Full desktop control: mouse, keyboard, window management, file ops.
-  <br>`emergency_stop`, `clear_emergency_stop`, `is_estopped`, `move`, `click`, `double_click`, `right_click`, `drag`, `scroll`, `type_text`, `type_text_raw`, `hotkey`, `press`, `compose_and_type` _(+22 more)_
+  <br>`emergency_stop`, `clear_emergency_stop`, `is_estopped`, `move`, `click`, `double_click`, `right_click`, `drag`, `scroll`, `type_text`, `type_text_raw`, `hotkey`, `press`, `compose_text` _(+25 more)_
   <br>`backend/agents/desktop_agent.py`
 
 **`executor_agent.py`** — V9 autonomy core (LOCKED spec).
@@ -101,6 +101,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`scout_agent.py`** — ScoutAgent — discovers opportunities across all enabled platforms.
   <br>`ScoutAgent`
   <br>`backend/agents/scout_agent.py`
+
+**`ui_agent.py`** — read and drive Windows applications through their
+  <br>`available`, `walk`, `match`, `text_containers`, `snapshot`, `read_text`, `read_messages`, `click`, `type_into`, `send_message`
+  <br>`backend/agents/ui_agent.py`
 
 **`v9_models.py`** — V9 typed data models (LOCKED spec).
   <br>`backend/agents/v9_models.py`
@@ -476,7 +480,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/services/teach.py`
 
 **`tool_registry.py`** — deterministic action shortcuts.
-  <br>`default_browser`, `search_url`, `split_query`, `resolve_steps`, `is_known_command`, `list_tools`
+  <br>`default_browser`, `search_url`, `split_query`, `message_steps`, `resolve_steps`, `is_known_command`, `list_tools`
   <br>`backend/services/tool_registry.py`
 
 **`trace.py`** — execution tracing. Every request records the EXACT path it took.
@@ -536,7 +540,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`backend/tests/test_decompose.py`
 
 **`test_felt_behaviour.py`** — The three complaints that are actually about how Jarvis FEELS to use.
-  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`, `test_agent_invented_navigation_is_risky`, `test_typing_a_url_yourself_is_not_gated`, `test_opening_a_url_is_never_retried`, `test_every_action_result_has_one_shape` _(+9 more)_
+  <br>`test_a_busy_ollama_is_asked_once_not_once_per_poll`, `test_the_model_list_call_gives_up`, `test_busy_is_reported_differently_from_offline`, `test_a_qualifier_alone_is_still_a_name`, `test_an_unconfirmed_bid_is_not_recorded_as_sent`, `test_the_unconfirmed_branch_says_success_but_not_verified`, `test_a_look_at_an_unfocusable_app_fails_instead_of_answering`, `test_a_tray_app_is_not_reported_as_missing`, `test_a_failed_app_launch_gets_an_app_remedy_not_a_browser_one`, `test_chain_steps_carry_their_own_time_not_the_whole_run`, `test_agent_invented_navigation_is_risky`, `test_typing_a_url_yourself_is_not_gated`, `test_opening_a_url_is_never_retried`, `test_every_action_result_has_one_shape` _(+10 more)_
   <br>`backend/tests/test_felt_behaviour.py`
 
 **`test_headless.py`** — Jarvis must survive a machine with no display.
@@ -562,6 +566,10 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
 **`test_submission_confirmation.py`** — "I press approve all but I don't know if it sent it."
   <br>`FakePage`, `verdict`, `test_a_click_that_did_nothing_is_never_called_submitted`, `test_form_closing_and_navigating_counts_as_sent_without_words`, `test_refusal_wins_over_a_success_word_in_the_same_page`, `test_a_submission_is_never_retried`, `test_the_unchanged_verdict_reaches_the_user_as_a_failure`
   <br>`backend/tests/test_submission_confirmation.py`
+
+**`test_ui_reading.py`** — What breaks if the UI-reading tier is wrong, described as the user would see it.
+  <br>`Ctrl`, `chat_window`, `nodes_of`, `test_checking_messages_returns_what_they_actually_say`, `test_a_quiet_chat_does_not_return_your_contact_list_as_messages`, `test_an_enclosing_web_view_does_not_win_on_size_alone`, `test_one_message_with_nested_text_is_not_counted_as_three`, `test_an_app_that_shows_nothing_is_not_reported_as_an_empty_inbox`, `test_a_window_too_big_to_read_says_it_was_cut_short`, `test_a_deeply_nested_window_stops_instead_of_running_forever`, `test_an_exact_name_beats_a_longer_one_that_contains_it`, `test_two_different_people_matching_equally_stops_instead_of_guessing`, `test_the_same_person_listed_twice_is_not_treated_as_ambiguous`, `test_a_name_typed_on_a_chinese_keyboard_still_matches` _(+9 more)_
+  <br>`backend/tests/test_ui_reading.py`
 
 **`test_url_gate.py`** — Where Jarvis is allowed to point a browser that is already signed in as you.
   <br>`test_a_doubly_prefixed_url_is_refused`, `test_localhost_with_a_port_is_refused_for_the_RIGHT_reason`, `test_chat_can_still_open_an_ordinary_site`, `test_a_refusal_says_why_and_is_not_retried`, `test_llm_parsed_actions_need_approval`, `test_screenshot_from_the_model_stays_cheap`
@@ -657,7 +665,7 @@ a style choice: CLAUDE.md says the reasoning lives in the docstring.
   <br>`tools/dump_source.py`
 
 **`failure_injection.py`** — Phase 0. Break Jarvis on purpose, in two minutes,
-  <br>`Result`, `s_missing_app`, `s_clipboard`, `s_no_model`, `s_queue_load`, `s_browser_death`, `s_estop`, `s_learning`, `s_model_pressure`, `s_classification`, `s_control`, `s_decompose`, `s_plan_visibility`, `s_selfeval` _(+15 more)_
+  <br>`Result`, `s_missing_app`, `s_clipboard`, `s_no_model`, `s_queue_load`, `s_browser_death`, `s_estop`, `s_learning`, `s_model_pressure`, `s_classification`, `s_control`, `s_decompose`, `s_plan_visibility`, `s_selfeval` _(+17 more)_
   <br>`tools/failure_injection.py`
 
 **`mutate.py`**

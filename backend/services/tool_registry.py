@@ -235,6 +235,72 @@ def split_query(text: str):
     return query, follow
 
 
+# "send a message to john saying hi", "message ahmed on wechat: on my way",
+# "dm sara, running late", "text 王伟 saying 好的".
+#
+# The optional filler between the verb and the name is why this is one regex
+# rather than four: people say "send a message to X", "send X a message",
+# "send message to X" and "message X" interchangeably, and every one of those
+# used to be a different outcome — two parsed, one typed the whole sentence
+# into the chat window, and one fell through to the LLM.
+_MESSAGE_RE = re.compile(
+    r"^\s*(?:send|message|msg|text|dm)\s+"
+    r"(?:(?:an?)\s+)?(?:message|msg|text|dm|note)?\s*(?:to\s+)?"
+    r"([\w][\w .一-鿿-]{0,40}?)\s*"
+    r"(?:\s+(?:on|in|via|using)\s+([\w+]+))?"
+    r"\s*(?:saying|that says|:|,)\s*[\"'“]?(.+?)[\"'”]?\s*$")
+
+
+def message_steps(clause: str, app_hint: str = "") -> list[dict] | None:
+    """
+    Turn "message <who> on <app>: <what>" into a plan, or return None.
+
+    Resolves the APP by capability when none is named: on this machine that
+    means QQ or WeChat, not whatever a generic assistant would assume.
+
+    One step, not five, and that is the point. This used to be click_text(who)
+    — OCR, pick the rectangle that most resembles the name — then type_text,
+    then press Enter. Nothing between the guess and the send. If the OCR picked
+    the wrong row, a real message reached a real person and the reply said
+    "Done ✓".
+
+    `send_message` finds the contact as a NAMED ELEMENT, refuses when two
+    different names match, confirms the chat actually opened, reads the input
+    box back to check the text landed, and stops before Enter unless sending
+    was approved. Splitting that across separate steps would let a chain carry
+    on past a step that only half-worked, which is exactly what happened.
+    """
+    mm = _MESSAGE_RE.match(clause or "")
+    if not mm:
+        return None
+    who, app_named, body = (mm.group(1).strip(), (mm.group(2) or "").strip(),
+                            mm.group(3).strip())
+    # "send Ahmed a message ..." — the name is Ahmed, not "Ahmed a message".
+    # The capture swallows the filler, and clicking the wrong contact means
+    # sending a real message to the wrong person.
+    who = re.sub(r"\s+(?:an?\s+)?(?:message|msg|text|dm|note)$", "", who,
+                 flags=re.IGNORECASE).strip()
+    if not who or not body:
+        return None
+    app = _canon_app(app_named) if app_named else (_canon_app(app_hint) if app_hint
+                                                   else "")
+    if not app:
+        try:
+            from services import providers
+            app = providers.provider_for("message")
+        except Exception:
+            app = None
+    if not app:
+        return None
+    return [
+        {"action": "open_app",        "params": {"name_or_path": app}},
+        {"action": "wait_for_window", "params": {"title": app, "timeout": 15}},
+        {"action": "send_message",    "params": {
+            "app": app, "contact": who, "text": body,
+            "compose": _wants_composition("write", body)}},
+    ]
+
+
 def _looks_like_known_app(word: str) -> bool:
     w = _canon_app(word)
     return w in KNOWN_APPS or w in {_canon_app(a) for a in KNOWN_APPS}
@@ -252,8 +318,11 @@ def resolve_steps(text: str) -> list[dict] | None:
     low = m.lower()
 
     # ── "check my <app> messages" / "<app> check messages" / "read <app>" ──────
-    # open the app, wait for it, screenshot, and let vision summarise — the exact
-    # flow the QQ plan SHOULD have produced.
+    # Open the app, then READ IT. This used to be screenshot + ask a vision
+    # model — 55 seconds on this machine, measured, for a paraphrase of a
+    # picture. read_messages asks Windows for the window's actual text and only
+    # falls back to looking at the screen when the app exposes nothing, saying
+    # which of the two answered.
     app = _find_app(low)
     wants_messages = (any(w in low for w in _CHECK_WORDS)
                       and any(w in low for w in _MESSAGE_WORDS))
@@ -261,48 +330,16 @@ def resolve_steps(text: str) -> list[dict] | None:
         return [
             {"action": "open_app",        "params": {"name_or_path": app}},
             {"action": "wait_for_window", "params": {"title": app, "timeout": 12}},
-            {"action": "screenshot",      "params": {}},
-            {"action": "analyze",         "params": {
+            {"action": "read_messages",   "params": {
+                "app": app,
                 "question": f"What new or unread messages are visible in {app}? "
                             f"List each sender and a one-line summary. If none are "
                             f"visible, say so."}},
         ]
 
     # ── "message <who> on <app>: <text>" / "send <who> a message" ─────────────
-    # Resolves the APP by capability when none is named: on this machine that
-    # means QQ or WeChat, not whatever a generic assistant would assume.
-    mm = re.match(r"^\s*(?:send|message|text|dm)\s+(?:a\s+message\s+to\s+)?"
-                  r"([\w][\w .\u4e00-\u9fff-]{0,40}?)\s*"
-                  r"(?:\s+(?:on|in|via|using)\s+([\w+]+))?"
-                  r"\s*(?:saying|that says|:|,)\s*[\"'\u201c]?(.+?)[\"'\u201d]?\s*$", low)
-    if mm:
-        who, app_named, body = mm.group(1).strip(), (mm.group(2) or "").strip(), mm.group(3).strip()
-        # "send Ahmed a message ..." — the name is Ahmed, not "Ahmed a message".
-        # The greedy capture swallows the filler, and clicking the wrong contact
-        # means sending a real message to the wrong person.
-        who = re.sub(r"\s+(?:an?\s+)?(?:message|msg|text|dm|note)$", "", who,
-                     flags=re.IGNORECASE).strip()
-        app = _canon_app(app_named) if app_named else None
-        if not app:
-            try:
-                from services import providers
-                app = providers.provider_for("message")
-            except Exception:
-                app = None
-        if app:
-            steps = [
-                {"action": "open_app",        "params": {"name_or_path": app}},
-                {"action": "wait_for_window", "params": {"title": app, "timeout": 15}},
-                # Find the conversation before typing. Sending a message to
-                # whatever chat happens to be open is worse than not sending it.
-                {"action": "click_text",      "params": {"text": who}},
-                {"action": "wait",            "params": {"seconds": 1}},
-            ]
-            steps.append({"action": "compose", "params": {"prompt": body, "topic": body}}
-                         if _wants_composition("write", body)
-                         else {"action": "type_text", "params": {"text": body}})
-            steps.append({"action": "press", "params": {"key": "enter"}})
-            return steps
+    if steps := message_steps(low):
+        return steps
 
     # ── "open <app> and ask/type/say/search <text>" → open, focus, type, enter ──
     # This is the doubao case: "open doubao and ask it how it is" must actually
@@ -318,6 +355,17 @@ def resolve_steps(text: str) -> list[dict] | None:
         # Only "it" was stripped before, so "tell me about yourself" kept the
         # "me" and Notepad received the characters `me about yourself`.
         text = re.sub(r"^(?:it|me|us|him|her|them)\s+", "", text).strip() or text
+
+        # "open qq and send message to john saying hello" is a MESSAGE, not a
+        # typing job. Reaching this branch first is how it became
+        # type_text("message to john saying hello") straight into the QQ window
+        # — the whole sentence typed at whoever's chat was already open, and
+        # then Enter. Re-parsing the clause here routes it to the verified path
+        # instead; if it doesn't parse as a message, the literal typing below
+        # still applies, so "open notepad and write X" is untouched.
+        if verb in ("send", "message"):
+            if msg := message_steps(f"{verb} {text}", app_hint=app):
+                return msg
 
         # ── Browser + search is its own thing ─────────────────────────────────
         # Typing into a browser window is the fragile way to search: it depends

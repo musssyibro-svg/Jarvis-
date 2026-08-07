@@ -396,9 +396,21 @@ def _steps_for(parsed: dict, ctx: dict) -> list[dict]:
     if intent == "send":
         # Delegated: recipient extraction and the "which messaging app" decision
         # already live in tool_registry and are covered by their own rules.
-        from services.tool_registry import resolve_steps
-        got = resolve_steps(parsed["raw"])
-        return got or []
+        #
+        # The app already opened by an earlier clause is passed in as a hint.
+        # Without it, "open qq and send message to john saying hello" split into
+        # two clauses and the second one had no idea which app it meant — so it
+        # asked providers for a default, and on a machine where that resolved to
+        # WeChat the message went out on the wrong app entirely. The clause
+        # right in front of it said which one.
+        from services.tool_registry import message_steps, resolve_steps
+        got = message_steps(parsed["raw"].lower(), app_hint=ctx.get("app") or "")
+        if got is None:
+            got = resolve_steps(parsed["raw"]) or []
+        # Don't re-open what the previous clause already opened and waited for.
+        if ctx.get("focused") and ctx.get("app"):
+            got = [s for s in got if s["action"] not in ("open_app", "wait_for_window")]
+        return got
 
     if intent == "press":
         key = obj.replace("the ", "").replace(" key", "").strip() or "enter"

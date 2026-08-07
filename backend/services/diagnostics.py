@@ -234,6 +234,27 @@ def _check_runtime() -> list[dict]:
         out.append({"group": "Runtime", "name": "Desktop control", "ok": False,
                     "detail": f"{platform.system()} — Jarvis desktop control targets Windows",
                     "why": "opening apps, typing", "fix": "Run Jarvis on the Windows machine"})
+    # Can Jarvis READ an app's interface, or only photograph it?
+    #
+    # Worth its own line rather than hiding in the package list, because the
+    # difference is not "a feature is missing" — it is a 55-second screenshot
+    # round trip standing in for a 40-millisecond read, every time you ask what
+    # a window says. Without this line the degradation is invisible: everything
+    # still works, just slowly and vaguely, which reads as "Jarvis is dumb".
+    try:
+        from agents.ui_agent import available as _ui_available
+        ui = _ui_available()
+        out.append({"group": "Runtime", "name": "Reading app windows",
+                    "ok": bool(ui["ok"]),
+                    "detail": ui["library"] or ui["reason"],
+                    "why": "reading messages and clicking by name instead of by "
+                           "screenshot",
+                    "fix": None if ui["ok"] else (ui["what_to_do"] or None)})
+    except Exception as e:
+        out.append({"group": "Runtime", "name": "Reading app windows", "ok": False,
+                    "detail": f"couldn't check ({str(e)[:80]})",
+                    "why": "reading messages without a screenshot", "fix": None})
+
     # Disk
     try:
         import psutil

@@ -181,9 +181,54 @@ def look_at_the_screen(question: str = "") -> dict:
 
     Slow on this machine — there's no usable GPU, so vision runs on the CPU.
     Expect tens of seconds, and ask one specific question rather than several.
+
+    Prefer read_app_window when you want to know what a SPECIFIC app says: it
+    reads the window's real text in milliseconds instead of describing a
+    picture of it.
     """
     from adapters.commander_adapter import handle_chat
     return _j(handle_chat, question or "what's on my screen", "mcp")
+
+
+@mcp.tool
+def read_app_window(app: str) -> dict:
+    """
+    Read what an app's window actually says — its real text, not a screenshot.
+
+    Fast (milliseconds) and exact, because it asks Windows for the interface
+    rather than photographing it. Use this for "what's in my inbox", "what does
+    that dialog say", "what's the error".
+
+    Some apps — QQ NT and other Electron ones — draw their interface without
+    exposing any text. Those come back saying so, and naming the screenshot
+    route, rather than pretending the window is empty.
+    """
+    from agents.desktop_agent import read_messages
+    return _j(read_messages, app, "")
+
+
+@mcp.tool
+def message_someone(contact: str, text: str, app: str = "",
+                    send: bool = False) -> dict:
+    """
+    Type a message into a named person's chat. Does NOT send it by default.
+
+    Call it once with send=False (the default) to compose: it opens that
+    person's conversation, types the message into the real input box and leaves
+    it there, then returns the composed text and which chat it is sitting in.
+    SHOW THAT TO THE USER. Only call again with send=True once they have
+    actually said to send it.
+
+    It refuses rather than guesses. If two contacts answer to the name it stops
+    and lists them; if the conversation didn't visibly open it stops before
+    typing. A message that reaches the wrong person cannot be taken back, so an
+    unconfirmed step is a stop, not a warning.
+
+    `app` defaults to whichever messaging app is installed here.
+    """
+    from agents.desktop_agent import send_message
+    return _j(send_message, {"app": app, "contact": contact, "text": text,
+                             "send": bool(send)})
 
 
 @mcp.tool

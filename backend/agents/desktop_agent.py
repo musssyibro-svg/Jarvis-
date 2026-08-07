@@ -384,22 +384,24 @@ def press(key: str) -> dict:
 
 # ── Applications ──────────────────────────────────────────────────────────────
 
-def compose_and_type(prompt: str, max_words: int = 180) -> dict:
+def compose_text(prompt: str, max_words: int = 180) -> dict:
     """
-    Generate text with the LLM, then type it. This is what "open notepad and
-    write about yourself" should always have done.
+    Generate the text and hand it back WITHOUT typing it.
 
-    Kept separate from type_text on purpose. Typing is deterministic and instant;
-    composing calls a model, can take seconds, and can fail. Merging them would
-    make every literal `type` pay the cost and the risk of a model call.
+    Split out of compose_and_type when messaging arrived. Sending a composed
+    message is not "generate, then type wherever the caret is" — the text has to
+    exist before the chat is chosen, so it can be shown to the user in the
+    approval step and compared against the input box afterwards. Two callers,
+    one model call, one preamble stripper; the alternative was a second copy of
+    this prompt that would drift.
 
-    On failure it types NOTHING and says why. The alternative — falling back to
-    typing the prompt — is exactly the bug being fixed here, and would put the
-    words "about yourself" into the user's document.
+    Returns {"success", "text"|"error"}. On failure `text` is absent and NOTHING
+    is typed — falling back to typing the prompt would put the words "about
+    yourself" into the user's document, which is the bug this was built to fix.
     """
     topic = (prompt or "").strip()
     if not topic:
-        return {"success": False, "action": "compose", "error": "nothing to write about"}
+        return {"success": False, "error": "nothing to write about"}
 
     try:
         from services.deepseek_service import call_model
@@ -411,21 +413,35 @@ def compose_and_type(prompt: str, max_words: int = 180) -> dict:
         )
         text = (call_model(instruction, fast=True, task="chat") or "").strip()
     except Exception as e:
-        return {"success": False, "action": "compose",
+        return {"success": False,
                 "error": f"couldn't reach the model: {str(e)[:120]}"}
 
     # call_model returns its errors as a string rather than raising.
     if not text or text.startswith("[Ollama") or text.startswith("[Anthropic"):
-        return {"success": False, "action": "compose",
-                "error": text or "the model returned nothing"}
+        return {"success": False, "error": text or "the model returned nothing"}
 
     text = _strip_model_preamble(text)
     if not text:
-        return {"success": False, "action": "compose",
+        return {"success": False,
                 "error": "the model replied but produced no usable text"}
+    return {"success": True, "text": text, "topic": topic}
 
+
+def compose_and_type(prompt: str, max_words: int = 180) -> dict:
+    """
+    Generate text with the LLM, then type it. This is what "open notepad and
+    write about yourself" should always have done.
+
+    Kept separate from type_text on purpose. Typing is deterministic and instant;
+    composing calls a model, can take seconds, and can fail. Merging them would
+    make every literal `type` pay the cost and the risk of a model call.
+    """
+    got = compose_text(prompt, max_words)
+    if not got.get("success"):
+        return {"success": False, "action": "compose", "error": got["error"]}
+    text = got["text"]
     res = type_text_raw(text)
-    res.update(action="compose", topic=topic, composed=text,
+    res.update(action="compose", topic=got.get("topic", ""), composed=text,
                words=len(text.split()))
     return res
 
@@ -736,6 +752,104 @@ def _use_credential(params: dict) -> dict:
             "detail": f"filled saved login for {label}"}
 
 
+def read_messages(app: str = "", question: str = "") -> dict:
+    """
+    "What does this app say?" — read the interface, fall back to looking at it.
+
+    Two ways to answer, and they are not equal. Windows hands us the actual text
+    of the actual window in milliseconds; a screenshot plus a vision model takes
+    55 seconds on this machine (measured, 2026-08-05) and returns a paraphrase.
+    So: accessibility tree first, always.
+
+    The fallback is NOT silent. `method` says which path answered and
+    `fell_back_because` says why the fast one didn't, because "QQ hides its
+    interface from Windows" and "you have no new messages" look identical in a
+    summary and mean completely different things. A user who never learns which
+    one they got cannot tell a quiet app from a blind assistant.
+    """
+    from agents import ui_agent
+    got = ui_agent.read_messages(app)
+    if got.get("success") and got.get("verified") and got.get("messages"):
+        msgs = got["messages"]
+        return {"success": True, "verified": True, "action": "read_messages",
+                "app": app, "method": "accessibility",
+                "messages": msgs,
+                "detail": "\n".join(msgs),
+                "verify_reason": got.get("verify_reason", ""),
+                "explanation": f"Read {len(msgs)} entries straight from {app}'s "
+                               f"window — this is what it says, not a summary."}
+
+    why = got.get("error") or got.get("verify_reason") or "the window wasn't readable"
+
+    # Falling back to a screenshot is only honest if we were looking at the
+    # right window. When the app could not be brought to the front, a photo of
+    # the screen is a photo of something else — and the vision model will answer
+    # confidently about it. That is precisely the 2026-08-05 report: focus_window
+    # failed twice for 'qq', the chain carried on, and Jarvis described Edge.
+    if got.get("stage") == "focus":
+        return {"success": False, "verified": False, "action": "read_messages",
+                "app": app, "method": "none", "error": why,
+                "what_to_do": got.get("what_to_do") or
+                              f"Bring {app or 'the app'} up yourself and ask "
+                              f"again — Jarvis will not photograph a different "
+                              f"window and answer about that."}
+
+    from agents import vision_agent
+    shot = vision_agent.screenshot()
+    if not shot.get("success"):
+        # Both ways of looking failed. Reporting an empty inbox here would be
+        # the exact lie this function exists to prevent.
+        return {"success": False, "verified": False, "action": "read_messages",
+                "app": app, "method": "none",
+                "error": f"couldn't read {app or 'that window'} ({why}) and "
+                         f"couldn't take a screenshot either "
+                         f"({shot.get('error', 'no reason given')})",
+                "what_to_do": got.get("what_to_do", "")}
+    look = vision_agent.analyze_screen(
+        question or (f"What new or unread messages are visible in {app}? List each "
+                     f"sender and a one-line summary. If none are visible, say so."))
+    return {**look, "action": "read_messages", "app": app, "method": "screenshot",
+            "fell_back_because": why,
+            "verified": False,
+            "verify_reason": f"read by looking at the screen, not from {app}'s own "
+                             f"window ({why})"}
+
+
+def send_message(p: dict) -> dict:
+    """
+    The `send_message` step: compose if asked, then hand off to ui_agent.
+
+    Approval lives here rather than inside ui_agent because it is a policy, not
+    a mechanism. Default is "type it, show it, don't send it" — CLAUDE.md is
+    explicit that anything which submits needs approval by default, and a
+    message to the wrong person is not recoverable by clicking undo. The setting
+    exists because the chain now VERIFIES whose chat is open before typing, so
+    turning it off is a considered choice rather than a leap.
+    """
+    text = p.get("text", "")
+    if p.get("compose") and text:
+        got = compose_text(text, max_words=60)
+        if not got.get("success"):
+            return {"success": False, "action": "send_message",
+                    "error": f"couldn't write the message: {got['error']}",
+                    "what_to_do": "Nothing was typed or sent."}
+        text = got["text"]
+
+    send = p.get("send")
+    if send is None:
+        try:
+            from services import config
+            send = not config.get_bool("messages_need_approval", True)
+        except Exception:
+            send = False
+
+    from agents import ui_agent
+    out = ui_agent.send_message(p.get("app", ""), p.get("contact", ""), text,
+                                send=bool(send))
+    out["action"] = "send_message"
+    return out
+
+
 def _run_action(action: str, params: dict) -> dict:
     """Dispatch a single desktop/vision action by name. Never raises."""
     ACTIONS = {
@@ -771,6 +885,17 @@ def _run_action(action: str, params: dict) -> dict:
         "screenshot":   lambda p: __import__("agents.vision_agent", fromlist=["screenshot"]).screenshot(),
         "click_text":   lambda p: __import__("agents.vision_agent", fromlist=["click_text"]).click_text(p.get("text", "")),
         "analyze":      lambda p: __import__("agents.vision_agent", fromlist=["analyze_screen"]).analyze_screen(p.get("question", "")),
+        # ── Reading the interface instead of a picture of it ──────────────
+        # These go through agents/ui_agent.py. They are separate actions rather
+        # than a smarter `click_text` because they answer a different question:
+        # click_text finds a rectangle that looks like some words, ui_click
+        # finds the element that IS those words and can say when two of them
+        # match. One guesses and cannot know it guessed wrong.
+        "read_messages": lambda p: read_messages(p.get("app", ""),
+                                                 p.get("question", "")),
+        "ui_read":      lambda p: __import__("agents.ui_agent", fromlist=["read_text"]).read_text(p.get("app", "")),
+        "ui_click":     lambda p: __import__("agents.ui_agent", fromlist=["click"]).click(p.get("app", ""), p.get("name", ""), p.get("role", "")),
+        "send_message": lambda p: send_message(p),
     }
     fn = ACTIONS.get(action)
     if fn is None:
@@ -1007,8 +1132,13 @@ def _read_focused_text() -> str | None:
 # type_text duplication bug wearing a different hat — the failure was never
 # "it didn't open", it was "I couldn't confirm it opened", and doing it again
 # cannot answer that question.
+#
+# send_message is the starkest case in the list: a retry does not re-attempt a
+# delivery, it makes a second delivery. Someone's phone buzzes twice. And the
+# failure it would be retrying is nearly always "I couldn't confirm it sent" —
+# a question another Enter cannot answer.
 _NO_RETRY = {"type_text", "compose", "click", "click_text", "press", "hotkey",
-             "open_url"}
+             "open_url", "send_message", "ui_click"}
 
 
 def _classify(error: str, action: str, result: dict | None = None) -> dict:
@@ -1118,8 +1248,14 @@ def _execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
     #
     # Looking at the screen is an interaction with a specific window, exactly
     # like typing into one.
+    # read_messages and ui_click focus the app themselves before they touch it,
+    # so they don't strictly need this. They are here anyway because the chain's
+    # focus attempt happens BEFORE the step and its failure is recorded as its
+    # own result line — which is what makes "it never brought QQ up" visible in
+    # the report instead of buried inside one step's error string.
     _INPUT = {"type_text", "compose", "press", "hotkey", "click", "click_text",
-              "screenshot", "analyze", "scroll"}
+              "screenshot", "analyze", "scroll", "read_messages", "ui_click",
+              "ui_read", "send_message"}
 
     # Publish the plan so it's watchable while it runs, not only afterwards.
     # ensure() defers to a caller that already published a better-worded plan.
@@ -1149,7 +1285,10 @@ def _execute_chain(steps: list, max_retries: int = 2, goal: str = "") -> dict:
         # doesn't type" bug, which also happens when wait_for_window sits between
         # open and type). Confirm focus here regardless of step ordering, and
         # STOP HONESTLY if we can't get it — never type into the void.
-        looking = action in ("screenshot", "analyze")
+        # read_messages can end in a screenshot when the app exposes no text,
+        # and a screenshot of the wrong window is the failure this whole guard
+        # exists for. It looks, so it is treated as looking.
+        looking = action in ("screenshot", "analyze", "read_messages", "ui_read")
         if action in _INPUT and last_opened:
             if not _is_foreground(last_opened):
                 fw = focus_window(last_opened)

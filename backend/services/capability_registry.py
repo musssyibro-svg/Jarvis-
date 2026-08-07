@@ -54,6 +54,23 @@ BUILTIN = [
                "Find text on screen by OCR and click it (see -> act).",
                ["click on", "press the", "button", "find and click"],
                ["target text"], ["click performed"], ["ocr", "pyautogui"], 0.7, "medium"),
+    # Higher confidence and lower latency than the vision pair above, because
+    # this reads the interface rather than a picture of it — exact text, no
+    # model call. Listed separately rather than replacing them: apps that draw
+    # their own interface expose nothing here, and OCR is still the answer
+    # there.
+    Capability("read_app", "desktop",
+               "Read what an app's window actually says (its accessibility "
+               "tree), including the open conversation in a chat app.",
+               ["read", "check messages", "what does it say", "unread", "inbox"],
+               ["app name"], ["the window's text"], ["uiautomation"], 0.9, "fast"),
+    Capability("send_message", "desktop",
+               "Open a named person's chat, type a message into it, and show it "
+               "for approval before sending.",
+               ["message", "send", "text", "dm", "tell", "reply"],
+               ["app", "contact", "text"],
+               ["message composed in the right chat, sent only on approval"],
+               ["uiautomation", "pyautogui"], 0.75, "medium"),
     Capability("browse", "browser", "Open a URL in the managed browser.",
                ["browse", "go to", "open url", "website", "navigate"],
                ["url"], ["page open"], ["playwright"], 0.8, "medium"),
@@ -107,6 +124,13 @@ def _requirement_ok(req: str) -> bool:
         if req == "login":
             from services import session_manager
             return bool(session_manager.logged_in_platforms())
+        if req == "uiautomation":
+            # Asks ui_agent rather than find_spec, because "the package is
+            # importable" is not the question — on a machine with no
+            # interactive desktop it imports and then cannot attach to
+            # anything. available() distinguishes the two and says which.
+            from agents.ui_agent import available
+            return bool(available()["ok"])
     except Exception:
         return False
     return True

@@ -420,20 +420,45 @@ def test_boards_only_is_explained_not_reported_as_broken():
     assert "job board" in r["headline"]
 
 
-def test_a_compound_command_names_the_half_it_could_not_do():
+def test_sending_someone_a_message_is_a_capability_now_not_a_skipped_clause():
     """
-    "open qq and send message to john saying hello" opens QQ and stops, because
-    there is no send-a-message capability. That is a missing FEATURE, not a lie
-    — but the reply has to say which half was skipped, or it reads as Jarvis
-    ignoring you.
+    "open qq and send message to john saying hello" used to open QQ, stop, and
+    honestly report that it had no way to send a message. Honest, and still a
+    thing Jarvis couldn't do — the single most-asked-for missing capability.
+
+    It resolves now, and the shape matters as much as the fact: ONE
+    send_message step, not click_text + type_text + press Enter. Those three
+    could each half-succeed, and the failure that mattered — OCR clicking the
+    wrong contact — was invisible to all of them.
     """
     from services import decompose
 
     out = decompose.decompose("open qq and send message to john saying hello")
     actions = [s["action"] for s in out["steps"]]
-    assert "open_app" in actions
-    assert out.get("unresolved"), "the unhandled clause vanished silently"
-    assert "send message" in " ".join(out["unresolved"]).lower()
+    assert actions == ["open_app", "wait_for_window", "send_message"]
+    assert not out.get("unresolved")
+    step = out["steps"][-1]["params"]
+    assert step["contact"] == "john"
+    assert step["text"] == "hello"
+    # The app came from the clause in front of it, not from a default. Guessing
+    # here means the message goes out on the wrong app.
+    assert step["app"] == "qq"
+
+
+def test_a_message_never_becomes_a_sentence_typed_into_the_open_chat():
+    """
+    The dangerous near-miss: "open qq and send message to john saying hello"
+    matched the "open <app> and <verb> <text>" rule first and became
+    type_text("message to john saying hello") followed by Enter — the whole
+    sentence sent to whoever's chat happened to be open.
+    """
+    from services import tool_registry
+
+    steps = tool_registry.resolve_steps("open qq and send message to john saying hello")
+    kinds = [s["action"] for s in steps]
+    assert "type_text" not in kinds
+    assert "press" not in kinds
+    assert "send_message" in kinds
 
 
 # ── "Show me the page — show me it sending it" ───────────────────────────────

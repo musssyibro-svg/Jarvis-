@@ -122,6 +122,36 @@ This is the rule the whole project rests on: a system that can type on your
 keyboard and submit proposals under your name is only usable if its reports are
 true. A false "Done ✓" is worse than a crash, because a crash is visible.
 
+### Read the interface, don't photograph it
+
+Two ways to find out what an app says, and they are not equal:
+
+| | `agents/ui_agent.py` | `agents/vision_agent.py` |
+|---|---|---|
+| asks | Windows, for the accessibility tree | a vision model, about a JPEG |
+| returns | the real text, element names, values | a paraphrase |
+| costs | tens of milliseconds | 55 s median on this machine |
+| works on | native apps, WeChat, Office, Explorer | anything with pixels |
+
+The tree comes first, always. The screenshot is the fallback for apps that
+expose nothing — QQ NT is Electron and draws its chat on a canvas — and
+`read_messages` reports `method` and `fell_back_because` so the two are never
+confused. An empty read from an app that exposes no text is reported as an
+unreadable window, **never** as an empty inbox: that is a claim about the read,
+not about the world.
+
+This is also what makes messaging safe enough to have at all. `click_text`
+OCRs the screen and clicks the rectangle that most resembles a name; `ui_click`
+finds the element that *is* that name and refuses when two different names
+match. `send_message` chains focus → find contact → click → confirm the chat
+changed → type → read the input box back → stop. Enter is only pressed on
+approval, and a send that can't be confirmed reports `verified: False` and
+declines to retry, because a retry sends the message twice.
+
+`ui_agent` never finds windows itself — it asks `desktop_agent.focus_window`,
+which already matches by process rather than localised title. Two window
+finders would be two sets of the same bugs.
+
 ### Interruption lands between steps, never inside one
 
 `services/control.py`. Long loops call `checkpoint()` between steps; that's

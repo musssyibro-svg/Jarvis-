@@ -54,8 +54,15 @@ _SIDE_EFFECTS = {
     "credential":  ("fills a saved login", "sensitive"),
     "write_file":  ("writes a file to disk", "writes"),
     "run_command": ("runs a shell command", "sensitive"),
+    "ui_click":     ("clicks a named thing in an app's window", "writes"),
+    "send_message": ("types a message to a person, and sends it only if you "
+                     "approved that", "sensitive"),
 }
-_HARMLESS = {"screenshot", "analyze", "wait", "wait_for_window", "focus_window"}
+# Reading an app's window brings it to the front, same as focus_window already
+# in this list. Visible, instantly undone, and nothing outside Jarvis changes —
+# so it doesn't earn a line in "read this twice before approving".
+_HARMLESS = {"screenshot", "analyze", "wait", "wait_for_window", "focus_window",
+             "read_messages", "ui_read"}
 
 
 def _estimate(step: dict) -> tuple[float, str]:

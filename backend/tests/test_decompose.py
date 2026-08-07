@@ -121,13 +121,17 @@ def test_unhandled_clause_is_reported_not_dropped():
 # ── App resolution ───────────────────────────────────────────────────────────
 
 
-def test_check_messages_opens_looks_and_reads():
-    """The QQ flow: open, wait, screenshot, analyze — in that order."""
+def test_check_messages_opens_the_app_and_reads_its_window():
+    """
+    The QQ flow: open, wait, read. It used to end in screenshot + analyze —
+    a 55-second round trip through a vision model to paraphrase a picture of
+    text Windows would have handed over directly. read_messages asks the window
+    and only falls back to looking when the app exposes nothing.
+    """
     assert actions("check my qq messages") == [
         "open_app",
         "wait_for_window",
-        "screenshot",
-        "analyze",
+        "read_messages",
     ]
 
 
